@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#06040d" />
+  <meta name="description" content="疯狂的赛车：在弯曲的公路上躲避车流，限时冲线，累积时间，跑出更远的总里程。" />
+  <title>疯狂的赛车 · LiteGame</title>
+  <link rel="icon" href="../../assets/images/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../../assets/css/crazy-racing.css" />
+</head>
+<body>
+  <div class="game-stage">
+    <canvas id="gameCanvas" aria-label="疯狂的赛车游戏画面"></canvas>
+
+    <div class="hud" id="gameHud" hidden>
+      <span class="hud-progress"><i id="progressFill"></i></span>
+      <div class="hud-left">
+        <a class="hud-icon-btn" href="../../index.html#/category/racing" aria-label="返回赛车分区">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M19 12H5m6-6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <div class="hud-stage"><span>赛段</span><strong id="hudStage">1</strong></div>
+      </div>
+
+      <div class="hud-timer" id="timerBox">
+        <span class="hud-timer-label">剩余时间</span>
+        <strong id="hudTime">35.0</strong>
+        <em id="hudRemaining">距终点 1400 m</em>
+      </div>
+
+      <div class="hud-right">
+        <button class="hud-icon-btn" id="pauseBtn" aria-label="暂停游戏">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="7" y="5" width="3.6" height="14" rx="1.4" fill="currentColor"/>
+            <rect x="13.4" y="5" width="3.6" height="14" rx="1.4" fill="currentColor"/>
+          </svg>
+        </button>
+        <div class="hud-speed"><strong id="hudSpeed">0</strong><span>km/h</span></div>
+        <div class="hud-distance">里程 <strong id="hudDistance">0</strong> m</div>
+      </div>
+
+      <div class="hud-tip" id="hudTip">自动加速 · 左右转向 · 刹车减速</div>
+    </div>
+
+    <div class="offroad-warning" id="offroadWarning" hidden>驶出赛道 · 车速降低</div>
+
+    <div class="touch-controls" id="touchControls" hidden>
+      <button class="touch-btn touch-steer" type="button" data-control="left" aria-label="向左转向">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M14.5 6 8.5 12l6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="touch-right">
+        <button class="touch-btn touch-brake" type="button" data-control="brake" aria-label="刹车">刹车</button>
+        <button class="touch-btn touch-steer" type="button" data-control="right" aria-label="向右转向">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="countdown" id="countdown" hidden><span id="countdownText">3</span></div>
+
+    <div class="stage-toast" id="stageToast" hidden>
+      <strong id="stageToastBonus">+26s</strong>
+      <span class="toast-sub" id="stageToastSub">进入第 2 赛段</span>
+    </div>
+
+    <div class="overlay" id="startOverlay">
+      <div class="panel start-panel">
+        <div class="panel-topline">
+          <span class="panel-tag">RACING · 01</span>
+          <span class="panel-built">LiteGame 轻量游戏厅</span>
+        </div>
+        <h1 class="game-title">疯狂的赛车</h1>
+        <p class="game-tagline">在弯曲的公路上躲避车流，用每一段剩余时间续命，跑出更远的里程。</p>
+
+        <div class="rules">
+          <div class="rule">
+            <span class="rule-icon">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4.5 20 8 7.5h8L19.5 20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M12 4v16" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2.4 3.2" opacity=".75"/>
+              </svg>
+            </span>
+            <div><strong>守住赛道</strong><p>路面内保持全速，驶出路面会明显减速。</p></div>
+          </div>
+          <div class="rule">
+            <span class="rule-icon">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12.5" r="8" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 8v4.8l3.2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div><strong>限时冲线</strong><p>时间归零前到达终点；剩余时间累积，并额外获得 26 秒。</p></div>
+          </div>
+          <div class="rule">
+            <span class="rule-icon">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 15.5h14l1.3 3.2a1.2 1.2 0 0 1-1.1 1.7H4.8a1.2 1.2 0 0 1-1.1-1.7L5 15.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M7 15.5 8.5 8h7L17 15.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <circle cx="7.5" cy="19" r="1.1" fill="currentColor"/>
+                <circle cx="16.5" cy="19" r="1.1" fill="currentColor"/>
+              </svg>
+            </span>
+            <div><strong>躲避车流</strong><p>碰撞会大幅减速。越往后的赛段，路上的车越多。</p></div>
+          </div>
+        </div>
+
+        <div class="start-meta">
+          <div class="control-hint keyboard-hint">
+            <span><kbd>←</kbd><kbd>→</kbd> 转向</span>
+            <span><kbd>S</kbd><kbd>↓</kbd> 刹车</span>
+            <span><kbd>Esc</kbd> 暂停</span>
+            <span class="hint-note">自动加速</span>
+          </div>
+          <div class="control-hint touch-device-hint">
+            <span>左下 / 右下按钮转向</span>
+            <span>自动加速 · 刹车按钮减速</span>
+          </div>
+          <div class="best-line">最佳里程 <strong id="bestStart">0 m</strong></div>
+        </div>
+
+        <button class="btn-start" id="startBtn" type="button">
+          <span>开始游戏</span>
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M8 5.6v12.8L19 12 8 5.6Z" fill="currentColor"/>
+          </svg>
+        </button>
+        <a class="panel-back" href="../../index.html#/category/racing">返回赛车分区</a>
+      </div>
+    </div>
+
+    <div class="overlay" id="pauseOverlay" hidden>
+      <div class="panel small-panel">
+        <span class="panel-tag">PAUSED</span>
+        <h2>比赛暂停</h2>
+        <p>按 Esc 或点击继续，回到赛道上。</p>
+        <div class="panel-actions">
+          <button class="btn-start" id="resumeBtn" type="button">继续比赛</button>
+          <button class="btn-soft" id="restartBtn" type="button">重新开始</button>
+          <a class="btn-soft" href="../../index.html#/category/racing">返回赛车分区</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="overOverlay" hidden>
+      <div class="panel small-panel over-panel">
+        <span class="panel-tag">TIME UP</span>
+        <h2>时间到！</h2>
+        <div class="final-score">
+          <span>本次总里程</span>
+          <strong><b id="finalDistance">0</b><em>m</em></strong>
+        </div>
+        <div class="final-grid">
+          <div><span>到达赛段</span><strong id="finalStage">1</strong></div>
+          <div><span>最佳里程</span><strong id="finalBest">0 m</strong></div>
+        </div>
+        <div class="new-record" id="newRecord" hidden>新纪录！你刷新了最佳里程</div>
+        <div class="panel-actions">
+          <button class="btn-start" id="retryBtn" type="button">再来一局</button>
+          <a class="btn-soft" href="../../index.html#/category/racing">返回赛车分区</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/crazy-racing.js"></script>
+</body>
+</html>
