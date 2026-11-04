@@ -413,5 +413,179 @@
   });
 
   window.addEventListener('hashchange', route);
+
+  /* -------------------------------------------- 进度导入 / 导出 */
+
+  const DATA_PREFIXES = ['litegame.', 'chogan.'];
+  const dataBtn = document.getElementById('dataBtn');
+  const dataModal = document.getElementById('dataModal');
+  const dataStats = document.getElementById('dataStats');
+  const dataMsg = document.getElementById('dataMsg');
+  const dataConfirm = document.getElementById('dataConfirm');
+  const dataConfirmText = document.getElementById('dataConfirmText');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFile = document.getElementById('importFile');
+  const importConfirmBtn = document.getElementById('importConfirmBtn');
+  const importCancelBtn = document.getElementById('importCancelBtn');
+
+  let pendingImport = null;
+
+  function storedEntries() {
+    const out = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && DATA_PREFIXES.some(function (p) { return k.indexOf(p) === 0; })) {
+          out.push([k, localStorage.getItem(k)]);
+        }
+      }
+    } catch (e) { /* 隐私模式等 */ }
+    return out;
+  }
+
+  function gameIdsOf(entries) {
+    const ids = new Set();
+    entries.forEach(function (pair) {
+      const parts = pair[0].split('.');
+      if (parts[0] === 'chogan' && parts[1] && parts[1] !== 'app') ids.add(parts[1]);
+      else if (parts[0] === 'litegame') ids.add(parts.slice(1).join('.'));
+    });
+    return ids;
+  }
+
+  function showDataMsg(text, ok) {
+    dataMsg.hidden = false;
+    dataMsg.textContent = text;
+    dataMsg.classList.toggle('data-msg-ok', !!ok);
+    dataMsg.classList.toggle('data-msg-err', !ok);
+  }
+
+  function openDataModal() {
+    const entries = storedEntries();
+    const ids = gameIdsOf(entries);
+    dataStats.textContent = entries.length
+      ? '当前已有 ' + entries.length + ' 条记录，来自 ' + ids.size + ' 款游戏。'
+      : '当前还没有任何游戏记录，玩过一局后这里就会有数据。';
+    dataMsg.hidden = true;
+    dataConfirm.hidden = true;
+    pendingImport = null;
+    dataModal.hidden = false;
+  }
+
+  function closeDataModal() {
+    dataModal.hidden = true;
+    dataConfirm.hidden = true;
+    pendingImport = null;
+    importFile.value = '';
+  }
+
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  exportBtn.addEventListener('click', function () {
+    const entries = storedEntries();
+    if (!entries.length) {
+      showDataMsg('还没有可导出的记录，先去玩一局吧。', false);
+      return;
+    }
+    const data = {};
+    entries.forEach(function (pair) { data[pair[0]] = pair[1]; });
+    const now = new Date();
+    const stamp = now.getFullYear() + pad2(now.getMonth() + 1) + pad2(now.getDate()) + '-' + pad2(now.getHours()) + pad2(now.getMinutes());
+    const payload = {
+      app: 'litegame',
+      type: 'progress-backup',
+      version: 1,
+      exportedAt: now.toISOString(),
+      count: entries.length,
+      data: data
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'litegame-progress-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    showDataMsg('已导出 ' + entries.length + ' 条记录，文件在浏览器下载里。', true);
+  });
+
+  importBtn.addEventListener('click', function () { importFile.click(); });
+
+  importFile.addEventListener('change', function () {
+    const file = importFile.files && importFile.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      let parsed;
+      try {
+        parsed = JSON.parse(String(reader.result));
+      } catch (e) {
+        showDataMsg('导入失败：这不是有效的 JSON 文件。', false);
+        return;
+      }
+      if (!parsed || parsed.app !== 'litegame' || !parsed.data || typeof parsed.data !== 'object' || Array.isArray(parsed.data)) {
+        showDataMsg('导入失败：文件不是 LiteGame 的进度备份。', false);
+        return;
+      }
+      const keys = Object.keys(parsed.data);
+      if (!keys.length) {
+        showDataMsg('这个备份文件里没有记录。', false);
+        return;
+      }
+      pendingImport = parsed;
+      const when = parsed.exportedAt ? new Date(parsed.exportedAt) : null;
+      const whenText = when && !isNaN(when.getTime())
+        ? '，导出于 ' + when.getFullYear() + '-' + pad2(when.getMonth() + 1) + '-' + pad2(when.getDate())
+        : '';
+      dataConfirmText.textContent = '文件里有 ' + keys.length + ' 条记录' + whenText + '。导入会覆盖浏览器里同名的记录，确定继续吗？';
+      dataMsg.hidden = true;
+      dataConfirm.hidden = false;
+    };
+    reader.onerror = function () {
+      showDataMsg('导入失败：文件读取不了。', false);
+    };
+    reader.readAsText(file);
+  });
+
+  importConfirmBtn.addEventListener('click', function () {
+    if (!pendingImport) return;
+    let written = 0;
+    try {
+      Object.keys(pendingImport.data).forEach(function (k) {
+        if (DATA_PREFIXES.some(function (p) { return k.indexOf(p) === 0; })) {
+          localStorage.setItem(k, String(pendingImport.data[k]));
+          written++;
+        }
+      });
+    } catch (e) {
+      showDataMsg('导入失败：浏览器存储不可用。', false);
+      dataConfirm.hidden = true;
+      pendingImport = null;
+      return;
+    }
+    dataConfirm.hidden = true;
+    pendingImport = null;
+    importFile.value = '';
+    showDataMsg('已导入 ' + written + ' 条记录，正在刷新页面…', true);
+    setTimeout(function () { location.reload(); }, 900);
+  });
+
+  importCancelBtn.addEventListener('click', function () {
+    dataConfirm.hidden = true;
+    pendingImport = null;
+    importFile.value = '';
+  });
+
+  dataBtn.addEventListener('click', openDataModal);
+  dataModal.addEventListener('click', function (event) {
+    if (event.target.closest('[data-close]')) closeDataModal();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !dataModal.hidden) closeDataModal();
+  });
+
   route();
 })();

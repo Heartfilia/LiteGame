@@ -63,9 +63,57 @@
         LiteGame 轻量游戏厅
       </div>
       <p>打开即玩的网页小游戏，支持手机触屏与电脑键盘。</p>
-      <p class="footer-meta">无需下载 · 无需登录 · 纯前端运行</p>
+      <p class="footer-meta">无需下载 · 无需登录 · 纯前端运行 · 部分游戏基于开源项目 <a class="footer-link" href="https://github.com/choganhq/chogan" target="_blank" rel="noopener">Chogan</a>（MIT）</p>
+      <button class="footer-data" id="dataBtn" type="button" aria-haspopup="dialog" title="导入 / 导出游戏进度">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <ellipse cx="12" cy="5.6" rx="7.4" ry="2.8" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M4.6 5.6v12.8c0 1.55 3.31 2.8 7.4 2.8s7.4-1.25 7.4-2.8V5.6" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M4.6 12c0 1.55 3.31 2.8 7.4 2.8s7.4-1.25 7.4-2.8" stroke="currentColor" stroke-width="1.7" opacity=".65"/>
+        </svg>
+        <span>进度备份</span>
+      </button>
     </div>
   </footer>
+
+  <div class="data-modal" id="dataModal" hidden role="dialog" aria-modal="true" aria-labelledby="dataModalTitle">
+    <div class="data-backdrop" data-close></div>
+    <div class="data-panel">
+      <button class="data-close" type="button" aria-label="关闭" data-close>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m6.4 6.4 11.2 11.2M17.6 6.4 6.4 17.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <span class="data-tag">BACKUP</span>
+      <h2 id="dataModalTitle">游戏进度</h2>
+      <p class="data-desc">所有游戏记录都保存在这台设备的浏览器里，包括最佳成绩、金币、成就和棋局进度。换设备或清理浏览器前，可以先导出成一个文件，之后随时导入恢复。</p>
+      <div class="data-stats" id="dataStats"></div>
+      <div class="data-actions">
+        <button class="data-btn data-btn-primary" id="exportBtn" type="button">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 15.4V4.2m0 0L7.8 8.4M12 4.2l4.2 4.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4.8 15.6v2.6a1.8 1.8 0 0 0 1.8 1.8h10.8a1.8 1.8 0 0 0 1.8-1.8v-2.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          </svg>
+          导出进度
+        </button>
+        <button class="data-btn" id="importBtn" type="button">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 4.2v11.2m0 0L7.8 11.2m4.2 4.2 4.2-4.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4.8 15.6v2.6a1.8 1.8 0 0 0 1.8 1.8h10.8a1.8 1.8 0 0 0 1.8-1.8v-2.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          </svg>
+          导入进度
+        </button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden />
+      </div>
+      <p class="data-msg" id="dataMsg" hidden></p>
+      <div class="data-confirm" id="dataConfirm" hidden>
+        <p id="dataConfirmText"></p>
+        <div class="data-actions">
+          <button class="data-btn data-btn-danger" id="importConfirmBtn" type="button">覆盖导入</button>
+          <button class="data-btn" id="importCancelBtn" type="button">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <noscript>
     <div class="noscript">这个游戏厅需要启用 JavaScript 才能运行。</div>
