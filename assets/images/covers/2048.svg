@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#143a35"/><stop offset="1" stop-color="#131326"/></linearGradient><linearGradient id="tile" x2="1" y2="1"><stop stop-color="#c4f5ab"/><stop offset="1" stop-color="#7ce7a5"/></linearGradient></defs>
+<rect width="800" height="500" fill="url(#bg)"/><circle cx="700" cy="80" r="210" fill="#7ce7a5" opacity=".05"/>
+<g transform="translate(245 75) rotate(-8 155 175)" stroke="#ffffff12" stroke-width="2"><rect width="310" height="350" rx="28" fill="#162b2c"/><rect x="18" y="18" width="130" height="130" rx="18" fill="#314745"/><rect x="162" y="18" width="130" height="130" rx="18" fill="#b7dece"/><rect x="18" y="162" width="274" height="170" rx="20" fill="url(#tile)"/>
+<g font-family="sans-serif" font-weight="800" text-anchor="middle" stroke="none"><text x="83" y="105" font-size="52" fill="#7ce7a5">2</text><text x="227" y="105" font-size="52" fill="#18382d">4</text><text x="155" y="275" font-size="76" fill="#18382d">2048</text></g></g>
+<text x="42" y="52" font-family="sans-serif" font-size="14" letter-spacing="5" fill="#a5cdbd">LITEGAME / MERGE</text><path d="M105 245h65m-20-20 20 20-20 20M620 310h65m-20-20 20 20-20 20" fill="none" stroke="#7ce7a5" stroke-width="7" opacity=".35"/>
+</svg>

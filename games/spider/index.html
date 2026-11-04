@@ -525,8 +525,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SpiderEngi
   // still: no animation (first paint, resize). stagger: cards that set off one after
   // another (a dealt row), in the order given.
   function render(still, stagger) {
+    var previous = L;
     L = layout();
     if (!L || !S) return;
+    if (previous && (previous.W !== L.W || previous.H !== L.H)) {
+      Object.keys(nodes).forEach(function (k) { C.ui.cancelFly(nodes[k]); });
+    }
     var ss = stockSpot();
     slots.stock.style.transform = 'translate(' + ss.x + 'px,' + ss.y + 'px)';
     slots.stock.style.opacity = S.stock.length ? 0 : 1;

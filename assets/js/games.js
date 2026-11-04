@@ -1,10 +1,18 @@
 window.GAME_DATA = {
   categories: [
     {
+      id: 'rpg',
+      name: '角色扮演',
+      tagline: '带上行囊，踏进故事',
+      description: '探索像素世界，培养角色，让每一次冒险都留下进度。',
+      accent: '#c6a56c',
+      icon: 'spark'
+    },
+    {
       id: 'racing',
       name: '赛车',
       tagline: '极速狂飙，弯道超车',
-      description: '油门到底，在弯曲的赛道上与时间赛跑。',
+      description: '公路躲避、弯道控车、精准换挡，用不同方式挑战速度。',
       accent: '#ff5d8f',
       icon: 'flag'
     },
@@ -66,6 +74,29 @@ window.GAME_DATA = {
     }
   ],
   games: [
+    { id: 'bubble-shooter', title: '泡泡龙', category: 'casual', url: 'games/bubble-shooter/index.html?from=casual', cover: 'assets/images/covers/bubble-shooter.svg', tags: ['瞄准消除', '20 关', '自动存档', '触屏'], description: '瞄准发射同色泡泡，消除相连泡泡和悬空球群。不限时间，挑战二十个关卡。', badge: 'NEW', source: 'rembound/Bubble-Shooter-HTML5' },
+    { id: 'match3', title: '宝石三消', category: 'casual', url: 'games/match3/index.html?from=casual', cover: 'assets/images/covers/match3.svg', tags: ['交换消除', '不限时', '关卡存档', '触屏'], description: '交换相邻宝石，连消得分并收集指定宝石。二十个步数关卡，无解自动重排。', badge: 'NEW', source: 'rembound/Match-3-Game-HTML5' },
+    { id: 'packabunchas', title: '太空收纳', category: 'casual', url: 'games/packabunchas/index.html?from=casual', cover: 'assets/images/covers/packabunchas.svg', tags: ['收纳拼搭', '五种模式', '拼盘存档', '触屏'], description: '拖动旋转可爱的太空生物，把它们装进飞船。保留原作五种拼块模式，慢慢完成救援。', badge: 'NEW', source: 'MattiaFortunati/packabunchas' },
+    { id: 'catchcat', title: '围住小猫', category: 'casual', url: 'games/catchcat/index.html?from=casual', cover: 'assets/images/covers/catchcat.svg', tags: ['围堵策略', '回合制', '撤销', '触屏'], description: '点击圆点设置障碍，提前封住小猫的逃生路线。二十关挑战，支持撤销与换局。', badge: 'NEW', source: 'ganlvtech/phaser-catch-the-cat' },
+    { id: 'starfarm', title: '星砂牧场', category: 'rpg', url: 'games/starfarm/index.html?from=rpg', cover: 'assets/images/covers/starfarm.svg', tags: ['种植养成', '订单经营', '永久存档', '触屏'], description: '经营九格田园，建造厨房与鱼塘，完成八份订单，让牧场重新开张。', badge: 'NEW' },
+    { id: 'runetraveler', title: '符文旅人', category: 'rpg', url: 'games/runetraveler/index.html?from=rpg', cover: 'assets/images/covers/runetraveler.svg', tags: ['牌组构筑', '九场试炼', '永久存档', '触屏'], description: '选择卡牌与遗物，观察敌人意图，穿过九场符文试炼。', badge: 'NEW' },
+    { id: 'caravan', title: '口袋商队', category: 'rpg', url: 'games/caravan/index.html?from=rpg', cover: 'assets/images/covers/caravan.svg', tags: ['贸易经营', '五城商路', '永久存档', '触屏'], description: '低买高卖、运送委托、雇佣护卫，带领商队获得王都商路执照。', badge: 'NEW' },
+    { id: 'wardens', title: '遗迹守望者', category: 'rpg', url: 'games/wardens/index.html?from=rpg', cover: 'assets/images/covers/wardens.svg', tags: ['回合战棋', '三人小队', '永久存档', '触屏'], description: '指挥剑卫、游侠和医师，用走位与配合守住六座遗迹。', badge: 'NEW' },
+    { id: 'island', title: '荒岛手记', category: 'rpg', url: 'games/island/index.html?from=rpg', cover: 'assets/images/covers/island.svg', tags: ['采集制作', '荒岛生存', '永久存档', '触屏'], description: '从海滩拾荒起步，探索四片地区，收集航海手记并修船归乡。', badge: 'NEW' },
+    { id: 'magictower', title: '百层魔塔', category: 'rpg', url: 'games/magictower/index.html?from=rpg', cover: 'assets/images/covers/magictower.svg', tags: ['数值策略', '百层探索', '永久存档', '触屏'], description: '计算战斗损伤、收集宝石与钥匙，击败十位守层者并解除百层封印。', badge: 'NEW' },
+    { id: 'bounce-back', title: 'Bounce Back 回旋冒险', category: 'action', url: 'games/bounce-back/index.html?from=action', cover: 'assets/images/covers/bounce-back.svg', tags: ['回旋镖', '十层冒险', '关卡存档', '触屏'], description: 'Frank Force 的回旋镖冒险原作：购买装备、冲刺躲避，挑战最终首领。新增手机操作与关卡检查点。', badge: 'NEW', source: 'js13kGames/bounce-back' },
+    { id: 'entombed', title: 'Entombed 地穴逃生', category: 'rpg', url: 'games/entombed/index.html?from=rpg', cover: 'assets/images/covers/entombed.svg', tags: ['第一人称', '地穴探索', '进度存档', '触屏'], description: '探索像素地穴，击败幽灵夺取钥匙，找到梯子逃出生天。原作新增手机转向和进度恢复。', badge: 'NEW', source: 'beeglebug/js13k-19' },
+    {
+      id: 'fogtown',
+      title: '雾灯镇：遗迹之钥',
+      subtitle: '点亮灯塔，让迷途的人回家',
+      category: 'rpg',
+      url: 'games/fogtown/index.html?from=rpg',
+      cover: 'assets/images/covers/fogtown.svg',
+      tags: ['像素 RPG', '回合制', '长期存档', '触屏'],
+      description: '探索森林、矿洞与古代遗迹，收集三枚钥印，重新点亮雾灯镇。升级、装备、支线与完整主线，自动保存冒险进度。',
+      badge: 'NEW'
+    },
     {
       id: 'crazy-racing',
       title: '疯狂的赛车',
@@ -76,6 +107,26 @@ window.GAME_DATA = {
       tags: ['竞速', '躲避', '时间挑战', '触屏支持'],
       description: '在弯曲的公路上躲避来车，用剩余时间续命。越跑越远，刷新你的总里程。',
       featured: true,
+      badge: 'NEW'
+    },
+    {
+      id: 'circuit',
+      title: '弯道计时赛',
+      category: 'racing',
+      url: 'games/circuit/index.html?from=racing',
+      cover: 'assets/images/covers/circuit.svg',
+      tags: ['俯视驾驶', '刹车过弯', '三圈计时', '触屏'],
+      description: '控制车头、刹车过弯，按顺序穿过检查点，在 90 秒内跑完三圈。',
+      badge: 'NEW'
+    },
+    {
+      id: 'drag-race',
+      title: '极速换挡',
+      category: 'racing',
+      url: 'games/drag-race/index.html?from=racing',
+      cover: 'assets/images/covers/drag-race.svg',
+      tags: ['直线加速', '换挡时机', '氮气', '触屏'],
+      description: '盯紧转速甜区，精准换挡、释放氮气，赢下 400 米直线加速对决。',
       badge: 'NEW'
     },
     {
@@ -534,6 +585,66 @@ window.GAME_DATA = {
       tags: ['帕苏尔', '凑十一', '对战电脑'],
       description: '波斯钓鱼纸牌：凑成十一，清台得分，对战电脑。',
       source: 'chogan'
+    },
+    {
+      id: '2048',
+      title: '2048',
+      category: 'casual',
+      url: 'games/2048/index.html?from=casual',
+      cover: 'assets/images/covers/2048.svg',
+      tags: ['数字合并', '滑动', '自动存档'],
+      description: '滑动棋盘合并相同数字，轻松挑战 2048；随时离开，下次接着玩。',
+      badge: 'NEW'
+    },
+    {
+      id: 'snake',
+      title: '贪吃蛇',
+      category: 'casual',
+      url: 'games/snake/index.html?from=casual',
+      cover: 'assets/images/covers/snake.svg',
+      tags: ['经典', '方向键', '触屏'],
+      description: '吃掉果实，让小蛇慢慢长大。三档速度，挑战自己的最长纪录。',
+      badge: 'NEW'
+    },
+    {
+      id: 'stack',
+      title: '云端叠塔',
+      category: 'casual',
+      url: 'games/stack/index.html?from=casual',
+      cover: 'assets/images/covers/stack.svg',
+      tags: ['一键操作', '精准叠放', '连击', '触屏'],
+      description: '看准时机放下移动方块，切掉多余部分。三连精准恢复宽度，挑战 30 层云端高塔。',
+      badge: 'NEW'
+    },
+    {
+      id: 'pitch',
+      title: '音高侦探',
+      category: 'music',
+      url: 'games/pitch/index.html?from=music',
+      cover: 'assets/images/covers/pitch.svg',
+      tags: ['听音辨高低', '音感', '不限时', '视觉辅助'],
+      description: '听两个音，判断第二个更高、更低还是相同。十二轮渐进音程，训练敏锐的耳朵。',
+      badge: 'NEW'
+    },
+    {
+      id: 'melody',
+      title: '旋律拼图',
+      category: 'music',
+      url: 'games/melody/index.html?from=music',
+      cover: 'assets/images/covers/melody.svg',
+      tags: ['音乐解谜', '旋律重排', '试听', '不限时'],
+      description: '把打乱的音符拼成完整旋律，试听、修改、查看乐谱，收集五张音乐明信片。',
+      badge: 'NEW'
+    },
+    {
+      id: 'rhythm',
+      title: '节拍音符',
+      category: 'music',
+      url: 'games/rhythm/index.html?from=music',
+      cover: 'assets/images/covers/rhythm.svg',
+      tags: ['节奏', '四键', '原创旋律', '触屏'],
+      description: '跟随原创合成旋律，在音符落到判定线时敲击四条轨道，争取全连。',
+      badge: 'NEW'
     },
     {
       id: 'pingpong',

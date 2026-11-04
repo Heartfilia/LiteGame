@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#07070f">
+<title>雾灯镇：遗迹之钥 · LiteGame</title><meta name="description" content="复古像素回合制 RPG。探索森林、矿洞与遗迹，收集三枚钥印，重新点亮雾灯镇的灯塔。自动存档，支持手机触屏。">
+<link rel="icon" href="../../assets/images/covers/fogtown.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../lib/chogan.css"><link rel="stylesheet" href="../lib/litegame.css"><link rel="stylesheet" href="style.css">
+</head><body>
+<script src="../version.js"></script><script src="../lib/chogan.js"></script><script src="../lib/litegame.js"></script>
+<script>
+/* ==== ENGINE START ==== */
+function FogtownEngineFactory() {
+  'use strict';
+  var VERSION = 1, W = 23, H = 19;
+  var DIR = { up: [0,-1], down: [0,1], left: [-1,0], right: [1,0] };
+  var ITEMS = {
+    sword: { name:'旧铁剑', slot:'weapon', atk:0, price:0, desc:'灯塔守望者留下的旧剑。' },
+    coat: { name:'旅行外衣', slot:'armor', def:0, price:0, desc:'一件带着海风气息的外衣。' },
+    steel: { name:'精钢剑', slot:'weapon', atk:5, price:45, desc:'攻击 +5。可靠的冒险伙伴。' },
+    staff: { name:'萤石杖', slot:'weapon', atk:1, magic:8, price:45, desc:'攻击 +1，火花伤害 +8。' },
+    fang: { name:'暮牙剑', slot:'weapon', atk:8, drain:3, price:110, desc:'攻击 +8；普通攻击命中回复 3 生命。' },
+    robe: { name:'织光法袍', slot:'armor', def:3, magic:5, price:70, desc:'防御 +3，火花伤害 +5。' },
+    mail: { name:'守夜锁甲', slot:'armor', def:6, price:90, desc:'防御 +6。' },
+    thorn: { name:'荆棘护符', slot:'charm', reflect:5, price:0, desc:'防御时反击敌人 5 点伤害。林间宝箱藏着它。' },
+    focus: { name:'回响吊坠', slot:'charm', discount:1, price:0, desc:'技能魔力消耗减少 1。矿工的谢礼。' },
+    lantern: { name:'晨曦徽章', slot:'charm', atk:3, def:2, price:0, desc:'攻击 +3，防御 +2。遗迹深处的旧物。' },
+    potion: { name:'疗伤药', price:10, desc:'恢复 45 生命；战斗中使用占一回合。' },
+    ether: { name:'萤光露', price:12, desc:'恢复 12 魔力；战斗中使用占一回合。' }
+  };
+  var ENEMIES = {
+    slime: { name:'苔团', hp:24, atk:8, def:0, xp:12, gold:8, color:'#80bc76', pattern:['attack','charge','heavy'] },
+    moth: { name:'迷雾蛾', hp:26, atk:9, def:0, xp:14, gold:9, color:'#c1a3df', pattern:['attack','drain','attack'] },
+    wolf: { name:'灰尾狼', hp:34, atk:11, def:1, xp:18, gold:12, color:'#aab9c2', pattern:['charge','heavy','attack'] },
+    root: { name:'盘根守卫', hp:95, atk:15, def:2, xp:55, gold:40, boss:true, key:'forest', color:'#b49a64', pattern:['charge','heavy','attack','drain'] },
+    bat: { name:'矿洞蝠', hp:40, atk:13, def:1, xp:22, gold:13, color:'#9c8ab6', pattern:['attack','drain','charge','heavy'] },
+    crab: { name:'晶壳蟹', hp:52, atk:14, def:5, xp:27, gold:16, color:'#6abfc3', pattern:['guard','attack','charge','heavy'] },
+    wisp: { name:'失路灯灵', hp:44, atk:15, def:1, xp:25, gold:16, color:'#8ce4cf', pattern:['drain','attack','attack'] },
+    golem: { name:'矿心巨像', hp:145, atk:20, def:5, xp:85, gold:65, boss:true, key:'mine', color:'#7ac6d8', pattern:['guard','charge','heavy','attack'] },
+    shade: { name:'旧城游魂', hp:58, atk:18, def:2, xp:33, gold:20, color:'#b0a4de', pattern:['drain','charge','heavy'] },
+    knight: { name:'空铠骑士', hp:72, atk:20, def:6, xp:38, gold:23, color:'#a6b6cb', pattern:['guard','charge','heavy','attack'] },
+    mirror: { name:'镜面使徒', hp:65, atk:19, def:3, xp:36, gold:22, color:'#efb5c0', pattern:['attack','drain','charge','heavy'] },
+    keeper: { name:'无光守门人', hp:210, atk:25, def:6, xp:140, gold:100, boss:true, key:'ruins', color:'#d1a8e3', pattern:['charge','heavy','drain','guard','attack'] }
+  };
+  function entity(id, type, x, y, extra) { return Object.assign({id:id,type:type,x:x,y:y},extra||{}); }
+  function makeMap(id, name, ground, walls, entities) {
+    var tiles = [];
+    for(var y=0;y<H;y++) { var row=[]; for(var x=0;x<W;x++) row.push(x===0||y===0||x===W-1||y===H-1?'#':ground); tiles.push(row); }
+    walls.forEach(function(r){ for(var y=r[1];y<=r[3];y++)for(var x=r[0];x<=r[2];x++)tiles[y][x]='#'; });
+    // Paths cross every map and connect the entry, return path, and gatekeeper.
+    for(var x=1;x<W-1;x++)tiles[9][x]='.';
+    for(var y=1;y<H-1;y++)tiles[y][11]='.';
+    entities.forEach(function(e){tiles[e.y][e.x]='.';});
+    return {id:id,name:name,tiles:tiles,entities:entities};
+  }
+  var MAPS = {
+    town: makeMap('town','雾灯镇',',',[[3,2,7,4],[15,2,19,4],[3,12,6,14],[16,12,19,14]],[
+      entity('elder','npc',11,6,{name:'守灯人 · 阿禾',role:'elder'}), entity('inn','npc',5,5,{name:'旅店 · 眠风屋',role:'inn'}),
+      entity('smith','npc',17,5,{name:'铁匠 · 老锤',role:'shop'}), entity('healer','npc',7,13,{name:'药师 · 芽芽',role:'healer'}),
+      entity('lighthouse','tower',11,2,{name:'熄灭的灯塔'}),
+      entity('to-forest','portal',21,9,{name:'萤火森林',to:'forest',tx:2,ty:9}),
+      entity('to-mine','portal',11,17,{name:'回响矿洞',to:'mine',tx:2,ty:9,require:'forest'}),
+      entity('to-ruins','portal',1,9,{name:'无光遗迹',to:'ruins',tx:2,ty:9,require:'mine'})
+    ]),
+    forest: makeMap('forest','萤火森林',',',[[3,2,5,5],[8,3,9,6],[14,2,17,4],[4,12,7,15],[14,12,16,16],[19,13,20,15]],[
+      entity('forest-back','portal',1,9,{name:'返回雾灯镇',to:'town',tx:20,ty:9}),
+      entity('f-slime','enemy',5,9,{kind:'slime'}),entity('f-moth','enemy',9,8,{kind:'moth'}),entity('f-wolf','enemy',15,9,{kind:'wolf'}),
+      entity('f-wolf2','enemy',18,6,{kind:'wolf'}),entity('f-moth2','enemy',12,13,{kind:'moth'}),
+      entity('f-root','enemy',20,9,{kind:'root'}),
+      entity('f-herb1','herb',7,6,{name:'月露草'}),entity('f-herb2','herb',17,12,{name:'月露草'}),entity('f-herb3','herb',9,15,{name:'月露草'}),
+      entity('f-chest','chest',3,16,{name:'林间旧箱',loot:{gear:'thorn',potion:2,gold:15}}),
+      entity('f-camp','camp',11,5,{name:'林间泉眼'}),entity('f-note','sign',13,5,{name:'石碑',text:'树根攥紧时，守卫正在蓄力。重击可以打断，防御能挡住大部分伤害。'})
+    ]),
+    mine: makeMap('mine','回响矿洞',':',[[3,2,8,4],[14,2,19,4],[5,6,7,7],[15,6,17,7],[3,12,8,14],[14,12,18,14]],[
+      entity('mine-back','portal',1,9,{name:'返回雾灯镇',to:'town',tx:11,ty:16}),
+      entity('m-bat','enemy',5,9,{kind:'bat'}),entity('m-crab','enemy',9,10,{kind:'crab'}),entity('m-wisp','enemy',15,9,{kind:'wisp'}),
+      entity('m-crab2','enemy',19,13,{kind:'crab'}),entity('m-bat2','enemy',10,15,{kind:'bat'}),entity('m-golem','enemy',20,9,{kind:'golem'}),
+      entity('miner','npc',20,16,{name:'被困矿工 · 林叔',role:'miner'}),
+      entity('m-chest','chest',4,16,{name:'矿工补给箱',loot:{potion:3,ether:2,gold:25}}),entity('m-camp','camp',11,5,{name:'温热矿泉'}),
+      entity('m-note','sign',13,5,{name:'矿工手记',text:'晶壳与岩甲挡得住刀剑，却挡不住火花。防御时可以恢复魔力。'})
+    ]),
+    ruins: makeMap('ruins','无光遗迹',';',[[3,2,7,5],[15,2,19,5],[4,12,8,15],[14,12,18,15],[8,7,9,7],[14,7,15,7]],[
+      entity('ruins-back','portal',1,9,{name:'返回雾灯镇',to:'town',tx:2,ty:9}),
+      entity('r-shade','enemy',5,9,{kind:'shade'}),entity('r-knight','enemy',10,10,{kind:'knight'}),entity('r-mirror','enemy',15,9,{kind:'mirror'}),
+      entity('r-shade2','enemy',9,15,{kind:'shade'}),entity('r-knight2','enemy',19,6,{kind:'knight'}),entity('r-keeper','enemy',20,9,{kind:'keeper'}),
+      entity('r-chest','chest',20,16,{name:'守望者遗物',loot:{gear:'lantern',potion:3,ether:2,gold:35}}),
+      entity('r-camp','camp',11,4,{name:'未熄的火盆'}),entity('r-note','sign',13,4,{name:'守望者誓言',text:'灯火不属于守灯人。它属于每一个循光归来的人。集齐钥印，回镇点亮灯塔。'})
+    ])
+  };
+  var ALL = {}; Object.keys(MAPS).forEach(function(k){MAPS[k].entities.forEach(function(e){ALL[e.id]=e;});});
+  function fresh(seed) {
+    return {version:VERSION,seed:(seed>>>0)||1234567,map:'town',x:11,y:9,dir:'up',level:1,xp:0,hp:72,mp:18,gold:25,
+      path:'wanderer',bag:{potion:4,ether:2},owned:['sword','coat'],equip:{weapon:'sword',armor:'coat',charm:null},
+      defeated:[],opened:[],herbs:[],visited:['town'],keys:[],flags:{intro:false,herbQuest:false,herbDone:false,minerDone:false,completed:false},
+      battle:null,steps:0,deaths:0,kills:0,elapsed:0,log:['你带着旧剑抵达雾灯镇。先去北边找守灯人阿禾。']};
+  }
+  function stats(s) {
+    var v={maxHp:72+(s.level-1)*12,maxMp:18+(s.level-1)*3,atk:10+(s.level-1)*2,def:3+(s.level-1),magic:0,drain:0,reflect:0,discount:0};
+    if(s.path==='blade'){v.atk+=3;v.maxHp+=12;}if(s.path==='spark'){v.magic+=5;v.maxMp+=6;}
+    Object.keys(s.equip).forEach(function(slot){var it=ITEMS[s.equip[slot]];if(it)Object.keys(v).forEach(function(k){v[k]+=it[k]||0;});});return v;
+  }
+  function log(s,t){s.log.push(t);if(s.log.length>8)s.log.shift();return t;}
+  function random(s){s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296;}
+  function threshold(s){return 20+s.level*14;}
+  function xp(s,n){s.xp+=n;while(s.level<12&&s.xp>=threshold(s)){s.xp-=threshold(s);s.level++;var v=stats(s);s.hp=v.maxHp;s.mp=v.maxMp;log(s,'升到 '+s.level+' 级！生命与魔力完全恢复。');}if(s.level===12)s.xp=Math.min(s.xp,threshold(s)-1);}
+  function active(s,e){if(e.type==='enemy')return !s.defeated.includes(e.id);if(e.type==='chest')return !s.opened.includes(e.id);if(e.type==='herb')return !s.herbs.includes(e.id);return true;}
+  function at(s,x,y){return MAPS[s.map].entities.find(function(e){return e.x===x&&e.y===y&&active(s,e);});}
+  function walkable(map,x,y){return Number.isInteger(x)&&Number.isInteger(y)&&x>=0&&x<W&&y>=0&&y<H&&MAPS[map].tiles[y][x]!=='#';}
+  function objective(s){if(s.flags.completed)return '灯火已重燃 · 继续探索、收集遗物';if(!s.flags.intro)return '与北边的守灯人阿禾交谈';if(!s.keys.includes('forest'))return '萤火森林 · 击败盘根守卫，取回林之印';if(!s.keys.includes('mine'))return '回响矿洞 · 击败矿心巨像，取回岩之印';if(!s.keys.includes('ruins'))return '无光遗迹 · 击败无光守门人，取回星之印';return '返回雾灯镇 · 在北侧灯塔点燃三枚钥印';}
+  function begin(s,e){var enemy=ENEMIES[e.kind];s.battle={id:e.id,hp:enemy.hp,turn:0};log(s,enemy.name+' 拦住了去路！');return {type:'battle'};}
+  function interact(s,e){
+    if(s.battle||!e||!active(s,e)||!MAPS[s.map].entities.includes(e)||Math.abs(e.x-s.x)+Math.abs(e.y-s.y)>1)return null;
+    if(e.type==='enemy')return begin(s,e);
+    if(e.type==='portal'){
+      if(!s.flags.intro){log(s,'先和阿禾谈谈，了解镇外的迷雾。');return null;}
+      if(e.require&&!s.keys.includes(e.require)){log(s,e.require==='forest'?'矿洞被根须封住了，需要林之印。':'遗迹入口被岩封住了，需要岩之印。');return null;}
+      s.map=e.to;s.x=e.tx;s.y=e.ty;s.dir='right';if(!s.visited.includes(s.map))s.visited.push(s.map);log(s,'抵达'+MAPS[s.map].name+'。');return {type:'travel'};
+    }
+    if(e.type==='chest'){s.opened.push(e.id);var l=e.loot;s.gold+=l.gold||0;s.bag.potion+=l.potion||0;s.bag.ether+=l.ether||0;if(l.gear&&!s.owned.includes(l.gear))s.owned.push(l.gear);log(s,'打开'+e.name+'：'+(l.gear?ITEMS[l.gear].name+'、':'')+(l.gold||0)+' 金币，另有补给。');return {type:'loot'};}
+    if(e.type==='herb'){s.herbs.push(e.id);log(s,'采到月露草（'+s.herbs.length+'/3）。药师芽芽也许需要它。');return {type:'loot'};}
+    if(e.type==='camp'){var v=stats(s);s.hp=v.maxHp;s.mp=v.maxMp;log(s,'在'+e.name+'休息，生命与魔力恢复。');return {type:'rest'};}
+    if(e.type==='sign'){log(s,e.text);return {type:'dialog',title:e.name,text:e.text};}
+    if(e.type==='tower'){
+      if(s.keys.length<3)return {type:'dialog',title:'熄灭的灯塔',text:'灯座上留着三个凹槽。森林、矿洞、遗迹的钥印，缺一不可。'};
+      if(s.flags.completed)return {type:'dialog',title:'归来的灯火',text:'温暖的光穿过薄雾。镇上的每一扇窗，都亮了起来。你仍可继续探索。'};
+      s.flags.completed=true;log(s,'三枚钥印汇成晨光，雾灯镇的灯塔重新亮起。');return {type:'ending'};
+    }
+    if(e.role==='elder'){if(!s.flags.intro){s.flags.intro=true;log(s,'接受委托：寻找三枚钥印。');return {type:'dialog',title:e.name,text:'我是阿禾，最后一位守灯人。森林的根、矿洞的心、遗迹的星，藏着三枚钥印。带它们回来，我们就能重新点亮灯塔。东边的森林最适合你的第一场冒险。'};}return {type:'dialog',title:e.name,text:objective(s)+'。记住：在泉眼休息不花金币，防御能恢复魔力。'};}
+    if(e.role==='healer'){
+      s.flags.herbQuest=true;
+      if(!s.flags.herbDone&&s.herbs.length===3){s.flags.herbDone=true;s.bag.potion+=4;s.gold+=25;xp(s,30);log(s,'月露草委托完成：4 瓶疗伤药、25 金币、30 经验。');}
+      return {type:'dialog',title:e.name,text:s.flags.herbDone?'有了这些草药，大家就不怕雾中的寒气了。谢谢你！':'森林里有三株月露草，能帮我找来吗？留意小路两旁的白色花簇。已找到 '+s.herbs.length+'/3。'};
+    }
+    if(e.role==='miner'){
+      if(!s.flags.minerDone){s.flags.minerDone=true;s.gold+=30;s.owned.push('focus');xp(s,35);log(s,'救出矿工：获得回响吊坠、30 金币、35 经验。');}
+      return {type:'dialog',title:e.name,text:'终于有人来了！这枚回响吊坠送给你，能减少技能的魔力消耗。我会沿着你清出的路回镇。'};
+    }
+    return {type:e.role,title:e.name};
+  }
+  function move(s,dir){if(s.battle||!DIR[dir])return null;s.dir=dir;var d=DIR[dir],x=s.x+d[0],y=s.y+d[1];if(!walkable(s.map,x,y))return null;var e=at(s,x,y);if(e)return interact(s,e);s.x=x;s.y=y;s.steps++;return {type:'move'};}
+  function nearby(s){var d=DIR[s.dir],front=at(s,s.x+d[0],s.y+d[1]);return front||MAPS[s.map].entities.find(function(e){return active(s,e)&&Math.abs(e.x-s.x)+Math.abs(e.y-s.y)===1;})||null;}
+  function use(s,id){if(!['potion','ether'].includes(id)||s.bag[id]<1)return false;var v=stats(s),k=id==='potion'?'hp':'mp',max=id==='potion'?v.maxHp:v.maxMp;if(s[k]>=max)return false;s.bag[id]--;s[k]=Math.min(max,s[k]+(id==='potion'?45:12));log(s,'使用'+ITEMS[id].name+'。');return true;}
+  function equip(s,id){var it=ITEMS[id];if(s.battle||!it||!it.slot||!s.owned.includes(id))return false;s.equip[it.slot]=id;var v=stats(s);s.hp=Math.min(s.hp,v.maxHp);s.mp=Math.min(s.mp,v.maxMp);log(s,'装备了'+it.name+'。');return true;}
+  function choose(s,path){if(s.battle||s.path!=='wanderer'||!['blade','spark'].includes(path))return false;s.path=path;var v=stats(s);s.hp=v.maxHp;s.mp=v.maxMp;log(s,path==='blade'?'选择剑卫之路：攻击 +3，生命 +12。':'选择星火之路：火花 +5，魔力 +6。');return true;}
+  function buy(s,id){var it=ITEMS[id];if(s.battle||s.map!=='town'||!it||it.price<=0||s.gold<it.price||(it.slot&&s.owned.includes(id)))return false;s.gold-=it.price;if(it.slot)s.owned.push(id);else s.bag[id]++;log(s,'购买了'+it.name+'。');return true;}
+  function rest(s,train){if(s.battle||s.map!=='town')return false;var v=stats(s);s.hp=v.maxHp;s.mp=v.maxMp;if(train)s.defeated=s.defeated.filter(function(id){return ENEMIES[ALL[id].kind].boss;});log(s,train?'远征重新出发：普通怪物已刷新，宝箱与首领进度保留。':'旅店免费提供热汤。生命与魔力恢复。');return true;}
+  function recall(s){if(s.battle)return false;s.map='town';s.x=11;s.y=9;s.dir='up';log(s,'沿着灯铃的声音回到小镇。');return true;}
+  function cost(s,action){return Math.max(1,(action==='power'?3:4)-stats(s).discount);}
+  function intent(s){if(!s.battle)return null;var e=ENEMIES[ALL[s.battle.id].kind];return e.pattern[s.battle.turn%e.pattern.length];}
+  function victory(s){var b=s.battle,e=ENEMIES[ALL[b.id].kind];if(!s.defeated.includes(b.id))s.defeated.push(b.id);s.battle=null;s.kills++;s.gold+=e.gold;log(s,'击败'+e.name+'：'+e.xp+' 经验、'+e.gold+' 金币。');if(e.key&&!s.keys.includes(e.key)){s.keys.push(e.key);s.bag.potion+=2;log(s,'获得'+({forest:'林',mine:'岩',ruins:'星'}[e.key])+'之印与 2 瓶疗伤药！');}if(!e.boss&&random(s)<0.3){s.bag.potion++;log(s,'发现了一瓶疗伤药。');}xp(s,e.xp);return {type:'victory',boss:!!e.boss};}
+  function battle(s,action){
+    if(!s.battle||!['attack','power','spark','defend','potion','ether','flee'].includes(action))return null;
+    var b=s.battle,e=ENEMIES[ALL[b.id].kind],v=stats(s),plan=intent(s),guard=action==='defend',damage=0,interrupt=false;
+    if(action==='flee'){if(e.boss){log(s,'首领封住了退路！需要击败它，或败退回镇。');return null;}s.battle=null;s.map='town';s.x=11;s.y=9;log(s,'撤离战斗，回到小镇。');return {type:'flee'};}
+    if(action==='potion'||action==='ether'){if(!use(s,action)){log(s,'当前不需要，或背包里没有这种补给。');return null;}}
+    else if(action==='defend'){s.mp=Math.min(v.maxMp,s.mp+3);log(s,'举起防御，恢复 3 魔力。');}
+    else {
+      if(action==='power'||action==='spark'){var c=cost(s,action);if(s.mp<c){log(s,'魔力不足。防御可恢复魔力。');return null;}s.mp-=c;}
+      if(action==='spark')damage=16+s.level*3+v.magic;
+      else damage=Math.max(1,Math.floor(v.atk*(action==='power'?1.7:1))-e.def);
+      if(plan==='guard'&&action!=='spark')damage=Math.max(1,Math.floor(damage/2));
+      b.hp=Math.max(0,b.hp-damage);log(s,({attack:'挥剑',power:'破势重击',spark:'星火术'}[action])+'造成 '+damage+' 伤害。');
+      if(action==='attack'&&v.drain)s.hp=Math.min(v.maxHp,s.hp+v.drain);
+      interrupt=action==='power'&&(plan==='charge'||plan==='heavy');
+    }
+    if(b.hp===0)return victory(s);
+    if(interrupt){log(s,'成功打断蓄力！');b.turn+=plan==='charge'?2:1;return {type:'turn'};}
+    if(plan==='charge')log(s,e.name+' 正在蓄力，下回合将发动重击！');
+    else if(plan==='guard')log(s,e.name+' 收紧护甲，暂未攻击。');
+    else {
+      var hit=Math.max(1,Math.round(e.atk*(plan==='heavy'?1.9:1))-v.def);if(guard)hit=Math.max(1,Math.floor(hit*0.3));
+      s.hp=Math.max(0,s.hp-hit);log(s,e.name+(plan==='heavy'?' 发动重击':' 攻击')+'，你失去 '+hit+' 生命。');
+      if(plan==='drain'){s.mp=Math.max(0,s.mp-2);log(s,'迷雾吸走了 2 魔力。');}
+      if(guard&&v.reflect){b.hp=Math.max(0,b.hp-v.reflect);log(s,'荆棘反击 '+v.reflect+' 伤害。');}
+    }
+    if(s.hp===0){var loss=Math.min(s.gold,Math.ceil(s.gold*0.1));s.gold-=loss;s.deaths++;s.battle=null;s.map='town';s.x=11;s.y=9;s.hp=v.maxHp;s.mp=v.maxMp;log(s,'阿禾将你带回镇上。遗失 '+loss+' 金币，成长与任务进度保留。');return {type:'defeat'};}
+    if(b.hp===0)return victory(s);b.turn++;return {type:'turn'};
+  }
+  function restore(input){
+    // Rebuild known fields only; imported JSON never becomes live state directly.
+    if(!input||typeof input!=='object'||input.version!==VERSION)return null;var v=input;
+    function integer(n,min,max){return Number.isInteger(n)&&n>=min&&n<=max;}
+    function list(a,max,check){return Array.isArray(a)&&a.length<=max&&new Set(a).size===a.length&&a.every(check);}
+    if(!Object.prototype.hasOwnProperty.call(MAPS,v.map)||!walkable(v.map,v.x,v.y)||!Object.prototype.hasOwnProperty.call(DIR,v.dir))return null;
+    if(!integer(v.seed,0,4294967295)||!integer(v.level,1,12)||!integer(v.xp,0,1000)||v.xp>=20+v.level*14||!integer(v.gold,0,10000000)||!['wanderer','blade','spark'].includes(v.path))return null;
+    if(!v.bag||!integer(v.bag.potion,0,1000000)||!integer(v.bag.ether,0,1000000)||!v.equip)return null;
+    if(!list(v.owned,20,function(id){return Object.prototype.hasOwnProperty.call(ITEMS,id)&&!!ITEMS[id].slot;})||!v.owned.includes('sword')||!v.owned.includes('coat'))return null;
+    if(!['weapon','armor','charm'].every(function(slot){var id=v.equip[slot];return slot==='charm'&&id===null||v.owned.includes(id)&&ITEMS[id].slot===slot;}))return null;
+    if(!list(v.defeated,30,function(id){return ALL[id]&&ALL[id].type==='enemy';})||!list(v.opened,3,function(id){return ALL[id]&&ALL[id].type==='chest';})||!list(v.herbs,3,function(id){return ALL[id]&&ALL[id].type==='herb';})||!list(v.visited,4,function(id){return Object.prototype.hasOwnProperty.call(MAPS,id);})||!v.visited.includes('town')||!v.visited.includes(v.map)||!list(v.keys,3,function(k){return ['forest','mine','ruins'].includes(k);}))return null;
+    if(!v.flags||!['intro','herbQuest','herbDone','minerDone','completed'].every(function(k){return typeof v.flags[k]==='boolean';}))return null;
+    if(v.flags.herbDone&&v.herbs.length!==3||v.flags.minerDone&&!v.owned.includes('focus')||v.flags.completed&&v.keys.length!==3||v.keys.length&&!v.flags.intro)return null;
+    if(v.map==='mine'&&!v.keys.includes('forest')||v.map==='ruins'&&!v.keys.includes('mine')||v.keys.includes('mine')&&!v.keys.includes('forest')||v.keys.includes('ruins')&&!v.keys.includes('mine'))return null;
+    if(![['forest','f-root'],['mine','m-golem'],['ruins','r-keeper']].every(function(p){return v.keys.includes(p[0])===v.defeated.includes(p[1]);}))return null;
+    if(!['steps','deaths','kills'].every(function(k){return integer(v[k],0,100000000);})||!Number.isFinite(v.elapsed)||v.elapsed<0||v.elapsed>1000000000)return null;
+    var st=stats(v);if(!integer(v.hp,1,st.maxHp)||!integer(v.mp,0,st.maxMp)||!Array.isArray(v.log)||v.log.length>8||v.log.some(function(t){return typeof t!=='string'||t.length>300;}))return null;
+    var b=null;
+    if(v.battle!==null){b=v.battle;var en=b&&ALL[b.id];if(!en||en.type!=='enemy'||!MAPS[v.map].entities.includes(en)||v.defeated.includes(b.id)||Math.abs(en.x-v.x)+Math.abs(en.y-v.y)!==1||!integer(b.hp,1,ENEMIES[en.kind].hp)||!integer(b.turn,0,10000000))return null;b={id:b.id,hp:b.hp,turn:b.turn};}
+    var s=fresh(v.seed);['seed','map','x','y','dir','level','xp','hp','mp','gold','path','steps','deaths','kills','elapsed'].forEach(function(k){s[k]=v[k];});
+    ['owned','defeated','opened','herbs','visited','keys','log'].forEach(function(k){s[k]=v[k].slice();});
+    s.bag={potion:v.bag.potion,ether:v.bag.ether};s.equip={weapon:v.equip.weapon,armor:v.equip.armor,charm:v.equip.charm};Object.keys(s.flags).forEach(function(k){s.flags[k]=v.flags[k];});s.battle=b;return s;
+  }
+  return {VERSION:VERSION,W:W,H:H,DIR:DIR,ITEMS:ITEMS,ENEMIES:ENEMIES,MAPS:MAPS,ALL:ALL,newGame:fresh,stats:stats,threshold:threshold,objective:objective,active:active,at:at,nearby:nearby,walkable:walkable,move:move,interact:interact,use:use,equip:equip,choose:choose,buy:buy,rest:rest,recall:recall,cost:cost,intent:intent,battle:battle,restore:restore};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports=FogtownEngineFactory;
+/* ==== ENGINE END ==== */
+</script>
+<script src="save.js"></script><script src="game.js"></script>
+</body></html>

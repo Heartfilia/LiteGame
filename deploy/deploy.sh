@@ -63,6 +63,12 @@ rsync -a --delete \
 chown -R root:root "$APP_DIR"
 chmod -R a+rX "$APP_DIR"
 
+# SELinux 开启时（Amazon Linux / RHEL / CentOS），不给目录打标签 Nginx 会 403
+if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
+  log "SELinux 为 Enforcing，设置站点目录标签"
+  chcon -R -t httpd_sys_content_t "$APP_DIR" || warn "标签设置失败，若出现 403 请检查：ls -Z $APP_DIR"
+fi
+
 log "文件已就位："
 find "$APP_DIR" -maxdepth 2 | sort | sed 's|^|    |'
 
@@ -78,26 +84,37 @@ done
 # ---------------------------- 安装 Nginx 配置 ----------------------------
 
 if [ "$MODE" = "install" ]; then
-  log "安装 Nginx 站点配置 /etc/nginx/conf.d/${CONF_NAME}"
-  install -o root -g root -m 644 "$SRC_DIR/deploy/nginx.conf" "/etc/nginx/conf.d/${CONF_NAME}"
+  # Nginx 配置在服务器 /etc/nginx/nginx.conf 的 game.litetools.top 两个 server 块里
+  # （参考本目录 nginx.conf），本脚本只负责同步站点文件，不改动 Nginx 配置。
 
-  warn "请编辑 /etc/nginx/conf.d/${CONF_NAME}，把 server_name 改成你的域名（当前是 litegame.example.com）"
+  # 历史遗留检查：这些位置若还有旧配置，会与 nginx.conf 里的域名声明冲突
+  if [ -f /etc/nginx/conf.d/litegame.conf ]; then
+    warn "检测到遗留的 /etc/nginx/conf.d/litegame.conf，会与 nginx.conf 的 game 块冲突（conflicting server name）"
+    warn "处理：sudo mv /etc/nginx/conf.d/litegame.conf /etc/nginx/conf.d/litegame.conf.bak"
+  fi
+  if [ -e /etc/nginx/sites-enabled/default ] && grep -rq "game.litetools.top" /etc/nginx/sites-enabled/default; then
+    warn "检测到 sites-enabled/default 里也有 game.litetools.top 的旧配置（Certbot 时代遗留）"
+    warn "处理：sudo mv /etc/nginx/sites-enabled/default /etc/nginx/default.bak"
+  fi
+
+  warn "Nginx 配置参考 deploy/nginx.conf，实际生效位置：/etc/nginx/nginx.conf 的 game.litetools.top 块。"
 else
-  log "update 模式：保留现有 Nginx 配置，不重新生成"
+  log "update 模式：只同步站点文件，不动 Nginx 配置"
 fi
 
 # -------------------------------- 自检 --------------------------------
 
-nginx -t || die "Nginx 配置校验失败，请检查 /etc/nginx/conf.d/${CONF_NAME}"
+nginx -t || die "Nginx 配置校验失败，请检查 /etc/nginx/nginx.conf"
 systemctl reload nginx
 
 sleep 1
 if command -v curl >/dev/null 2>&1; then
-  if curl -fsS -o /dev/null --max-time 3 "http://127.0.0.1/"; then
-    log "本机自检通过：/ 返回 200"
+  if curl -fsS -o /dev/null --max-time 3 -H 'Host: game.litetools.top' "https://game.litetools.top/" 2>/dev/null ||
+     curl -fsS -o /dev/null --max-time 3 -k "https://127.0.0.1/" 2>/dev/null ||
+     curl -fsS -o /dev/null --max-time 3 "http://127.0.0.1/"; then
+    log "本机自检通过：站点可访问"
   else
-    warn "本机自检失败：可能 server_name 尚未改成实际域名，默认 server 段不响应 127.0.0.1。
-       可先用 curl -H 'Host: litegame.example.com' http://127.0.0.1/ 验证。"
+    warn "本机自检失败：请检查 nginx 是否在运行（systemctl status nginx）"
   fi
 fi
 
@@ -108,16 +125,13 @@ if [ "$MODE" = "install" ]; then
  部署完成（首次安装）
 
    站点目录：  $APP_DIR
-   Nginx 配置：/etc/nginx/conf.d/$CONF_NAME
+   Nginx 配置：/etc/nginx/nginx.conf 的 game.litetools.top 块
+              （参考副本在 deploy/nginx.conf，改配置时以它为准手工同步）
 
  还需完成：
-   1. 编辑 /etc/nginx/conf.d/$CONF_NAME
-      把 server_name 改成你的域名，然后 sudo systemctl reload nginx
-   2. 申请 HTTPS 证书
-      sudo apt install certbot python3-certbot-nginx
-      sudo certbot --nginx -d 你的域名
-   3. 放行防火墙 80 / 443
-   4. 以后更新代码：在本地改完后把项目同步到服务器任意目录，再执行
+   1. 确认 /etc/nginx/nginx.conf 里 game 块的 server_name / 证书路径正确
+   2. 放行防火墙 80 / 443
+   3. 以后更新代码：在本地改完后把项目同步到服务器任意目录，再执行
       sudo /path/to/LiteGame/deploy/deploy.sh update
       （或直接 rsync 到 $APP_DIR 也行，纯静态站无需重启任何服务）
 ────────────────────────────────────────────────

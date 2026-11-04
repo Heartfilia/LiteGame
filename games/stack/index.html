@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#07070f"><title>云端叠塔 · LiteGame</title><meta name="description" content="看准时机放下方块，切掉悬空部分，连续精准叠放可恢复宽度。"><link rel="icon" href="../../assets/images/covers/stack.svg" type="image/svg+xml"><link rel="stylesheet" href="../lib/chogan.css"><link rel="stylesheet" href="../lib/litegame.css"><link rel="stylesheet" href="../lib/arcade.css"></head><body>
+<script src="../version.js"></script><script src="../lib/chogan.js"></script><script src="../lib/litegame.js"></script><script src="../lib/arcade.js"></script><script>
+/* ==== ENGINE START ==== */
+function StackEngineFactory(){
+  'use strict';
+  function newGame(){return {layers:[{x:190,w:220}],x:0,dir:1,elapsed:0,cooldown:0,combo:0,score:0,message:'看准重合位置再放下',over:false,won:false};}
+  function step(s,dt){if(s.over||!Number.isFinite(dt)||dt<=0)return;dt=Math.min(dt,0.05);s.elapsed+=dt;s.cooldown=Math.max(0,s.cooldown-dt);var w=s.layers[s.layers.length-1].w;s.x+=s.dir*(125+Math.min(230,s.layers.length*8))*dt;if(s.x<0){s.x=-s.x;s.dir=1;}if(s.x>600-w){s.x=2*(600-w)-s.x;s.dir=-1;}}
+  function drop(s){
+    if(s.over||s.cooldown>0)return false;
+    var top=s.layers[s.layers.length-1],delta=s.x-top.x,left=Math.max(s.x,top.x),right=Math.min(s.x+top.w,top.x+top.w);
+    if(right-left<4){s.over=true;s.message='擦肩而过';return true;}
+    if(Math.abs(delta)<=7){left=top.x;right=top.x+top.w;s.combo++;s.score+=150+s.combo*25;s.message='精准叠放 × '+s.combo;if(s.combo%3===0){left=Math.max(0,left-8);right=Math.min(600,right+8);s.message='三连精准！塔身恢复宽度';}}
+    else{s.combo=0;s.score+=100;s.message='切掉 '+Math.round(top.w-(right-left))+' 像素，再稳一点';}
+    s.layers.push({x:left,w:right-left});s.dir=s.layers.length%2?1:-1;s.x=s.dir===1?0:600-(right-left);s.cooldown=0.18;
+    if(s.layers.length===31){s.over=s.won=true;s.score+=1000;s.message='登上云端！';}return true;
+  }
+  function restore(v){
+    if(!v||v.over||!Array.isArray(v.layers)||v.layers.length<1||v.layers.length>30||v.layers.some(function(b){return !b||!Number.isFinite(b.x)||!Number.isFinite(b.w)||b.x<0||b.w<4||b.w>380||b.x+b.w>600;}))return null;
+    if(['x','elapsed','cooldown','combo','score'].some(function(k){return !Number.isFinite(v[k])||v[k]<0;})||v.x>600-v.layers[v.layers.length-1].w||![1,-1].includes(v.dir)||v.cooldown>0.18||!Number.isInteger(v.combo)||v.combo>=v.layers.length||!Number.isInteger(v.score)||typeof v.message!=='string')return null;
+    return Object.assign(newGame(),v,{layers:v.layers.map(function(b){return {x:b.x,w:b.w};}),over:false,won:false});
+  }
+  return {newGame:newGame,step:step,drop:drop,restore:restore};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports=StackEngineFactory;
+/* ==== ENGINE END ==== */
+</script><script>
+(function(){var E=StackEngineFactory();
+  LiteArcade({id:'stack',title:'云端叠塔',accent:'#7ce7a5',engine:E,hint:'点击画面 / 空格放下方块 · Enter 暂停',
+    help:'移动中的方块与塔顶重合时放下，伸出部分会被切掉，下一块继承剩余宽度。误差不超过 7 像素视为精准，连续三次精准可恢复一些宽度。速度会逐渐增加，叠到 30 层获胜；完全错开或剩余宽度不足 4 像素则结束。',
+    controls:[{id:'drop',label:'放下方块',keys:[' ']}],action:function(s){E.drop(s);},tap:function(s){E.drop(s);},
+    status:function(s){return '高度 '+(s.layers.length-1)+' / 30 层 · '+s.message;},
+    result:function(s){return {title:s.won?'云端建筑师！':'再搭高一点',lines:[{label:'高度',value:(s.layers.length-1)+' 层'},{label:'得分',value:s.score}]};},
+    draw:function(g,s,a){
+      var bg=g.createLinearGradient(0,0,0,480);bg.addColorStop(0,'#122b42');bg.addColorStop(1,'#243249');g.fillStyle=bg;g.fillRect(0,0,600,480);
+      for(var j=0;j<5;j++){g.fillStyle='#ffffff09';g.beginPath();g.ellipse((j*173+80)%600,60+j*76,80,17,0,0,Math.PI*2);g.fill();}
+      var offset=Math.max(0,s.layers.length-9),base=430;
+      s.layers.forEach(function(b,i){var y=base-(i-offset)*34;if(y>480)return;g.fillStyle='hsl('+(155+i*7)+',60%,65%)';g.fillRect(b.x,y,b.w,31);g.fillStyle='#ffffff25';g.fillRect(b.x,y,b.w,5);g.fillStyle='#07142025';g.fillRect(b.x,y+25,b.w,6);});
+      var top=s.layers[s.layers.length-1],y=base-(s.layers.length-offset)*34;
+      if(!s.over){g.fillStyle='#ffffff14';g.fillRect(top.x,y,top.w,31);g.fillStyle='#ffd166';g.fillRect(s.x,y,top.w,31);g.fillStyle='#fff3bf';g.fillRect(s.x,y,top.w,5);}
+      a.text('CLOUD BUILDER',300,35,18,'#9fd5d6');a.text(String(s.layers.length-1).padStart(2,'0'),540,87,40,'#ffffffaa');
+      if(s.combo)a.text('PERFECT × '+s.combo,300,65,18,'#ffd166');
+    }
+  });
+})();
+</script></body></html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070f">
+<meta name="description" content="跟随原创合成旋律敲击四条轨道，挑战全连。LiteGame 轻量游戏厅。">
+<title>节拍音符 · LiteGame</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../lib/chogan.css">
+<link rel="stylesheet" href="../lib/litegame.css">
+<style>
+  .rh-wrap { width: min(100%, 420px); margin: auto; display: grid; gap: 10px; }
+  .rh-stage { position: relative; }
+  .rh-canvas { display: block; width: 100%; border: 1px solid var(--c-line); border-radius: var(--r-lg); background: #121120; }
+  .rh-overlay { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; font-size: 26px; font-weight: 800; text-shadow: 0 2px 12px #000; }
+  .rh-pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .rh-pad { min-height: 64px; border: 1px solid var(--pad); border-radius: 12px; background: var(--c-surface-2); color: var(--pad); font: 800 20px var(--f); touch-action: none; user-select: none; }
+  .rh-pad:active, .rh-pad[data-lit] { background: var(--pad); color: #151020; }
+  .rh-tools { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .rh-tools select { background: var(--c-surface-2); color: var(--c-text); border: 1px solid var(--c-line); border-radius: 12px; padding: 12px; font: inherit; }
+  .rh-status { color: var(--c-text-dim); text-align: center; font-size: var(--fs-sm); min-height: 1.6em; }
+</style>
+</head>
+<body>
+<script src="../version.js"></script>
+<script src="../lib/chogan.js"></script>
+<script src="../lib/litegame.js"></script>
+<script>
+/* ==== ENGINE START ==== */
+function RhythmEngineFactory() {
+  'use strict';
+  var WINDOW = 0.18;
+  // Original four-note phrases: one note per beat, two tempos, no external audio.
+  var PHRASES = [[0, 1, 2, 1, 0, 2, 3, 2], [1, 0, 1, 3, 2, 1, 0, 2], [2, 3, 2, 0, 1, 3, 1, 0], [0, 2, 1, 3, 2, 0, 3, 1]];
+  function chart(mode) {
+    var beat = 60 / (mode === 1 ? 120 : 90), notes = [];
+    for (var i = 0; i < 64; i++) notes.push({ at: 2 + i * beat, lane: PHRASES[Math.floor(i / 8) % 4][i % 8], grade: null });
+    return notes;
+  }
+  function newGame(mode) { return { mode: mode, notes: chart(mode), t: 0, score: 0, combo: 0, maxCombo: 0, weight: 0, hits: 0, misses: 0, over: false }; }
+  function advance(s, t) {
+    if (s.over) return 0;
+    s.t = Math.max(s.t, t); var missed = 0;
+    s.notes.forEach(function (n) { if (n.grade === null && s.t - n.at > WINDOW) { n.grade = 0; s.combo = 0; s.misses++; missed++; } });
+    if (s.t >= s.notes[s.notes.length - 1].at + 1) s.over = true;
+    return missed;
+  }
+  function hit(s, lane) {
+    if (s.over || !Number.isInteger(lane) || lane < 0 || lane > 3) return null;
+    var note = s.notes.find(function (n) { return n.lane === lane && n.grade === null && Math.abs(n.at - s.t) <= WINDOW; });
+    if (!note) { s.combo = 0; s.score = Math.max(0, s.score - 25); return '空拍'; }
+    var delta = Math.abs(note.at - s.t), grade = delta <= 0.06 ? 100 : delta <= 0.12 ? 70 : 40;
+    note.grade = grade; s.hits++; s.weight += grade; s.combo++; s.maxCombo = Math.max(s.maxCombo, s.combo);
+    s.score += grade + Math.min(20, s.combo - 1) * 2;
+    return grade === 100 ? '完美' : grade === 70 ? '很棒' : '命中';
+  }
+  function restore(v) {
+    if (!v || ![0, 1].includes(v.mode) || !Array.isArray(v.notes) || v.notes.length !== 64 || v.over) return null;
+    var s = newGame(v.mode);
+    if (['t', 'score', 'combo', 'maxCombo', 'weight', 'hits', 'misses'].some(function (k) { return !Number.isFinite(v[k]) || v[k] < 0; }) || v.t >= s.notes[63].at + 1) return null;
+    if (v.notes.some(function (n, i) { return !n || n.at !== s.notes[i].at || n.lane !== s.notes[i].lane || ![null, 0, 40, 70, 100].includes(n.grade); })) return null;
+    var hits = v.notes.filter(function (n) { return n.grade > 0; }).length;
+    var misses = v.notes.filter(function (n) { return n.grade === 0; }).length;
+    var weight = v.notes.reduce(function (sum, n) { return sum + (n.grade || 0); }, 0);
+    if (hits !== v.hits || misses !== v.misses || weight !== v.weight || v.combo > v.maxCombo || v.maxCombo > hits || v.score > 8960) return null;
+    ['t', 'score', 'combo', 'maxCombo', 'weight', 'hits', 'misses'].forEach(function (k) { s[k] = v[k]; });
+    v.notes.forEach(function (n, i) { s.notes[i].grade = n.grade; });
+    return s;
+  }
+  return { newGame: newGame, advance: advance, hit: hit, restore: restore, WINDOW: WINDOW };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = RhythmEngineFactory;
+/* ==== ENGINE END ==== */
+</script>
+<script>
+(function () {
+  'use strict';
+  var C = window.Chogan, el = C.el, E = RhythmEngineFactory(), COLORS = ['#ff8fab', '#ffd166', '#7ce7a5', '#b493ff'];
+  C.boot({});
+  var ctx = C.game({ id: 'rhythm', name: { zh: '节拍音符', en: 'Rhythm Notes' }, accent: '#c08bff', scroll: true });
+  var S, running = false, ended = false, audio = null, nodes = [], origin = 0, countUntil = 0, nextSound = 0, feedback = '', feedbackUntil = 0;
+  var lights = [0, 0, 0, 0], pads = [];
+  ctx.stat('score', '得分'); ctx.stat('combo', '连击');
+  var cv = el('canvas', { class: 'rh-canvas', width: '400', height: '440', role: 'img', 'aria-label': '四轨音符，下落到横线时按 D、F、J、K 或点击对应按键' }), g = cv.getContext('2d');
+  var overlay = el('div', { class: 'rh-overlay' });
+  var status = el('div', { class: 'rh-status', role: 'status', 'aria-live': 'polite' });
+  var best = el('span', { class: 'ch-badge' });
+  var mode = el('select', { 'aria-label': '节奏（下一局生效）' }, [el('option', { value: '0', text: '轻松 · 90 BPM' }), el('option', { value: '1', text: '律动 · 120 BPM' })]);
+  var play = el('button', { class: 'ch-btn ch-btn--primary', type: 'button', onclick: toggle });
+  var sound = el('button', { class: 'ch-btn ch-btn--soft', type: 'button', onclick: function () { C.audio.setMusic(!C.state.settings.music); C.audio.stopMusic(0); stopNotes(); update(); } });
+  var padRow = el('div', { class: 'rh-pads', role: 'group', 'aria-label': '四轨按键' });
+  ['D', 'F', 'J', 'K'].forEach(function (key, i) {
+    var b = el('button', { class: 'rh-pad', type: 'button', text: key, 'aria-label': '轨道 ' + (i + 1) + '，' + key + ' 键', style: { '--pad': COLORS[i] } });
+    b.addEventListener('pointerdown', function (e) { e.preventDefault(); press(i); });
+    b.addEventListener('click', function (e) { if (e.detail === 0) press(i); });
+    pads.push(b); padRow.appendChild(b);
+  });
+  ctx.button({ icon: 'help', label: '玩法说明', onClick: function () { pause(); C.ui.modal({ title: '节拍音符 · 玩法', body: [el('p', { text: '音符落到横线时，按 D / F / J / K 或点对应轨道按钮。每局 64 个音符；越贴近节拍得分越高，连击有加分。漏音或空拍会中断连击，空拍另扣 25 分。空格暂停或继续。旋律为本地合成的原创四音旋律；静音时也能按视觉提示游玩。切换页面自动暂停并保存，继续前有三秒准备时间。' })], actions: [{ label: '知道了', kind: 'primary' }] }); } });
+  ctx.button({ icon: 'refresh', label: '重新开始', onClick: function () { pause(); C.ui.confirm({ title: '重新开始？', body: [el('p', { text: '使用所选节奏开始新一局。' })], onOk: fresh }); } });
+  ctx.main.appendChild(el('div', { class: 'rh-wrap' }, [el('div', { class: 'rh-tools' }, [mode, best]), el('div', { class: 'rh-stage' }, [cv, overlay]), padRow, el('div', { class: 'rh-tools' }, [play, sound]), status]));
+  ctx.mount();
+  function clock() { return useAudioClock ? audio.currentTime : performance.now() / 1000; }
+  function stopNotes() { nodes.forEach(function (osc) { try { osc.stop(); } catch (e) { /* already ended */ } }); nodes = []; }
+  function tone(freq, at, bass) {
+    if (!audio || audio.state !== 'running' || !C.state.settings.music) return;
+    var osc = audio.createOscillator(), gain = audio.createGain();
+    osc.type = bass ? 'sine' : 'triangle'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(bass ? 0.1 : 0.16, at + 0.008); gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.3);
+    osc.connect(gain); gain.connect(audio.destination); nodes.push(osc);
+    osc.onended = function () { osc.disconnect(); gain.disconnect(); var i = nodes.indexOf(osc); if (i >= 0) nodes.splice(i, 1); };
+    osc.start(at); osc.stop(at + 0.32);
+  }
+  function schedule() {
+    while (nextSound < S.notes.length && S.notes[nextSound].at <= S.t + 0.12) {
+      var n = S.notes[nextSound], delay = n.at - S.t;
+      if (delay >= -0.04 && audio) { var at = audio.currentTime + Math.max(0, delay); tone([261.63, 329.63, 392, 523.25][n.lane], at, false); if (nextSound % 2 === 0) tone(nextSound % 8 < 4 ? 130.81 : 98, at, true); }
+      nextSound++;
+    }
+  }
+  function update() {
+    ctx.setStat('score', S.score); ctx.setStat('combo', S.combo);
+    play.textContent = ended ? '再来一局' : running ? '暂停' : '开始 / 继续';
+    sound.textContent = C.state.settings.music ? '旋律：开' : '旋律：关'; sound.setAttribute('aria-pressed', String(C.state.settings.music));
+    best.textContent = '本档最佳 ' + (C.stats.getBest('rhythm', 'mode' + S.mode) || 0);
+    status.textContent = (running ? 'D / F / J / K · ' : '已暂停 · ') + '命中 ' + S.hits + ' / 64 · 漏音 ' + S.misses;
+  }
+  function fresh() { running = false; ended = false; stopNotes(); S = E.newGame(Number(mode.value)); nextSound = 0; feedback = ''; ctx.save(); update(); }
+  function pause() { if (running) sync(); running = false; stopNotes(); if (S) { ctx.save(); update(); } }
+  var starting = false, useAudioClock = false;
+  async function toggle() {
+    if (starting) return;
+    if (running) { pause(); return; }
+    if (ended) fresh();
+    starting = true;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!audio && AC) audio = new AC();
+      if (audio && audio.state === 'suspended') await audio.resume();
+    } catch (e) { /* Visual rhythm remains playable without audio. */ }
+    starting = false;
+    if (document.hidden || document.querySelector('.ch-scrim')) return;
+    C.audio.stopMusic(0);
+    useAudioClock = !!(audio && audio.state === 'running');
+    countUntil = clock() + 3; origin = countUntil - S.t; running = true;
+    nextSound = S.notes.findIndex(function (n) { return n.at >= S.t; }); if (nextSound < 0) nextSound = S.notes.length;
+    update();
+  }
+  function sync() {
+    if (!running || clock() < countUntil) return;
+    if (E.advance(S, clock() - origin)) { feedback = '漏音'; feedbackUntil = performance.now() + 500; update(); }
+    if (S.over) finish();
+  }
+  function press(lane) {
+    if (!running || clock() < countUntil || document.hidden || document.querySelector('.ch-scrim')) return;
+    sync(); if (ended) return;
+    feedback = E.hit(S, lane); feedbackUntil = performance.now() + 450; lights[lane] = performance.now() + 130;
+    update();
+  }
+  function finish() {
+    if (ended) return;
+    ended = true; running = false; stopNotes(); C.stats.best('rhythm', 'mode' + S.mode, S.score); update();
+    var accuracy = Math.round(S.weight / 64), won = accuracy >= 60;
+    ctx.finish({ won: won, title: S.maxCombo === 64 ? '全连！' : won ? '节奏很棒！' : '再跟一次节拍', timeMs: S.t * 1000, coins: Math.floor(S.hits / 4), points: Math.min(120, Math.floor(S.score / 60)),
+      lines: [{ label: '得分', value: C.num(S.score) }, { label: '准确率', value: accuracy + '%' }, { label: '最大连击', value: C.num(S.maxCombo) }, { label: '漏音', value: C.num(S.misses) }], onAgain: fresh });
+  }
+  function draw() {
+    g.clearRect(0, 0, 400, 440);
+    for (var i = 0; i < 4; i++) { g.fillStyle = i % 2 ? '#191729' : '#131221'; g.fillRect(i * 100, 0, 100, 440); g.strokeStyle = '#ffffff12'; g.strokeRect(i * 100, 0, 100, 440); pads[i].toggleAttribute('data-lit', lights[i] > performance.now()); }
+    g.fillStyle = '#ffffff0c'; g.fillRect(0, 360 - E.WINDOW * 190, 400, E.WINDOW * 380);
+    g.strokeStyle = '#f4f1fd'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, 360); g.lineTo(400, 360); g.stroke();
+    S.notes.forEach(function (n) { var y = 360 - (n.at - S.t) * 190; if (n.grade !== null || y < -20 || y > 440) return; g.fillStyle = COLORS[n.lane]; g.fillRect(n.lane * 100 + 15, y - 9, 70, 18); });
+    g.textAlign = 'center'; g.font = 'bold 26px sans-serif'; g.fillStyle = '#f4f1fd';
+    if (feedbackUntil > performance.now()) g.fillText(feedback, 200, 190);
+    g.font = '14px sans-serif'; g.fillStyle = '#a69fbe'; g.fillText('判定线', 200, 417);
+    overlay.textContent = ended ? '本局结束' : !running ? '准备好就开始' : clock() < countUntil ? String(Math.ceil(countUntil - clock())) : '';
+  }
+  function frame() { if (running && !document.hidden) { if (document.querySelector('.ch-scrim')) pause(); else { sync(); if (running && clock() >= countUntil) schedule(); } } draw(); requestAnimationFrame(frame); }
+  window.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || document.querySelector('.ch-scrim')) return;
+    var lane = ['d', 'f', 'j', 'k'].indexOf(e.key.toLowerCase());
+    if (lane >= 0) { e.preventDefault(); if (!e.repeat) press(lane); }
+    else if (e.key === ' ' && e.target.tagName !== 'BUTTON') { e.preventDefault(); if (!e.repeat) toggle(); }
+  });
+  C.onPause(pause); window.addEventListener('blur', pause);
+  C.onResume(function () { setTimeout(function () { C.audio.stopMusic(0); }, 0); });
+  ctx.autosave(function () { return ended || !S ? { inProgress: false } : S; });
+  S = E.restore(ctx.loadSave());
+  if (S) { mode.value = String(S.mode); update(); } else fresh();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

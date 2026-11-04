@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070f">
+<meta name="description" content="经典贪吃蛇，三档速度，支持键盘与触屏。LiteGame 轻量游戏厅。">
+<title>贪吃蛇 · LiteGame</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../lib/chogan.css">
+<link rel="stylesheet" href="../lib/litegame.css">
+<style>
+  .sn-wrap { width: min(100%, 480px); margin: auto; display: grid; gap: 12px; }
+  .sn-canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: var(--r-lg); border: 1px solid var(--c-line); touch-action: none; }
+  .sn-tools { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; }
+  .sn-status { text-align: center; min-height: 1.6em; color: var(--c-text-dim); font-size: var(--fs-sm); }
+  .sn-tools select { font: inherit; color: var(--c-text); background: var(--c-surface-2); padding: 12px; border: 1px solid var(--c-line); border-radius: 12px; }
+</style>
+</head>
+<body>
+<script src="../version.js"></script>
+<script src="../lib/chogan.js"></script>
+<script src="../lib/litegame.js"></script>
+<script>
+/* ==== ENGINE START ==== */
+function SnakeEngineFactory() {
+  'use strict';
+  var N = 18, dirs = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
+  function food(s, rnd) {
+    var empty = [];
+    for (var i = 0; i < N * N; i++) if (s.body.indexOf(i) < 0) empty.push(i);
+    s.food = empty.length ? empty[Math.floor(rnd() * empty.length)] : -1;
+  }
+  function newGame(rnd, speed) {
+    var s = { body: [170, 169, 168], dir: 'right', queue: [], food: -1, score: 0, speed: speed, elapsed: 0, over: false, won: false };
+    food(s, rnd); return s;
+  }
+  function turn(s, dir) {
+    if (s.over || !dirs[dir] || s.queue.length >= 2) return false;
+    var prev = dirs[s.queue.length ? s.queue[s.queue.length - 1] : s.dir], next = dirs[dir];
+    if (prev[0] === -next[0] && prev[1] === -next[1] || prev[0] === next[0] && prev[1] === next[1]) return false;
+    s.queue.push(dir); return true;
+  }
+  function step(s, rnd) {
+    if (s.over) return;
+    if (s.queue.length) s.dir = s.queue.shift();
+    var d = dirs[s.dir], x = s.body[0] % N + d[0], y = Math.floor(s.body[0] / N) + d[1], next = y * N + x, eat = next === s.food;
+    // The tail vacates its cell on a non-growing step.
+    if (x < 0 || x >= N || y < 0 || y >= N || s.body.slice(0, eat ? s.body.length : -1).indexOf(next) >= 0) { s.over = true; return; }
+    s.body.unshift(next);
+    if (eat) { s.score++; food(s, rnd); if (s.food < 0) s.over = s.won = true; } else s.body.pop();
+  }
+  function restore(v) {
+    if (!v || !Array.isArray(v.body) || v.body.length < 3 || v.body.length >= N * N || !dirs[v.dir] || ![0, 1, 2].includes(v.speed)) return null;
+    if (v.body.some(function (n, i) { return !Number.isInteger(n) || n < 0 || n >= N * N || v.body.indexOf(n) !== i || (i > 0 && Math.abs(n % N - v.body[i - 1] % N) + Math.abs(Math.floor(n / N) - Math.floor(v.body[i - 1] / N)) !== 1); })) return null;
+    if (!Number.isInteger(v.food) || v.food < 0 || v.food >= N * N || v.body.includes(v.food) || v.score !== v.body.length - 3 || !Number.isFinite(v.elapsed) || v.elapsed < 0 || v.over) return null;
+    return { body: v.body.slice(), dir: v.dir, queue: [], food: v.food, score: v.score, speed: v.speed, elapsed: v.elapsed, over: false, won: false };
+  }
+  return { N: N, newGame: newGame, turn: turn, step: step, restore: restore };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = SnakeEngineFactory;
+/* ==== ENGINE END ==== */
+</script>
+<script>
+(function () {
+  'use strict';
+  var C = window.Chogan, el = C.el, E = SnakeEngineFactory();
+  C.boot({});
+  var ctx = C.game({ id: 'snake', name: { zh: '贪吃蛇', en: 'Snake' }, accent: '#7ce7a5', scroll: true });
+  var S, running = false, ended = false, last = 0, acc = 0;
+  ctx.stat('score', '果实');
+  var cv = el('canvas', { class: 'sn-canvas', width: '540', height: '540', role: 'img', 'aria-label': '贪吃蛇棋盘，方向键或滑动控制' }), g = cv.getContext('2d');
+  var status = el('div', { class: 'sn-status', role: 'status', 'aria-live': 'polite' });
+  var play = el('button', { class: 'ch-btn ch-btn--primary', type: 'button', onclick: toggle });
+  var speed = el('select', { 'aria-label': '速度（下一局生效）' }, [el('option', { value: '0', text: '悠闲' }), el('option', { value: '1', text: '标准' }), el('option', { value: '2', text: '挑战' })]);
+  var best = el('span', { class: 'ch-badge' });
+  ctx.button({ icon: 'help', label: '玩法说明', onClick: function () { pause(); C.ui.modal({ title: '贪吃蛇 · 玩法', body: [el('p', { text: '用方向键、WASD、滑动棋盘或屏幕方向键转向。吃果实会变长，撞墙或撞到身体则结束，不能直接掉头。空格开始或暂停。速度在新一局生效；离开页面会保存当前棋盘，回来后手动继续。' })], actions: [{ label: '知道了', kind: 'primary' }] }); } });
+  ctx.button({ icon: 'refresh', label: '重新开始', onClick: function () { pause(); C.ui.confirm({ title: '重新开始？', body: [el('p', { text: '使用所选速度开始新一局。' })], onOk: fresh }); } });
+  ctx.main.appendChild(el('div', { class: 'sn-wrap' }, [el('div', { class: 'sn-tools' }, [best, speed]), cv, el('div', { class: 'sn-tools' }, [play]), status]));
+  ctx.mount();
+  function render() {
+    g.fillStyle = '#101b20'; g.fillRect(0, 0, 540, 540);
+    g.strokeStyle = '#ffffff08'; g.lineWidth = 1;
+    for (var i = 1; i < E.N; i++) { g.beginPath(); g.moveTo(i * 30, 0); g.lineTo(i * 30, 540); g.moveTo(0, i * 30); g.lineTo(540, i * 30); g.stroke(); }
+    S.body.forEach(function (n, i) { g.fillStyle = i === 0 ? '#e4ffe9' : '#7ce7a5'; g.fillRect(n % E.N * 30 + 2, Math.floor(n / E.N) * 30 + 2, 26, 26); });
+    var x = S.body[0] % E.N * 30, y = Math.floor(S.body[0] / E.N) * 30;
+    g.fillStyle = '#143b2b'; g.fillRect(x + 8, y + 8, 4, 4); g.fillRect(x + 19, y + 8, 4, 4);
+    if (S.food >= 0) { g.fillStyle = '#ff8fab'; g.beginPath(); g.arc(S.food % E.N * 30 + 15, Math.floor(S.food / E.N) * 30 + 15, 10, 0, Math.PI * 2); g.fill(); }
+    if (!running && !ended) { g.fillStyle = '#07070f9c'; g.fillRect(0, 0, 540, 540); g.fillStyle = '#fff'; g.font = 'bold 28px sans-serif'; g.textAlign = 'center'; g.fillText('点击继续 · 空格开始', 270, 265); }
+    ctx.setStat('score', S.score); play.textContent = ended ? '再来一局' : running ? '暂停' : '继续游戏';
+    best.textContent = '本档最佳 ' + (C.stats.getBest('snake', 'speed' + S.speed) || 0);
+    status.textContent = ended ? '本局结束' : running ? ['悠闲', '标准', '挑战'][S.speed] + ' · 方向键 / WASD / 滑动转向' : '已暂停 · 速度选择在下一局生效';
+  }
+  function fresh() { S = E.newGame(Math.random, Number(speed.value)); ended = false; running = false; acc = 0; ctx.save(); render(); }
+  function pause() { running = false; acc = 0; if (S) { ctx.save(); render(); } }
+  function toggle() { if (running) { pause(); return; } if (ended) fresh(); running = true; last = performance.now(); render(); }
+  function finish() {
+    ended = true; running = false; C.stats.best('snake', 'speed' + S.speed, S.score); render();
+    ctx.finish({ won: S.won, title: S.won ? '填满棋盘！' : '下次再长一点', timeMs: S.elapsed, coins: Math.min(25, S.score), points: Math.min(120, S.score * 3),
+      lines: [{ label: '果实', value: C.num(S.score) }, { label: '本档最佳', value: C.num(C.stats.getBest('snake', 'speed' + S.speed)) }], onAgain: fresh });
+  }
+  function frame(t) {
+    var dt = last ? Math.min(t - last, 250) : 0; last = t;
+    if (running && !document.hidden && !document.querySelector('.ch-scrim')) {
+      acc += dt; S.elapsed += dt;
+      var interval = [220, 145, 95][S.speed], changed = false;
+      while (acc >= interval && !S.over) { acc -= interval; var score = S.score; E.step(S, Math.random); changed = true; if (S.score > score) C.audio.sfx('coin'); }
+      if (S.over) finish(); else if (changed) render();
+    } else acc = 0;
+    requestAnimationFrame(frame);
+  }
+  function turn(dir) { if (!document.querySelector('.ch-scrim') && running) E.turn(S, dir); }
+  var keys = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'left', d: 'right', w: 'up', s: 'down' };
+  window.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || document.querySelector('.ch-scrim')) return;
+    var dir = keys[e.key] || keys[e.key.toLowerCase()];
+    if (dir) { e.preventDefault(); if (!e.repeat) turn(dir); }
+    else if (e.key === ' ' && e.target.tagName !== 'BUTTON') { e.preventDefault(); if (!e.repeat) toggle(); }
+  });
+  var touch = null;
+  cv.addEventListener('pointerdown', function (e) { if (touch || e.button !== 0) return; touch = { id: e.pointerId, x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointerup', function (e) {
+    if (!touch || touch.id !== e.pointerId) return;
+    var dx = e.clientX - touch.x, dy = e.clientY - touch.y; touch = null;
+    if (document.querySelector('.ch-scrim')) return;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > 15) turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    else if (!running && !ended) toggle();
+  });
+  cv.addEventListener('pointercancel', function () { touch = null; });
+  C.onPause(function () { touch = null; pause(); });
+  window.addEventListener('blur', pause);
+  ctx.autosave(function () { return ended || !S ? { inProgress: false } : S; });
+  S = E.restore(ctx.loadSave());
+  if (S) { speed.value = String(S.speed); render(); } else fresh();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

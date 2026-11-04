@@ -1,0 +1,91 @@
+.ft-wrap { width: min(100%, 1080px); margin: auto; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; color: #e4e7e1; }
+.ft-world, .ft-side { min-width: 0; }
+.ft-world { display: flex; flex-direction: column; gap: 9px; }
+.ft-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ft-place { margin: 0; font-size: 17px; color: #e7d5a5; }
+.ft-location { color: #a6b9b2; font-size: 11px; }
+.ft-hud { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 10px; font-size: 12px; }
+.ft-meter { position: relative; padding: 5px 8px; background: #15282c; border: 1px solid #37524e; border-radius: 6px; overflow: hidden; text-align: center; }
+.ft-meter i { position: absolute; inset: 0; background: #41715a; transform-origin: left; }
+.ft-meter--mp i { background: #3d5689; }
+.ft-meter span { position: relative; font-variant-numeric: tabular-nums; }
+.ft-stage { position: relative; min-width: 0; border: 2px solid #52635c; border-radius: 9px; overflow: hidden; background: #111e23; }
+.ft-canvas { width: 100%; display: block; aspect-ratio: 23 / 19; image-rendering: pixelated; touch-action: none; }
+.ft-map-label { position: absolute; left: 7px; bottom: 6px; padding: 3px 6px; border-radius: 3px; background: #101a22d9; font-size: 10px; color: #cfddd6; pointer-events: none; }
+.ft-objective { margin: 0; padding: 8px 10px; border-left: 3px solid #e6bc72; background: #e6bc720b; font-size: 12px; line-height: 1.5; color: #e7d7b0; }
+.ft-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; user-select: none; }
+.ft-dpad { display: grid; grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(2, 43px); gap: 5px; }
+.ft-dpad [data-dir="up"] { grid-column: 2; }
+.ft-dpad [data-dir="left"] { grid-column: 1; grid-row: 2; }
+.ft-dpad [data-dir="down"] { grid-column: 2; grid-row: 2; }
+.ft-dpad [data-dir="right"] { grid-column: 3; grid-row: 2; }
+.ft-btn { border: 1px solid #4b605a; border-radius: 8px; color: #e8e9d9; background: #223831; font: 600 14px var(--f); padding: 10px 12px; min-height: 44px; cursor: pointer; touch-action: manipulation; }
+.ft-btn:focus-visible { outline: 3px solid #f3d891; outline-offset: 2px; }
+.ft-btn:active, .ft-btn[data-held] { background: #45624d; }
+.ft-btn:disabled { opacity: .45; cursor: default; }
+.ft-btn--gold { background: #705a33; border-color: #ae8c51; color: #fff0c8; }
+.ft-btn--danger { background: #603d41; border-color: #a46c6a; }
+.ft-interact { min-width: 104px; min-height: 63px; max-width: 180px; }
+.ft-shortcuts { display: flex; flex-wrap: wrap; gap: 6px; }
+.ft-shortcuts button { flex: 1; white-space: nowrap; padding-inline: 8px; }
+.ft-side { display: flex; flex-direction: column; gap: 12px; }
+.ft-card { background: #182326; border: 1px solid #344a45; border-radius: 10px; padding: 14px; }
+.ft-card h2 { margin: 0 0 10px; color: #e5d6ae; font-size: 15px; }
+.ft-card p { font-size: 13px; color: #b0c1ba; line-height: 1.65; }
+.ft-card p:last-child { margin-bottom: 0; }
+.ft-journal { margin: 0; padding: 0; list-style: none; font-size: 12px; color: #a9beb5; line-height: 1.6; }
+.ft-journal li { border-bottom: 1px solid #ffffff08; padding: 6px 0; }
+.ft-journal li:first-child { color: #ecdfbc; }
+.ft-save { font-size: 11px; color: #9db7a8; text-align: right; min-height: 16px; }
+.ft-save[data-error] { color: #ffb2a7; }
+.ft-hint { font-size: 11px; color: #9aaba6; margin: 0; }
+.ft-sheet { position: fixed; z-index: 120; inset: 0; background: #080e15cf; display: grid; place-items: center; padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.ft-sheet[hidden] { display: none; }
+.ft-dialog { background: #18262a; border: 1px solid #6c785e; border-radius: 16px; width: min(100%, 560px); max-height: 90vh; max-height: 90dvh; display: flex; flex-direction: column; box-shadow: 0 24px 100px #0009; }
+.ft-dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #40514a; gap: 10px; }
+.ft-dialog-head h2 { font-size: 18px; color: #e8d8b1; margin: 0; }
+.ft-dialog-body { overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
+.ft-dialog-body p { line-height: 1.7; color: #c4d0c5; white-space: pre-line; }
+.ft-dialog-body .ft-btn { width: 100%; margin: 4px 0; }
+.ft-item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; border-bottom: 1px solid #ffffff12; padding: 9px 0; }
+.ft-item small { display: block; color: #a0b6ad; line-height: 1.5; margin-top: 4px; }
+.ft-item .ft-btn { width: auto; min-width: 68px; }
+.ft-battle { margin-top: 8px; background: #1c2530; padding: 12px; border: 1px solid #777266; border-radius: 10px; }
+.ft-battle[hidden] { display: none; }
+.ft-battle h2 { margin: 0; font-size: 17px; color: #f1d39b; }
+.ft-intent { margin: 7px 0; color: #e7b29a; font-size: 13px; }
+.ft-enemy-hp { height: 7px; background: #3c2830; margin: 8px 0; border-radius: 5px; overflow: hidden; }
+.ft-enemy-hp i { display: block; height: 100%; background: #bd7875; }
+.ft-battle-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+.ft-battle-actions button { padding: 9px 4px; font-size: 12px; }
+.ft-battle-actions small { display: block; font-size: 10px; font-weight: normal; margin-top: 4px; }
+.ft-battle-log { font-size: 12px; color: #c8cbbb; min-height: 36px; margin: 8px 0 0; line-height: 1.5; }
+.ft-file { display: none; }
+@media (max-width: 760px) {
+  .ft-wrap { width: min(100%,480px); display: block; margin: 0 auto; }
+  .ft-side { margin-top: 12px; }
+  .ft-lore { display: none; }
+  .ft-card { padding: 10px 12px; }
+  .ft-heading { gap: 4px; }
+  .ft-place { font-size: 15px; }
+  .ft-controls { gap: 8px; }
+  .ft-world { gap: 7px; }
+  .ft-journal li:nth-child(n+4) { display: none; }
+  .ft-sheet { padding: 9px; padding-bottom: max(9px, env(safe-area-inset-bottom)); }
+  .ft-dialog { max-height: 94vh; max-height: 94dvh; }
+  .ft-wrap[data-battle] .ft-canvas { max-height: 180px; object-fit: contain; }
+  .ft-wrap[data-battle] .ft-controls, .ft-wrap[data-battle] .ft-map-label { display: none; }
+}
+@media (max-width: 350px) {
+  .ft-dpad { grid-template-columns: repeat(3,42px); grid-template-rows: repeat(2,42px); gap: 4px; }
+  .ft-interact { min-width: 90px; font-size: 12px; }
+  .ft-hud { gap: 5px; font-size: 11px; }
+  .ft-location { display: none; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .ft-wrap { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 12px; }
+  .ft-side { margin-top: 0; }
+  .ft-canvas { max-height: 240px; object-fit: contain; }
+  .ft-world { gap: 5px; }
+  .ft-lore, .ft-hint { display: none; }
+}

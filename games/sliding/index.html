@@ -339,8 +339,11 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SlidingEng
     place(true);
     requestAnimationFrame(function () { nodes.forEach(function (b) { if (b) b.classList.remove('sp-tile--still'); }); });
   }
-  function place() {
+  function place(still) {
     var n = S.n, inner = board.clientWidth - 12, cell = inner / n, g = cell * GAP, size = cell - g;
+    var resized = still || place.width !== inner;
+    place.width = inner;
+    if (resized) nodes.forEach(function (b) { if (b) b.classList.add('sp-tile--still'); });
     var fs = Math.round(size * (n === 3 ? 0.42 : n === 4 ? 0.4 : 0.38));
     for (var i = 0; i < S.tiles.length; i++) {
       var v = S.tiles[i];
@@ -354,6 +357,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SlidingEng
       b.classList.toggle('sp-tile--home', home);
       b.classList.toggle('sp-tile--cur', i === cur);
       b.setAttribute('aria-label', C.t(home ? 'tileHome' : 'tileN', { n: C.num(v) }));
+    }
+    if (resized) {
+      void board.offsetWidth;
+      nodes.forEach(function (b) { if (b) b.classList.remove('sp-tile--still'); });
     }
   }
   function render() {
@@ -600,10 +607,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SlidingEng
     pausedAt = 0;
   });
 
-  var resizeT = null;
   function onResize() {
-    clearTimeout(resizeT);
-    resizeT = setTimeout(function () { if (S) place(); }, 80);
+    if (S) place(true);
   }
   // the board's size follows its slot, which changes with the window and the side column (#359)
   if (window.ResizeObserver) new ResizeObserver(onResize).observe(board);

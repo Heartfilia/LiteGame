@@ -456,7 +456,14 @@ if (typeof module !== 'undefined' && module.exports) module.exports = GinRummyEn
   function resume(v) {
     M = v;
     // closed after a knock: the showdown (and its points) comes first
-    if (M.H.phase === 'over') { M.startedAt = Date.now() - (v.elapsed || 0); if (M.H.scored) newHand(); else { render(); showdown(); } return; }
+    if (M.H.phase === 'over') {
+      M.startedAt = Date.now() - (v.elapsed || 0);
+      if (M.H.scored) {
+        if (M.daily || M.scores[0] >= E.TARGET || M.scores[1] >= E.TARGET) { render(); finish(); }
+        else newHand();
+      } else { render(); showdown(); }
+      return;
+    }
     botRnd = M.daily ? C.daily('ginrummy', M.daily + '|bot|' + M.H.stock.length).rng : Math.random;
     M.startedAt = Date.now() - (v.elapsed || 0);
     sel = -1; msg = '';
@@ -589,7 +596,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = GinRummyEn
     var h = H();
     if (!mine() || document.querySelector('.ch-scrim')) return;
     if (h.phase !== 'discard') { C.feedback('bad'); msg = C.t('drawHint'); render(); msg = ''; return; }
-    if (c === h.took) { C.feedback('bad'); C.ui.shake(node); msg = C.t('notTook'); render(); msg = ''; return; }
+    if (c === h.took) { C.feedback('bad'); C.ui.shake(node); status.textContent = C.t('notTook'); return; }
     // a second tap on the chosen card discards it
     if (sel === c) { humanDiscard(false); return; }
     sel = c;
@@ -613,7 +620,11 @@ if (typeof module !== 'undefined' && module.exports) module.exports = GinRummyEn
     render();
     if (rect && pileBtn.firstChild) C.ui.fly(pileBtn.firstChild, rect, { ms: 240, flip: !!flip });
     save();
-    if (H().phase === 'over') { setTimeout(showdown, C.cards.pace(700)); return; }
+    if (H().phase === 'over') {
+      var finishedHand = H();
+      setTimeout(function () { if (H() === finishedHand) showdown(); }, C.cards.pace(700));
+      return;
+    }
     maybeBot();
   }
 
@@ -679,7 +690,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = GinRummyEn
     C.ui.modal({
       title: title,
       body: body,
-      actions: [{ label: over ? C.t('done') : C.t('nextHand'), kind: 'primary', onClick: function () { if (over) finish(); else newHand(); } }],
+      actions: [{ label: over ? C.t('done') : C.t('nextHand'), kind: 'primary' }],
       onClose: function () { if (H() === h) { if (over) finish(); else newHand(); } }
     });
   }

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#302047"/><stop offset="1" stop-color="#111322"/></linearGradient><linearGradient id="glow" x2="0" y2="1"><stop stop-color="#c08bff" stop-opacity="0"/><stop offset="1" stop-color="#c08bff" stop-opacity=".25"/></linearGradient></defs>
+<rect width="800" height="500" fill="url(#bg)"/><path d="M260 40h280l120 420H140z" fill="url(#glow)"/>
+<g stroke="#c08bff" stroke-width="2" opacity=".3"><path d="M260 40 140 460M330 40 270 460M400 40v420M470 40l60 420M540 40l120 420"/></g>
+<path d="M165 370h470" stroke="#f4e9ff" stroke-width="5"/>
+<g transform="skewX(-9)"><rect x="302" y="100" width="57" height="16" rx="6" fill="#ff8fab"/><rect x="450" y="160" width="65" height="18" rx="6" fill="#7ce7a5"/><rect x="373" y="235" width="79" height="22" rx="7" fill="#ffd166"/><rect x="551" y="320" width="85" height="24" rx="7" fill="#c08bff"/></g>
+<g font-family="sans-serif" font-weight="800" font-size="24" text-anchor="middle" fill="#f4e9ff"><text x="220" y="416">D</text><text x="340" y="416">F</text><text x="460" y="416">J</text><text x="580" y="416">K</text></g>
+<text x="42" y="52" font-family="sans-serif" font-size="14" letter-spacing="5" fill="#c6a8ed">LITEGAME / RHYTHM</text><circle cx="650" cy="120" r="50" fill="none" stroke="#c08bff" stroke-width="2" opacity=".25"/>
+</svg>

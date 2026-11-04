@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#07070f">
+<title>弯道计时赛 · LiteGame</title><meta name="description" content="俯视赛车，控制转向和刹车，按顺序通过检查点，挑战三圈最佳时间。">
+<link rel="icon" href="../../assets/images/covers/circuit.svg" type="image/svg+xml"><link rel="stylesheet" href="../lib/chogan.css"><link rel="stylesheet" href="../lib/litegame.css"><link rel="stylesheet" href="../lib/arcade.css">
+</head><body><script src="../version.js"></script><script src="../lib/chogan.js"></script><script src="../lib/litegame.js"></script><script src="../lib/arcade.js"></script>
+<script>
+/* ==== ENGINE START ==== */
+function CircuitEngineFactory() {
+  'use strict';
+  var TAU = Math.PI * 2;
+  function newGame() { return { x: 300, y: 70, angle: 0, speed: 0, elapsed: 0, gate: 1, laps: 0, score: 0, over: false, won: false }; }
+  function radius(s) { return Math.hypot((s.x - 300) / 210, (s.y - 240) / 170); }
+  function gatePoint(n) { var a = -Math.PI / 2 + n * Math.PI / 2; return { x: 300 + 210 * Math.cos(a), y: 240 + 170 * Math.sin(a) }; }
+  function step(s, dt, keys) {
+    if (s.over || !Number.isFinite(dt) || dt <= 0) return;
+    dt = Math.min(dt, 0.05); s.elapsed += dt;
+    var road = radius(s) >= 0.75 && radius(s) <= 1.24, brake = keys.brake;
+    var target = road ? (brake ? 65 : 175) : 40;
+    s.speed += Math.max(-180 * dt, Math.min(70 * dt, target - s.speed));
+    s.angle += ((keys.right ? 1 : 0) - (keys.left ? 1 : 0)) * (brake ? 2.65 : 1.85) * Math.min(1, s.speed / 60) * dt;
+    s.angle = (s.angle + TAU) % TAU;
+    s.x = Math.max(12, Math.min(588, s.x + Math.cos(s.angle) * s.speed * dt));
+    s.y = Math.max(12, Math.min(468, s.y + Math.sin(s.angle) * s.speed * dt));
+    var p = gatePoint(s.gate);
+    if (road && Math.hypot(s.x - p.x, s.y - p.y) < 52) {
+      s.gate++; s.score += 100;
+      if (s.gate % 4 === 1) s.laps++;
+      if (s.laps === 3) { s.over = s.won = true; s.score += Math.max(0, Math.round((90 - s.elapsed) * 30)); }
+    }
+    if (s.elapsed >= 90 && !s.won) { s.elapsed = 90; s.over = true; }
+  }
+  function restore(v) {
+    if (!v || v.over || ['x','y','angle','speed','elapsed','gate','laps','score'].some(function (k) { return !Number.isFinite(v[k]); })) return null;
+    if (v.x < 12 || v.x > 588 || v.y < 12 || v.y > 468 || v.angle < 0 || v.angle >= TAU || v.speed < 0 || v.speed > 175 || v.elapsed < 0 || v.elapsed >= 90 || !Number.isInteger(v.gate) || v.gate < 1 || v.gate > 12 || v.laps !== Math.floor((v.gate - 1) / 4) || v.score !== (v.gate - 1) * 100) return null;
+    return Object.assign(newGame(), v, { over: false, won: false });
+  }
+  return { newGame: newGame, step: step, restore: restore, radius: radius, gatePoint: gatePoint };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = CircuitEngineFactory;
+/* ==== ENGINE END ==== */
+</script><script>
+(function () {
+  var E = CircuitEngineFactory();
+  LiteArcade({ id: 'circuit', title: '弯道计时赛', accent: '#ff5d8f', engine: E,
+    hint: '自动加速 · ← → / A D 转向 · ↓ / 空格刹车 · Enter 暂停',
+    help: '赛车会自动加速，左右键控制车头方向，不是直接横移。顺时针通过四个检查点，90 秒内完成三圈。弯道先刹车再转向更容易保持路线；草地会明显减速。黄色门是下一个检查点，抄近道不能跳过检查点。支持同时按住屏幕转向和刹车按钮。',
+    controls: [{ id: 'left', label: '↶ 左转', keys: ['arrowleft','a'], hold: true }, { id: 'brake', label: '刹车', keys: ['arrowdown','s',' '], hold: true }, { id: 'right', label: '右转 ↷', keys: ['arrowright','d'], hold: true }],
+    action: function () {},
+    status: function (s) { return '完成 ' + s.laps + ' / 3 圈 · 剩余 ' + Math.max(0, 90 - s.elapsed).toFixed(1) + ' 秒 · ' + (E.radius(s) < 0.75 || E.radius(s) > 1.24 ? '草地减速' : '保持在赛道上'); },
+    result: function (s) { return { title: s.won ? '三圈冲线！' : '计时结束', lines: [{ label: '完成圈数', value: s.laps + ' / 3' }, { label: '用时', value: s.elapsed.toFixed(2) + ' 秒' }, { label: '得分', value: s.score }] }; },
+    draw: function (g, s, a) {
+      g.fillStyle = '#102c2b'; g.fillRect(0, 0, 600, 480);
+      for (var i = 0; i < 34; i++) { g.fillStyle = '#7ce7a510'; g.fillRect((i * 113) % 590, (i * 71) % 470, 4, 10); }
+      function oval(rx, ry, color, width) { g.beginPath(); g.ellipse(300,240,rx,ry,0,0,Math.PI*2); g.strokeStyle=color;g.lineWidth=width;g.stroke(); }
+      oval(210,170,'#ededef',86); oval(210,170,'#344052',76);
+      g.setLineDash([16,18]); oval(210,170,'#ffffff30',2); g.setLineDash([]);
+      for (var n = 0; n < 4; n++) { var p = E.gatePoint(n); g.beginPath(); g.arc(p.x,p.y,25,0,Math.PI*2);g.fillStyle=n===s.gate%4?'#ffd166':'#ffffff15';g.fill(); a.text(n===s.gate%4?'➜':String(n+1),p.x,p.y+7,23,n===s.gate%4?'#18202c':'#9aa9bd'); }
+      a.text('APEX CLUB',300,205,26,'#7ce7a5'); a.text('LAP ' + Math.min(3,s.laps+1) + ' / 3',300,245,34); a.text(Math.round(s.speed) + ' km/h',300,278,18,'#a4bec8');
+      g.save(); g.translate(s.x,s.y); g.rotate(s.angle); g.fillStyle='#070b13';g.fillRect(-17,-13,32,26); g.fillStyle='#ff5d8f';g.fillRect(-19,-10,38,20);g.fillStyle='#f4f1fd';g.fillRect(2,-8,8,16);g.fillStyle='#21314d';g.fillRect(-7,-7,8,14);g.restore();
+      a.text('顺时针 · 黄色门为下一检查点',300,468,13,'#c4d9df');
+    }
+  });
+})();
+</script></body></html>

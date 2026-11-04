@@ -519,8 +519,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = KlondikeEn
 
   // still: no animation (first paint, resize, undo of many cards)
   function render(still) {
+    var previous = L;
     L = layout();
     if (!L || !S) return;
+    if (previous && (previous.W !== L.W || previous.H !== L.H)) {
+      Object.keys(nodes).forEach(function (k) { C.ui.cancelFly(nodes[k]); });
+    }
     place(slots.stock, { x: colX(0), y: L.ty });
     place(slots.waste, { x: colX(1), y: L.ty });
     for (var s = 0; s < 4; s++) place(slots['f' + s], { x: colX(3 + s), y: L.ty });

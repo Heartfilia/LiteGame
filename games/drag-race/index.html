@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#07070f"><title>极速换挡 · LiteGame</title><meta name="description" content="把握转速甜区，精准换挡与氮气时机，赢下四百米直线加速赛。"><link rel="icon" href="../../assets/images/covers/drag-race.svg" type="image/svg+xml"><link rel="stylesheet" href="../lib/chogan.css"><link rel="stylesheet" href="../lib/litegame.css"><link rel="stylesheet" href="../lib/arcade.css"></head>
+<body><script src="../version.js"></script><script src="../lib/chogan.js"></script><script src="../lib/litegame.js"></script><script src="../lib/arcade.js"></script><script>
+/* ==== ENGINE START ==== */
+function DragRaceEngineFactory() {
+  'use strict';
+  var MAX = [17,29,43,59,78];
+  function newGame() { return { elapsed: 0, time: 0, countdown: 3, distance: 0, speed: 0, gear: 1, nitro: 2.5, boost: false, shifts: 0, perfect: 0, penalty: 0, score: 0, message: '等待绿灯', over: false, won: false }; }
+  function rpm(s) { return Math.min(1, 0.2 + 0.8 * s.speed / MAX[s.gear-1]); }
+  function shift(s) {
+    if (s.over || s.countdown > 0 || s.gear >= 5) return false;
+    var r = rpm(s); s.shifts++;
+    if (r >= 0.82 && r <= 0.94) { s.perfect++; s.message = '完美换挡！'; s.penalty = 0.08; }
+    else { s.message = r < 0.82 ? '换挡太早，损失扭矩' : '转速过高，换挡迟了'; s.penalty = 0.65; s.speed *= 0.93; }
+    s.gear++; return true;
+  }
+  function boost(s) { if (s.over || s.countdown > 0 || s.nitro <= 0 || s.boost) return false; s.boost = true; s.message = '氮气释放！'; return true; }
+  function step(s, dt) {
+    if (s.over || !Number.isFinite(dt) || dt <= 0) return;
+    dt = Math.min(dt, 0.05); s.elapsed += dt;
+    if (s.countdown > 0) { s.countdown = Math.max(0, s.countdown - dt); if (!s.countdown) s.message = '绿灯！转速到绿色区时换挡'; return; }
+    s.time += dt; s.penalty = Math.max(0, s.penalty-dt);
+    var use = s.boost ? Math.min(s.nitro, dt) : 0; s.nitro -= use; if (s.nitro <= 0) s.boost = false;
+    var acceleration = (s.penalty > 0 ? 0 : (10.5 - s.gear * 0.8)) + (use > 0 ? 7 : 0);
+    s.speed = Math.min(MAX[s.gear-1], s.speed + acceleration * dt);
+    s.distance += s.speed * dt;
+    if (s.distance >= 400 || s.time >= 28) {
+      s.over = true; s.won = s.distance >= 400 && s.time <= 13.5;
+      s.score = s.distance >= 400 ? Math.max(0, Math.round((28-s.time)*100)) + s.perfect*150 : 0;
+    }
+  }
+  function restore(v) {
+    if (!v || v.over || ['elapsed','time','countdown','distance','speed','gear','nitro','shifts','perfect','penalty','score'].some(function(k){return !Number.isFinite(v[k]) || v[k]<0;})) return null;
+    if (!Number.isInteger(v.gear) || v.gear<1 || v.gear>5 || v.time>=28 || v.countdown>3 || v.distance>=400 || v.speed>MAX[v.gear-1] || v.nitro>2.5 || v.penalty>0.65 || v.shifts!==v.gear-1 || !Number.isInteger(v.perfect) || v.perfect>v.shifts || v.score!==0 || typeof v.boost!=='boolean' || typeof v.message!=='string') return null;
+    return Object.assign(newGame(),v,{over:false,won:false});
+  }
+  return { newGame:newGame, step:step, restore:restore, rpm:rpm, shift:shift, boost:boost };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = DragRaceEngineFactory;
+/* ==== ENGINE END ==== */
+</script><script>
+(function(){ var E=DragRaceEngineFactory();
+  LiteArcade({ id:'drag-race',title:'极速换挡',accent:'#ffb347',engine:E,
+    hint:'空格 / ↑ 升挡 · N 氮气 · Enter 暂停',
+    help:'绿灯后自动全油门。转速指针进入绿色区（82%—94%）时升挡；太早或太晚都会损失速度。氮气只有一次、持续 2.5 秒，释放时及时换挡，避免撞上当前挡位的速度上限。与 13.5 秒的标杆车较量，跑完 400 米。屏幕按钮与键盘都能操作。',
+    controls:[{id:'shift',label:'升挡 ↑',keys:[' ','arrowup']},{id:'boost',label:'氮气 N',keys:['n']}],
+    action:function(s,id){if(id==='shift')E.shift(s);else E.boost(s);},
+    status:function(s){return s.message+' · 完美换挡 '+s.perfect+' / 4';},
+    update:function(s,a){a.button('boost').disabled=s.nitro<=0||s.boost; a.button('shift').disabled=s.gear>=5;},
+    result:function(s){return {title:s.won?'赢下直线对决！':'冲线，再试试换挡时机',lines:[{label:'400 米用时',value:s.distance>=400?s.time.toFixed(2)+' 秒':'未完成'},{label:'完美换挡',value:s.perfect+' / 4'},{label:'得分',value:s.score}]};},
+    draw:function(g,s,a){
+      g.fillStyle='#111827';g.fillRect(0,0,600,480);g.fillStyle='#232d40';g.fillRect(0,120,600,180);
+      for(var i=0;i<12;i++){var x=(i*70-s.distance*5)%840;g.fillStyle='#ffffff30';g.fillRect(x,205,35,3);}
+      function car(x,y,color){g.fillStyle='#080c14';g.fillRect(x-32,y-17,64,34);g.fillStyle=color;g.fillRect(x-36,y-12,72,24);g.fillStyle='#b9def4';g.fillRect(x+5,y-9,13,18);}
+      var rival=Math.min(400,400*Math.pow(Math.min(1,s.time/13.5),1.45));
+      car(110,260,'#ffb347');car(Math.max(-60,Math.min(660,110+(rival-s.distance)*3)),160,'#9b8edb');
+      a.text('400 M / DRAG CLUB',300,42,24,'#ffb347');a.text(s.countdown>0?String(Math.ceil(s.countdown)):s.time.toFixed(2)+' s',300,95,36);
+      a.text('挡位 '+s.gear,105,345,27);a.text(Math.round(s.speed*3.6)+' km/h',440,345,27);
+      g.fillStyle='#364157';g.fillRect(50,375,500,25);g.fillStyle='#7ce7a5';g.fillRect(50+500*0.82,375,500*0.12,25);g.fillStyle='#ff5d8f';g.fillRect(520,375,30,25);
+      var x=50+500*E.rpm(s);g.fillStyle='#fff';g.fillRect(x-3,369,6,37);a.text('转速进入绿色区 → 升挡',300,433,18,'#b9c9e0');
+      g.fillStyle='#ffb347';g.fillRect(50,459,500*Math.min(1,s.distance/400),4);a.text(Math.min(400,Math.floor(s.distance))+' / 400 m · 氮气 '+s.nitro.toFixed(1)+' s',300,284,13,'#fff');
+    }
+  });
+})();
+</script></body></html>

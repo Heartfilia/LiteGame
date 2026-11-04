@@ -2548,12 +2548,24 @@
     })(t0);
   };
 
+  var shakeTimers = new WeakMap();
   ui.shake = function (node) {
     if (!node || ui.reduceMotion()) return;
+    clearTimeout(shakeTimers.get(node));
     node.classList.remove('ch-shake');
+    // A positioned card already uses transform. Do not replace it with a
+    // translation around (0, 0) when reporting an invalid move.
+    if (!(global.CSS && CSS.supports && CSS.supports('translate', '0'))) {
+      var base = getComputedStyle(node).transform;
+      node.style.setProperty('--ch-shake-base', base && base !== 'none' ? base : 'translateX(0)');
+    }
     void node.offsetWidth;
     node.classList.add('ch-shake');
-    setTimeout(function () { node.classList.remove('ch-shake'); }, 520);
+    shakeTimers.set(node, setTimeout(function () {
+      node.classList.remove('ch-shake');
+      node.style.removeProperty('--ch-shake-base');
+      shakeTimers.delete(node);
+    }, 520));
   };
 
   // Moves a node that is already in its final place so that it seems to arrive
@@ -2563,6 +2575,7 @@
   // under a copy of the player's chosen back. Returns the Animation, or null.
   ui.fly = function (node, from, opts) {
     if (!node || !from || !node.animate || ui.reduceMotion()) return null;
+    ui.cancelFly(node);
     opts = opts || {};
     var a = from.getBoundingClientRect ? from.getBoundingClientRect() : from;
     var b = node.getBoundingClientRect();
@@ -2596,10 +2609,23 @@
       node.appendChild(cover);
     }
     var anim = node.animate(frames, { duration: ms, delay: delay, easing: opts.easing || 'cubic-bezier(.2,.7,.3,1)', fill: 'backwards' });
-    var tidy = function () { if (cover && cover.parentNode) cover.parentNode.removeChild(cover); if (opts.onDone) opts.onDone(); };
+    node._chFlight = anim;
+    var tidy = function () {
+      if (node._chFlight === anim) node._chFlight = null;
+      if (cover && cover.parentNode) cover.parentNode.removeChild(cover);
+      if (opts.onDone) opts.onDone();
+    };
     anim.onfinish = tidy;
     anim.oncancel = tidy;
     return anim;
+  };
+
+  ui.cancelFly = function (node) {
+    if (!node || !node._chFlight) return;
+    node._chFlight.cancel();
+    node._chFlight = null;
+    // Remove the old flip cover synchronously, before a new flight is measured.
+    Array.prototype.forEach.call(node.querySelectorAll('.ch-turnback'), function (cover) { cover.remove(); });
   };
 
   // The way out: a node leaves for `to` (a node or a rect), shrinking and fading,

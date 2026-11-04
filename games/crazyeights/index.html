@@ -597,7 +597,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CrazyEight
     if (n) C.ui.fly(n, from, { ms: 220, flip: true });
     save();
     // a drawn card that does not fit passes the turn at once
-    if (!E.legal(R, 0).length) setTimeout(function () { if (human() && R.drawn === c) { E.pass(R); after(null, false); } }, C.cards.pace(450));
+    if (!E.legal(R, 0).length) setTimeout(function () { if (M.R === R && human() && R.drawn === c) { E.pass(R); after(null, false); } }, C.cards.pace(450));
   }
   function humanPass() {
     if (!human() || !E.pass(M.R)) return;
@@ -671,20 +671,24 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CrazyEight
     if (w === 0 && pile.firstChild) C.ui.burst(pile.firstChild, { count: 22, speed: 240, ring: 30, colors: ['#F2B84B', '#A06420', '#FFF1C9'] });
     var over = M.daily || M.scores[w] >= E.TARGET;
     save();
-    if (over) { setTimeout(finish, C.cards.pace(900)); return; }
+    if (over) { setTimeout(function () { if (M.R === R) finish(); }, C.cards.pace(900)); return; }
     var lines = [];
     for (var p = 0; p < M.n; p++) lines.push(el('div', { class: 'ch-item' }, [el('div', { class: 'ch-item__label', text: pname(p) }), el('b', { class: 'ch-num', text: C.num(M.scores[p]) })]));
     setTimeout(function () {
+      if (!M || M.R !== R) return;
       C.ui.modal({
         title: msg,
         body: [el('p', { class: 'ch-dim', text: (R.blocked ? C.t('blocked') + ' · ' : '') + C.t('plusPts', { n: C.num(pts) }) }), el('div', { class: 'ch-list' }, lines)],
-        actions: [{ label: C.t('nextRound'), kind: 'primary', onClick: function () { newRound(); } }],
+        // modal closes before its action callback; advance in onClose only.
+        actions: [{ label: C.t('nextRound'), kind: 'primary' }],
         onClose: function () { if (M && M.R === R) newRound(); }
       });
     }, C.cards.pace(700));
   }
 
   function finish() {
+    if (!M || M.done || M.R.winner < 0) return;
+    M.done = true;
     var R = M.R, ms = Date.now() - M.startedAt, won;
     var best = 0;
     for (var p = 1; p < M.n; p++) if (M.scores[p] > M.scores[best]) best = p;

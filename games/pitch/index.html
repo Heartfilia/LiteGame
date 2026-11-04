@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#07070f"><title>音高侦探 · LiteGame</title><meta name="description" content="听两颗星星的声音，判断第二个音更高、更低还是相同，挑战十二轮音感。"><link rel="icon" href="../../assets/images/covers/pitch.svg" type="image/svg+xml"><link rel="stylesheet" href="../lib/chogan.css"><link rel="stylesheet" href="../lib/litegame.css"><link rel="stylesheet" href="../lib/arcade.css"></head><body>
+<script src="../version.js"></script><script src="../lib/chogan.js"></script><script src="../lib/litegame.js"></script><script src="../lib/arcade.js"></script><script>
+/* ==== ENGINE START ==== */
+function PitchEngineFactory(){
+  'use strict';
+  function newGame(rnd){
+    var rounds=[];
+    for(var i=0;i<12;i++){var first=5+Math.floor(rnd()*9),direction=Math.floor(rnd()*3)-1,gap=i<4?5:i<8?3:1;rounds.push({first:first,second:first+direction*gap});}
+    return {rounds:rounds,index:0,correct:0,combo:0,score:0,elapsed:0,answered:false,choice:null,visual:false,assisted:0,over:false,won:false};
+  }
+  function answer(s,n){if(s.over||s.answered||![-1,0,1].includes(n))return false;var r=s.rounds[s.index],ok=Math.sign(r.second-r.first)===n;s.answered=true;s.choice=n;if(ok){s.correct++;s.combo++;s.score+=(s.visual?50:100)+Math.min(5,s.combo)*10;}else s.combo=0;if(s.visual)s.assisted++;return ok;}
+  function next(s){if(s.over||!s.answered)return false;s.index++;if(s.index===12){s.over=true;s.won=s.correct>=9;return true;}s.answered=false;s.choice=null;s.visual=false;return true;}
+  function step(s,dt){if(!s.over&&Number.isFinite(dt)&&dt>0)s.elapsed+=Math.min(dt,0.05);}
+  function restore(v){
+    if(!v||v.over||!Array.isArray(v.rounds)||v.rounds.length!==12||v.rounds.some(function(r,i){return !r||!Number.isInteger(r.first)||r.first<5||r.first>13||!Number.isInteger(r.second)||![0,i<4?5:i<8?3:1].includes(Math.abs(r.second-r.first));}))return null;
+    if(['index','correct','combo','score','assisted'].some(function(k){return !Number.isInteger(v[k])||v[k]<0;})||v.index>11||v.correct>v.index+(v.answered?1:0)||v.combo>v.correct||v.assisted>v.index+(v.answered?1:0)||v.score>v.correct*150||!Number.isFinite(v.elapsed)||v.elapsed<0||typeof v.answered!=='boolean'||typeof v.visual!=='boolean'||(v.answered?![-1,0,1].includes(v.choice):v.choice!==null))return null;
+    return Object.assign({},v,{rounds:v.rounds.map(function(r){return {first:r.first,second:r.second};}),over:false,won:false});
+  }
+  return {newGame:newGame,answer:answer,next:next,step:step,restore:restore};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports=PitchEngineFactory;
+/* ==== ENGINE END ==== */
+</script><script>
+(function(){var E=PitchEngineFactory();
+  function listen(s,a){var r=s.rounds[Math.min(11,s.index)];a.tone([r.first,-1,r.second],0.48);}
+  LiteArcade({id:'pitch',title:'音高侦探',accent:'#c08bff',engine:E,music:true,hint:'先听声音 · ← 更低 / ↓ 相同 / → 更高 · R 重听',
+    help:'每轮播放两个音，判断第二个比第一个更低、相同还是更高。共十二轮，音程逐渐缩小；答完后按下一题继续。可以无限重听，不限答题时间。开启“显示音高”可用图形辅助，该题基础分减半；辅助仅对当前题生效。声音使用本地合成，无需下载音乐。',
+    controls:[{id:'listen',label:'▶ 听一遍 R',keys:['r']},{id:'lower',label:'↓ 更低',keys:['arrowleft','1']},{id:'same',label:'＝ 相同',keys:['arrowdown','2']},{id:'higher',label:'↑ 更高',keys:['arrowright','3']},{id:'visual',label:'显示音高',keys:['v']},{id:'next',label:'下一题',keys:['n']}],
+    action:function(s,id,a){if(id==='listen')listen(s,a);else if(id==='visual')s.visual=true;else if(id==='next'){if(E.next(s)&&!s.over)listen(s,a);}else{a.stopAudio();E.answer(s,{lower:-1,same:0,higher:1}[id]);}},
+    update:function(s,a){['lower','same','higher'].forEach(function(id){a.button(id).disabled=s.answered||s.over;});a.button('next').disabled=!s.answered||s.over;a.button('next').textContent=s.index===11?'查看成绩':'下一题';a.button('visual').disabled=s.visual||s.answered||s.over;a.button('visual').textContent=s.visual?'音高辅助已开启':'显示音高（减半分）';},
+    status:function(s){var r=s.rounds[Math.min(s.index,11)],answer=['更低','相同','更高'][Math.sign(r.second-r.first)+1];return s.over?'挑战完成':s.answered?(s.choice===Math.sign(r.second-r.first)?'答对了！':'正确答案：'+answer)+' · 点击下一题':'第 '+(s.index+1)+' / 12 题 · 点击听一遍，再判断第二个音';},
+    result:function(s){return {title:s.won?'你的耳朵很敏锐！':'音感练习完成',lines:[{label:'答对',value:s.correct+' / 12'},{label:'辅助题数',value:s.assisted},{label:'得分',value:s.score}]};},
+    draw:function(g,s,a){
+      g.fillStyle='#19142d';g.fillRect(0,0,600,480);for(var i=0;i<40;i++){g.fillStyle='#c08bff44';g.fillRect((i*137)%600,(i*89)%480,2,2);}
+      a.text('PITCH DETECTIVE',300,45,20,'#c6a8ed');a.text(Math.min(12,s.index+1)+' / 12',300,85,28);
+      var r=s.rounds[Math.min(s.index,11)],show=s.visual||s.answered||s.over,ys=show?[320-r.first*9,320-r.second*9]:[235,235];
+      for(var j=0;j<2;j++){g.beginPath();g.arc(190+j*220,ys[j],50,0,Math.PI*2);g.fillStyle=j?'#ffd166':'#c08bff';g.fill();a.text(j?'②':'①',190+j*220,ys[j]+12,34,'#211a32');}
+      if(show){g.beginPath();g.moveTo(245,ys[0]);g.lineTo(355,ys[1]);g.strokeStyle='#ffffff77';g.lineWidth=3;g.stroke();a.text('高度代表音高',300,355,18,'#b8a8cf');}
+      else a.text(a.speaking?'仔细听两个音…':'哪个音更高？',300,355,24);
+      a.text('答对 '+s.correct+' 题 · 连对 '+s.combo,300,425,20,'#c6a8ed');
+    }
+  });
+})();
+</script></body></html>

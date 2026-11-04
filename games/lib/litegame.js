@@ -5,6 +5,7 @@
   if (!C) return;
 
   var CATEGORY_NAMES = {
+    rpg: '角色扮演',
     racing: '赛车',
     action: '动作',
     puzzle: '益智',
@@ -52,7 +53,7 @@
   if (themeMeta) themeMeta.setAttribute('content', '#07070f');
 
   C.back = function () {
-    var target = new URL('../../../index.html', location.href);
+    var target = new URL('../../index.html', location.href);
     target.search = '';
     target.hash = categoryName ? '#/category/' + from : '#/';
     location.href = target.href;
@@ -95,6 +96,7 @@
   /* -------- 虚拟按键：只给需要键盘持续操作的游戏，在触屏设备上显示 -------- */
 
   var PAD_GAMES = {
+    snake: { dirs: ['left', 'right', 'up', 'down'], actions: [] },
     breakout: { dirs: ['left', 'right'], actions: [{ key: ' ', code: 'Space', label: '发射' }] },
     hop: { dirs: ['left', 'right'], actions: [] },
     pingpong: { dirs: ['left', 'right'], actions: [{ key: ' ', code: 'Space', label: '发球' }] },

@@ -299,6 +299,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = BlackjackE
   }
 
   function finish() {
+    if (!S || S.finished) return;
+    S.finished = true;
     var won = S.wins > S.losses, draw = S.wins === S.losses;
     var coins = 4 + S.wins * 2 + S.bjs * 2 + (S.daily ? 8 : 0);
     var points = 10 + S.wins * 6 + S.bjs * 4 + (S.daily ? 25 : 0);

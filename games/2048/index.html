@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070f">
+<meta name="description" content="滑动合并数字，挑战 2048。LiteGame 轻量游戏厅。">
+<title>2048 · LiteGame</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../lib/chogan.css">
+<link rel="stylesheet" href="../lib/litegame.css">
+<style>
+  .m-wrap { width: min(100%, 480px); min-width: 0; margin: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .m-board { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px; border-radius: var(--r-lg); background: var(--c-surface-2); touch-action: none; user-select: none; }
+  .m-cell { min-width: 0; aspect-ratio: 1; display: grid; place-items: center; border-radius: 12px; background: var(--c-surface-3); font-size: clamp(20px, 6vw, 36px); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .m-cell[data-filled] { background: hsl(var(--hue) 65% 74%); color: #161322; box-shadow: inset 0 1px 0 #ffffff60; }
+  .m-cell[data-large] { font-size: clamp(18px, 5vw, 28px); }
+  .m-info { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+  .m-hint { text-align: center; color: var(--c-text-dim); font-size: var(--fs-sm); }
+</style>
+</head>
+<body>
+<script src="../version.js"></script>
+<script src="../lib/chogan.js"></script>
+<script src="../lib/litegame.js"></script>
+<script>
+/* ==== ENGINE START ==== */
+function MergeEngineFactory() {
+  'use strict';
+  function spawn(s, rnd) {
+    var empty = [];
+    s.board.forEach(function (v, i) { if (!v) empty.push(i); });
+    if (empty.length) s.board[empty[Math.floor(rnd() * empty.length)]] = rnd() < 0.9 ? 2 : 4;
+  }
+  function newGame(rnd) {
+    var s = { board: Array(16).fill(0), score: 0, moves: 0, elapsed: 0 };
+    spawn(s, rnd); spawn(s, rnd); return s;
+  }
+  function canMove(s) {
+    return s.board.some(function (v, i, b) { return !v || (i % 4 < 3 && v === b[i + 1]) || (i < 12 && v === b[i + 4]); });
+  }
+  function move(s, dir, rnd) {
+    if (['left', 'right', 'up', 'down'].indexOf(dir) < 0) return false;
+    var before = s.board.slice(), gain = 0;
+    for (var line = 0; line < 4; line++) {
+      var ids = [];
+      for (var p = 0; p < 4; p++) ids.push(dir === 'left' ? line * 4 + p : dir === 'right' ? line * 4 + 3 - p : dir === 'up' ? p * 4 + line : (3 - p) * 4 + line);
+      var values = ids.map(function (i) { return s.board[i]; }).filter(Boolean), out = [];
+      for (var j = 0; j < values.length; j++) {
+        if (values[j] === values[j + 1]) { out.push(values[j] * 2); gain += values[j] * 2; j++; }
+        else out.push(values[j]);
+      }
+      ids.forEach(function (i, k) { s.board[i] = out[k] || 0; });
+    }
+    if (before.every(function (v, i) { return v === s.board[i]; })) return false;
+    s.score += gain; s.moves++; spawn(s, rnd); return true;
+  }
+  function restore(v) {
+    if (!v || !Array.isArray(v.board) || v.board.length !== 16 || !v.board.some(Boolean)) return null;
+    if (v.board.some(function (n) { return !Number.isInteger(n) || n < 0 || n > 2048 || (n !== 0 && (n < 2 || (n & (n - 1)) !== 0)); })) return null;
+    if (['score', 'moves', 'elapsed'].some(function (k) { return !Number.isFinite(v[k]) || v[k] < 0; })) return null;
+    return { board: v.board.slice(), score: v.score, moves: v.moves, elapsed: v.elapsed };
+  }
+  return { newGame: newGame, move: move, canMove: canMove, restore: restore };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = MergeEngineFactory;
+/* ==== ENGINE END ==== */
+</script>
+<script>
+(function () {
+  'use strict';
+  var C = window.Chogan, el = C.el, E = MergeEngineFactory();
+  C.boot({});
+  var ctx = C.game({ id: '2048', name: { zh: '2048', en: '2048' }, accent: '#7ce7a5', scroll: true });
+  var S, ended = false, cells = [], last = performance.now();
+  ctx.stat('score', '得分');
+  var best = el('span', { class: 'ch-badge' });
+  var status = el('div', { class: 'm-hint', role: 'status', 'aria-live': 'polite' });
+  var board = el('div', { class: 'm-board', role: 'group', 'aria-label': '2048 棋盘，使用方向键或滑动操作', tabindex: '0' });
+  for (var i = 0; i < 16; i++) { var cell = el('div', { class: 'm-cell' }); cells.push(cell); board.appendChild(cell); }
+  var restart = el('button', { class: 'ch-btn ch-btn--soft', text: '重新开始', type: 'button', onclick: askRestart });
+  ctx.button({ icon: 'help', label: '玩法说明', onClick: help });
+  ctx.main.appendChild(el('div', { class: 'm-wrap' }, [el('div', { class: 'm-info' }, [best, restart]), board, status, el('p', { class: 'm-hint', text: '方向键 / WASD · 手机上滑动棋盘' })]));
+  ctx.mount();
+  function render() {
+    cells.forEach(function (cell, i) {
+      var n = S.board[i]; cell.textContent = n || ''; cell.setAttribute('aria-label', n ? String(n) : '空格');
+      cell.toggleAttribute('data-filled', !!n); cell.toggleAttribute('data-large', n >= 1024);
+      cell.style.setProperty('--hue', String(155 - Math.log2(n || 2) * 13));
+    });
+    ctx.setStat('score', S.score);
+    best.textContent = '最佳 ' + C.num(C.stats.getBest('2048', 'score') || 0);
+    status.textContent = ended ? '本局已结束，可以重新开始。' : '第 ' + S.moves + ' 步 · 合并相同数字，目标 2048';
+  }
+  function fresh() { S = E.newGame(Math.random); ended = false; last = performance.now(); ctx.save(); render(); }
+  function askRestart() { C.ui.confirm({ title: '重新开始？', body: [el('p', { text: '本局进度会被新棋盘替换。' })], onOk: fresh }); }
+  function finish(won) {
+    if (ended) return;
+    ended = true; render();
+    ctx.finish({ won: won, title: won ? '合成 2048！' : '棋盘填满了', timeMs: S.elapsed,
+      coins: Math.min(30, Math.floor(S.score / 200)), points: Math.min(120, Math.floor(S.score / 50)),
+      lines: [{ label: '得分', value: C.num(S.score) }, { label: '步数', value: C.num(S.moves) }, { label: '最佳', value: C.num(C.stats.getBest('2048', 'score') || 0) }],
+      onAgain: fresh });
+  }
+  function move(dir) {
+    if (ended || document.querySelector('.ch-scrim')) return;
+    if (!E.move(S, dir, Math.random)) return;
+    C.audio.sfx('place'); C.stats.best('2048', 'score', S.score); ctx.save(); render();
+    if (S.board.indexOf(2048) >= 0) finish(true); else if (!E.canMove(S)) finish(false);
+  }
+  var keys = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'left', d: 'right', w: 'up', s: 'down' };
+  window.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    var dir = keys[e.key] || keys[e.key.toLowerCase()];
+    if (dir && !document.querySelector('.ch-scrim')) { e.preventDefault(); move(dir); }
+  });
+  var touch = null;
+  board.addEventListener('pointerdown', function (e) { if (touch || e.button !== 0) return; touch = { id: e.pointerId, x: e.clientX, y: e.clientY }; board.setPointerCapture(e.pointerId); });
+  board.addEventListener('pointerup', function (e) {
+    if (!touch || touch.id !== e.pointerId) return;
+    var dx = e.clientX - touch.x, dy = e.clientY - touch.y; touch = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > 24) move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+  });
+  board.addEventListener('pointercancel', function () { touch = null; });
+  function help() { C.ui.modal({ title: '2048 · 玩法', body: [el('p', { text: '用方向键、WASD 或滑动棋盘移动所有方块。相同数字相撞时合并，每个方块每步只能合并一次。有效移动后出现一个 2 或 4。合成 2048 获胜，无路可走则结束。进度自动保存。' })], actions: [{ label: '知道了', kind: 'primary' }] }); }
+  ctx.autosave(function () { return ended ? { inProgress: false } : S; });
+  S = E.restore(ctx.loadSave());
+  if (!S) fresh(); else { render(); if (S.board.indexOf(2048) >= 0) finish(true); else if (!E.canMove(S)) finish(false); }
+  setInterval(function () { var now = performance.now(); if (!ended && !document.hidden && !document.querySelector('.ch-scrim')) S.elapsed += Math.min(1000, now - last); last = now; }, 1000);
+  C.onPause(function () { touch = null; ctx.save(); });
+  C.onResume(function () { last = performance.now(); });
+})();
+</script>
+</body>
+</html>

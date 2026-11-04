@@ -1,0 +1,19 @@
+.arc-wrap { width: min(100%, 640px); margin: auto; display: grid; gap: 12px; }
+.arc-stage { position: relative; min-width: 0; }
+.arc-canvas { width: 100%; display: block; border: 1px solid var(--c-line); border-radius: 18px; background: #101421; touch-action: none; }
+.arc-overlay { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; background: #080d1bbd; border-radius: 18px; pointer-events: none; color: #fff; padding: 18px; }
+.arc-overlay[hidden] { display: none; }
+.arc-overlay strong { font-size: clamp(22px, 5vw, 34px); }
+.arc-overlay span { margin-top: 10px; font-size: 14px; }
+.arc-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.arc-controls button { min-height: 48px; flex: 1 1 88px; touch-action: manipulation; }
+.arc-controls button[data-held] { background: var(--game); color: #101421; }
+.arc-tools { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; align-items: center; }
+.arc-status { min-height: 2.8em; text-align: center; color: var(--c-text-dim); font-size: var(--fs-sm); line-height: 1.5; }
+.arc-help { margin: 0; text-align: center; font-size: 13px; color: var(--c-text-dim); }
+.arc-pitch .arc-controls, .arc-melody .arc-controls { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.arc-pitch .arc-controls button, .arc-melody .arc-controls button { grid-column: span 2; padding: 10px 5px; font-size: 14px; }
+.arc-pitch [data-action="listen"] { grid-column: span 6 !important; }
+.arc-pitch [data-action="visual"], .arc-pitch [data-action="next"] { grid-column: span 3 !important; }
+.arc-melody [data-action="target"], .arc-melody [data-action="mine"], .arc-melody [data-action="check"], .arc-melody [data-action="next"] { grid-column: span 3 !important; }
+@media (max-width: 360px) { .arc-controls { gap: 6px; } .arc-controls button { padding: 8px; flex-basis: 70px; } }

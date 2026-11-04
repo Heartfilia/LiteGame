@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#07070f"><title>旋律拼图 · LiteGame</title><meta name="description" content="将打乱的音符拼回原来的旋律，试听、修改、提交，完成五张音乐明信片。"><link rel="icon" href="../../assets/images/covers/melody.svg" type="image/svg+xml"><link rel="stylesheet" href="../lib/chogan.css"><link rel="stylesheet" href="../lib/litegame.css"><link rel="stylesheet" href="../lib/arcade.css"></head><body>
+<script src="../version.js"></script><script src="../lib/chogan.js"></script><script src="../lib/litegame.js"></script><script src="../lib/arcade.js"></script><script>
+/* ==== ENGINE START ==== */
+function MelodyEngineFactory(){
+  'use strict';
+  var SCALE=[0,2,4,5,7,9,11,12];
+  function shuffle(a,rnd){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+  function newGame(rnd){var rounds=[];for(var i=0;i<5;i++){var target=shuffle(SCALE,rnd).slice(0,4+Math.floor(i/2)),tiles=shuffle(target,rnd);if(tiles.every(function(n,k){return n===target[k];}))tiles.push(tiles.shift());rounds.push({target:target,tiles:tiles});}return {rounds:rounds,index:0,picks:[],tries:0,solved:0,score:0,elapsed:0,revealed:false,checked:false,message:'听目标旋律，再依次选择音符',over:false,won:false};}
+  function pick(s,i){if(s.over||s.checked||!Number.isInteger(i)||i<0||i>=s.rounds[s.index].tiles.length||s.picks.includes(i))return false;s.picks.push(i);return true;}
+  function undo(s){if(s.over||s.checked||!s.picks.length)return false;s.picks.pop();return true;}
+  function check(s){if(s.over||s.checked)return false;var r=s.rounds[s.index];if(s.picks.length!==r.target.length){s.message='先把所有音符放进旋律';return false;}s.tries++;var correct=s.picks.filter(function(p,i){return r.tiles[p]===r.target[i];}).length;if(correct===r.target.length){s.checked=true;s.solved++;s.score+=Math.max(100,600-(s.tries-1)*100-(s.revealed?200:0));s.message='旋律复原！';return true;}s.message=correct+' / '+r.target.length+' 个位置正确 · 撤回或清空后再试';return false;}
+  function next(s){if(s.over||!s.checked)return false;s.index++;if(s.index===5){s.over=s.won=true;return true;}s.picks=[];s.tries=0;s.revealed=false;s.checked=false;s.message='新的音乐明信片';return true;}
+  function step(s,dt){if(!s.over&&Number.isFinite(dt)&&dt>0)s.elapsed+=Math.min(dt,0.05);}
+  function restore(v){
+    if(!v||v.over||!Array.isArray(v.rounds)||v.rounds.length!==5||v.rounds.some(function(r,i){var n=4+Math.floor(i/2);return !r||!Array.isArray(r.target)||!Array.isArray(r.tiles)||r.target.length!==n||r.tiles.length!==n||new Set(r.target).size!==n||new Set(r.tiles).size!==n||r.target.some(function(k){return !SCALE.includes(k);})||r.tiles.some(function(k){return !r.target.includes(k);});}))return null;
+    if(!Number.isInteger(v.index)||v.index<0||v.index>=5||!Array.isArray(v.picks)||new Set(v.picks).size!==v.picks.length||v.picks.some(function(k){return !Number.isInteger(k)||k<0||k>=v.rounds[v.index].tiles.length;})||['tries','score','solved'].some(function(k){return !Number.isInteger(v[k])||v[k]<0;})||!Number.isFinite(v.elapsed)||v.elapsed<0||typeof v.revealed!=='boolean'||typeof v.checked!=='boolean'||typeof v.message!=='string'||v.solved!==v.index+(v.checked?1:0)||v.score>v.solved*600)return null;
+    var r=v.rounds[v.index];if(v.checked&&(v.picks.length!==r.target.length||v.picks.some(function(p,i){return r.tiles[p]!==r.target[i];})))return null;
+    return JSON.parse(JSON.stringify(v));
+  }
+  return {newGame:newGame,pick:pick,undo:undo,check:check,next:next,step:step,restore:restore,SCALE:SCALE};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports=MelodyEngineFactory;
+/* ==== ENGINE END ==== */
+</script><script>
+(function(){var E=MelodyEngineFactory(),names={0:'Do',2:'Re',4:'Mi',5:'Fa',7:'Sol',9:'La',11:'Si',12:'Do↑'},colors=['#ff8fab','#ffd166','#7ce7a5','#5cc8ff','#b493ff','#ffa66b'];
+  function target(s,a){a.tone(s.rounds[Math.min(4,s.index)].target,0.4);}
+  var controls=[];for(var i=0;i<6;i++)controls.push({id:'note'+i,label:'音符 '+(i+1),keys:[String(i+1)]});
+  controls=controls.concat([{id:'target',label:'▶ 目标旋律 R',keys:['r']},{id:'mine',label:'▷ 我的旋律 P',keys:['p']},{id:'undo',label:'撤回',keys:['backspace']},{id:'clear',label:'清空',keys:['c']},{id:'hint',label:'查看乐谱',keys:['h']},{id:'check',label:'提交旋律',keys:[' ']},{id:'next',label:'下一曲',keys:['n']}]);
+  LiteArcade({id:'melody',title:'旋律拼图',accent:'#5cc8ff',engine:E,music:true,controls:controls,hint:'1—6 选音符 · R 听目标 · P 听拼图 · 空格提交',
+    help:'五段原创短旋律被打乱了。先听目标，再依次点击音符卡拼出旋律；每张卡只能使用一次。可以试听自己的排列、撤回或清空。提交会告诉你正确位置的数量。查看乐谱会展示完整音符顺序，该曲扣 200 分；每次错误提交扣 100 分，完成至少得 100 分。没有时间限制，静音时可看乐谱游玩。',
+    action:function(s,id,a){var r=s.rounds[Math.min(4,s.index)];if(id.indexOf('note')===0){var n=Number(id.slice(4));if(E.pick(s,n))a.tone([r.tiles[n]],0.3);}else if(id==='target')target(s,a);else if(id==='mine')a.tone(s.picks.map(function(p){return r.tiles[p];}),0.4);else if(id==='undo')E.undo(s);else if(id==='clear'&&!s.checked)s.picks=[];else if(id==='hint'&&!s.checked)s.revealed=true;else if(id==='check')E.check(s);else if(id==='next'&&E.next(s)&&!s.over)target(s,a);},
+    update:function(s,a){var r=s.rounds[Math.min(4,s.index)];for(var i=0;i<6;i++){var b=a.button('note'+i);b.hidden=i>=r.tiles.length;b.disabled=s.checked||s.over||s.picks.includes(i);b.textContent=(i+1)+' · '+(names[r.tiles[i]]||'');}a.button('next').disabled=!s.checked||s.over;a.button('next').textContent=s.index===4?'完成合辑':'下一曲';['undo','clear','check','hint'].forEach(function(k){a.button(k).disabled=s.checked||s.over;});},
+    status:function(s){return '第 '+Math.min(5,s.index+1)+' / 5 曲 · '+s.message;},
+    result:function(s){return {title:'旋律合辑完成！',lines:[{label:'复原旋律',value:s.solved+' / 5'},{label:'得分',value:s.score}]};},
+    draw:function(g,s,a){g.fillStyle='#141f32';g.fillRect(0,0,600,480);var r=s.rounds[Math.min(4,s.index)];a.text('MELODY POSTCARDS',300,43,22,'#95cfff');a.text(['晨光','小径','海风','星桥','归途'][Math.min(4,s.index)],300,84,30);
+      for(var i=0;i<5;i++){g.strokeStyle='#ffffff15';g.beginPath();g.moveTo(40,135+i*20);g.lineTo(560,135+i*20);g.stroke();}
+      if(s.revealed||s.checked||s.over)r.target.forEach(function(n,j){var x=80+j*440/(r.target.length-1),y=224-n*7;g.fillStyle='#95cfff';g.beginPath();g.ellipse(x,y,10,7,-0.2,0,Math.PI*2);g.fill();g.fillRect(x+8,y-30,2,30);a.text(names[n],x,260,16,'#95cfff');});else a.text('听一听，拼出这张明信片的旋律',300,187,22,'#a1b3d0');
+      var w=480/r.tiles.length;r.target.forEach(function(n,j){var x=60+j*w;g.fillStyle=s.picks[j]===undefined?'#ffffff0c':colors[s.picks[j]];g.fillRect(x+4,310,w-8,70);a.text(s.picks[j]===undefined?String(j+1):names[r.tiles[s.picks[j]]],x+w/2,353,22,s.picks[j]===undefined?'#8a9bb6':'#182234');});a.text(s.checked?'完美复原，前往下一曲':'选择下方音符，填入空位',300,430,19,'#a1b3d0');}
+  });
+})();
+</script></body></html>
