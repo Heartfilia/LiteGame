@@ -984,7 +984,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = MancalaEng
   });
 
   // the board follows its slot (#359)
-  if (window.ResizeObserver) new ResizeObserver(function () { layout(); }).observe(boardBox);
+  if (window.ResizeObserver) { var resizeFrame = 0; new ResizeObserver(function () { cancelAnimationFrame(resizeFrame); resizeFrame = requestAnimationFrame(layout); }).observe(boardBox); }
   else window.addEventListener('resize', layout);
   // تم با ویژگی data-theme یا تنظیم سیستم عوض می‌شود و بوم خودش نمی‌فهمد
   new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });

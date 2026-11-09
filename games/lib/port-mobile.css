@@ -1,0 +1,23 @@
+/* Keep realtime action games' controls and viewport visible together on phones. */
+.port-game-bounce-back,.port-game-entombed { padding-left: max(8px,env(safe-area-inset-left)); padding-right: max(8px,env(safe-area-inset-right)); }
+.port-game-entombed .port-stage canvas { object-fit:contain; }
+@media (pointer:coarse) and (orientation:portrait) {
+  .port-game-bounce-back .port-stage--bounce { height: min(52dvh,480px); min-height: 180px; }
+  .port-game-entombed #wrap { max-height: 48dvh; }
+}
+@media (orientation:landscape) and (max-height:500px) {
+  .port-game-bounce-back main,.port-game-entombed main { display:grid; grid-template-columns:minmax(0,1fr) 200px; gap:6px 10px; }
+  .port-game-bounce-back header,.port-game-entombed header { grid-column:1 / -1; }
+  .port-game-bounce-back h1,.port-game-entombed h1 { font-size:16px; }
+  .port-game-bounce-back .port-toolbar,.port-game-entombed .port-toolbar { grid-column:2; grid-row:2; margin:0; gap:4px; }
+  .port-game-bounce-back .port-toolbar button,.port-game-entombed .port-toolbar button { flex:1 1 80px; min-height:40px; padding:5px; font-size:12px; }
+  .port-game-bounce-back .port-stage,.port-game-entombed .port-stage { grid-column:1; grid-row:2 / 4; height:calc(100dvh - 64px); min-height:160px; aspect-ratio:auto; }
+  .port-game-bounce-back .port-controls,.port-game-entombed .port-controls { grid-column:2; grid-row:3; align-self:start; margin:0; gap:4px; justify-content:center; }
+  .port-game-bounce-back .port-actions,.port-game-entombed .port-actions { max-width:100%; gap:4px; }
+  .port-game-bounce-back .port-actions button,.port-game-entombed .port-actions button { padding:5px 8px; min-height:40px; font-size:12px; }
+  .port-game-bounce-back .port-controls,.port-game-entombed .port-controls { gap:2px; }
+  .port-game-bounce-back .port-controls button,.port-game-entombed .port-controls button { min-height:36px; padding:3px 6px; }
+  .port-game-bounce-back #port-status,.port-game-entombed #port-status,
+  .port-game-bounce-back details,.port-game-entombed details,
+  .port-game-bounce-back footer,.port-game-entombed footer { grid-column:1 / -1; }
+}

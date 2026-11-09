@@ -2475,7 +2475,7 @@
     // is often "start over", and Enter must not wipe a game by default.
     var focusable = (o.focusPrimary && box.querySelector('.ch-modal__actions .ch-btn--primary')) ||
       box.querySelector('.ch-modal__actions button') || box.querySelector('button, [tabindex], input');
-    if (focusable) setTimeout(function () { focusable.focus(); }, 40);
+    if (focusable) setTimeout(function () { focusable.focus({ preventScroll: true }); }, 40);
     return { close: close, box: box };
   };
 
@@ -2833,6 +2833,7 @@
       dismissable: false
     });
     var btns = m.box.querySelectorAll('.ch-modal__actions .ch-btn');
+    m.box.classList.add('ch-modal--tutorial');
     leftBtn = btns[0]; nextBtn = btns[1];
     render();
     return m;
@@ -2948,7 +2949,12 @@
     audioApi.stopMusic(0.2);
     var fromMenu = ss(NAV_KEY) === 'menu';
     if (fromMenu && global.history.length > 1) global.history.back();
-    else global.location.href = '../index.html';
+    else global.location.href = '../../index.html';
+  };
+
+  Chogan.home = function () {
+    audioApi.stopMusic(0.2);
+    global.location.href = '../../index.html';
   };
 
   var pauseHooks = [];
@@ -3010,6 +3016,8 @@
     // بازگشت در راست‌چین رو به راست است، مثل پیکان‌های منو (#107)
     var backBtn = el('button', { class: 'ch-iconbtn ch-iconbtn--plain', type: 'button', 'aria-label': Chogan.t('back') }, [Chogan.icon(Chogan.isRtl() ? 'forward' : 'back', 22)]);
     backBtn.addEventListener('click', function () { Chogan.feedback('tap'); ctx.save(); Chogan.back(); });
+    var homeBtn = el('button', { class: 'ch-iconbtn ch-iconbtn--plain ch-homebtn', type: 'button', 'aria-label': Chogan.t('home'), title: Chogan.t('home') }, [Chogan.icon('home', 22)]);
+    homeBtn.addEventListener('click', function () { Chogan.feedback('tap'); ctx.save(); Chogan.home(); });
     // Keyboard players had no way back to the menu but Tab to this button (#206).
     // Escape and Backspace also undo a selection or erase a cell in some games,
     // so the check waits until every game listener has run and leaves the key
@@ -3026,7 +3034,7 @@
       }, 0);
     });
 
-    var bar = el('header', { class: 'ch-gamebar' }, standalone ? [title] : [backBtn, title]);
+    var bar = el('header', { class: 'ch-gamebar' }, standalone ? [homeBtn, title] : [backBtn, homeBtn, title]);
     // در نوار بازی هم هست چون ناوبری بین منو و بازی تمام‌صفحه را می‌بندد
     var fsBtn = Chogan.fullscreen.button('ch-iconbtn--plain');
     var main = el('main', { class: 'ch-gamemain' + (cfg.scroll ? ' ch-gamemain--scroll' : '') });

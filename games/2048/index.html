@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../lib/litegame.css">
 <style>
   .m-wrap { width: min(100%, 480px); min-width: 0; margin: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .m-board { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px; border-radius: var(--r-lg); background: var(--c-surface-2); touch-action: none; user-select: none; }
+  .m-board { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px; border-radius: var(--r-lg); background: var(--c-surface-2); touch-action: none; overscroll-behavior: contain; user-select: none; }
   .m-cell { min-width: 0; aspect-ratio: 1; display: grid; place-items: center; border-radius: 12px; background: var(--c-surface-3); font-size: clamp(20px, 6vw, 36px); font-weight: 800; font-variant-numeric: tabular-nums; }
   .m-cell[data-filled] { background: hsl(var(--hue) 65% 74%); color: #161322; box-shadow: inset 0 1px 0 #ffffff60; }
   .m-cell[data-large] { font-size: clamp(18px, 5vw, 28px); }
@@ -115,7 +115,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = MergeEngin
     if (dir && !document.querySelector('.ch-scrim')) { e.preventDefault(); move(dir); }
   });
   var touch = null;
-  board.addEventListener('pointerdown', function (e) { if (touch || e.button !== 0) return; touch = { id: e.pointerId, x: e.clientX, y: e.clientY }; board.setPointerCapture(e.pointerId); });
+  board.addEventListener('pointerdown', function (e) { if (touch || (e.pointerType === 'mouse' && e.button !== 0)) return; e.preventDefault(); touch = { id: e.pointerId, x: e.clientX, y: e.clientY }; board.setPointerCapture(e.pointerId); });
   board.addEventListener('pointerup', function (e) {
     if (!touch || touch.id !== e.pointerId) return;
     var dx = e.clientX - touch.x, dy = e.clientY - touch.y; touch = null;

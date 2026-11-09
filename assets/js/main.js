@@ -236,10 +236,32 @@
             '<span class="page-count">' + list.length + '<small>款游戏</small></span>' +
           '</div>' +
         '</section>' +
-        (list.length
+        (cat.id === 'retro'
+          ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机 / 导入本地卡带</a><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" aria-label="怀旧游戏分页" style="display:flex;gap:16px;align-items:center;justify-content:center;margin:24px 0"></nav></section>'
+          : list.length
           ? '<section class="section section-tight"><div class="game-grid">' + list.map(gameCard).join('') + '</div></section>'
           : '<section class="section section-tight">' + emptyState('这个分区还是空的', '我们正在给它攒一个好玩的开局，先去其他分区逛逛吧。', '#/', '回到主菜单') + '</section>') +
       '</div>';
+    if (cat.id === 'retro') {
+      let page = 0;
+      try { page = Math.max(0, Math.min(Math.ceil(list.length / 36) - 1, Number(sessionStorage.getItem('litegame.retro-page')) || 0)); } catch (e) {}
+      function renderRetroPage() {
+        document.getElementById('retro-cards').innerHTML = list.slice(page * 36, (page + 1) * 36).map(gameCard).join('');
+        const nav = document.getElementById('retro-pages'); nav.replaceChildren();
+        const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + Math.ceil(list.length / 36);
+        for (const [text, step] of [['上一页', -1], ['下一页', 1]]) {
+          const button = document.createElement('button'); button.className = 'btn btn-ghost'; button.textContent = text;
+          button.disabled = page + step < 0 || (page + step) * 36 >= list.length;
+          button.onclick = function () {
+            page += step;
+            try { sessionStorage.setItem('litegame.retro-page', String(page)); } catch (e) {}
+            renderRetroPage(); document.getElementById('retro-cards').scrollIntoView();
+          };
+          nav.append(button); if (step === -1) nav.append(label);
+        }
+      }
+      renderRetroPage();
+    }
   }
 
   function renderSearch(query) {
@@ -317,8 +339,81 @@
   }
 
   let pendingCategoryScroll = false;
+  let routeNavigation = 'initial';
+  let currentRouteKey = '';
+  let routeTrail = [];
+  let routeTrailIndex = -1;
+  const SCROLL_STORAGE_KEY = 'litegame.scroll-position';
+
+  function routeKey(hash) {
+    return (hash || '').replace(/^#\/?/, '') || 'home';
+  }
+
+  function readScrollPositions() {
+    try { return JSON.parse(sessionStorage.getItem(SCROLL_STORAGE_KEY) || '{}'); }
+    catch (e) { return {}; }
+  }
+
+  function saveRouteScroll(key) {
+    if (!key) return;
+    try {
+      const positions = readScrollPositions();
+      positions[key] = Math.max(0, Math.round(window.scrollY || window.pageYOffset || 0));
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
+    } catch (e) { /* storage may be unavailable */ }
+  }
+
+  function applyRouteScroll(key, mode) {
+    const categoryScroll = pendingCategoryScroll;
+    if (categoryScroll) pendingCategoryScroll = false;
+    function restore() {
+      if (categoryScroll) {
+        const target = document.getElementById('categories');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      let top = 0;
+      if (mode === 'back' || mode === 'initial') {
+        const saved = readScrollPositions()[key];
+        if (typeof saved === 'number' && isFinite(saved)) top = saved;
+      }
+      const root = document.documentElement;
+      const previousBehavior = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
+      window.scrollTo(0, top);
+      requestAnimationFrame(function () { root.style.scrollBehavior = previousBehavior; });
+    }
+    restore();
+    requestAnimationFrame(restore);
+    // Some mobile browsers apply their own fragment restoration after
+    // hashchange. A final task wins that race without changing the visible
+    // behavior of ordinary route transitions.
+    setTimeout(restore, 0);
+    setTimeout(restore, 60);
+  }
 
   function route() {
+    const nextRouteKey = routeKey(location.hash);
+    let navigation = routeNavigation;
+    if (currentRouteKey && currentRouteKey !== nextRouteKey) {
+      // Safari and some embedded WebViews report a fragment traversal through
+      // hashchange without firing popstate. The route trail lets us identify
+      // that traversal instead of treating it as a fresh forward navigation.
+      if (routeTrailIndex > 0 && routeTrail[routeTrailIndex - 1] === nextRouteKey) navigation = 'back';
+      else if (routeTrailIndex + 1 < routeTrail.length && routeTrail[routeTrailIndex + 1] === nextRouteKey) navigation = 'forward';
+    }
+    if (currentRouteKey && currentRouteKey !== nextRouteKey) saveRouteScroll(currentRouteKey);
+    currentRouteKey = nextRouteKey;
+    if (routeTrailIndex < 0) {
+      routeTrail = [nextRouteKey];
+      routeTrailIndex = 0;
+    } else if (navigation === 'back' && routeTrailIndex > 0) {
+      routeTrailIndex--;
+    } else if (navigation === 'forward') {
+      routeTrail = routeTrail.slice(0, routeTrailIndex + 1);
+      routeTrail.push(nextRouteKey);
+      routeTrailIndex++;
+    }
     const hash = location.hash.replace(/^#\/?/, '');
     const parts = hash.split('/').filter(Boolean);
     let routeName = 'home';
@@ -339,25 +434,16 @@
     if (routeName === 'category') {
       renderCategory(routeId);
       document.title = '分区 · LiteGame 轻量游戏厅';
-      window.scrollTo({ top: 0 });
     } else if (routeName === 'search') {
       searchInput.value = routeQuery;
       renderSearch(routeQuery);
       document.title = '搜索 · LiteGame 轻量游戏厅';
-      window.scrollTo({ top: 0 });
     } else {
       renderHome();
       document.title = 'LiteGame 轻量游戏厅 · 网页小游戏合集';
-      if (pendingCategoryScroll) {
-        pendingCategoryScroll = false;
-        requestAnimationFrame(function () {
-          const target = document.getElementById('categories');
-          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      } else {
-        window.scrollTo({ top: 0 });
-      }
     }
+    applyRouteScroll(nextRouteKey, navigation);
+    routeNavigation = 'forward';
   }
 
   searchInput.addEventListener('input', showSearchDropdown);
@@ -381,6 +467,14 @@
       searchInput.blur();
     }
   });
+
+  document.addEventListener('click', function (event) {
+    const link = event.target.closest && event.target.closest('a[href^="#"]');
+    if (link) {
+      saveRouteScroll(currentRouteKey);
+      routeNavigation = 'forward';
+    }
+  }, true);
 
   document.addEventListener('click', function (event) {
     if (!searchWrap.contains(event.target)) hideSearchDropdown();
@@ -412,7 +506,12 @@
     }
   });
 
+  window.addEventListener('popstate', function () { routeNavigation = 'back'; });
   window.addEventListener('hashchange', route);
+  window.addEventListener('pagehide', function () { saveRouteScroll(currentRouteKey); });
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted && currentRouteKey) applyRouteScroll(currentRouteKey, 'back');
+  });
 
   /* -------------------------------------------- 进度导入 / 导出 */
 
@@ -587,5 +686,6 @@
     if (event.key === 'Escape' && !dataModal.hidden) closeDataModal();
   });
 
+  try { history.scrollRestoration = 'manual'; } catch (e) { /* older browsers */ }
   route();
 })();

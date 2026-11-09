@@ -70,6 +70,11 @@
   /* on a short phone (360×640) the two-line move list cost the board a fifth of its size;
      one line is enough there, and it still keeps its room before the first move */
   @container game (max-height: 560px) { .cs-moves { height: 2.2em; } }
+  @media (max-width:420px) and (orientation:portrait) {
+    .cs-main { overflow-y:auto; justify-content:flex-start; }
+    .cs-wrap { height:auto; flex-shrink:0; }
+    .cs-wrap > .ch-fit { flex:none; width:100%; height:calc(100vw - 24px); max-height:none; }
+  }
   .cs-promo { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-2); }
   .cs-promo button { aspect-ratio: 1; border: 0; border-radius: var(--r-md); background: var(--cs-light); cursor: pointer; padding: 6px; }
   .cs-promo svg { width: 100%; height: 100%; }
@@ -1034,6 +1039,7 @@ function ChessBotFactory() {
   var movesEl = el('div', { class: 'cs-moves', 'aria-label': C.t('moves') });
   var actions = el('div', { class: 'cs-actions' });
   var wrap = el('div', { class: 'cs-wrap ch-split' }, [el('div', { class: 'ch-fit' }, [boardEl]), el('div', { class: 'ch-side' }, [topBar, topRow, bottomRow, status, actions, movesEl])]);
+  ctx.main.classList.add('cs-main');
   ctx.button({ icon: 'help', label: C.t('help'), onClick: showHelp });
   ctx.button({ icon: 'undo', label: C.t('undoMove'), onClick: undo });
   ctx.button({ icon: 'refresh', label: C.t('newGame'), onClick: askNew });

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+<defs><linearGradient id="sky" x2="1" y2="1"><stop stop-color="#24324e"/><stop offset="1" stop-color="#120e25"/></linearGradient></defs>
+<path fill="url(#sky)" d="M0 0h640v400H0z"/><path d="M0 320h640M0 360h640M80 280l-40 120m160-120-20 120m140-120v120m120-120 20 120m100-120 40 120" stroke="#665080" opacity=".4"/>
+<circle cx="496" cy="90" r="40" fill="#efaa78"/><path d="M486 50h50v80h-50z" fill="#211c34"/>
+<rect x="100" y="115" width="440" height="195" rx="22" fill="#d5cec0"/><rect x="118" y="135" width="404" height="152" rx="10" fill="#353341"/>
+<path d="M167 165h34v30h30v34h-30v30h-34v-30h-30v-34h30z" fill="#12141e" stroke="#88828b" stroke-width="4"/>
+<rect x="265" y="232" width="40" height="12" rx="6" fill="#b6b1b0"/><rect x="319" y="232" width="40" height="12" rx="6" fill="#b6b1b0"/>
+<circle cx="410" cy="224" r="25" fill="#e75c78"/><circle cx="477" cy="201" r="25" fill="#e75c78"/>
+<text x="135" y="87" fill="#f5d99b" font-family="monospace" font-size="30" letter-spacing="7">8-BIT MEMORIES</text>
+<text x="270" y="194" fill="#d5cec0" font-family="monospace" font-size="20">FC / NES</text>
+</svg>

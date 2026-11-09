@@ -3,6 +3,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.join(__dirname, '..');
 function load(id) {
+  if (['ridge-rally','neon-traffic','beat-echo','chord-lab'].includes(id)) return require('../games/lib/five-engines.js')(id);
   if (['starfarm','runetraveler','caravan','wardens','island','magictower'].includes(id)) return require('../games/lib/chronicles-engines.js')(id);
   const html = fs.readFileSync(path.join(root, 'games', id, 'index.html'), 'utf8');
   const source = html.split('/* ==== ENGINE START ==== */')[1].split('/* ==== ENGINE END ==== */')[0].replace(/<\/?script[^>]*>/g, '');

@@ -28,13 +28,15 @@
         if (!C.state.settings.sfx || !audio) return;
         var start = audio.currentTime + 0.06; beat = beat || 0.42;
         notes.forEach(function (n, i) {
+          (Array.isArray(n) ? n : [n]).forEach(function (n, voice, chord) {
           if (n < 0) return;
           var o = audio.createOscillator(), gain = audio.createGain(), at = start + i * beat;
           o.type = 'triangle'; o.frequency.value = 261.6256 * Math.pow(2, n / 12);
-          gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(0.15, at + 0.012); gain.gain.exponentialRampToValueAtTime(0.0001, at + beat * 0.85);
+          gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(0.15 / chord.length, at + 0.012); gain.gain.exponentialRampToValueAtTime(0.0001, at + beat * 0.85);
           o.connect(gain); gain.connect(audio.destination); voices.push(o);
           o.onended = function () { o.disconnect(); gain.disconnect(); var j = voices.indexOf(o); if (j >= 0) voices.splice(j, 1); };
           o.start(at); o.stop(at + beat);
+          });
         });
         soundUntil = performance.now() + (notes.length * beat + 0.06) * 1000;
       },

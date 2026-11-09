@@ -33,7 +33,7 @@
   .sp-board {
     direction: ltr; position: relative; aspect-ratio: 1; /* fills the room it has (#359); it stopped at a fixed size before */
     background: var(--sp-tray); border-radius: var(--r-lg); box-shadow: var(--sh-2), inset 0 0 0 3px rgba(255, 255, 255, .06);
-    touch-action: none; user-select: none; -webkit-user-select: none;
+    touch-action: none; overscroll-behavior: contain; user-select: none; -webkit-user-select: none;
   }
   .sp-hole { position: absolute; inset: 6px; border-radius: calc(var(--r-lg) - 4px); background: var(--sp-hole); }
   .sp-tile {
@@ -553,6 +553,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SlidingEng
   board.addEventListener('pointerdown', function (e) {
     if (!S || S.done || busy || press) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
     press = { id: e.pointerId, x: e.clientX, y: e.clientY, cell: cellAt(e) };
     try { board.setPointerCapture(e.pointerId); } catch (err) { /* older WebViews */ }
   });
@@ -567,7 +568,11 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SlidingEng
     }
     if (p.cell >= 0 && S.tiles[p.cell]) tapCell(p.cell);
   });
-  board.addEventListener('pointercancel', function () { press = null; });
+  board.addEventListener('pointercancel', function (e) {
+    if (press && press.id === e.pointerId) press = null;
+    cur = -1;
+    place();
+  });
   board.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
   window.addEventListener('keydown', function (e) {

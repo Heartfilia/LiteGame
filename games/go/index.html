@@ -841,7 +841,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = GoEngineFa
   });
 
   // the board's size follows its slot, which changes with the window and the side column
-  if (window.ResizeObserver) new ResizeObserver(function () { if (S) draw(); }).observe(boardBox);
+  if (window.ResizeObserver) { var resizeFrame = 0; new ResizeObserver(function () { cancelAnimationFrame(resizeFrame); resizeFrame = requestAnimationFrame(function () { if (S) draw(); }); }).observe(boardBox); }
   else window.addEventListener('resize', function () { if (S) draw(); });
   if (window.matchMedia) {
     var mq = window.matchMedia('(prefers-color-scheme: dark)');

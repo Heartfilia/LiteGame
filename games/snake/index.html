@@ -10,11 +10,21 @@
 <link rel="stylesheet" href="../lib/chogan.css">
 <link rel="stylesheet" href="../lib/litegame.css">
 <style>
-  .sn-wrap { width: min(100%, 480px); margin: auto; display: grid; gap: 12px; }
+  .sn-wrap { width: min(100%, 480px); height: 100%; min-height: 0; margin: auto; display: grid; grid-template-rows: auto minmax(0,1fr) auto auto; gap: 8px; justify-items: center; }
+  .sn-board-slot { width: 100%; min-height: 0; container-type: size; display: grid; place-items: center; }
+  .sn-board-slot .sn-canvas { width: min(100cqw,100cqh); max-height: 100%; }
   .sn-canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: var(--r-lg); border: 1px solid var(--c-line); touch-action: none; }
   .sn-tools { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; }
   .sn-status { text-align: center; min-height: 1.6em; color: var(--c-text-dim); font-size: var(--fs-sm); }
   .sn-tools select { font: inherit; color: var(--c-text); background: var(--c-surface-2); padding: 12px; border: 1px solid var(--c-line); border-radius: 12px; }
+  @media (orientation:landscape) and (max-height:500px) {
+    .ch-gameroot .ch-gamemain.sn-main.lg-pad-space { padding-right: max(8px,env(safe-area-inset-right)); }
+    .sn-wrap { max-width: none; width: 100%; grid-template-columns: minmax(0,1fr) 140px; grid-template-rows: auto auto 1fr; column-gap: 8px; }
+    .sn-board-slot { grid-column: 1; grid-row: 1 / 4; height: 100%; }
+    .sn-tools,.sn-status { grid-column: 2; }
+    .sn-status { font-size: 11px; }
+    .sn-tools select { padding: 6px; min-height: 40px; }
+  }
 </style>
 </head>
 <body>
@@ -66,7 +76,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SnakeEngin
   'use strict';
   var C = window.Chogan, el = C.el, E = SnakeEngineFactory();
   C.boot({});
-  var ctx = C.game({ id: 'snake', name: { zh: '贪吃蛇', en: 'Snake' }, accent: '#7ce7a5', scroll: true });
+  var ctx = C.game({ id: 'snake', name: { zh: '贪吃蛇', en: 'Snake' }, accent: '#7ce7a5' });
+  ctx.main.classList.add('sn-main');
   var S, running = false, ended = false, last = 0, acc = 0;
   ctx.stat('score', '果实');
   var cv = el('canvas', { class: 'sn-canvas', width: '540', height: '540', role: 'img', 'aria-label': '贪吃蛇棋盘，方向键或滑动控制' }), g = cv.getContext('2d');
@@ -76,7 +87,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = SnakeEngin
   var best = el('span', { class: 'ch-badge' });
   ctx.button({ icon: 'help', label: '玩法说明', onClick: function () { pause(); C.ui.modal({ title: '贪吃蛇 · 玩法', body: [el('p', { text: '用方向键、WASD、滑动棋盘或屏幕方向键转向。吃果实会变长，撞墙或撞到身体则结束，不能直接掉头。空格开始或暂停。速度在新一局生效；离开页面会保存当前棋盘，回来后手动继续。' })], actions: [{ label: '知道了', kind: 'primary' }] }); } });
   ctx.button({ icon: 'refresh', label: '重新开始', onClick: function () { pause(); C.ui.confirm({ title: '重新开始？', body: [el('p', { text: '使用所选速度开始新一局。' })], onOk: fresh }); } });
-  ctx.main.appendChild(el('div', { class: 'sn-wrap' }, [el('div', { class: 'sn-tools' }, [best, speed]), cv, el('div', { class: 'sn-tools' }, [play]), status]));
+  ctx.main.appendChild(el('div', { class: 'sn-wrap' }, [el('div', { class: 'sn-tools' }, [best, speed]), el('div', { class: 'sn-board-slot' }, [cv]), el('div', { class: 'sn-tools' }, [play]), status]));
   ctx.mount();
   function render() {
     g.fillStyle = '#101b20'; g.fillRect(0, 0, 540, 540);

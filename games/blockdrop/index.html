@@ -31,6 +31,12 @@
   }
   .bd-btn:active { background: var(--game-soft); color: var(--game); }
   @media (max-width: 360px) { .bd-btn { width: 46px; } }
+  @media (orientation:landscape) and (max-height:500px) {
+    .bd-wrap { display:grid; grid-template-columns:minmax(0,1fr) 180px; grid-template-rows:auto 1fr; }
+    .bd-canvasbox { grid-column:1; grid-row:1 / 3; height:100%; }
+    .bd-top { grid-column:2; }
+    .bd-pad { grid-column:2; display:grid; grid-template-columns:repeat(3,52px); align-self:center; }
+  }
 </style>
 </head>
 <body>
@@ -410,7 +416,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = BlockDropE
   function resize() {
     var boxW = cbox.clientWidth || window.innerWidth;
     var boxH = cbox.clientHeight || (window.innerHeight - 220);
-    scale = Math.max(0.4, Math.min(boxW / FW, boxH / FH));
+    scale = Math.max(0.1, Math.min(boxW / FW, boxH / FH));
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     var w = Math.floor(FW * scale), h = Math.floor(FH * scale);
     canvas.width = Math.floor(w * dpr);

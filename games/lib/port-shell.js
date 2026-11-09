@@ -1,6 +1,10 @@
 // Shared journal UI; each original game supplies a validated snapshot adapter.
 window.PortShell=function(config){
- 'use strict';
+  'use strict';
+  document.body.classList.add('port-game-'+config.id);
+  const home=document.querySelector('header a[href*="index.html"]');
+  if(home){home.className='port-home';home.href='../../index.html';home.textContent='游戏厅主页';home.setAttribute('aria-label','返回游戏厅主页');}
+ if(['bounce-back','entombed'].includes(config.id)){const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('../lib/port-mobile.css',location.href).href;document.head.append(style);}
  const status=document.getElementById('port-status'),journal=CampaignSave(config.id,{restore:config.validate}, {getItem:k=>localStorage.getItem(k),setItem:(k,v)=>localStorage.setItem(k,v)});
  const loaded=journal.load();let locked=['corrupt','version','unavailable'].includes(loaded.status),ready=false;
  const dialog=document.createElement('dialog');dialog.setAttribute('aria-label','存档管理');document.body.append(dialog);

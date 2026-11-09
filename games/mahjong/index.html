@@ -14,13 +14,13 @@
 <style>
   /* کاشی شیء فیزیکی است و در هر دو تم رنگ عاج دارد تا نقش‌ها همیشه خوانا باشند */
   :root { --mj-face: #FBF7EE; --mj-side: #D9CDB4; --mj-edge: #B9AB8E; }
-  .mj-wrap { width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--s-3); }
+  .mj-wrap { width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--s-3); flex-shrink:0; }
   .mj-top { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: center; align-items: center; }
   .mj-clock { font-variant-numeric: tabular-nums; min-width: 52px; justify-content: center; }
   .mj-clock--out { color: var(--c-bad); }
   /* تخته در راست‌چین آینه نمی‌شود؛ جای کاشی‌ها بخشی از چیدمان است */
   /* The view clips the board; zoom and pan move the board inside it (#167) */
-  .mj-view { position: relative; overflow: hidden; touch-action: none; margin: 6px auto; border-radius: var(--r-md); }
+  .mj-view { position: relative; overflow: hidden; touch-action: none; overscroll-behavior: contain; margin: 6px auto; border-radius: var(--r-md); }
   .mj-board { position: relative; direction: ltr; transform-origin: 0 0; }
   /* above every tile: tiles stack at layer * 1000 + row * 10 + column */
   .mj-spark { position: absolute; z-index: 100000; pointer-events: none; animation: mj-spark 380ms var(--ease) forwards; }
@@ -379,6 +379,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = MahjongEng
   ctx.button({ icon: 'undo', label: C.t('undoMove'), onClick: undo });
   ctx.button({ icon: 'refresh', label: C.t('newDeal'), onClick: askNew });
   ctx.main.appendChild(wrap);
+  ctx.main.classList.add('ch-gamemain--scroll');
   ctx.mount();
 
   /* ------------------------------------------------------- نقش کاشی */
@@ -666,6 +667,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = MahjongEng
   });
   window.addEventListener('pointermove', function (e) {
     if (!touches[e.pointerId] || !gesture) return;
+    e.preventDefault();
     touches[e.pointerId] = { x: e.clientX, y: e.clientY };
     var ps = pts();
     if (gesture.pinch && ps.length >= 2) {
@@ -678,7 +680,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = MahjongEng
       if (moved && Z.z > 1) { Z.x += p.x - gesture.last.x; Z.y += p.y - gesture.last.y; applyZoom(); }
       gesture.last = p;
     }
-  });
+  }, { passive: false });
   function endTouch(e) {
     if (!touches[e.pointerId]) return;
     delete touches[e.pointerId];

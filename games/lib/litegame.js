@@ -145,6 +145,7 @@
 
     var pad = document.createElement('div');
     pad.className = 'lg-pad';
+    var releases = [];
 
     if (cfg.dirs && cfg.dirs.length) {
       var dpad = document.createElement('div');
@@ -156,17 +157,25 @@
         b.className = 'lg-pad__btn lg-pad__btn--' + dir;
         b.innerHTML = PAD_ARROW[dir];
         b.setAttribute('aria-label', { left: '左移', right: '右移', up: '上', down: '下' }[dir] || dir);
+        var pointers = {};
         var press = function (e) {
           e.preventDefault();
+          if (pointers[e.pointerId]) return;
+          pointers[e.pointerId] = true;
           if (b.setPointerCapture && e.pointerId != null) {
             try { b.setPointerCapture(e.pointerId); } catch (er) { /* 忽略 */ }
           }
           sendKey('keydown', def.key, def.code);
         };
-        var release = function () { sendKey('keyup', def.key, def.code); };
+        var release = function (e) {
+          if (e && e.pointerId != null) delete pointers[e.pointerId]; else pointers = {};
+          if (!Object.keys(pointers).length) sendKey('keyup', def.key, def.code);
+        };
+        releases.push(function () { release(); });
         b.addEventListener('pointerdown', press);
         b.addEventListener('pointerup', release);
         b.addEventListener('pointercancel', release);
+        b.addEventListener('lostpointercapture', release);
         b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
         dpad.appendChild(b);
       });
@@ -193,5 +202,7 @@
     }
 
     root.appendChild(pad);
+    window.addEventListener('blur', function () { releases.forEach(function (release) { release(); }); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) releases.forEach(function (release) { release(); }); });
   }
 })();

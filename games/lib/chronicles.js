@@ -15,7 +15,59 @@
   function panel(title,children){return el('section',{class:'cp-panel'},[el('h2',{text:title})].concat(children||[]));}
   function stats(items){return el('div',{class:'cp-stats'},items.map(function(t){return el('span',{class:'cp-stat',text:t});}));}
   function row(name,desc,buttons){return el('div',{class:'cp-row'},[el('div',{},[el('strong',{text:name}),el('small',{text:desc})]),el('div',{class:'cp-actions'},buttons)]);}
-  function art(name,symbol){return el('div',{class:'cp-art'},[el('strong',{text:name}),el('span',{text:symbol})]);}
+  function svgText(text,x,y,size,fill,weight){return '<text x="'+x+'" y="'+y+'" font-family="system-ui,sans-serif" font-size="'+size+'" fill="'+fill+'" font-weight="'+(weight||600)+'">'+text+'</text>';}
+  function sceneSvg(name){
+    var common='<defs><linearGradient id="cp-sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#172742"/><stop offset="1" stop-color="#6b9b9a"/></linearGradient><linearGradient id="cp-night" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#11152e"/><stop offset="1" stop-color="#493b68"/></linearGradient><filter id="cp-glow"><feGaussianBlur stdDeviation="4"/></filter></defs>';
+    var s=common+'<rect width="760" height="230" rx="14" fill="#17242b"/>';
+    if(id==='starfarm'){
+      s+='<rect width="760" height="230" rx="14" fill="url(#cp-sky)"/><circle cx="650" cy="43" r="25" fill="#ffe4a0"/><circle cx="650" cy="43" r="39" fill="#ffe4a0" opacity=".18" filter="url(#cp-glow)"/><path d="M0 145 Q150 88 300 143 T760 125V230H0Z" fill="#365d50"/><path d="M0 175 Q200 132 380 176 T760 158V230H0Z" fill="#244638"/><rect x="42" y="108" width="116" height="76" rx="4" fill="#a85f4a"/><path d="M32 111 100 62l70 49Z" fill="#593c4f"/><rect x="87" y="138" width="27" height="46" fill="#4a3540"/><circle cx="62" cy="145" r="12" fill="#e2ba65"/><path d="M196 178h285v34H196Z" fill="#765333"/>';
+      for(var i=0;i<9;i++){var x=210+(i%3)*92,y=130+Math.floor(i/3)*29,g=S.plots[i]&&S.plots[i].crop;s+='<rect x="'+x+'" y="'+y+'" width="78" height="22" rx="5" fill="'+(g?'#527c47':'#8b6340')+'" stroke="#c39b5b"/><path d="M'+(x+39)+' '+(y+17)+'v-8m-8 3 8-6 8 6" stroke="'+(g?'#b8d870':'#b08352')+'" stroke-width="3" fill="none"/>';}
+      s+='<path d="M530 181q12-55 25-70 13 15 25 70Z" fill="#315c45"/><circle cx="555" cy="93" r="25" fill="#4d8654"/><circle cx="535" cy="105" r="20" fill="#568e5a"/><circle cx="575" cy="105" r="20" fill="#568e5a"/>'+svgText(name,22,31,18,'#fff1c7',800)+svgText('第 '+S.day+' 天 · 田园与收成',22,52,12,'#d8e8d1',500);
+    } else if(id==='runetraveler'){
+      s+='<rect width="760" height="230" rx="14" fill="url(#cp-night)"/><circle cx="610" cy="55" r="43" fill="#d8c4ff" opacity=".18"/><circle cx="610" cy="55" r="22" fill="#e5d9ff"/><path d="M0 183 135 109l125 65 120-74 150 73 130-83 130 72v68H0Z" fill="#202b4a"/><path d="M60 190 C190 151 260 185 355 151 S570 161 700 132" fill="none" stroke="#d9a7ff" stroke-width="4" stroke-dasharray="9 8"/>';
+      for(var r=0;r<5;r++){var rx=100+r*132,ry=168-(r%2)*25;s+='<circle cx="'+rx+'" cy="'+ry+'" r="13" fill="'+(r<S.stage?'#8b6bb9':'#302b58')+'" stroke="#e4c8ff" stroke-width="2"/><path d="M'+(rx-5)+' '+ry+'h10M'+rx+' '+(ry-5)+'v10" stroke="#fff1bd" stroke-width="2"/>';}
+      s+='<path d="M520 155l18-42 18 42-18 25Z" fill="#b38bd4" stroke="#f5d6ff" stroke-width="3"/><circle cx="538" cy="105" r="14" fill="#e8c9ff"/><path d="M513 178q25-18 50 0" fill="#6f4d9a"/>'+svgText(name,22,31,18,'#fff1d4',800)+svgText('第 '+S.stage+' / 9 战 · 符文之路',22,52,12,'#e0d0f3',500);
+    } else if(id==='caravan'){
+      s+='<rect width="760" height="230" rx="14" fill="#e6b878"/><circle cx="650" cy="44" r="28" fill="#fff0ae"/><path d="M0 124 120 54l105 70 116-92 115 92 130-62 174 62v106H0Z" fill="#8b604d"/><path d="M0 174q190-40 350 0t410-8v64H0Z" fill="#d39b59"/><path d="M65 230q120-75 250-45t180-18q95-31 200 63" fill="none" stroke="#8f5e42" stroke-width="18" opacity=".75"/><path d="M278 183h130l-20 42H296Z" fill="#a76342" stroke="#543f43" stroke-width="4"/><path d="M295 183v-45h95v45" fill="#d07a50" stroke="#543f43" stroke-width="4"/><path d="M282 140h122l-61-37Z" fill="#704b59"/><circle cx="305" cy="222" r="17" fill="#3a3540"/><circle cx="381" cy="222" r="17" fill="#3a3540"/><path d="M442 185q22-40 44 0m-37 0q22-29 44 0" stroke="#4c3f3b" stroke-width="8" fill="none"/>'+svgText(name,22,31,18,'#4c3440',800)+svgText(E.cities[S.city]+' · 第 '+S.day+' 天 · 商路',22,52,12,'#704b42',600);
+    } else if(id==='wardens'){
+      s+='<rect width="760" height="230" rx="14" fill="#202e3c"/><path d="M0 0h760v230H0Z" fill="#314452"/><path d="M0 185 130 35h75l-70 195H0Zm540 45L610 35h80l-48 195Z" fill="#596878" opacity=".55"/><rect x="178" y="24" width="410" height="178" rx="10" fill="#1c2935" stroke="#91b1b4" stroke-width="3"/>';
+      for(var gy=0;gy<7;gy++)for(var gx=0;gx<7;gx++)s+='<rect x="190" y="35" width="54" height="22" transform="translate('+(gx*55)+' '+(gy*23)+')" fill="'+((gx+gy)%2?'#304550':'#273b44')+'" stroke="#5e7476"/>';
+      var roles=['#e2b86b','#8bc8e1','#b58be0'];for(var u=0;u<S.units.length;u++){var up=S.units[u].pos,ux=190+(up%7)*55+27,uy=46+Math.floor(up/7)*23;s+='<circle cx="'+ux+'" cy="'+uy+'" r="10" fill="'+roles[u]+'" stroke="#fff4cf" stroke-width="2"/><path d="M'+(ux-6)+' '+(uy+6)+'h12" stroke="#24313c" stroke-width="3"/>';}
+      for(var q=0;q<S.enemies.length;q++){if(!S.enemies[q].hp)continue;var ep=S.enemies[q].pos,ex=190+(ep%7)*55+27,ey=46+Math.floor(ep/7)*23;s+='<path d="M'+ex+' '+(ey-10)+'l10 18h-20Z" fill="#ca777d" stroke="#ffe1bb" stroke-width="2"/>';}
+      s+=svgText(name,22,31,18,'#f4dfb5',800)+svgText('遗迹 '+S.mission+' / 6 · 第 '+S.round+' 回合',22,52,12,'#bfd1d0',500);
+    } else if(id==='island'){
+      s+='<rect width="760" height="230" rx="14" fill="#4e9da9"/><path d="M0 0h760v35H0Z" fill="#86d1c5" opacity=".35"/><path d="M0 170q140-25 280 5t270-4q120-25 210 8v51H0Z" fill="#e5c47b"/><path d="M0 199q190-35 370 5t390-3v29H0Z" fill="#c49a61"/><path d="M184 171q45-90 100 0Z" fill="#486947"/><path d="M220 169V66" stroke="#684a3d" stroke-width="8"/><path d="M220 75q-62-30-79 12 55-7 79 16 23-44 86-27-34-45-86-1Z" fill="#397a59"/><path d="M500 191q58-48 115 2l-13 21H512Z" fill="#9b5a42" stroke="#513f46" stroke-width="4"/><path d="M555 194v-49" stroke="#513f46" stroke-width="4"/><path d="M555 146l38 30h-38Z" fill="#ecd594"/><path d="M80 190q14-30 28 0m-14-17v-20" stroke="#e6dfab" stroke-width="5"/>'+svgText(name,22,31,18,'#f5f3cf',800)+svgText(E.zones[S.zone]+' · 第 '+S.day+' 天 · 海岛',22,52,12,'#d9f1df',500);
+    } else {
+      s+='<rect width="760" height="230" rx="14" fill="url(#cp-night)"/><path d="M135 210V55l38-31h414l38 31v155Z" fill="#36394c" stroke="#b28ec7" stroke-width="4"/><path d="M173 55h414M173 92h414M173 129h414M173 166h414" stroke="#5e6076" stroke-width="3"/><path d="M173 55v155M242 55v155M311 55v155M380 55v155M449 55v155M518 55v155" stroke="#5e6076" stroke-width="3"/>';
+      s+='<circle cx="381" cy="145" r="13" fill="#e1b66e" stroke="#fff0bc" stroke-width="3"/><path d="M365 165q16-20 32 0" fill="#8b5b9c"/><path d="M210 79l-7 17h14Z M550 79l-7 17h14Z" fill="#d7a3e5"/><rect x="270" y="177" width="22" height="25" fill="#c7925b"/><rect x="470" y="177" width="22" height="25" fill="#c7925b"/>'+svgText(name,22,31,18,'#f0dcff',800)+svgText('第 '+S.floor+' / 100 层 · 封印之塔',22,52,12,'#d9c7eb',500);
+    }
+    // 状态反馈层：场景中的光效、标记和角色状态随操作变化，而不是一张
+    // 永远不变的装饰图。它们只读游戏状态，不参与规则计算。
+    if(id==='starfarm'){
+      if(S.tool==='water'){
+        for(var d=0;d<7;d++)s+='<path class="cp-scene-rain" d="M'+(225+d*45)+' 112l-5 12" stroke="#bde8f2" stroke-width="3" stroke-linecap="round"/>';
+      }
+      if(S.plots.some(function(p){return p.crop&&p.age>=2;}))s+='<circle class="cp-scene-pulse" cx="430" cy="136" r="18" fill="none" stroke="#d6ee86" stroke-width="3"/>';
+    } else if(id==='runetraveler'){
+      if(S.phase==='battle')s+='<circle class="cp-scene-pulse" cx="538" cy="128" r="28" fill="none" stroke="#ef9aaf" stroke-width="4"/><path class="cp-scene-spark" d="M505 117l-12-12m49 3 11-15m-1 40 16 8" stroke="#ffe7a4" stroke-width="3" stroke-linecap="round"/>';
+      else s+='<path class="cp-scene-fire" d="M390 172q-13-28 8-36-3 17 9 20 12-19 18 4 3 18-18 22-15-1-17-10Z" fill="#f0a75b"/>';
+    } else if(id==='caravan'){
+      if(S.event==='bandits')s+='<g class="cp-scene-alert"><path d="M535 107l22 40h-44Z" fill="#b95c5c" stroke="#ffe3a7" stroke-width="3"/>'+svgText('!',548,137,27,'#fff3c0',900)+'</g>';
+      else if(S.event==='traveler')s+='<g class="cp-scene-spark"><circle cx="535" cy="137" r="17" fill="#8bd2c2"/><path d="M520 167q15-27 30 0" fill="#4b7690"/></g>';
+      else s+='<path d="M444 185h72" stroke="#fff0be" stroke-width="3" stroke-dasharray="8 7" opacity=".7"/>';
+    } else if(id==='wardens'){
+      if(S.phase==='battle'&&S.units[S.selected]&&S.units[S.selected].hp){var sp=S.units[S.selected].pos,sx=190+(sp%7)*55+27,sy=46+Math.floor(sp/7)*23;s+='<rect class="cp-scene-selected" x="'+(sx-19)+'" y="'+(sy-19)+'" width="38" height="38" rx="8" fill="none" stroke="#ffe59a" stroke-width="3"/>';}
+      s+='<path d="M636 190h76" stroke="#d5e5d1" stroke-width="4" stroke-linecap="round"/><path d="M636 190h'+Math.max(8,76-Math.min(76,S.enemies.reduce(function(n,e){return n+(e.hp>0?e.hp:0);},0)))+'" stroke="#d2787c" stroke-width="4" stroke-linecap="round"/>';
+    } else if(id==='island'){
+      var madeCount=S.made.length;s+='<g class="cp-scene-craft">'+svgText('制作 '+madeCount+'/7',625,202,12,'#fff1c2',800)+'<path d="M626 211h92" stroke="#172f35" stroke-width="5"/><path d="M626 211h'+Math.min(92,madeCount*13)+'" stroke="#d8c16d" stroke-width="5"/></g>';
+      if(S.zone===3)s+='<circle class="cp-scene-pulse" cx="92" cy="166" r="17" fill="none" stroke="#b6d7ec" stroke-width="3"/>';
+    } else if(id==='magictower'){
+      var tx=173+(S.pos%9)*69+34,ty=55+Math.floor(S.pos/9)*37+18;s+='<rect class="cp-scene-selected" x="'+(tx-18)+'" y="'+(ty-18)+'" width="36" height="36" rx="7" fill="none" stroke="#ffe79d" stroke-width="3"/>';
+      if(S.floor%10===0)s+='<circle class="cp-scene-pulse" cx="381" cy="77" r="20" fill="none" stroke="#df9ee8" stroke-width="4"/>';
+    }
+    return '<svg class="cp-scene-svg" viewBox="0 0 760 230" role="img" aria-label="'+name+'场景" preserveAspectRatio="xMidYMid slice">'+s+'</svg>';
+  }
+  function art(name,symbol){return el('div',{class:'cp-scene',role:'img','aria-label':name,html:sceneSvg(name)});}
   function show(title){returnFocus=sheet.hidden?document.activeElement:returnFocus;dialog.replaceChildren(el('h2',{text:title}));sheet.hidden=false;wrap.inert=true;ctx.bar.inert=true;}
   function close(){if(locked)return;sheet.hidden=true;wrap.inert=false;ctx.bar.inert=false;if(returnFocus&&returnFocus.isConnected)returnFocus.focus();}
   function dismiss(){var b=button('返回游戏',close);dialog.appendChild(b);b.focus();}

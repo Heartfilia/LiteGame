@@ -3,7 +3,7 @@
 # LiteGame 轻量游戏厅 · 部署脚本（Debian / Ubuntu，纯静态站点）
 #
 # 用法：
-#   sudo ./deploy/deploy.sh          # 首次完整部署（装 Nginx 配置 + 复制文件）
+#   sudo ./deploy/deploy.sh          # 首次同步文件，检查已有 Nginx 配置
 #   sudo ./deploy/deploy.sh update   # 日常更新（只复制文件，无需重启）
 #
 # 前置条件：
@@ -18,7 +18,6 @@ set -euo pipefail
 
 # 站点根目录，与 deploy/nginx.conf 中的 root 保持一致
 APP_DIR="${APP_DIR:-/opt/litegame}"
-CONF_NAME="litegame.conf"
 
 # install = 首次完整部署；update = 日常更新（改完代码后同步）
 MODE="${1:-install}"
@@ -40,6 +39,24 @@ die()  { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 
 command -v nginx >/dev/null 2>&1 || die "未找到 nginx，请先安装：sudo apt install nginx"
 command -v systemctl >/dev/null 2>&1 || die "未检测到 systemd，本脚本仅适用于使用 systemd 的发行版"
+command -v rsync >/dev/null 2>&1 || die "未找到 rsync，请先安装：sudo apt install rsync"
+command -v realpath >/dev/null 2>&1 || die "未找到 realpath，请先安装 coreutils"
+
+# --delete-excluded 会清理旧部署中非公开文件，仅允许独立的站点目录。
+APP_DIR="$(realpath -m "$APP_DIR")"
+SRC_DIR="$(realpath "$SRC_DIR")"
+case "$APP_DIR" in
+  /|/opt|/var|/var/www|/home|/root|/etc|/usr|/srv|/tmp) die "APP_DIR 必须是专用站点子目录" ;;
+esac
+case "$APP_DIR/" in "$SRC_DIR/"*) die "站点目录不能位于源码目录内" ;; esac
+case "$SRC_DIR/" in "$APP_DIR/"*) die "站点目录不能包含源码目录" ;; esac
+[ -f "$SRC_DIR/deploy/publish.rules" ] || die "缺少发布规则 deploy/publish.rules"
+# 不允许源码符号链接将站点指向工作区之外的文件。
+[ -z "$(find "$SRC_DIR/assets" "$SRC_DIR/games" -type l -print -quit)" ] || die "assets/games 中存在符号链接，请改为实际公开资源"
+[ ! -L "$SRC_DIR/index.html" ] || die "首页不能是符号链接"
+
+# 在更新文件前检查现有配置，避免配置已损坏时仍继续发布。
+nginx -t || die "Nginx 配置校验失败，请先修复配置"
 
 [ -f "$SRC_DIR/index.html" ] || die "未找到 $SRC_DIR/index.html，请在项目根目录内运行本脚本"
 
@@ -51,17 +68,16 @@ log "站点目录：$APP_DIR"
 log "同步站点文件到 $APP_DIR"
 mkdir -p "$APP_DIR"
 
-# --delete：删掉线上已不存在于源目录的旧文件，保证两边一致；
-# 排除 deploy/ 自身与 .git
-rsync -a --delete \
-  --exclude 'deploy/' \
-  --exclude '.git/' \
-  --exclude '.DS_Store' \
+# 仅发布首页、assets/、games/；清掉旧部署遗留的 .git、tests、deploy、秘密文件。
+# APP_DIR 是发布产物目录，不应放证书、备份、上传文件或其他站点。
+rsync -a --delete --delete-excluded \
+  --filter="merge $SRC_DIR/deploy/publish.rules" \
   "$SRC_DIR"/ "$APP_DIR"/
 
 # 静态文件全局可读即可，避免出现权限导致的 403
 chown -R root:root "$APP_DIR"
-chmod -R a+rX "$APP_DIR"
+find "$APP_DIR" -type d -exec chmod 755 {} +
+find "$APP_DIR" -type f -exec chmod 644 {} +
 
 # SELinux 开启时（Amazon Linux / RHEL / CentOS），不给目录打标签 Nginx 会 403
 if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
@@ -109,9 +125,7 @@ systemctl reload nginx
 
 sleep 1
 if command -v curl >/dev/null 2>&1; then
-  if curl -fsS -o /dev/null --max-time 3 -H 'Host: game.litetools.top' "https://game.litetools.top/" 2>/dev/null ||
-     curl -fsS -o /dev/null --max-time 3 -k "https://127.0.0.1/" 2>/dev/null ||
-     curl -fsS -o /dev/null --max-time 3 "http://127.0.0.1/"; then
+   if curl -fsS -o /dev/null --max-time 3 --resolve 'game.litetools.top:443:127.0.0.1' "https://game.litetools.top/"; then
     log "本机自检通过：站点可访问"
   else
     warn "本机自检失败：请检查 nginx 是否在运行（systemctl status nginx）"
@@ -144,7 +158,8 @@ else
 
    站点目录：  $APP_DIR
    纯静态站点即时生效，无需重启服务。
-   浏览器可能缓存了旧资源，验证时建议用无痕窗口。
+   HTML 不缓存，CSS/JS 每次发布时重新向 Nginx 验证；浏览器仍可能保留
+   当前页面的 bfcache，验证时可关闭页面后重新打开，或检查响应头。
 ────────────────────────────────────────────────
 EOF
 fi

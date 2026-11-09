@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../lib/chogan.css">
 <link rel="stylesheet" href="../lib/litegame.css">
 <style>
-  .ms-wrap { width: 100%; display: flex; flex-direction: column; gap: var(--s-3); align-items: center; max-width: 100%; }
+  .ms-wrap { width: 100%; display: flex; flex-direction: column; gap: var(--s-3); align-items: center; max-width: 100%; flex-shrink:0; }
   .ms-top { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; justify-content: center; }
   /* قاب ثابت می‌ماند و فقط داخلش اسکرول می‌شود، پس حاشیه هیچ‌وقت از دید خارج نمی‌شود */
   .ms-frame {
@@ -584,7 +584,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = MinesEngin
   function roomH() {
     var cs = getComputedStyle(ctx.main);
     var inner = ctx.main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-    return Math.floor(inner - (wrap.offsetHeight - scroll.offsetHeight) - 6);
+    return Math.floor(inner - top.offsetHeight - tools.offsetHeight - 2 * parseFloat(getComputedStyle(wrap).rowGap) - 6);
   }
   // and the width: the game area's, less its padding, not a fixed 640px (#359)
   function roomW() {
@@ -634,6 +634,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = MinesEngin
       ));
     }
     if (S.noGuess === true) top.appendChild(el('span', { class: 'ch-badge ch-badge--good', text: C.t('noGuess') }));
+    sizeCells();
     paint();
   }
 

@@ -297,3 +297,18 @@ body {
 .ch-gameroot .ch-gamemain.lg-pad-space--tall {
   padding-bottom: calc(144px + env(safe-area-inset-bottom, 0px));
 }
+
+/* Short landscape phones: keep the board tall and put controls in side gutters. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .ch-gameroot .ch-gamemain.lg-pad-space,
+  .ch-gameroot .ch-gamemain.lg-pad-space--tall {
+    padding: 8px calc(92px + env(safe-area-inset-right, 0px)) 8px calc(126px + env(safe-area-inset-left, 0px));
+  }
+  .lg-pad { padding: 0 max(8px, env(safe-area-inset-left, 0px)) 0 max(8px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+  .lg-pad__dpad { gap: 4px; }
+  .lg-pad__dpad--2 { grid-template-columns: repeat(2, 48px); }
+  .lg-pad__dpad--4 { grid-template-columns: repeat(3, 36px); }
+  .lg-pad__btn { width: 48px; height: 48px; }
+  .lg-pad__dpad--4 .lg-pad__btn { width: 36px; height: 44px; }
+  .lg-pad__btn--act { width: auto; min-width: 72px; padding: 0 10px; }
+}
