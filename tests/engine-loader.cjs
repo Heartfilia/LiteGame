@@ -10,9 +10,9 @@ function load(id) {
   const sandbox = { module: { exports: {} }, console };
   vm.runInNewContext(source, sandbox, { filename: id, timeout: 10000 });
   let cue;
-  if (id === 'eightball' || id === 'snooker') {
+  if (['eightball','snooker','carrom','football'].includes(id)) {
     const core = { module: { exports: {} } };
-    vm.runInNewContext(fs.readFileSync(path.join(root, 'games/lib/cue.js'), 'utf8'), core);
+    vm.runInNewContext(fs.readFileSync(path.join(root, ['carrom','football'].includes(id)?'games/lib/cue-expansion.js':'games/lib/cue.js'), 'utf8'), core);
     cue = core.module.exports;
   }
   return sandbox.module.exports(cue);

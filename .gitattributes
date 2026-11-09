@@ -1,0 +1,3 @@
+# Preserve pinned upstream bytes, including CRLF and whitespace in pixel sprites.
+games/crisp/*/main.js -text -whitespace
+games/crisp/vendor/*.js -text -whitespace

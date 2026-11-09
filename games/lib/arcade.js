@@ -41,6 +41,7 @@
         soundUntil = performance.now() + (notes.length * beat + 0.06) * 1000;
       },
       stopAudio: stopAudio,
+      act: action,
       text: function (text, x, y, size, color, align) { g.fillStyle = color || '#edf2ff'; g.font = '600 ' + (size || 20) + 'px sans-serif'; g.textAlign = align || 'center'; g.fillText(text, x, y); },
       button: function (id) { return buttons[id]; }
     };

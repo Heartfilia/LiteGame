@@ -1,0 +1,242 @@
+{
+  "repositories": {
+    "crisp-game-lib-games": "cfb39d2f988feb5918eb83697145b5a35adabf58",
+    "crisp-game-lib-11-games": "6fea4eefe2deaa42706051d96a04ec9e36104696"
+  },
+  "packages": [
+    {
+      "name": "crisp-game-lib",
+      "version": "1.1.1",
+      "integrity": "sha512-agv/YtEkFIFNVwABeNxwtn2SfWEOsZHt3bts1jSCOJuy4/OaVz1DWXdPKcwKycnj77CiG+3OK2Xdq6KuSF7mYA=="
+    },
+    {
+      "name": "sounds-some-sounds",
+      "version": "3.0.0",
+      "integrity": "sha512-Ca6o459G4MIQY9/9YeXqxRhopuPe0u7XJZfYG5kCg6hwwjTRsV3s22Njo9mRkKVFgGrFVy2KUsxYYUChHtRj3A=="
+    }
+  ],
+  "games": [
+    {
+      "id": "aba-chargebeam",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/chargebeam/main.js",
+      "sha256": "398e4ba510a9ed370eabaf54abf2aa6051dd45047d64c46e98d1c3b0b12cdfda",
+      "category": "action"
+    },
+    {
+      "id": "aba-catapult",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/catapult/main.js",
+      "sha256": "b1bc7390b54eb0ced2aa32e4b785dcc7dafac1874550f4488cae0125d8c8de69",
+      "category": "action"
+    },
+    {
+      "id": "aba-dpistols",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/dpistols/main.js",
+      "sha256": "36f45131e784dbd14caadbbedea4c05b5f07485daf0dded4fe0c3f316923e260",
+      "category": "action"
+    },
+    {
+      "id": "aba-grenadier",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/grenadier/main.js",
+      "sha256": "9795d49f641f9130a19b9b7ee79c3eaf70b1ad462b21268015e53c5601479ae9",
+      "category": "action"
+    },
+    {
+      "id": "aba-islash",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/islash/main.js",
+      "sha256": "e31b9878c0ffa1c702efbc11a3e0564fde19df060d86d18b3ceb412b4b88d77e",
+      "category": "action"
+    },
+    {
+      "id": "aba-laserfortress",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/laserfortress/main.js",
+      "sha256": "760749cab8392079fcf5cbd2119710b317b7869fe6d329493bd2840c6b6aa111",
+      "category": "action"
+    },
+    {
+      "id": "aba-scrambird",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/scrambird/main.js",
+      "sha256": "5cd06738f6b42c96b6e0cd0c951c738dce71344bdd15076512fd3b4e0d81163e",
+      "category": "action"
+    },
+    {
+      "id": "aba-reflector",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/reflector/main.js",
+      "sha256": "b885261c7a7c2b4104004ca7aaaa723cd448a6b6d0b112f76f5b38a33e569141",
+      "category": "action"
+    },
+    {
+      "id": "aba-upshot",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/upshot/main.js",
+      "sha256": "4fde48f37161f5321672c0ec890c67b581ce7266b38e83bd3130a7da9ad27965",
+      "category": "action"
+    },
+    {
+      "id": "aba-mortar",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/mortar/main.js",
+      "sha256": "f226baabc28a27b266b8df4adbd463210a85d4152358055772c631e4cd78872a",
+      "category": "action"
+    },
+    {
+      "id": "aba-divarr",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/divarr/main.js",
+      "sha256": "373fb4289c58c5b72e32fb3a681045adb26b4443c6af5d14963112fd17ee2aa3",
+      "category": "action"
+    },
+    {
+      "id": "aba-hyperlaser",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/hyperlaser/main.js",
+      "sha256": "0faf1a18460a16146b2975af7e99bfd481ca6acb59741f1f359577b5536efc92",
+      "category": "action"
+    },
+    {
+      "id": "aba-bamboo",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/bamboo/main.js",
+      "sha256": "ddbb9d0592897333a294b31cd7e9234ed3b47310b172b51f11cd7fd484c79859",
+      "category": "casual"
+    },
+    {
+      "id": "aba-balloon",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/balloon/main.js",
+      "sha256": "c6e6977b902fd217939b291a5be0ee652e6112b379aff9577d798eb23452a0e4",
+      "category": "casual"
+    },
+    {
+      "id": "aba-cleanrobo",
+      "source": "https://github.com/abagames/crisp-game-lib-11-games/blob/6fea4eefe2deaa42706051d96a04ec9e36104696/docs/cleanrobo/main.js",
+      "sha256": "1a33a0dc24fc13b2988e079ad8196aee27433302ccf01a7c883fbb85ae05986c",
+      "category": "casual"
+    },
+    {
+      "id": "aba-pakupaku",
+      "source": "https://github.com/abagames/crisp-game-lib-11-games/blob/6fea4eefe2deaa42706051d96a04ec9e36104696/docs/pakupaku/main.js",
+      "sha256": "465b4baaa64bb3c3d3fed5a31788611b49420406acf655d998dc8dda9cbbbe87",
+      "category": "casual"
+    },
+    {
+      "id": "aba-dango",
+      "source": "https://github.com/abagames/crisp-game-lib-11-games/blob/6fea4eefe2deaa42706051d96a04ec9e36104696/docs/dango/main.js",
+      "sha256": "4fcc6584f27517d433742538eb5867791cdd0ba17971e8acf67cd3f2e03024d9",
+      "category": "casual"
+    },
+    {
+      "id": "aba-timbertest",
+      "source": "https://github.com/abagames/crisp-game-lib-11-games/blob/6fea4eefe2deaa42706051d96a04ec9e36104696/docs/timbertest/main.js",
+      "sha256": "37299c23628de5c5d195f087cde341842e2aee5a4ca878be5b83739b97190726",
+      "category": "casual"
+    },
+    {
+      "id": "aba-growth",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/growth/main.js",
+      "sha256": "344b587c0eaf8c5c78bd1ee2f20073041862c55ad23314e823b2018e208affa7",
+      "category": "casual"
+    },
+    {
+      "id": "aba-shiny",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/shiny/main.js",
+      "sha256": "765f080adbc1661ffa81ec9c3aad174e07050261587cb0dddac9a1e66b532414",
+      "category": "casual"
+    },
+    {
+      "id": "aba-findastar",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/findastar/main.js",
+      "sha256": "dbf058c0bebbc26c6778b84cea8441475c12fa458483dc69f7d4427905d0a5aa",
+      "category": "casual"
+    },
+    {
+      "id": "aba-antlion",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/antlion/main.js",
+      "sha256": "eacbe24a0ea0c3a5f320b1aa75233ef06fc632ad5cd85a0bfa090ed5fb98e5e7",
+      "category": "casual"
+    },
+    {
+      "id": "aba-froooog",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/froooog/main.js",
+      "sha256": "59392e0ec83286cf09f4f6d8cc440fef71269cffed9c1ccfca67fa779f01c175",
+      "category": "casual"
+    },
+    {
+      "id": "aba-kite",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/kite/main.js",
+      "sha256": "24dd78afcf99147b432cdc58c52500bf8d2c76b92960ed6ab797fec8de825e69",
+      "category": "casual"
+    },
+    {
+      "id": "aba-balance",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/balance/main.js",
+      "sha256": "37d9756feb3dafb70380080f48ed242bec4db0db1ccd8b886af1226aa5998717",
+      "category": "casual"
+    },
+    {
+      "id": "aba-twolane",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/twolane/main.js",
+      "sha256": "d3386e01fec11c7c5478692401e18fe754e3bea43ed8120166988db9ef611e82",
+      "category": "racing"
+    },
+    {
+      "id": "aba-parking",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/parking/main.js",
+      "sha256": "f72e7790d4d5d6cfbcd8bd831ae8466bd7666a3e30cedf956ebedd271ebe87e0",
+      "category": "racing"
+    },
+    {
+      "id": "aba-tlanes",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/tlanes/main.js",
+      "sha256": "c371085f68fb3983b8e0d25ae30f7c4743e45405564fb74ea269a5747a40355a",
+      "category": "racing"
+    },
+    {
+      "id": "aba-rbdrive",
+      "source": "https://github.com/abagames/crisp-game-lib-11-games/blob/6fea4eefe2deaa42706051d96a04ec9e36104696/docs/rbdrive/main.js",
+      "sha256": "b46e6678ccea53bccfbb6709999180fc3722768c81832dbb62c5d2d77cfb96d4",
+      "category": "racing"
+    },
+    {
+      "id": "aba-slalom",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/slalom/main.js",
+      "sha256": "e2099c59bf7381a21f24fece670683c86aeded498af8967f9ef7eaf7657a8f5e",
+      "category": "sports"
+    },
+    {
+      "id": "aba-golfme",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/golfme/main.js",
+      "sha256": "98cf2aef856b7324b81bccb8d60c07a95965df042166a2106acf90384f7e4ebb",
+      "category": "sports"
+    },
+    {
+      "id": "aba-skygolf",
+      "source": "https://github.com/abagames/crisp-game-lib-11-games/blob/6fea4eefe2deaa42706051d96a04ec9e36104696/docs/skygolf/main.js",
+      "sha256": "820cbeb86c738dc1f508237982418e5a004929d6ae01063189e521bc2efb3b31",
+      "category": "sports"
+    },
+    {
+      "id": "aba-castn",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/castn/main.js",
+      "sha256": "0cf8a3eb79517cdb34595e1f93b5440c4bc548e99c91df1e5b175e74cede266c",
+      "category": "sports"
+    },
+    {
+      "id": "aba-numberball",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/numberball/main.js",
+      "sha256": "fff931cfe6647cad59104bb68554cf17b6ef571eb7d61c26215ba8c26f12d7c9",
+      "category": "sports"
+    },
+    {
+      "id": "aba-tpunch",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/tpunch/main.js",
+      "sha256": "b022a7de05bcc1e7a8470dfa4bd1e73c093ac61db93f5e70db53869c81f92674",
+      "category": "sports"
+    },
+    {
+      "id": "aba-cardq",
+      "source": "https://github.com/abagames/crisp-game-lib-games/blob/cfb39d2f988feb5918eb83697145b5a35adabf58/docs/cardq/main.js",
+      "sha256": "9e2dcc5779e9714a4f38a7f8700bd99cc1d417aa36898c19d8fdf605bd376e38",
+      "category": "cards"
+    },
+    {
+      "id": "aba-attackchain",
+      "source": "https://github.com/abagames/crisp-game-lib-11-games/blob/6fea4eefe2deaa42706051d96a04ec9e36104696/docs/attackchain/main.js",
+      "sha256": "14f7459cb39a8b90747c8e2411227722af9cf9617754bc0454bd9c9257daed1f",
+      "category": "cards"
+    }
+  ]
+}

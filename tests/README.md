@@ -15,7 +15,23 @@ node --test tests/*.test.cjs
 - `casual-ports.test.cjs`：泡泡龙与三消以合法动作走完各 20 关（允许重试），泡泡簇与反弹、三消交叉消除与恢复确定性、围猫 BFS／胜负／撤销、无效存档拒绝。
 - `deploy-cache.test.cjs`：检查 Nginx 对 HTML、CSS、JS、图片和字体使用重新验证缓存，并确认部署在同步文件前后校验 Nginx 配置。
 - `nes.test.cjs`：怀旧目录完整性、ROM 内容校验与三款代表游戏的启动／存档确定性。
-- `five-games.test.cjs`：山路拉力与车流穿梭的合法通关／失败、节拍回声的复奏／超时、和弦工坊的选音／评分、四款存档恢复；目录测试要求每个分区至少五个条目。
+- `five-games.test.cjs`：山路拉力与车流穿梭的合法通关／失败、节拍回声的复奏／超时、和弦工坊的选音／评分、四款存档恢复。
+- `collection.test.cjs`：53 款原创初始化与存档、接龙牌张守恒／撤销、音乐答案及节奏判定、赛车通关、体育目标可达性。
+- `collection-routes.test.cjs`：十二个 RPG 短篇分别通过合法移动、战斗、职业机制和出口完成任务。
+- `h5-sources.test.cjs`：37 款 ABA 原文哈希、许可证与本地依赖；当前目录检查要求每个分区至少 **20** 个条目。
+
+### 每区二十款扩充的浏览器检查
+
+```sh
+node tests/static-server.cjs
+# 另一个终端，playwright 需在 node_modules 或 NODE_PATH 中可解析
+GAME_BASE_URL=http://127.0.0.1:8766 node tests/h5-imports.browser.cjs
+GAME_BASE_URL=http://127.0.0.1:8766 BROWSER_ENGINE=webkit node tests/h5-imports.browser.cjs
+node tests/collection.browser.cjs
+BROWSER_ENGINE=webkit node tests/collection.browser.cjs
+```
+
+ABA 检查真实触摸、暂停、外部资源及四种尺寸。原创专项逐款进行输入、有效存档和刷新一致性检查，并验证五个家族的实际结算。通用 `mobile-games.browser.cjs` 可用 `GAME_IDS` 选择新增 Chogan 游戏。
 - `nes-audit.cjs`：逐个独立进程检查全部 ROM 的 180 帧启动与 START 输入，结果写入 `games/nes/catalog.json`，再运行 `python3 deploy/publish-nes.py` 更新展示目录。启动检查不等于完整通关验证。
 
 ## 浏览器测试

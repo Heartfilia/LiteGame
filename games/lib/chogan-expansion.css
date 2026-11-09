@@ -1,0 +1,5 @@
+/* Mobile adjustments for the newly imported upstream games. */
+.ch-badge.ch-tap{min-height:44px}
+.sk-top button{min-width:36px;min-height:40px}
+.dm-tile{min-width:40px!important;min-height:60px!important}
+@media(max-height:450px){.tr-top,.trio-top{flex-wrap:wrap!important}.ch-main{overflow:auto}.dm-side{justify-content:flex-start!important}.dm-side>*{flex-shrink:0}.tr-wrap{min-height:460px;flex:none}.tr-tools{flex-shrink:0;padding-bottom:12px}}

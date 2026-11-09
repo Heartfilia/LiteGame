@@ -134,8 +134,8 @@ test('catalog has playable entries and local covers in every category', () => {
   vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/js/games.js'), 'utf8'), { window });
   const { games, categories } = window.GAME_DATA;
   assert.equal(new Set(games.map(g => g.id)).size, games.length);
-  // Every section must retain at least five entries.
-  for (const c of categories) assert.ok(games.filter(g => g.category === c.id).length >= 5, c.id + ' has too few games');
+  // Every section must retain at least twenty playable entries.
+  for (const c of categories) assert.ok(games.filter(g => g.category === c.id).length >= 20, c.id + ' has too few games');
   for (const g of games) {
     assert.ok(fs.existsSync(path.join(root, g.url.split('?')[0])), g.url);
     assert.ok(fs.existsSync(path.join(root, g.cover)), g.cover);

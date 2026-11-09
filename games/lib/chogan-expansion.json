@@ -1,0 +1,98 @@
+{
+  "repository": "https://github.com/choganhq/chogan",
+  "revision": "55bdf6ae6df1fad51221a9403912148ac09fd746",
+  "games": [
+    {
+      "id": "carrom",
+      "files": {
+        "index.html": "3869c33604525def413d1bbd70eab70699fa3c675fc7a517403381810911cd72",
+        "icon.svg": "4b864be695a159c6f1734a2d6e84caf6aff7d99314c2d6ce2d7dc375c2c734ef"
+      }
+    },
+    {
+      "id": "dominoes",
+      "files": {
+        "index.html": "c0ae662ab4711d7624740a2327de44bfc76185684119af5232a805c33441deb9",
+        "icon.svg": "bd426889eca5248d8d5f69e55754d8efc7246b41f6f4472e9b88fec567b79d74"
+      }
+    },
+    {
+      "id": "fourrow",
+      "files": {
+        "index.html": "d00b428062b75156f8b0f46c9bf313fa34a1ea64869b58305ac08c3a9da09deb",
+        "icon.svg": "a44fdd07299da63b1c3a2f18aaeff9a4875a9a4662aa91740e5ee412e0b0741b"
+      }
+    },
+    {
+      "id": "territories",
+      "files": {
+        "index.html": "4f947e9f035234018b1eb17d34ee33fd3baefba606b57c2c7d17c7a626998613",
+        "icon.svg": "b35e4680ebae15a88ee8c25b3d8dd6f5381afd88d3adc23e845f7043c9672b8f"
+      }
+    },
+    {
+      "id": "pipes",
+      "files": {
+        "index.html": "f6fe0004172d13ed485d1435e063682d24f4690e5a61e4bcad077021ed5c500b",
+        "icon.svg": "be10da55c4b3d49189ffdee4dae86b1094393796e9f63e73c47fe8faf34434b9"
+      }
+    },
+    {
+      "id": "storekeeper",
+      "files": {
+        "index.html": "3fa08097dfce7f89e5a4a31dc96f21f5e2a6a7fdfe2f649a5bb18083f338cf53",
+        "icon.svg": "5b17edc5a889e6c2b3a119ce529d5661badb9dd2a037bb2320abf48dd8a8f893"
+      }
+    },
+    {
+      "id": "sums",
+      "files": {
+        "index.html": "58333443fd8df6c2ded98f45c554ec900cbd69625b406653ca7282a1555cdd45",
+        "icon.svg": "f95acdc4fccb5cb061db88b42281d370b9d0110feb80ca04306b37f96f76af69"
+      }
+    },
+    {
+      "id": "watersort",
+      "files": {
+        "index.html": "ca947c2534f55a490f47aa54de19e0c50f97d1895e5a59e9895cafcb06bf32e5",
+        "icon.svg": "bc991cf61dc7c6e8321181dfd89b20c47badd583498fe36d06e72415fe37e493"
+      }
+    },
+    {
+      "id": "trio",
+      "files": {
+        "index.html": "e82ce29653f7ad8e6bfbc1ecca8398fcb268d48fccacb574d91156715a651c57",
+        "icon.svg": "a3cf818961064038b6701b0fab20d3afe8e98aa8c50c8930df400bc9a05edcea"
+      }
+    },
+    {
+      "id": "numberdrop",
+      "files": {
+        "index.html": "87be4c30470b8da9a7c4668df44765c239d02fc0ad556ceae51928bfa471827f",
+        "icon.svg": "6a6758f3a590ef80ddfe5cc1a0e3d4d0b321efdcbfd07a0d57002cc72c289685"
+      }
+    },
+    {
+      "id": "starraid",
+      "files": {
+        "index.html": "5874f2818bf4a2ca4202f5d0f95a99abb4934d186fef8312417548ae38b6dc19",
+        "icon.svg": "52c480711a233c32061f8b8b34f1235bd6d3886a8a0dc6b23fb5e0a15cd13e4d"
+      }
+    },
+    {
+      "id": "football",
+      "files": {
+        "index.html": "51816166ad0dbc52d24887e1a96383801b380654724859ceac0c69b350357678",
+        "icon.svg": "846c7a15afaa70c80efa0ffaae229787daa18f4d206d3a32776f49e08581708a"
+      }
+    },
+    {
+      "id": "peak",
+      "files": {
+        "index.html": "2c6394570c8dd712509c0ad36a137ab0fc74199a230e2ae3ebee52f5719c3688",
+        "icon.svg": "5fb34e393617a76c6f5ce12777c34c74fe3c5e01698c064a8e2483ff7a1d1a50"
+      }
+    }
+  ],
+  "cueSha256": "7c365ba470f7a8d5405141a8eaf91f0c3340e0285fee4b08a50c26cd300b144e"
+}
