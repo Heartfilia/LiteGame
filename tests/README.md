@@ -15,7 +15,7 @@ node --test tests/*.test.cjs
 - `casual-ports.test.cjs`：泡泡龙与三消以合法动作走完各 20 关（允许重试），泡泡簇与反弹、三消交叉消除与恢复确定性、围猫 BFS／胜负／撤销、无效存档拒绝。
 - `deploy-cache.test.cjs`：检查 Nginx 对 HTML、CSS、JS、图片和字体使用重新验证缓存，并确认部署在同步文件前后校验 Nginx 配置。
 - `nes.test.cjs`：怀旧目录完整性、ROM 内容校验与三款代表游戏的启动／存档确定性。
-- `jigsaw-free.test.cjs`：400 块自由拼图的任意摆放、真实邻接吸附、组合合并／移动、完整拼接、存档恢复与损坏校验。
+- `jigsaw-free.test.cjs`：100／400 块自由拼图的任意摆放、真实邻接吸附、组合合并／移动、完整拼接、存档恢复与损坏校验，以及旧 20×20 存档兼容。
 - `five-games.test.cjs`：山路拉力与车流穿梭的合法通关／失败、节拍回声的复奏／超时、和弦工坊的选音／评分、四款存档恢复。
 - `collection.test.cjs`：53 款原创初始化与存档、接龙牌张守恒／撤销、音乐答案及节奏判定、赛车通关、体育目标可达性。
 - `collection-routes.test.cjs`：十二个 RPG 短篇分别通过合法移动、战斗、职业机制和出口完成任务。
@@ -80,7 +80,7 @@ BROWSER_ENGINE=webkit node tests/mobile-tutorials.browser.cjs
 
 `nes-display.browser.cjs` 和 `nes-system-buttons.browser.cjs` 默认连接 8766 端口（`node tests/static-server.cjs`），同时使用 Chromium 与 WebKit；可通过 `GAME_BASE_URL` 指向其他测试端口。
 
-`jigsaw-free.browser.cjs` 同样默认连接 8766，同时运行 Chromium 和 WebKit：验证空白工作区、400 块入口、触摸放置、组间合并、整体拖动／取消、缩放坐标、平移、刷新恢复、四尺寸与可达控件。Chromium 另用 CDP 验证真实触摸拖动和取消；结局采用合法的 399 块组合存档，再通过 UI 拼入最后一块。包含经典模式回归。
+`jigsaw-free.browser.cjs` 同样默认连接 8766，同时运行 Chromium 和 WebKit：分别验证 10×10、20×20 的空白工作区、难度入口、触摸放置、组间合并、整体拖动／取消、缩放坐标、平移、刷新恢复、四尺寸与可达控件。Chromium 另用 CDP 验证真实触摸拖动和取消；结局采用合法的 99／399 块组合存档，再通过 UI 拼入最后一块。包含旧 20×20 存档和经典模式回归。
 
 ### 检查范围
 

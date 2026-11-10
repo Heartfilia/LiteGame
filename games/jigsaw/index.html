@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#07070f">
 <meta name="color-scheme" content="dark">
 <meta name="application-name" content="LiteGame">
-<meta name="description" content="经典拼图与自由难度：20×20 共 400 块，空白工作区自由摆放、吸附拼接、整组拖动。 LiteGame 轻量游戏厅。">
+<meta name="description" content="经典拼图与自由难度：10×10（100 块）、20×20（400 块），空白工作区自由摆放、吸附拼接、整组拖动。 LiteGame 轻量游戏厅。">
 <title>拼图 · LiteGame</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../lib/chogan.css">
@@ -78,7 +78,7 @@ function JigsawEngineFactory() {
   // Piece counts and their cuts. The picture is 3:4 upright, so on a 390px phone, where the
   // picture is about 360px wide, the pieces are about 120, 90, 60 and 45px. 150 pieces would be
   // 36px there, under a fingertip, so it is offered only where a piece keeps MIN_PIECE (#376).
-  var CUTS = { 12: [3, 4], 24: [4, 6], 48: [6, 8], 96: [8, 12], 150: [10, 15], 400: [20, 20] };
+  var CUTS = { 12: [3, 4], 24: [4, 6], 48: [6, 8], 96: [8, 12], 150: [10, 15], 100: [10, 10], 400: [20, 20] };
   var COUNTS = [12, 24, 48, 96, 150];
   var BIG_ONLY = [150];
   var MIN_PIECE = 44;
@@ -2318,7 +2318,7 @@ function JigsawPictures() {
   var TRAY_H = 96, TRAY_W = 232, LIFT_PX = 8, WIN_MS = 900, GLIDE_MS = 200;
 
   var prefs = ctx.store.get('prefs', null);
-  if (!prefs || (prefs.count !== 400 && E.COUNTS.indexOf(prefs.count) < 0)) prefs = { count: 24, last: null };
+  if (!prefs || (!freeCount(prefs.count) && E.COUNTS.indexOf(prefs.count) < 0)) prefs = { count: 24, last: null };
   // the pictures finished at each count, so a new game shows one not finished there yet (#376)
   if (!prefs.done || typeof prefs.done !== 'object') prefs.done = {};
 
@@ -2349,7 +2349,8 @@ function JigsawPictures() {
   freeTools.append(freeTool('− 缩小', function () { freeBoard.zoom(0.8); }), zoomLabel,
     freeTool('＋ 放大', function () { freeBoard.zoom(1.25); }), freeTool('查看全部', function () { freeBoard.fit(); }));
   wrap.insertBefore(freeTools, mid);
-  function isFree() { return S && S.count === 400; }
+  function freeCount(n) { return n === 100 || n === 400; }
+  function isFree() { return S && freeCount(S.count); }
 
   // one number in the bar: with two, the title had no room left on a phone
   ctx.stat('left', C.t('left'));
@@ -2425,7 +2426,7 @@ function JigsawPictures() {
   }
   // A count this screen does not offer, kept from a bigger window, falls back to the largest it does
   function usable(n) {
-    if (n === 400) return n;
+    if (freeCount(n)) return n;
     var r = room(), ok = E.offered(r[0], r[1]);
     return ok.indexOf(n) >= 0 ? n : ok[ok.length - 1];
   }
@@ -2471,7 +2472,7 @@ function JigsawPictures() {
     side = false; wrap.classList.remove('jg-wrap--side'); aside.remove();
     mid.append(frame, tray); wrap.prepend(top); wrap.insertBefore(freeTools, mid); wrap.append(status);
     // Keep pieces large enough to handle; the camera, not the puzzle, fits the viewport.
-    L = { w: 960, h: 1280, cols: 20, rows: 20, cw: 48, ch: 64, m: 22 };
+    L = { w: S.cols * 48, h: S.rows * 64, cols: S.cols, rows: S.rows, cw: 48, ch: 64, m: 22 };
     var width = Math.max(240, Math.min(1160, ctx.main.clientWidth - 24));
     render();
     var height = Math.max(180, Math.min(680, ctx.main.clientHeight - top.offsetHeight - freeTools.offsetHeight - status.offsetHeight - TRAY_H - 84));
@@ -2510,7 +2511,7 @@ function JigsawPictures() {
   function render() {
     ctx.setStat('left', C.num(S.tray.length));
     if (isFree()) {
-      status.textContent = (S.done ? '拼图完成！' : '工作区 ' + S.placed.length + '/400 块 · ' + S.free.groups.length + ' 组') + ' · 拖动拼块；空白处拖动平移。也可点选散块，再点工作区放下。正确邻块靠近后自动拼接。';
+      status.textContent = (S.done ? '拼图完成！' : '工作区 ' + S.placed.length + '/' + S.count + ' 块 · ' + S.free.groups.length + ' 组') + ' · 拖动拼块；空白处拖动平移。也可点选散块，再点工作区放下。正确邻块靠近后自动拼接。';
       return;
     }
     if (!S.done) status.textContent = S.misses ? C.t('wrongs') + ': ' + C.num(S.misses) : '';
@@ -2522,9 +2523,9 @@ function JigsawPictures() {
       var r = room(), counts = E.offered(r[0], r[1]);
       // a game already running at a count this window does not offer keeps its button
       if (counts.indexOf(S.count) < 0) counts = E.COUNTS.filter(function (n) { return n === S.count || counts.indexOf(n) >= 0; });
-      counts.push(400);
+      counts.push(100, 400);
       top.appendChild(C.ui.segmented(
-        counts.map(function (n) { return { value: n, label: n === 400 ? '自由 · 20×20' : C.num(n) }; }),
+        counts.map(function (n) { return { value: n, label: freeCount(n) ? '自由 · ' + E.CUTS[n].join('×') : C.num(n) }; }),
         S.count,
         function (v) {
           if (v === S.count) return;
@@ -2551,7 +2552,7 @@ function JigsawPictures() {
     render();
     if (S.done && !wasDone) {
       C.feedback('good'); frame.classList.add('jg-frame--done');
-      C.ui.toast({ icon: 'check', title: '400 块拼图完成！', sub: '完整拼图仍可整体拖动，进度已保存。' });
+      C.ui.toast({ icon: 'check', title: S.count + ' 块拼图完成！', sub: '完整拼图仍可整体拖动，进度已保存。' });
     }
     save();
   }
@@ -2667,7 +2668,7 @@ function JigsawPictures() {
       prefs.last = id; ctx.store.set('prefs', prefs);
     }
     S = E.deal(n, seed, rnd, id);
-    if (n === 400) S.free = F.create();
+    if (freeCount(n)) S.free = F.create(S.cols);
     start(S, daily || null, 0);
     save();
   }
@@ -2709,10 +2710,10 @@ function JigsawPictures() {
 
   function showHelp() {
     if (isFree()) {
-      C.ui.modal({ title: '自由难度 · 20×20（400 块）', body: [
+      C.ui.modal({ title: '自由难度 · ' + S.cols + '×' + S.rows + '（' + S.count + ' 块）', body: [
         el('p', { text: '工作区没有底图、网格或固定位置。拖入拼块后可以任意摆放；正确相邻的拼块在对应边靠近时会吸附，自动合成一组。抓住组内任意拼块即可移动整个组合，组合之间也能继续拼接。' }),
         el('p', { text: '拖动空白处平移工作区；滚轮或放大／缩小按钮调整视图，“查看全部”找回所有已放入的拼块。手机可先点选下方散块，再点工作区放置。选中组合后方向键微调，Enter 尝试吸附，Esc 取消选择。' }),
-        el('p', { text: '位置、组合和缩放视图会自动保存，刷新后继续。400 块全部连成一个整体才算完成，完成后仍可移动整张拼图。' })
+        el('p', { text: '位置、组合和缩放视图会自动保存，刷新后继续。' + S.count + ' 块全部连成一个整体才算完成，完成后仍可移动整张拼图。' })
       ], actions: [{ label: C.t('done'), kind: 'primary' }] });
       return;
     }
@@ -2949,12 +2950,12 @@ function JigsawPictures() {
   var saved = ctx.loadSave();
   // a save that fails its checks is dropped and a fresh picture is dealt
   var resume = saved && saved.s && (saved.daily || null) === (dailyDate || null) ? E.restore(saved.s) : null;
-  if (resume && resume.count === 400) {
-    resume.free = F.restore(saved.s.free, resume.placed);
+  if (resume && freeCount(resume.count)) {
+    resume.free = F.restore(saved.s.free, resume.placed, resume.cols);
     if (!resume.free || dailyDate) resume = null;
     else resume.done = F.complete(resume.free);
   }
-  if (resume && (!resume.done || resume.count === 400)) {
+  if (resume && (!resume.done || freeCount(resume.count))) {
     start(resume, saved.daily || null, saved.elapsed || 0);
   } else if (dailyDate) {
     newGame(E.DAILY_COUNT, dailyDate);

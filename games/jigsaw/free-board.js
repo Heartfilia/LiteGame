@@ -4,7 +4,7 @@
     var F = window.JigsawFree, canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
     canvas.className = 'jg-free-canvas'; canvas.tabIndex = 0;
     canvas.setAttribute('aria-label', '自由拼图工作区：拖动拼块或空白处，使用缩放按钮；选中组合后方向键微调，回车吸附');
-    var state, pieces = [], paths = [], cw = 48, ch = 64, margin = 22;
+    var state, pieces = [], paths = [], cols = 20, count = 400, cw = 48, ch = 64, margin = 22;
     var width = 0, height = 0, selected = null, drag = null, enabled = false;
     function world(x, y) {
       var v = state.view;
@@ -18,7 +18,7 @@
       ctx.translate(width / 2, height / 2); ctx.scale(v.zoom, v.zoom); ctx.translate(-v.x, -v.y);
       state.groups.forEach(function (g) {
         g.pieces.forEach(function (i) {
-          var x = (g.x + i % 20) * cw, y = (g.y + Math.floor(i / 20)) * ch;
+          var x = (g.x + i % cols) * cw, y = (g.y + Math.floor(i / cols)) * ch;
           var sx = (x - v.x) * v.zoom + width / 2, sy = (y - v.y) * v.zoom + height / 2;
           if (sx < -(cw + margin) * v.zoom || sy < -(ch + margin) * v.zoom || sx > width + margin * v.zoom || sy > height + margin * v.zoom) return;
           ctx.drawImage(pieces[i], x - margin, y - margin, cw + 2 * margin, ch + 2 * margin);
@@ -37,7 +37,7 @@
       for (var k = state.groups.length - 1; k >= 0 && !found; k--) {
         var g = state.groups[k];
         for (var i of g.pieces) {
-          if (ctx.isPointInPath(paths[i], p.x - (g.x + i % 20) * cw, p.y - (g.y + Math.floor(i / 20)) * ch)) { found = g; break; }
+          if (ctx.isPointInPath(paths[i], p.x - (g.x + i % cols) * cw, p.y - (g.y + Math.floor(i / cols)) * ch)) { found = g; break; }
         }
       }
       ctx.restore(); return found;
@@ -111,8 +111,9 @@
       setup: function (next, layout, makePiece, outline) {
         cancel(); state = next; selected = null; enabled = true;
         cw = layout.cw; ch = layout.ch; margin = layout.m;
+        cols = layout.cols; count = cols * layout.rows;
         pieces = []; paths = [];
-        for (var i = 0; i < 400; i++) {
+        for (var i = 0; i < count; i++) {
           pieces.push(makePiece(i, 1));
           var p = new Path2D();
           outline(i).forEach(function (c) {
@@ -140,7 +141,7 @@
       fit: function () {
         if (!enabled || drag) return;
         var xs = [], ys = [];
-        state.groups.forEach(function (g) { g.pieces.forEach(function (i) { xs.push((g.x + i % 20) * cw); ys.push((g.y + Math.floor(i / 20)) * ch); }); });
+        state.groups.forEach(function (g) { g.pieces.forEach(function (i) { xs.push((g.x + i % cols) * cw); ys.push((g.y + Math.floor(i / cols)) * ch); }); });
         if (!xs.length) { state.view.x = 0; state.view.y = 0; state.view.zoom = 1; }
         else {
           var left = Math.min.apply(null, xs) - margin, right = Math.max.apply(null, xs) + cw + margin;

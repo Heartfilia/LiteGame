@@ -24,8 +24,8 @@ async function drop(page,id,x,y){
 }
 async function worldPoint(page,id){
  const s=(await session(page)).s, g=s.free.groups.find(g=>g.pieces.includes(id));
- const r=await page.locator('.jg-free-canvas').boundingBox(),v=s.free.view;
- return canvasPoint(page,r.width/2+((g.x+id%20+.5)*48-v.x)*v.zoom,r.height/2+((g.y+Math.floor(id/20)+.5)*64-v.y)*v.zoom);
+  const r=await page.locator('.jg-free-canvas').boundingBox(),v=s.free.view,cols=Math.sqrt(s.count);
+  return canvasPoint(page,r.width/2+((g.x+id%cols+.5)*48-v.x)*v.zoom,r.height/2+((g.y+Math.floor(id/cols)+.5)*64-v.y)*v.zoom);
 }
 (async()=>{
  for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
@@ -35,13 +35,15 @@ async function worldPoint(page,id){
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(base+'/games/jigsaw/');
    await page.evaluate(()=>Chogan.storage('jigsaw').set('tutSeen',true));await page.reload();
-   await page.getByRole('tab',{name:'自由 · 20×20',exact:true}).tap();
-   await page.waitForFunction(()=>Chogan.storage('jigsaw').get('session')?.s.count===400);
-   assert.equal(await page.locator('.jg-slot').count(),400);
+   for(const cols of [10,20]){
+   const count=cols*cols,label='自由 · '+cols+'×'+cols;
+   await page.getByRole('tab',{name:label,exact:true}).tap();
+   await page.waitForFunction(n=>Chogan.storage('jigsaw').get('session')?.s.count===n,count);
+   assert.equal(await page.locator('.jg-slot').count(),count);
    assert.equal(await page.locator('.jg-grid').isVisible(),false);
    assert.ok(await page.locator('.jg-free-canvas').evaluate(c=>c.getContext('2d').getImageData(0,0,c.width,c.height).data.every(v=>v===0)),'empty workspace has no guide lines or picture');
    // Arrange only the tray order for deterministic selection; all assembly actions use UI input.
-   const ordered=await session(page);ordered.s.tray=[0,1,20,21,...ordered.s.tray.filter(i=>![0,1,20,21].includes(i))];await loadFixture(page,ordered);
+   const ordered=await session(page);ordered.s.tray=[0,1,cols,cols+1,...ordered.s.tray.filter(i=>![0,1,cols,cols+1].includes(i))];await loadFixture(page,ordered);
    await page.locator('[data-piece="0"]').waitFor({state:'visible'});
    const slot=await page.locator('[data-piece="0"]').boundingBox(),target=await canvasPoint(page,180,160);
    await drag(page,{x:slot.x+slot.width/2,y:slot.y+slot.height/2},target);
@@ -50,13 +52,13 @@ async function worldPoint(page,id){
    await drop(page,1,180+48+5,160+4);
    s=(await session(page)).s;assert.equal(s.free.groups.length,1);assert.equal(s.free.groups[0].pieces.length,2);assert.equal(s.free.groups[0].x,origin.x);
    // Correct shapes but far from their neighbour stay independent and can form a second group.
-   await drop(page,20,380,320);await drop(page,21,428,320);
+   await drop(page,cols,380,320);await drop(page,cols+1,428,320);
    s=(await session(page)).s;assert.equal(s.free.groups.length,2);assert.ok(s.free.groups.every(g=>g.pieces.length===2));
    let p=await worldPoint(page,0);await drag(page,p,{x:p.x+70,y:p.y+30});
    s=(await session(page)).s;const moved=s.free.groups.find(g=>g.pieces.includes(0));
    assert.ok(Math.abs(moved.x-origin.x-70/48)<.001);assert.equal(moved.pieces.length,2);
    // Grab a piece in the second group and join both assemblies at once.
-   const first=await worldPoint(page,0),second=await worldPoint(page,20);
+   const first=await worldPoint(page,0),second=await worldPoint(page,cols);
    await drag(page,second,{x:first.x+3,y:first.y+64+3});
    s=(await session(page)).s;assert.equal(s.free.groups.length,1);assert.equal(s.free.groups[0].pieces.length,4);
    const beforeCancel=JSON.stringify(s.free.groups);
@@ -91,24 +93,26 @@ async function worldPoint(page,id){
    for(const size of [{width:390,height:844},{width:320,height:568},{width:844,height:390},{width:568,height:320}]){
     await page.setViewportSize(size);await page.waitForTimeout(250);
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no overflow '+JSON.stringify(size));
-    await page.getByRole('tab',{name:'自由 · 20×20',exact:true}).scrollIntoViewIfNeeded();
-    assert.ok(await page.getByRole('tab',{name:'自由 · 20×20',exact:true}).evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'difficulty selector remains reachable');
+    await page.getByRole('tab',{name:label,exact:true}).scrollIntoViewIfNeeded();
+    assert.ok(await page.getByRole('tab',{name:label,exact:true}).evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'difficulty selector remains reachable');
     const id=(await session(page)).s.tray[0];await drop(page,id,90,90);
     assert.ok((await session(page)).s.placed.includes(id));
    }
    // A valid near-complete save exercises completion, including persistence and final-group movement.
    await page.setViewportSize({width:1000,height:900});
    const nearComplete=await session(page);
-   nearComplete.s.placed=Array.from({length:399},(_,i)=>i);nearComplete.s.tray=[399];
-   nearComplete.s.free={version:1,groups:[{pieces:nearComplete.s.placed.slice(),x:0,y:0}],view:{x:19*48,y:19*64,zoom:1}};
+   nearComplete.s.placed=Array.from({length:count-1},(_,i)=>i);nearComplete.s.tray=[count-1];
+   nearComplete.s.free={version:1,cols,groups:[{pieces:nearComplete.s.placed.slice(),x:0,y:0}],view:{x:(cols-1)*48,y:(cols-1)*64,zoom:1}};
+   if(cols===20)delete nearComplete.s.free.cols; // Legacy 400-piece saves have no dimensions.
    await loadFixture(page,nearComplete);
-   const r=await page.locator('.jg-free-canvas').boundingBox();await drop(page,399,r.width/2+24,r.height/2+32);
-   s=(await session(page)).s;assert.equal(s.free.groups[0].pieces.length,400);assert.equal(s.tray.length,0);
+   const r=await page.locator('.jg-free-canvas').boundingBox();await drop(page,count-1,r.width/2+24,r.height/2+32);
+   s=(await session(page)).s;assert.equal(s.free.groups[0].pieces.length,count);assert.equal(s.tray.length,0);
    assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
-   p=await worldPoint(page,399);await drag(page,p,{x:p.x+20,y:p.y+15});
+   p=await worldPoint(page,count-1);await drag(page,p,{x:p.x+20,y:p.y+15});
    assert.ok((await session(page)).s.free.groups[0].x>0,'completed puzzle remains movable');
    await page.reload();assert.equal(await page.locator('.jg-slot').count(),0);assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
-   assert.deepEqual(errors,[]);console.log(name+': 400 pieces, blank workspace, touch placement, group joins/drag/cancel, pan/zoom, refresh, four sizes and completion passed');
+   assert.deepEqual(errors,[]);console.log(name+': '+count+' pieces, blank workspace, touch placement, group joins/drag/cancel, pan/zoom, refresh, four sizes and completion passed');
+   }
    // Classic mode still draws guides and places a piece by its keyboard cell.
    await loadFixture(page,null,{count:12,done:{}});
    assert.equal(await page.locator('.jg-grid').isVisible(),true);assert.equal(await page.locator('.jg-free-canvas').isVisible(),false);

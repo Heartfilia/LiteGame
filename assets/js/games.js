@@ -350,7 +350,7 @@ window.GAME_DATA = {
       url: 'games/jigsaw/index.html?from=puzzle',
       cover: 'assets/images/covers/jigsaw.jpg',
       tags: ['拼图', '拖拽', '风景'],
-      description: '经典 12～150 块，或自由难度 20×20：空白工作区任意摆放，正确拼接后整组拖动，支持缩放与进度保存。',
+      description: '经典 12～150 块，或自由难度 10×10、20×20：空白工作区任意摆放，正确拼接后整组拖动，支持缩放与进度保存。',
       badge: 'PICK',
       source: 'chogan'
     },

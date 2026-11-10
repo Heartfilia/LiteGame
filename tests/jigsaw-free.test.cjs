@@ -43,3 +43,20 @@ test('Free jigsaw saves preserve positions/view and reject corrupted or disconne
  assert.equal(F.restore(s,[3]),null);assert.equal(F.restore({...s,version:2},[3,9]),null);
  assert.equal(F.move(s.groups[0],NaN,0),false);
 });
+
+test('10x10 uses its own neighbours, piece limits and completion; legacy 20x20 saves remain compatible',()=>{
+ const J=load('jigsaw'),deal=J.deal(100,42,rng(42),'lake'),s=F.create(10);
+ assert.equal(deal.cols,10);assert.equal(deal.rows,10);assert.equal(deal.tray.length,100);
+ assert.equal(F.add(s,100,0,0),null);
+ assert.equal(F.adjacent(9,10,10),false);assert.equal(F.adjacent(0,10,10),true);
+ const a=F.add(s,0,4,5),b=F.add(s,10,4,6);assert.equal(F.join(s,b),1);
+ assert.equal(F.groupOf(s,0),b);assert.equal(a.x,b.x);
+ for(let i=0;i<100;i++)if(i!==0&&i!==10){const g=F.add(s,i,4+i%10,5+Math.floor(i/10));F.join(s,g);}
+ assert.ok(F.complete(s));assert.equal(s.groups[0].pieces.length,100);
+ const placed=Array.from({length:100},(_,i)=>i);
+ assert.deepEqual(F.restore(copy(s),placed,10),s);
+ assert.equal(F.restore(copy(s),placed,20),null);
+ const legacy=F.create();F.add(legacy,20,2,3);delete legacy.cols;
+ const restored=F.restore(legacy,[20],20);assert.equal(restored.cols,20);assert.deepEqual(restored.groups,legacy.groups);
+ assert.equal(F.restore(legacy,[20],10),null);
+});
