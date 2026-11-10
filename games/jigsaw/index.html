@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#07070f">
 <meta name="color-scheme" content="dark">
 <meta name="application-name" content="LiteGame">
-<meta name="description" content="把拼块从下方一排拖上来拼完整张图，12 到 150 块，波斯图案和风景都是用代码画的。 LiteGame 轻量游戏厅。">
+<meta name="description" content="经典拼图与自由难度：20×20 共 400 块，空白工作区自由摆放、吸附拼接、整组拖动。 LiteGame 轻量游戏厅。">
 <title>拼图 · LiteGame</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../lib/chogan.css">
@@ -51,12 +51,24 @@
   .jg-status { min-height: 1.4em; font-weight: 700; color: var(--c-text-dim); text-align: center; font-size: var(--fs-sm); }
   .jg-preview { display: block; margin: 0 auto; border-radius: var(--r-md); box-shadow: var(--sh-2); }
   .jg-tut { display: block; }
+  .jg-free-tools { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
+  .jg-free-tools[hidden], .jg-free-canvas[hidden] { display: none; }
+  .jg-free-tools button { min-width: 44px; min-height: 44px; padding: 6px 10px; font-size: 13px; }
+  .jg-frame--free { background: #171e29; box-shadow: none; touch-action: none; }
+  .jg-frame--free .jg-grid, .jg-frame--free .jg-cur { display: none !important; }
+  .jg-free-canvas { display: block; touch-action: none; cursor: grab; }
+  .jg-free-canvas:active { cursor: grabbing; }
+  .jg-wrap--free { max-width: 1200px; flex: none; }
+  .jg-top .ch-seg { flex-wrap: wrap; }
+  .jg-wrap--free .jg-status { font-size: 12px; }
 </style>
 </head>
 <body>
 <script src="../version.js"></script>
 <script src="../lib/chogan.js"></script>
 <script src="../lib/litegame.js"></script>
+<script src="free.js"></script>
+<script src="free-board.js"></script>
 
 <script>
 /* ==== ENGINE START ==== */
@@ -66,7 +78,7 @@ function JigsawEngineFactory() {
   // Piece counts and their cuts. The picture is 3:4 upright, so on a 390px phone, where the
   // picture is about 360px wide, the pieces are about 120, 90, 60 and 45px. 150 pieces would be
   // 36px there, under a fingertip, so it is offered only where a piece keeps MIN_PIECE (#376).
-  var CUTS = { 12: [3, 4], 24: [4, 6], 48: [6, 8], 96: [8, 12], 150: [10, 15] };
+  var CUTS = { 12: [3, 4], 24: [4, 6], 48: [6, 8], 96: [8, 12], 150: [10, 15], 400: [20, 20] };
   var COUNTS = [12, 24, 48, 96, 150];
   var BIG_ONLY = [150];
   var MIN_PIECE = 44;
@@ -2204,6 +2216,7 @@ function JigsawPictures() {
   'use strict';
   var C = window.Chogan, el = C.el;
   var E = JigsawEngineFactory();
+  var F = window.JigsawFree;
   var P = JigsawPictures();
 
   C.boot({});
@@ -2305,7 +2318,7 @@ function JigsawPictures() {
   var TRAY_H = 96, TRAY_W = 232, LIFT_PX = 8, WIN_MS = 900, GLIDE_MS = 200;
 
   var prefs = ctx.store.get('prefs', null);
-  if (!prefs || E.COUNTS.indexOf(prefs.count) < 0) prefs = { count: 24, last: null };
+  if (!prefs || (prefs.count !== 400 && E.COUNTS.indexOf(prefs.count) < 0)) prefs = { count: 24, last: null };
   // the pictures finished at each count, so a new game shows one not finished there yet (#376)
   if (!prefs.done || typeof prefs.done !== 'object') prefs.done = {};
 
@@ -2324,6 +2337,19 @@ function JigsawPictures() {
   var aside = el('div', { class: 'jg-aside' });
   var mid = el('div', { class: 'jg-mid' }, [frame, tray]);
   var wrap = el('div', { class: 'jg-wrap' }, [top, mid, status]);
+  var freeTools = el('div', { class: 'jg-free-tools', hidden: true });
+  var zoomLabel = el('span', { class: 'ch-badge', text: '100%' });
+  var freeBoard = window.JigsawFreeBoard({
+    onView: function (zoom) { zoomLabel.textContent = zoom + '%'; },
+    onChange: freeChanged,
+    placeSelected: function (x, y) { return sel >= 0 && freeDrop(sel, x, y); }
+  });
+  freeBoard.canvas.hidden = true; frame.appendChild(freeBoard.canvas);
+  function freeTool(label, action) { return el('button', { class: 'ch-btn ch-btn--ghost', type: 'button', text: label, onclick: action }); }
+  freeTools.append(freeTool('− 缩小', function () { freeBoard.zoom(0.8); }), zoomLabel,
+    freeTool('＋ 放大', function () { freeBoard.zoom(1.25); }), freeTool('查看全部', function () { freeBoard.fit(); }));
+  wrap.insertBefore(freeTools, mid);
+  function isFree() { return S && S.count === 400; }
 
   // one number in the bar: with two, the title had no room left on a phone
   ctx.stat('left', C.t('left'));
@@ -2399,10 +2425,16 @@ function JigsawPictures() {
   }
   // A count this screen does not offer, kept from a bigger window, falls back to the largest it does
   function usable(n) {
+    if (n === 400) return n;
     var r = room(), ok = E.offered(r[0], r[1]);
     return ok.indexOf(n) >= 0 ? n : ok[ok.length - 1];
   }
   function layout() {
+    ctx.main.classList.toggle('ch-gamemain--scroll', isFree());
+    freeBoard.setEnabled(isFree());
+    freeBoard.canvas.hidden = !isFree(); freeTools.hidden = !isFree();
+    frame.classList.toggle('jg-frame--free', isFree()); wrap.classList.toggle('jg-wrap--free', isFree());
+    if (isFree()) { layoutFree(); return; }
     var r = room(), availW = r[0];
     L = E.layout(r[0], r[1], S.count);
     side = r[2];
@@ -2435,6 +2467,22 @@ function JigsawPictures() {
     buildTray();
     frame.classList.toggle('jg-frame--done', !!S.done);
   }
+  function layoutFree() {
+    side = false; wrap.classList.remove('jg-wrap--side'); aside.remove();
+    mid.append(frame, tray); wrap.prepend(top); wrap.insertBefore(freeTools, mid); wrap.append(status);
+    // Keep pieces large enough to handle; the camera, not the puzzle, fits the viewport.
+    L = { w: 960, h: 1280, cols: 20, rows: 20, cw: 48, ch: 64, m: 22 };
+    var width = Math.max(240, Math.min(1160, ctx.main.clientWidth - 24));
+    render();
+    var height = Math.max(180, Math.min(680, ctx.main.clientHeight - top.offsetHeight - freeTools.offsetHeight - status.offsetHeight - TRAY_H - 84));
+    frame.style.width = width + 'px'; frame.style.height = height + 'px';
+    tray.style.width = width + 'px'; tray.style.maxWidth = '100%'; tray.style.height = TRAY_H + 'px';
+    Object.keys(placedNodes).forEach(function (k) { placedNodes[k].remove(); }); placedNodes = {};
+    pic = makePicture();
+    freeBoard.setup(S.free, L, pieceCanvas, function (i) { return E.outline(E.edges(S.cut, i), L.cw, L.ch); });
+    freeBoard.resize(width, height); buildTray();
+    frame.classList.toggle('jg-frame--done', !!S.done);
+  }
   function putInFrame(i, flash) {
     var cv = pieceCanvas(i, 1);
     cv.className = 'jg-piece' + (flash ? ' jg-snap' : '');
@@ -2449,6 +2497,11 @@ function JigsawPictures() {
     S.tray.forEach(function (i) {
       var s = el('div', { class: 'jg-slot', role: 'listitem', 'aria-label': C.t('pieceN', { n: C.num(i + 1) }) }, [pieceCanvas(i, k)]);
       s._piece = i;
+      s.dataset.piece = i;
+      if (isFree()) {
+        s.tabIndex = 0; s.setAttribute('role', 'button');
+        s.addEventListener('click', function () { if (!busy && !S.done) { sel = sel === i ? -1 : i; markSel(); } });
+      }
       slots[i] = s;
       tray.appendChild(s);
     });
@@ -2456,6 +2509,10 @@ function JigsawPictures() {
   }
   function render() {
     ctx.setStat('left', C.num(S.tray.length));
+    if (isFree()) {
+      status.textContent = (S.done ? '拼图完成！' : '工作区 ' + S.placed.length + '/400 块 · ' + S.free.groups.length + ' 组') + ' · 拖动拼块；空白处拖动平移。也可点选散块，再点工作区放下。正确邻块靠近后自动拼接。';
+      return;
+    }
     if (!S.done) status.textContent = S.misses ? C.t('wrongs') + ': ' + C.num(S.misses) : '';
   }
   function renderTop() {
@@ -2465,8 +2522,9 @@ function JigsawPictures() {
       var r = room(), counts = E.offered(r[0], r[1]);
       // a game already running at a count this window does not offer keeps its button
       if (counts.indexOf(S.count) < 0) counts = E.COUNTS.filter(function (n) { return n === S.count || counts.indexOf(n) >= 0; });
+      counts.push(400);
       top.appendChild(C.ui.segmented(
-        counts.map(function (n) { return { value: n, label: C.num(n) }; }),
+        counts.map(function (n) { return { value: n, label: n === 400 ? '自由 · 20×20' : C.num(n) }; }),
         S.count,
         function (v) {
           if (v === S.count) return;
@@ -2484,6 +2542,27 @@ function JigsawPictures() {
   }
 
   /* ------------------------------------------------------------ moves */
+
+  function freeChanged(merged) {
+    if (!isFree()) return;
+    var wasDone = S.done;
+    S.done = F.complete(S.free);
+    if (merged) C.feedback('place');
+    render();
+    if (S.done && !wasDone) {
+      C.feedback('good'); frame.classList.add('jg-frame--done');
+      C.ui.toast({ icon: 'check', title: '400 块拼图完成！', sub: '完整拼图仍可整体拖动，进度已保存。' });
+    }
+    save();
+  }
+  function freeDrop(i, x, y) {
+    if (!isFree() || busy || S.tray.indexOf(i) < 0) return false;
+    var result = freeBoard.drop(i, x, y);
+    if (!result) return false;
+    S.tray.splice(S.tray.indexOf(i), 1); S.placed.push(i);
+    if (slots[i]) slots[i].remove(); delete slots[i];
+    sel = -1; markSel(); freeChanged(result.merged); return true;
+  }
 
   // #407: a piece let go near its spot jumped the last bit into place. Now it
   // glides there from where it was let go, or from the row when placed by
@@ -2564,6 +2643,8 @@ function JigsawPictures() {
   /* ---------------------------------------------------------- saving */
 
   ctx.autosave(function () {
+    if (freeBoard.active()) freeBoard.cancel();
+    if (isFree()) return { s: { count: S.count, seed: S.seed, pic: S.pic, tray: S.tray, placed: S.placed, misses: 0, free: S.free }, daily: null, elapsed: (pausedAt || Date.now()) - startedAt };
     if (!S || S.done || busy || (!S.placed.length && !S.misses)) return { inProgress: false };
     return { s: { count: S.count, seed: S.seed, pic: S.pic, tray: S.tray, placed: S.placed, misses: S.misses }, daily: S.daily || null, elapsed: (pausedAt || Date.now()) - startedAt };
   });
@@ -2586,11 +2667,14 @@ function JigsawPictures() {
       prefs.last = id; ctx.store.set('prefs', prefs);
     }
     S = E.deal(n, seed, rnd, id);
+    if (n === 400) S.free = F.create();
     start(S, daily || null, 0);
     save();
   }
   // The cut comes from the seed after the picture and the order, so a save rebuilds it exactly
   function start(st, daily, elapsed) {
+    if (drag) endDrag({ pointerId: drag.id }, false);
+    freeBoard.cancel();
     S = st;
     S.daily = daily;
     var rnd = C.rng(S.seed ^ 0x9e3779b9);
@@ -2624,6 +2708,14 @@ function JigsawPictures() {
   }
 
   function showHelp() {
+    if (isFree()) {
+      C.ui.modal({ title: '自由难度 · 20×20（400 块）', body: [
+        el('p', { text: '工作区没有底图、网格或固定位置。拖入拼块后可以任意摆放；正确相邻的拼块在对应边靠近时会吸附，自动合成一组。抓住组内任意拼块即可移动整个组合，组合之间也能继续拼接。' }),
+        el('p', { text: '拖动空白处平移工作区；滚轮或放大／缩小按钮调整视图，“查看全部”找回所有已放入的拼块。手机可先点选下方散块，再点工作区放置。选中组合后方向键微调，Enter 尝试吸附，Esc 取消选择。' }),
+        el('p', { text: '位置、组合和缩放视图会自动保存，刷新后继续。400 块全部连成一个整体才算完成，完成后仍可移动整张拼图。' })
+      ], actions: [{ label: C.t('done'), kind: 'primary' }] });
+      return;
+    }
     var m = C.ui.modal({
       title: C.t('help'),
       body: [
@@ -2682,6 +2774,7 @@ function JigsawPictures() {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     var s = e.target.closest ? e.target.closest('.jg-slot') : null;
     if (!s) return;
+    if (isFree()) sel = -1;
     var r = s.getBoundingClientRect(), k = trayScale();
     drag = { id: e.pointerId, piece: s._piece, slot: s, x0: e.clientX, y0: e.clientY, gx: (e.clientX - r.left) / k, gy: (e.clientY - r.top) / k, node: null, mouse: e.pointerType === 'mouse' };
   });
@@ -2719,6 +2812,7 @@ function JigsawPictures() {
     d.node.remove();
     d.slot.classList.remove('jg-slot--away');
     if (!fire) return;
+    if (isFree()) { freeDrop(d.piece, e.clientX, e.clientY); return; }
     var fr = frame.getBoundingClientRect();
     // where the piece's body corner came to rest, in frame pixels
     var bx = d.x - d.gx + L.m - fr.left, by = d.y - d.gy + L.m - fr.top;
@@ -2774,6 +2868,11 @@ function JigsawPictures() {
     var k = e.key;
     if (C.keyIs(e, 'p')) { showPreview(); e.preventDefault(); return; }
     if (C.keyIs(e, 'r')) { askNew(); e.preventDefault(); return; }
+    if (isFree()) {
+      if (k === 'Escape') { sel = -1; markSel(); }
+      else if ((k === 'Enter' || k === ' ') && tg.classList.contains('jg-slot')) { sel = tg._piece; markSel(); e.preventDefault(); }
+      return;
+    }
     if (k === 'Escape' && lifted) { lifted = false; aim = -1; showAim(); e.preventDefault(); return; }
     // the frame and the row are not mirrored, so the arrows are geometric in every language
     var d = { ArrowUp: [0, -1], ArrowRight: [1, 0], ArrowDown: [0, 1], ArrowLeft: [-1, 0] }[k];
@@ -2822,7 +2921,7 @@ function JigsawPictures() {
   });
 
   // time in the background is not time spent on the picture
-  C.onPause(function () { if (!pausedAt) pausedAt = Date.now(); });
+  C.onPause(function () { freeBoard.cancel(); if (drag) endDrag({ pointerId: drag.id }, false); if (!pausedAt) pausedAt = Date.now(); });
   C.onResume(function () {
     if (pausedAt) startedAt += Date.now() - pausedAt;
     pausedAt = 0;
@@ -2833,6 +2932,7 @@ function JigsawPictures() {
     clearTimeout(resizeT);
     resizeT = setTimeout(function () {
       if (!S || drag) return;
+      if (freeBoard.active()) freeBoard.cancel();
       // a phone's address bar sliding in and out is not a new layout
       if (Math.abs(window.innerWidth - lastW) < 2 && Math.abs(window.innerHeight - lastH) < 60) return;
       lastW = window.innerWidth; lastH = window.innerHeight;
@@ -2849,7 +2949,12 @@ function JigsawPictures() {
   var saved = ctx.loadSave();
   // a save that fails its checks is dropped and a fresh picture is dealt
   var resume = saved && saved.s && (saved.daily || null) === (dailyDate || null) ? E.restore(saved.s) : null;
-  if (resume && !resume.done) {
+  if (resume && resume.count === 400) {
+    resume.free = F.restore(saved.s.free, resume.placed);
+    if (!resume.free || dailyDate) resume = null;
+    else resume.done = F.complete(resume.free);
+  }
+  if (resume && (!resume.done || resume.count === 400)) {
     start(resume, saved.daily || null, saved.elapsed || 0);
   } else if (dailyDate) {
     newGame(E.DAILY_COUNT, dailyDate);
@@ -2860,9 +2965,9 @@ function JigsawPictures() {
   } else {
     newGame(usable(prefs.count));
   }
-  ctx.tutorialIfNew(TUT);
+  if (!isFree()) ctx.tutorialIfNew(TUT);
   // the first layout can run before the page has its final height: lay out again once it settles
-  setTimeout(function () { if (S && !drag) layout(); }, 60);
+  setTimeout(function () { if (S && !drag && !freeBoard.active()) layout(); }, 60);
 })();
 </script>
 </body>
