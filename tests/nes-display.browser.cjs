@@ -6,9 +6,9 @@ const game=catalog.games.find(g=>g.title==='魂斗罗'&&g.status==='boot');
 async function geometry(page){
  const boxes=await page.evaluate(()=>{
   const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
-  return {w:innerWidth,h:innerHeight,rotated:document.getElementById('console').classList.contains('is-rotated'),screen:rect(document.getElementById('screen')),pad:rect(document.querySelector('.pad')),actions:rect(document.querySelector('.actions')),buttons:[...document.querySelectorAll('#console-menu,[data-key],#console-pause')].map(n=>({id:n.id||n.dataset.key,...rect(n)}))};
+   return {w:innerWidth,h:innerHeight,rotated:document.getElementById('console').classList.contains('is-rotated'),screen:rect(document.getElementById('screen')),pad:rect(document.querySelector('.pad')),actions:rect(document.querySelector('.actions')),buttons:[...document.querySelectorAll('#console-menu,[data-key],#console-pause')].map(n=>{const r=rect(n);return {id:n.id||n.dataset.key,...r,reachable:n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};})};
  });
- for(const b of boxes.buttons){assert.ok(b.width>=40&&b.height>=40,b.id+' target size');assert.ok(b.x>=-1&&b.y>=-1&&b.right<=boxes.w+1&&b.bottom<=boxes.h+1,b.id+' within viewport '+JSON.stringify(b));}
+  for(const b of boxes.buttons){assert.ok(b.width>=40&&b.height>=40,b.id+' target size');assert.ok(b.x>=-1&&b.y>=-1&&b.right<=boxes.w+1&&b.bottom<=boxes.h+1,b.id+' within viewport '+JSON.stringify(b));assert.ok(b.reachable,b.id+' is not covered');}
  const {screen:s,pad:p,actions:a}=boxes;
  assert.ok(s.x>=0&&s.y>=0&&s.right<=boxes.w&&s.bottom<=boxes.h,'screen in viewport');
  if(boxes.rotated){assert.ok(p.bottom<=s.y+1&&s.bottom<=a.y+1,'rotated left/screen/right');assert.ok(Math.abs(s.height/s.width-256/240)<.01,'rotated aspect');}
@@ -55,7 +55,12 @@ async function geometry(page){
     assert.deepEqual(errors,[]);await context.close();console.log(name+' '+mode+': rotation, side controls, menu, saves, exit and scroll passed');
    }
    if(name==='chromium'){
-    const page=await browser.newPage({viewport:{width:844,height:390}});await page.goto(base+'/games/nes/');await page.locator('#landscape').click();await page.waitForFunction(()=>document.fullscreenElement?.id==='console');await geometry(page);await page.locator('#console-menu').click();await page.locator('#exit-display').click();await page.waitForFunction(()=>!document.fullscreenElement);await page.close();console.log('chromium native fullscreen entry/exit passed');
+    for(const viewport of [{width:844,height:390},{width:390,height:844}]){
+     const page=await browser.newPage({viewport,hasTouch:true});await page.goto(base+'/games/nes/?game='+game.id);await page.waitForFunction(()=>!document.getElementById('console-pause').disabled);
+     await page.locator('#landscape').tap();await page.waitForFunction(()=>document.fullscreenElement?.id==='console');await geometry(page);
+     await page.locator('#console-pause').tap();assert.equal(await page.locator('#play').textContent(),'运行中');await page.locator('#console-pause').tap();assert.equal(await page.locator('#console-pause').textContent(),'继续');
+     await page.locator('#console-menu').tap();await page.locator('#exit-display').tap();await page.waitForFunction(()=>!document.fullscreenElement);await page.close();console.log('chromium native fullscreen '+viewport.width+'x'+viewport.height+': reachable controls, start/pause and exit passed');
+    }
    }
   }finally{await browser.close();}
  }

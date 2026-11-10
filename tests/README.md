@@ -62,6 +62,7 @@ node tests/fogtown.browser.cjs
 node tests/campaigns.browser.cjs
 node tests/nes.browser.cjs
 node tests/nes-display.browser.cjs
+node tests/nes-system-buttons.browser.cjs
 node tests/five-games.browser.cjs
 node tests/casual-ports.browser.cjs
 node tests/all-games.browser.cjs
@@ -75,12 +76,16 @@ BROWSER_ENGINE=webkit node tests/mobile-tutorials.browser.cjs
 
 浏览器测试创建独立上下文，不使用日常浏览器的游戏存档。
 
+`nes-display.browser.cjs` 和 `nes-system-buttons.browser.cjs` 默认连接 8766 端口（`node tests/static-server.cjs`），同时使用 Chromium 与 WebKit；可通过 `GAME_BASE_URL` 指向其他测试端口。
+
 ### 检查范围
 
 全量脚本从 `assets/js/games.js` 读取所有游戏，检查加载、资源请求、基础点击/键盘输入、帮助弹窗、刷新、尺寸重绘循环，以及 1280×800、390×844、844×390、320×568 四种窗口尺寸。裁切与零尺寸画布是待人工核实的观察项：例如海战棋布阵时会隐藏敌方棋盘。
 
 专项脚本验证：
 
+- 怀旧底部控制：分别仅用底部“开始”、START、SELECT 启动；验证短按传入两个模拟帧、暂停／继续、顶部与底部状态同步、键盘唤醒、横屏触摸及退出后的暂停状态。
+- 怀旧横屏布局：全屏／方向接口缺失、拒绝、模拟成功分支，四尺寸画面比例、按键边界与遮挡检查，菜单存读档；Chromium 另从横屏和竖屏视口进入真实全屏并触摸启动／暂停。
 - 无效移动时卡牌只在原位抖动，兼容旧浏览器回退和减少动态效果设置。
 - 连续点击不会被旧动画定时器提前打断。
 - 疯狂八、金拉米的下一局只发一次牌。

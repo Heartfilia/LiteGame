@@ -9,12 +9,16 @@
   let audioNode = null, read = 0, write = 0, stored = 0;
   const audioLeft = new Float32Array(16384), audioRight = new Float32Array(16384);
   const held = new Map();
+  const systemPulses = new Map();
+  let playedFrames = 0, hasStarted = false;
   let page = 0;
   const display = window.NESDisplay({ release: releaseAll, pause, start });
   function status(text) { $('status').textContent = $('menu-status').textContent = text; }
   function buttons(ready) {
-    for (const id of ['play', 'pause', 'reset', 'save', 'restore', 'export']) $(id).disabled = !ready;
+    for (const id of ['play', 'pause', 'reset', 'save', 'restore', 'export', 'console-pause']) $(id).disabled = !ready;
     for (const id of ['menu-resume', 'menu-save', 'menu-restore']) $(id).disabled = !ready;
+    document.querySelectorAll('[data-key]').forEach(button => { button.disabled = !ready; });
+    $('console-pause').textContent = hasStarted ? '继续' : '开始';
   }
   function draw(buffer) {
     for (let i = 0; i < pixels.length; i++) pixels[i] = 0xff000000 | buffer[i];
@@ -57,12 +61,13 @@
   }
   function releaseAll() {
     if (nes) for (let p = 1; p <= 2; p++) for (let b = 0; b < 10; b++) nes.buttonUp(p, b);
-    held.clear();
+    held.clear(); systemPulses.clear();
     document.querySelectorAll('[data-held]').forEach(b => b.removeAttribute('data-held'));
   }
   function pause(message) {
     running = false; cancelAnimationFrame(frame); frame = 0; releaseAll(); flushAudio();
     $('play').textContent = '开始 / 继续';
+    $('console-pause').textContent = hasStarted ? '继续' : '开始';
     if (message) status(message);
   }
   function tick(time) {
@@ -70,7 +75,10 @@
     debt += Math.min(time - lastTime, 100); lastTime = time;
     try {
       let count = 0;
-      while (debt >= 1000 / 60 && count < 4) { nes.frame(); debt -= 1000 / 60; count++; }
+      while (debt >= 1000 / 60 && count < 4) {
+        nes.frame(); debt -= 1000 / 60; count++; playedFrames++;
+        for (const [source, until] of systemPulses) if (playedFrames >= until) { systemPulses.delete(source); release(source); }
+      }
       if (count === 4) debt = 0;
     } catch (e) {
       pause('此版本运行异常：' + e.message + '。可以重新开机或选择其他版本。');
@@ -82,6 +90,7 @@
     if (!nes || running || display.menuOpen()) return;
     if (!muted) enableAudio();
     running = true; lastTime = performance.now(); debt = 0;
+    hasStarted = true; $('console-pause').textContent = '暂停';
     $('screen-label').hidden = true; $('play').textContent = '运行中';
     status('运行中 · 按 START 开始游戏，SELECT 选择模式。');
     frame = requestAnimationFrame(tick);
@@ -97,7 +106,21 @@
     held.delete(source);
     if (![...held.values()].some(v => v.player === value.player && v.button === value.button)) nes.buttonUp(value.player, value.button);
   }
+  function systemButton(name) {
+    if (!nes || display.menuOpen()) return;
+    // Wake the emulator without accidentally toggling the cartridge's own pause.
+    // Boot screens may ignore START: the next press after boot is the game input.
+    if (!running) { start(); return; }
+    const source = 'system-' + name;
+    hold(source, 1, name);
+    systemPulses.set(source, playedFrames + 2);
+  }
   document.querySelectorAll('[data-key]').forEach(button => {
+    if (['START', 'SELECT'].includes(button.dataset.key)) {
+      button.addEventListener('click', () => systemButton(button.dataset.key));
+      button.addEventListener('contextmenu', e => e.preventDefault());
+      return;
+    }
     button.addEventListener('pointerdown', e => {
       e.preventDefault(); if (!running) return;
       button.setPointerCapture(e.pointerId);
@@ -113,8 +136,12 @@
     KeyZ:[1,'A'], KeyX:[1,'B'], ShiftRight:[1,'SELECT'], Enter:[1,'START'],
     KeyI:[2,'UP'], KeyK:[2,'DOWN'], KeyJ:[2,'LEFT'], KeyL:[2,'RIGHT'], KeyG:[2,'A'], KeyH:[2,'B'], KeyT:[2,'SELECT'], KeyY:[2,'START'] };
   window.addEventListener('keydown', e => {
-    if (e.target.closest('input,textarea,select') || !running) return;
+    if (e.target.closest('input,textarea,select') || display.menuOpen()) return;
     if (e.code === 'Enter' && e.target.closest('button,a')) return;
+    if (!running) {
+      if (keys[e.code] && ['START', 'SELECT'].includes(keys[e.code][1]) && !e.repeat) { e.preventDefault(); start(); }
+      return;
+    }
     if (keys[e.code]) { e.preventDefault(); hold('key-' + e.code, ...keys[e.code]); }
   });
   window.addEventListener('keyup', e => release('key-' + e.code));
@@ -122,7 +149,8 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(nes ? '已暂停，点击继续。' : ''); });
   window.addEventListener('pagehide', () => pause());
   $('play').onclick = () => { start(); canvas.focus({ preventScroll: true }); };
-  $('pause').onclick = $('console-pause').onclick = () => pause('已暂停。');
+  $('pause').onclick = () => pause('已暂停。');
+  $('console-pause').onclick = () => { if (running) pause('已暂停，点击底部“继续”恢复。'); else start(); };
   $('mute').onclick = async () => {
     muted = !muted; flushAudio();
     $('mute').textContent = $('menu-mute').textContent = muted ? '开启声音' : '静音'; $('mute').setAttribute('aria-pressed', String(!muted));
@@ -140,7 +168,7 @@
   }
   async function load(entry, bytes) {
     const token = ++generation;
-    pause(); buttons(false); nes = null; rom = null; current = null;
+    pause(); hasStarted = false; buttons(false); nes = null; rom = null; current = null;
     $('screen-label').hidden = false; $('screen-label').textContent = '正在读取卡带…';
     $('title').textContent = entry.title; document.title = entry.title + ' · 怀旧 · LiteGame';
     status('正在读取 ' + entry.title + '…');
@@ -162,7 +190,7 @@
       const candidate = makeNES(); candidate.loadROM(bytes);
       nes = candidate; rom = bytes; current = { ...entry, sha256: digest };
       buttons(true); $('screen-label').textContent = 'READY · 点击开始 / 继续';
-      status('卡带已就绪。点击“开始 / 继续”或“读档”。' + (entry.status && entry.status !== 'boot' ? ' 此版本尚未通过启动检查。' : ''));
+      status('卡带已就绪。可点击底部“开始”、START / SELECT 启动，或点击“读档”。' + (entry.status && entry.status !== 'boot' ? ' 此版本尚未通过启动检查。' : ''));
     } catch (e) {
       if (token !== generation) return;
       $('screen-label').textContent = '卡带加载失败';
@@ -276,6 +304,7 @@
   }
   $('search').oninput = $('compatible').onchange = () => { page = 0; renderLibrary(); };
   renderLibrary();
+  buttons(false);
   const requested = new URLSearchParams(location.search).get('game');
   if (requested) {
     const entry = library.find(g => g.id === requested);
