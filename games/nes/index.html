@@ -16,10 +16,13 @@
     <button id="save" disabled>存档</button><button id="restore" disabled>读档</button>
     <button id="reset" disabled>重新开机</button><button id="mute" aria-pressed="false">开启声音</button>
     <button id="fullscreen">全屏</button>
+    <button id="landscape" aria-pressed="false">横屏游玩</button>
     <label class="file">导入本地 .nes<input id="rom-file" type="file" accept=".nes"></label>
   </div>
   <p id="status" role="status">选择卡带后开始游戏。</p>
   <section class="console" id="console" aria-label="FC 游戏机">
+    <div class="console-layout">
+    <button id="console-menu" aria-label="打开游戏菜单" aria-expanded="false" aria-controls="console-menu-panel">☰ 菜单</button>
     <div class="pad" aria-label="方向键">
       <button data-key="UP" aria-label="上">▲</button><button data-key="LEFT" aria-label="左">◀</button>
       <button data-key="DOWN" aria-label="下">▼</button><button data-key="RIGHT" aria-label="右">▶</button>
@@ -27,10 +30,25 @@
     <div class="screen"><canvas id="screen" width="256" height="240" aria-label="FC 游戏画面" tabindex="0"></canvas><span id="screen-label">LITEGAME · FAMILY COMPUTER</span></div>
     <div class="actions"><button data-key="B">B</button><button data-key="A">A</button><button data-key="TURBO_B">连发 B</button><button data-key="TURBO_A">连发 A</button></div>
     <div class="system"><button data-key="SELECT">选择 SELECT</button><button data-key="START">开始 START</button><button id="console-pause">暂停</button></div>
+    <div id="console-menu-panel" role="dialog" aria-modal="true" aria-labelledby="console-menu-title" hidden>
+      <div class="console-menu-card">
+        <h2 id="console-menu-title">游戏菜单</h2>
+        <p id="display-status" role="status"></p>
+        <p id="menu-status" role="status"></p>
+        <div class="menu-buttons">
+          <button id="menu-resume" disabled>开始 / 继续游戏</button>
+          <button id="menu-save" disabled>存档</button><button id="menu-restore" disabled>读档</button>
+          <button id="menu-mute">开启声音</button>
+          <button id="exit-display">退出横屏</button>
+        </div>
+      </div>
+    </div>
+    </div>
   </section>
   <details open><summary>玩法与存档</summary>
     <p>点击“开始 / 继续”启动模拟器，再按 START 进入游戏。方向键移动，Z = A、X = B、Enter = START、右 Shift = SELECT。双人游戏：玩家二用 I/J/K/L、G/H、T/Y。手机可同时按方向与 A/B，连发键适合射击。</p>
     <p>“存档”保存当前画面进度，“读档”恢复当前卡带的存档。切到后台会暂停；回到页面需手动继续。存档保存在此浏览器中，清理网站数据会删除存档；大厅的进度导出不包含 FC 存档。</p>
+    <p>“横屏游玩”将方向键放在左侧、A/B 放在右侧，画面居中。支持的浏览器会全屏并锁定横屏；iPhone 等不支持时使用网页内横屏，可将手机横拿。左上角“菜单”可以存读档或退出横屏，退出后游戏暂停。</p>
     <div class="toolbar"><button id="export" disabled>导出此卡带存档</button><label class="file">导入存档<input id="state-file" type="file" accept=".json"></label></div>
   </details>
   <section class="library"><h2>选择卡带</h2><label>搜索游戏 <input type="search" id="search" placeholder="魂斗罗、马戏团、冒险岛…"></label><label><input type="checkbox" id="compatible">只看通过启动检查</label><p id="count"></p><div id="library"></div><nav id="pages" aria-label="卡带分页"></nav></section>
@@ -38,6 +56,7 @@
 </main>
 <script src="vendor/jsnes.min.js"></script>
 <script src="catalog.js"></script>
+<script src="display.js"></script>
 <script src="nes.js"></script>
 </body>
 </html>

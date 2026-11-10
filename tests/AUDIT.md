@@ -1,5 +1,14 @@
 # 游戏检查记录
 
+## 怀旧模拟器横屏布局（2026-11-10）
+
+- 新增“横屏游玩”：优先请求浏览器全屏及 landscape 方向锁定，不可用或被拒绝时使用网页铺满布局；竖屏视口将整套游戏布局旋转 90°，画面保持 256:240 比例，方向键／动作键分居两侧。
+- 左上角菜单暂停并释放按键，提供继续、存档、读档、静音、退出。退出恢复原页面滚动位置和焦点，保持模拟器暂停；浏览器自行退出全屏时同步清理布局和方向锁定。
+- `nes-display.browser.cjs`：Chromium、WebKit 各验证接口缺失／拒绝／成功的模拟分支、四种尺寸下画面与按键边界、旋转后的输入、菜单存读档、退出及滚动恢复；Chromium 另验证旋转后的真实双触点取消和真实 Fullscreen API 进入／退出。
+- 方向锁定成功分支使用接口模拟，未在实体 Android/iPhone 上验证。WebKit 自动化通过不代表 iPhone 原生全屏可用。
+- 原有 `nes.browser.cjs` 三款代表游戏启动、双触点、存档、导出／导入、横竖屏及错误处理回归通过；`nes.test.cjs` 两项通过；脚本语法与 diff 检查通过。
+- 浏览器兼容性依据：MDN browser-compat-data 的 `api/Element.json`（requestFullscreen）及 `api/ScreenOrientation.json`（lock），核查于 2026-11-10。Android Chrome 支持相关接口；iPhone Safari 不支持普通元素全屏，Safari 不支持 orientation.lock；iPad 支持情况与 iPhone 不同。
+
 ## 每区二十款（2026-11-09）
 
 - 新增 103 款：37 款 ABA MIT 移植、13 款 Chogan MIT 移植、53 款原创小型游戏。九个非怀旧分类各 20 款，总计 180；怀旧区另计。

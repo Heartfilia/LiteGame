@@ -10,9 +10,11 @@
   const audioLeft = new Float32Array(16384), audioRight = new Float32Array(16384);
   const held = new Map();
   let page = 0;
-  function status(text) { $('status').textContent = text; }
+  const display = window.NESDisplay({ release: releaseAll, pause, start });
+  function status(text) { $('status').textContent = $('menu-status').textContent = text; }
   function buttons(ready) {
     for (const id of ['play', 'pause', 'reset', 'save', 'restore', 'export']) $(id).disabled = !ready;
+    for (const id of ['menu-resume', 'menu-save', 'menu-restore']) $(id).disabled = !ready;
   }
   function draw(buffer) {
     for (let i = 0; i < pixels.length; i++) pixels[i] = 0xff000000 | buffer[i];
@@ -77,7 +79,7 @@
     frame = requestAnimationFrame(tick);
   }
   function start() {
-    if (!nes || running) return;
+    if (!nes || running || display.menuOpen()) return;
     if (!muted) enableAudio();
     running = true; lastTime = performance.now(); debt = 0;
     $('screen-label').hidden = true; $('play').textContent = '运行中';
@@ -123,15 +125,8 @@
   $('pause').onclick = $('console-pause').onclick = () => pause('已暂停。');
   $('mute').onclick = async () => {
     muted = !muted; flushAudio();
-    $('mute').textContent = muted ? '开启声音' : '静音'; $('mute').setAttribute('aria-pressed', String(!muted));
+    $('mute').textContent = $('menu-mute').textContent = muted ? '开启声音' : '静音'; $('mute').setAttribute('aria-pressed', String(!muted));
     if (!muted) await enableAudio();
-  };
-  $('fullscreen').onclick = async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else if ($('console').requestFullscreen) await $('console').requestFullscreen();
-      else status('此浏览器未提供全屏接口，可旋转手机横屏游玩。');
-    } catch (e) { status('全屏未开启：' + e.message); }
   };
   $('reset').onclick = () => {
     if (!nes || !window.confirm('重新开机将丢弃未保存的当前进度，继续吗？')) return;

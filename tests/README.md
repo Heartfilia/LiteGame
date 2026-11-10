@@ -61,6 +61,7 @@ node tests/category-expansion.browser.cjs
 node tests/fogtown.browser.cjs
 node tests/campaigns.browser.cjs
 node tests/nes.browser.cjs
+node tests/nes-display.browser.cjs
 node tests/five-games.browser.cjs
 node tests/casual-ports.browser.cjs
 node tests/all-games.browser.cjs
