@@ -13,7 +13,7 @@ const base = process.env.GAME_BASE_URL || 'http://127.0.0.1:8765';
     assert.equal(await page.locator('#retro-cards .game-card').count(), Math.min(36, catalog.games.length));
     if (catalog.games.length > 36) {
       const first = await page.locator('#retro-cards .game-card').first().getAttribute('href');
-      await page.getByRole('button',{name:'下一页',exact:true}).click();
+      await page.locator('#retro-pages-top').getByRole('button',{name:'下一页',exact:true}).click();
       assert.notEqual(await page.locator('#retro-cards .game-card').first().getAttribute('href'), first);
     }
     for (const name of ['魂斗罗', '马戏团', '冒险岛']) {

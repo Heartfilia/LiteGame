@@ -23,13 +23,16 @@
   <section class="console" id="console" aria-label="FC 游戏机">
     <div class="console-layout">
     <button id="console-menu" aria-label="打开游戏菜单" aria-expanded="false" aria-controls="console-menu-panel">☰ 菜单</button>
+    <div class="screen"><canvas id="screen" width="256" height="240" aria-label="FC 游戏画面" tabindex="0"></canvas><span id="screen-label">LITEGAME · FAMILY COMPUTER</span></div>
+    <div class="console-controls">
     <div class="pad" aria-label="方向键">
       <button data-key="UP" aria-label="上">▲</button><button data-key="LEFT" aria-label="左">◀</button>
       <button data-key="DOWN" aria-label="下">▼</button><button data-key="RIGHT" aria-label="右">▶</button>
     </div>
-    <div class="screen"><canvas id="screen" width="256" height="240" aria-label="FC 游戏画面" tabindex="0"></canvas><span id="screen-label">LITEGAME · FAMILY COMPUTER</span></div>
     <div class="actions"><button data-key="B">B</button><button data-key="A">A</button><button data-key="TURBO_B">连发 B</button><button data-key="TURBO_A">连发 A</button></div>
     <div class="system"><button data-key="SELECT">选择 SELECT</button><button data-key="START">开始 START</button><button id="console-pause" disabled>开始</button></div>
+    <p class="keyboard-reference">键盘：<kbd>↑ ↓ ← →</kbd> 移动 · <kbd>Z</kbd> = A · <kbd>X</kbd> = B · <kbd>Enter</kbd> = START · <kbd>右 Shift</kbd> = SELECT</p>
+    </div>
     <div id="console-menu-panel" role="dialog" aria-modal="true" aria-labelledby="console-menu-title" hidden>
       <div class="console-menu-card">
         <h2 id="console-menu-title">游戏菜单</h2>
@@ -48,10 +51,10 @@
   <details open><summary>玩法与存档</summary>
     <p>底部“开始”可直接启动模拟器，运行后变为“暂停”，暂停后变为“继续”；也可用 START / SELECT 启动或唤醒。等待卡带标题画面出现后，再按 START 进入游戏，SELECT 选择模式（具体作用由游戏决定）。唤醒时不同时发送游戏按键，避免误触游戏内暂停。方向键移动，Z = A、X = B、Enter = START、右 Shift = SELECT。双人游戏：玩家二用 I/J/K/L、G/H、T/Y。手机可同时按方向与 A/B，连发键适合射击。</p>
     <p>“存档”保存当前画面进度，“读档”恢复当前卡带的存档。切到后台会暂停；回到页面需手动继续。存档保存在此浏览器中，清理网站数据会删除存档；大厅的进度导出不包含 FC 存档。</p>
-    <p>“横屏游玩”将方向键放在左侧、A/B 放在右侧，画面居中。支持的浏览器会全屏并锁定横屏；iPhone 等不支持时使用网页内横屏，可将手机横拿。左上角“菜单”可以存读档或退出横屏，退出后游戏暂停。</p>
+    <p>电脑使用独立居中画面，按键与键盘参考位于画面下方。手机“横屏游玩”将方向键放在左侧、A/B 放在右侧，画面居中。支持的浏览器会全屏并锁定横屏；iPhone 等不支持时使用网页内横屏，可将手机横拿。左上角“菜单”可以存读档或退出横屏，退出后游戏暂停。</p>
     <div class="toolbar"><button id="export" disabled>导出此卡带存档</button><label class="file">导入存档<input id="state-file" type="file" accept=".json"></label></div>
   </details>
-  <section class="library"><h2>选择卡带</h2><label>搜索游戏 <input type="search" id="search" placeholder="魂斗罗、马戏团、冒险岛…"></label><label><input type="checkbox" id="compatible">只看通过启动检查</label><p id="count"></p><div id="library"></div><nav id="pages" aria-label="卡带分页"></nav></section>
+  <section class="library"><h2>选择卡带</h2><label>搜索游戏 <input type="search" id="search" placeholder="魂斗罗、马戏团、冒险岛…"></label><label><input type="checkbox" id="compatible">只看通过启动检查</label><p id="count"></p><nav id="pages-top" aria-label="卡带顶部分页"></nav><div id="library"></div><nav id="pages" aria-label="卡带底部分页"></nav></section>
   <footer>模拟器：<a href="https://github.com/bfirsh/jsnes">JSNES 2.1.0</a> · <a href="vendor/LICENSE">Apache-2.0</a> · <a href="SOURCE.md">游戏来源与兼容性说明</a></footer>
 </main>
 <script src="vendor/jsnes.min.js"></script>

@@ -64,6 +64,7 @@ node tests/campaigns.browser.cjs
 node tests/nes.browser.cjs
 node tests/nes-display.browser.cjs
 node tests/nes-system-buttons.browser.cjs
+node tests/pagination-desktop.browser.cjs
 node tests/jigsaw-free.browser.cjs
 node tests/five-games.browser.cjs
 node tests/casual-ports.browser.cjs
@@ -77,6 +78,8 @@ BROWSER_ENGINE=webkit node tests/mobile-tutorials.browser.cjs
 ```
 
 浏览器测试创建独立上下文，不使用日常浏览器的游戏存档。
+
+`pagination-desktop.browser.cjs` 默认连接 8766，同时运行 Chromium、WebKit：大厅怀旧列表与模拟器卡带列表的上下分页同步、首尾禁用和搜索空结果，PC 三种尺寸下画面比例／居中／底部控制区，键盘启动、全屏与手机分页。
 
 `nes-display.browser.cjs` 和 `nes-system-buttons.browser.cjs` 默认连接 8766 端口（`node tests/static-server.cjs`），同时使用 Chromium 与 WebKit；可通过 `GAME_BASE_URL` 指向其他测试端口。
 

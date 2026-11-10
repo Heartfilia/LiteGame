@@ -1904,3 +1904,5 @@ img {
     scroll-behavior: auto !important;
   }
 }
+/* Both ends of long game lists share the same pagination state. */
+.game-pagination { display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:center; margin:24px 0; scroll-margin-top:100px; }

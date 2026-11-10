@@ -237,7 +237,7 @@
           '</div>' +
         '</section>' +
         (cat.id === 'retro'
-          ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机 / 导入本地卡带</a><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" aria-label="怀旧游戏分页" style="display:flex;gap:16px;align-items:center;justify-content:center;margin:24px 0"></nav></section>'
+          ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机 / 导入本地卡带</a><nav id="retro-pages-top" class="game-pagination" aria-label="怀旧游戏顶部分页"></nav><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" class="game-pagination" aria-label="怀旧游戏底部分页"></nav></section>'
           : list.length
           ? '<section class="section section-tight"><div class="game-grid">' + list.map(gameCard).join('') + '</div></section>'
           : '<section class="section section-tight">' + emptyState('这个分区还是空的', '我们正在给它攒一个好玩的开局，先去其他分区逛逛吧。', '#/', '回到主菜单') + '</section>') +
@@ -247,17 +247,20 @@
       try { page = Math.max(0, Math.min(Math.ceil(list.length / 36) - 1, Number(sessionStorage.getItem('litegame.retro-page')) || 0)); } catch (e) {}
       function renderRetroPage() {
         document.getElementById('retro-cards').innerHTML = list.slice(page * 36, (page + 1) * 36).map(gameCard).join('');
-        const nav = document.getElementById('retro-pages'); nav.replaceChildren();
-        const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + Math.ceil(list.length / 36);
-        for (const [text, step] of [['上一页', -1], ['下一页', 1]]) {
-          const button = document.createElement('button'); button.className = 'btn btn-ghost'; button.textContent = text;
-          button.disabled = page + step < 0 || (page + step) * 36 >= list.length;
-          button.onclick = function () {
-            page += step;
-            try { sessionStorage.setItem('litegame.retro-page', String(page)); } catch (e) {}
-            renderRetroPage(); document.getElementById('retro-cards').scrollIntoView();
-          };
-          nav.append(button); if (step === -1) nav.append(label);
+        for (const id of ['retro-pages-top', 'retro-pages']) {
+          const nav = document.getElementById(id); nav.replaceChildren();
+          const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + Math.ceil(list.length / 36);
+          for (const [text, step] of [['上一页', -1], ['下一页', 1]]) {
+            const button = document.createElement('button'); button.className = 'btn btn-ghost'; button.textContent = text;
+            button.disabled = page + step < 0 || (page + step) * 36 >= list.length;
+            button.onclick = function () {
+              page += step;
+              try { sessionStorage.setItem('litegame.retro-page', String(page)); } catch (e) {}
+              renderRetroPage(); document.getElementById('retro-pages-top').scrollIntoView({ block: 'start', behavior: 'instant' });
+              document.querySelector('#retro-pages-top button:not(:disabled)').focus({ preventScroll: true });
+            };
+            nav.append(button); if (step === -1) nav.append(label);
+          }
         }
       }
       renderRetroPage();

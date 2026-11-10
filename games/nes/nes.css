@@ -2,6 +2,10 @@
 @media(max-width:650px) and (orientation:portrait){.console{grid-template-columns:1fr 1fr;padding:10px;gap:12px}.screen{grid-column:1/-1;grid-row:1}.pad{grid-row:2;grid-column:1;max-width:165px;width:100%}.actions{grid-row:2;grid-column:2;max-width:160px;justify-self:end}.system{grid-row:3}.console:fullscreen .screen{width:min(100%,calc((100dvh - 245px)*256/240))}}
 @media(orientation:landscape) and (max-height:600px){.console{grid-template-columns:135px minmax(0,1fr) 135px;gap:8px;padding:8px}.screen{width:min(100%,calc((100dvh - 95px)*256/240));justify-self:center}.pad button{height:44px}.actions button{min-height:44px}.system button{min-height:40px;padding:6px}.console:fullscreen .screen{width:min(100%,calc((100dvh - 80px)*256/240))}}
 .console-layout{display:contents}
+.console-controls{display:contents}
+.keyboard-reference{display:none}
+#screen{height:auto}
+#pages-top{margin:12px 0;scroll-margin-top:12px}
 #console-menu{display:none}
 #console-menu-panel[hidden]{display:none}
 body.nes-immersive{overflow:hidden;overscroll-behavior:none}
@@ -22,3 +26,20 @@ body.nes-immersive{overflow:hidden;overscroll-behavior:none}
 .console-menu-card{width:min(100%,440px);max-height:100%;overflow:auto;overscroll-behavior:contain;background:#25293c;border:1px solid #827986;border-radius:14px;padding:14px}
 .console-menu-card h2{font-size:19px;margin:0 0 8px}.console-menu-card p{font-size:13px;line-height:1.4;margin:6px 0;color:#f3cc91}.menu-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.menu-buttons #menu-resume{grid-column:1/-1}
 @media(orientation:portrait){.immersive:not(.landscape-play) .console-layout{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) 112px 48px}.immersive:not(.landscape-play) .screen{grid-column:1/-1;grid-row:1;width:min(100%,calc((var(--play-height) - 300px)*256/240))}.immersive:not(.landscape-play) .pad{grid-column:1;grid-row:2}.immersive:not(.landscape-play) .actions{grid-column:2;grid-row:2}.immersive:not(.landscape-play) .system{grid-row:3}}
+/* Mouse/keyboard desktop: a dedicated picture area above the control reference. */
+@media(min-width:900px) and (hover:hover) and (pointer:fine){
+  .console:not(.immersive){display:block}
+  .console:not(.immersive) .console-layout{display:flex;flex-direction:column;align-items:center;gap:16px}
+  .console:not(.immersive) .screen{width:min(100%,640px,calc(max(180px,100dvh - 400px)*256/240));max-width:100%;flex:none}
+  .console .console-controls{display:grid;grid-template-columns:155px minmax(0,1fr) 190px;grid-template-rows:auto auto;align-items:center;gap:8px 16px;width:100%;padding-top:12px;border-top:1px solid #555366}
+  .console .console-controls .pad{grid-column:1;grid-row:1;max-width:none}
+  .console .console-controls .actions{grid-column:3;grid-row:1;max-width:none}
+  .console .console-controls .system{grid-column:2;grid-row:1;flex-wrap:wrap}
+  .console .keyboard-reference{display:block;grid-column:1/-1;grid-row:2;text-align:center;font-size:13px;line-height:1.5;margin:0;color:#eec794}
+  .keyboard-reference kbd{font:600 13px system-ui;color:#fff1d7}
+  .console.immersive .console-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 150px;padding:54px 20px 8px}
+  .console.immersive .screen{grid-column:1;grid-row:1;width:min(100%,calc((var(--play-height) - 230px)*256/240))}
+  .console.immersive .console-controls{grid-column:1;grid-row:2;align-self:end}
+  .console.immersive .pad button{height:44px}
+  .console.immersive .actions button{min-height:44px}
+}

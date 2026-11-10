@@ -290,16 +290,24 @@
     const list = library.filter(g => g.title.toLowerCase().includes(query) && (!$('compatible').checked || g.status === 'boot'));
     const pages = Math.max(1, Math.ceil(list.length / 36)); page = Math.min(page, pages - 1);
     $('count').textContent = list.length + ' 个卡带版本 · 第 ' + (page + 1) + ' / ' + pages + ' 页';
-    $('library').replaceChildren(); $('pages').replaceChildren();
+    $('library').replaceChildren();
     for (const game of list.slice(page * 36, (page + 1) * 36)) {
       const link = document.createElement('a'); link.href = '?game=' + game.id + '&from=retro'; link.textContent = game.title;
       const small = document.createElement('small'); small.textContent = game.status === 'boot' ? '启动已检查 · Mapper ' + game.mapper : game.detail;
       link.append(small); $('library').append(link);
     }
-    for (const [label, step] of [['上一页', -1], ['下一页', 1]]) {
-      const button = document.createElement('button'); button.textContent = label;
-      button.disabled = page + step < 0 || page + step >= pages;
-      button.onclick = () => { page += step; renderLibrary(); }; $('pages').append(button);
+    for (const id of ['pages-top', 'pages']) {
+      const nav = $(id); nav.replaceChildren();
+      for (const [label, step] of [['上一页', -1], ['下一页', 1]]) {
+        const button = document.createElement('button'); button.textContent = label;
+        button.disabled = page + step < 0 || page + step >= pages;
+        button.onclick = () => {
+          page += step; renderLibrary(); $('pages-top').scrollIntoView({ block: 'start', behavior: 'instant' });
+          $('pages-top').querySelector('button:not(:disabled)').focus({ preventScroll: true });
+        };
+        nav.append(button);
+        if (step === -1) { const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + pages; nav.append(label); }
+      }
     }
   }
   $('search').oninput = $('compatible').onchange = () => { page = 0; renderLibrary(); };
