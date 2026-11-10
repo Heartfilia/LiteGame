@@ -22,6 +22,27 @@ async function drop(page,id,x,y){
  await page.locator(`[data-piece="${id}"]`).tap();
  await page.locator('.jg-free-canvas').tap({position:{x,y}});
 }
+async function referencePreview(page){
+ const before=(await session(page)).s;
+ await page.getByRole('button',{name:'查看完整参考图',exact:true}).tap();
+ assert.ok(await page.locator('.jg-preview').isVisible());
+ assert.ok(await page.evaluate(()=>{
+  const pic=Chogan.storage('jigsaw').get('session').s.pic;
+  return ['.jg-reference canvas','.jg-preview'].every(selector=>{
+   const actual=document.querySelector(selector),expected=document.createElement('canvas');
+   expected.width=actual.width;expected.height=actual.height;
+   JigsawPictures().draw(pic,expected.getContext('2d'),expected.width,expected.height);
+   const a=actual.getContext('2d').getImageData(0,0,actual.width,actual.height).data;
+   const b=expected.getContext('2d').getImageData(0,0,expected.width,expected.height).data;
+   let error=0;for(let i=0;i<a.length;i++)error+=Math.abs(a[i]-b[i]);
+   return error/a.length<1; // Allow minor GPU/CPU rasterization differences in WebKit.
+  });
+ }),'thumbnail and modal show the current complete picture');
+ await page.getByRole('button',{name:'返回拼图',exact:true}).tap();
+ await page.locator('.jg-preview').waitFor({state:'detached'});
+ assert.equal(await page.locator('.jg-preview').count(),0);
+ assert.deepEqual((await session(page)).s,before,'reference leaves puzzle progress and camera intact');
+}
 async function worldPoint(page,id){
  const s=(await session(page)).s, g=s.free.groups.find(g=>g.pieces.includes(id));
   const r=await page.locator('.jg-free-canvas').boundingBox(),v=s.free.view,cols=Math.sqrt(s.count);
@@ -74,6 +95,7 @@ async function worldPoint(page,id){
    assert.ok(Math.abs((await session(page)).s.free.groups[0].x-beforeScaled-30/1.25/48)<.001,'drag uses zoomed world coordinates');
    const beforeReload=(await session(page)).s;await page.reload();
    assert.deepEqual((await session(page)).s,beforeReload,'positions, groups, view and tray survive refresh');
+   await referencePreview(page);await referencePreview(page);
    await page.getByRole('button',{name:'查看全部',exact:true}).tap();
    if(name==='chromium'){
     const cdp=await page.context().newCDPSession(page);
@@ -97,6 +119,7 @@ async function worldPoint(page,id){
     assert.ok(await page.getByRole('tab',{name:label,exact:true}).evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'difficulty selector remains reachable');
     const id=(await session(page)).s.tray[0];await drop(page,id,90,90);
     assert.ok((await session(page)).s.placed.includes(id));
+    await referencePreview(page);
    }
    // A valid near-complete save exercises completion, including persistence and final-group movement.
    await page.setViewportSize({width:1000,height:900});
@@ -111,11 +134,13 @@ async function worldPoint(page,id){
    p=await worldPoint(page,count-1);await drag(page,p,{x:p.x+20,y:p.y+15});
    assert.ok((await session(page)).s.free.groups[0].x>0,'completed puzzle remains movable');
    await page.reload();assert.equal(await page.locator('.jg-slot').count(),0);assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
+   await referencePreview(page);
    assert.deepEqual(errors,[]);console.log(name+': '+count+' pieces, blank workspace, touch placement, group joins/drag/cancel, pan/zoom, refresh, four sizes and completion passed');
    }
    // Classic mode still draws guides and places a piece by its keyboard cell.
    await loadFixture(page,null,{count:12,done:{}});
    assert.equal(await page.locator('.jg-grid').isVisible(),true);assert.equal(await page.locator('.jg-free-canvas').isVisible(),false);
+   assert.equal(await page.locator('.jg-reference').isVisible(),false);
    await page.keyboard.press('ArrowRight');await page.keyboard.press('Enter');
    const id=await page.locator('.jg-slot--sel').evaluate(n=>n._piece);
    for(let i=0;i<id%3;i++)await page.keyboard.press('ArrowRight');

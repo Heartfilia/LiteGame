@@ -50,6 +50,10 @@
   @keyframes jg-snap { 0% { filter: brightness(1.35); } 100% { filter: none; } }
   .jg-status { min-height: 1.4em; font-weight: 700; color: var(--c-text-dim); text-align: center; font-size: var(--fs-sm); }
   .jg-preview { display: block; margin: 0 auto; border-radius: var(--r-md); box-shadow: var(--sh-2); }
+  .jg-reference { display: flex; align-items: center; justify-content: center; gap: 14px; width: min(100%, 420px); padding: 10px 14px; border: 1px solid var(--c-line); border-radius: var(--r-md); background: var(--c-surface); color: var(--c-text); cursor: pointer; touch-action: manipulation; text-align: left; }
+  .jg-reference[hidden] { display: none; }
+  .jg-reference canvas { width: 60px; height: 80px; flex: none; border-radius: 4px; }
+  .jg-reference small { display: block; margin-top: 4px; color: var(--c-text-dim); }
   .jg-tut { display: block; }
   .jg-free-tools { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
   .jg-free-tools[hidden], .jg-free-canvas[hidden] { display: none; }
@@ -2338,6 +2342,12 @@ function JigsawPictures() {
   var mid = el('div', { class: 'jg-mid' }, [frame, tray]);
   var wrap = el('div', { class: 'jg-wrap' }, [top, mid, status]);
   var freeTools = el('div', { class: 'jg-free-tools', hidden: true });
+  var referenceImage = document.createElement('canvas');
+  referenceImage.setAttribute('aria-hidden', 'true');
+  var reference = el('button', { class: 'jg-reference', type: 'button', hidden: true, 'aria-label': '查看完整参考图', onclick: showPreview }, [
+    referenceImage,
+    el('span', {}, [el('strong', { text: '完整图参考' }), el('small', { text: '点击放大，随时查看完整图案' })])
+  ]);
   var zoomLabel = el('span', { class: 'ch-badge', text: '100%' });
   var freeBoard = window.JigsawFreeBoard({
     onView: function (zoom) { zoomLabel.textContent = zoom + '%'; },
@@ -2433,7 +2443,7 @@ function JigsawPictures() {
   function layout() {
     ctx.main.classList.toggle('ch-gamemain--scroll', isFree());
     freeBoard.setEnabled(isFree());
-    freeBoard.canvas.hidden = !isFree(); freeTools.hidden = !isFree();
+    freeBoard.canvas.hidden = !isFree(); freeTools.hidden = !isFree(); reference.hidden = !isFree();
     frame.classList.toggle('jg-frame--free', isFree()); wrap.classList.toggle('jg-wrap--free', isFree());
     if (isFree()) { layoutFree(); return; }
     var r = room(), availW = r[0];
@@ -2470,7 +2480,9 @@ function JigsawPictures() {
   }
   function layoutFree() {
     side = false; wrap.classList.remove('jg-wrap--side'); aside.remove();
-    mid.append(frame, tray); wrap.prepend(top); wrap.insertBefore(freeTools, mid); wrap.append(status);
+    mid.append(frame, tray); wrap.prepend(top); wrap.insertBefore(freeTools, mid); wrap.append(reference, status);
+    referenceImage.width = Math.round(60 * dpr()); referenceImage.height = Math.round(80 * dpr());
+    P.draw(S.pic, referenceImage.getContext('2d'), referenceImage.width, referenceImage.height);
     // Keep pieces large enough to handle; the camera, not the puzzle, fits the viewport.
     L = { w: S.cols * 48, h: S.rows * 64, cols: S.cols, rows: S.rows, cw: 48, ch: 64, m: 22 };
     var width = Math.max(240, Math.min(1160, ctx.main.clientWidth - 24));
@@ -2699,13 +2711,14 @@ function JigsawPictures() {
 
   function showPreview() {
     if (!S) return;
-    var w = Math.min(260, window.innerWidth - 120), h = Math.round(w * E.ASPECT), d = dpr();
+    var w = isFree() ? Math.max(100, Math.min(400, window.innerWidth - 100, (window.innerHeight - 200) / E.ASPECT)) : Math.min(260, window.innerWidth - 120);
+    var h = Math.round(w * E.ASPECT), d = dpr();
     var cv = document.createElement('canvas');
     cv.width = Math.round(w * d); cv.height = Math.round(h * d);
     cv.style.width = w + 'px'; cv.style.height = h + 'px';
     cv.className = 'jg-preview';
     P.draw(S.pic, cv.getContext('2d'), cv.width, cv.height);
-    C.ui.modal({ title: C.t('pic_' + S.pic), body: [cv], actions: [{ label: C.t('done'), kind: 'primary' }] });
+    C.ui.modal({ title: (isFree() ? '完整图参考 · ' : '') + C.t('pic_' + S.pic), body: [cv], actions: [{ label: isFree() ? '返回拼图' : C.t('done'), kind: 'primary' }] });
   }
 
   function showHelp() {
