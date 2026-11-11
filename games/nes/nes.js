@@ -13,11 +13,16 @@
   let playedFrames = 0, hasStarted = false;
   let page = 0;
   const display = window.NESDisplay({ release: releaseAll, pause, start });
+  const directionPad = window.NESDirectionPad($('direction-disc'), {
+    enabled: () => running && !display.menuOpen(),
+    down: (source, name) => hold(source, 1, name), up: release
+  });
   function status(text) { $('status').textContent = $('menu-status').textContent = text; }
   function buttons(ready) {
     for (const id of ['play', 'pause', 'reset', 'save', 'restore', 'export', 'console-pause']) $(id).disabled = !ready;
     for (const id of ['menu-resume', 'menu-save', 'menu-restore']) $(id).disabled = !ready;
     document.querySelectorAll('[data-key]').forEach(button => { button.disabled = !ready; });
+    $('direction-disc').setAttribute('aria-disabled', String(!ready));
     $('console-pause').textContent = hasStarted ? '继续' : '开始';
   }
   function draw(buffer) {
@@ -60,6 +65,7 @@
     } catch (e) { status('声音未开启：' + e.message); }
   }
   function releaseAll() {
+    directionPad.reset();
     if (nes) for (let p = 1; p <= 2; p++) for (let b = 0; b < 10; b++) nes.buttonUp(p, b);
     held.clear(); systemPulses.clear();
     document.querySelectorAll('[data-held]').forEach(b => b.removeAttribute('data-held'));

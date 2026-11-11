@@ -6,7 +6,7 @@ const game=catalog.games.find(g=>g.title==='魂斗罗'&&g.status==='boot');
 async function geometry(page){
  const boxes=await page.evaluate(()=>{
   const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
-   return {w:innerWidth,h:innerHeight,rotated:document.getElementById('console').classList.contains('is-rotated'),screen:rect(document.getElementById('screen')),pad:rect(document.querySelector('.pad')),actions:rect(document.querySelector('.actions')),buttons:[...document.querySelectorAll('#console-menu,[data-key],#console-pause')].map(n=>{const r=rect(n);return {id:n.id||n.dataset.key,...r,reachable:n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};})};
+   return {w:innerWidth,h:innerHeight,rotated:document.getElementById('console').classList.contains('is-rotated'),screen:rect(document.getElementById('screen')),pad:rect(document.querySelector('#direction-disc')),actions:rect(document.querySelector('.actions')),buttons:[...document.querySelectorAll('#console-menu,#direction-disc,[data-key],#console-pause')].filter(n=>n.getBoundingClientRect().width>0).map(n=>{const r=rect(n);return {id:n.id||n.dataset.key,...r,reachable:n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};})};
  });
   for(const b of boxes.buttons){assert.ok(b.width>=40&&b.height>=40,b.id+' target size');assert.ok(b.x>=-1&&b.y>=-1&&b.right<=boxes.w+1&&b.bottom<=boxes.h+1,b.id+' within viewport '+JSON.stringify(b));assert.ok(b.reachable,b.id+' is not covered');}
  const {screen:s,pad:p,actions:a}=boxes;
@@ -37,9 +37,9 @@ async function geometry(page){
     // Pointer capture still works after the whole layout has been rotated.
     const b=await page.locator('[data-key=A]').boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();assert.equal(await page.locator('[data-held]').count(),1);await page.mouse.up();
     if(name==='chromium'){
-     const cdp=await context.newCDPSession(page),left=await page.locator('[data-key=LEFT]').boundingBox();
-     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:b.x+b.width/2,y:b.y+b.height/2,id:1},{x:left.x+left.width/2,y:left.y+left.height/2,id:2}]});
-     assert.equal(await page.locator('[data-held]').count(),2);await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});assert.equal(await page.locator('[data-held]').count(),0);await cdp.detach();
+     const cdp=await context.newCDPSession(page),left=await page.locator('#direction-disc').boundingBox();
+     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:b.x+b.width/2,y:b.y+b.height/2,id:1},{x:left.x+left.width/2,y:left.y+left.height*.2,id:2}]});
+     assert.equal(await page.locator('[data-held]').count(),1);assert.equal(await page.locator('#direction-disc').getAttribute('data-directions'),'LEFT');await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});assert.equal(await page.locator('[data-held]').count(),0);assert.equal(await page.locator('#direction-disc').getAttribute('data-directions'),'');await cdp.detach();
     }
     await page.locator('#console-menu').tap();assert.equal(await page.locator('[data-held]').count(),0);assert.equal(await page.locator('#play').textContent(),'开始 / 继续');
     await page.locator('#menu-save').tap();await page.waitForFunction(()=>document.getElementById('menu-status').textContent.startsWith('已保存'));

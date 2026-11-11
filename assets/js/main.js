@@ -221,7 +221,10 @@
         emptyState('没有找到这个分区', '它可能已经被移动或尚未开放。', '#/', '回到主菜单') + '</div>';
       return;
     }
-    const list = gamesInCategory(cat.id);
+    const allGames = gamesInCategory(cat.id);
+    let list = allGames;
+    let categoryQuery = '';
+    try { categoryQuery = sessionStorage.getItem('litegame.category-search.' + cat.id) || ''; } catch (e) {}
     app.innerHTML = '' +
       '<div class="view">' +
         '<section class="page-head" style="--accent:' + esc(cat.accent) + '">' +
@@ -236,20 +239,34 @@
             '<span class="page-count">' + list.length + '<small>款游戏</small></span>' +
           '</div>' +
         '</section>' +
+        '<section class="category-search" role="search" aria-label="搜索本分区">' +
+          '<label for="category-search">搜索本分区的游戏</label>' +
+          '<div class="category-search-row"><input id="category-search" type="search" placeholder="输入游戏名称或关键词" autocomplete="off" value="' + esc(categoryQuery) + '"><button id="category-search-clear" class="btn btn-ghost" type="button">清空</button></div>' +
+          '<p id="category-search-status" role="status"></p>' +
+        '</section>' +
         (cat.id === 'retro'
           ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机 / 导入本地卡带</a><nav id="retro-pages-top" class="game-pagination" aria-label="怀旧游戏顶部分页"></nav><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" class="game-pagination" aria-label="怀旧游戏底部分页"></nav></section>'
           : list.length
-          ? '<section class="section section-tight"><div class="game-grid">' + list.map(gameCard).join('') + '</div></section>'
+          ? '<section class="section section-tight"><div id="category-cards" class="game-grid">' + list.map(gameCard).join('') + '</div></section>'
           : '<section class="section section-tight">' + emptyState('这个分区还是空的', '我们正在给它攒一个好玩的开局，先去其他分区逛逛吧。', '#/', '回到主菜单') + '</section>') +
       '</div>';
+    const field = document.getElementById('category-search');
+    function filterCategory() {
+      const q = field.value.trim().toLowerCase();
+      list = allGames.filter(game => [game.title, game.subtitle, game.description, (game.tags || []).join(' ')].join(' ').toLowerCase().includes(q));
+      document.getElementById('category-search-status').textContent = list.length ? '找到 ' + list.length + ' 款本分区游戏' : '本分区没有匹配的游戏，请换个关键词或清空搜索。';
+      try { sessionStorage.setItem('litegame.category-search.' + cat.id, field.value); } catch (e) {}
+    }
+    filterCategory();
+    let updateCategory;
     if (cat.id === 'retro') {
       let page = 0;
-      try { page = Math.max(0, Math.min(Math.ceil(list.length / 36) - 1, Number(sessionStorage.getItem('litegame.retro-page')) || 0)); } catch (e) {}
+      try { page = Math.max(0, Math.min(Math.ceil(list.length / 36) - 1, Math.floor(Number(sessionStorage.getItem('litegame.retro-page'))) || 0)); } catch (e) {}
       function renderRetroPage() {
         document.getElementById('retro-cards').innerHTML = list.slice(page * 36, (page + 1) * 36).map(gameCard).join('');
         for (const id of ['retro-pages-top', 'retro-pages']) {
           const nav = document.getElementById(id); nav.replaceChildren();
-          const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + Math.ceil(list.length / 36);
+          const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + Math.max(1, Math.ceil(list.length / 36));
           for (const [text, step] of [['上一页', -1], ['下一页', 1]]) {
             const button = document.createElement('button'); button.className = 'btn btn-ghost'; button.textContent = text;
             button.disabled = page + step < 0 || (page + step) * 36 >= list.length;
@@ -264,7 +281,13 @@
         }
       }
       renderRetroPage();
+      updateCategory = () => { page = 0; try { sessionStorage.setItem('litegame.retro-page', '0'); } catch (e) {} renderRetroPage(); };
+    } else {
+      updateCategory = () => { const cards = document.getElementById('category-cards'); if (cards) cards.innerHTML = list.map(gameCard).join(''); };
+      updateCategory();
     }
+    field.addEventListener('input', () => { filterCategory(); updateCategory(); });
+    document.getElementById('category-search-clear').onclick = () => { field.value = ''; filterCategory(); updateCategory(); field.focus(); };
   }
 
   function renderSearch(query) {

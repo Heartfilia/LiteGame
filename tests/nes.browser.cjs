@@ -29,9 +29,11 @@ const base = process.env.GAME_BASE_URL || 'http://127.0.0.1:8765';
         return data.some((n,i) => i % 4 !== 3 && n !== data[i % 4]);
       }, null, {timeout:15000});
       const cdp = await context.newCDPSession(page);
-      const left = await page.locator('[data-key=LEFT]').boundingBox(), a = await page.locator('[data-key=A]').boundingBox();
-      await cdp.send('Input.dispatchTouchEvent', {type:'touchStart', touchPoints:[{x:left.x+left.width/2,y:left.y+left.height/2,id:1},{x:a.x+a.width/2,y:a.y+a.height/2,id:2}]});
-      assert.equal(await page.locator('[data-held]').count(), 2);
+      await page.locator('#direction-disc').scrollIntoViewIfNeeded();
+      const left = await page.locator('#direction-disc').boundingBox(), a = await page.locator('[data-key=A]').boundingBox();
+      await cdp.send('Input.dispatchTouchEvent', {type:'touchStart', touchPoints:[{x:left.x+left.width*.2,y:left.y+left.height/2,id:1},{x:a.x+a.width/2,y:a.y+a.height/2,id:2}]});
+      assert.equal(await page.locator('[data-held]').count(), 1);
+      assert.equal(await page.locator('#direction-disc').getAttribute('data-directions'),'LEFT');
       await cdp.send('Input.dispatchTouchEvent', {type:'touchCancel', touchPoints:[]});
       assert.equal(await page.locator('[data-held]').count(), 0);
       await cdp.detach();
@@ -60,7 +62,7 @@ const base = process.env.GAME_BASE_URL || 'http://127.0.0.1:8765';
       for (const size of [{width:844,height:390},{width:568,height:320},{width:320,height:568}]) {
         await page.setViewportSize(size);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'viewport overflow');
-        for (const key of ['LEFT','RIGHT','A','B','START']) {
+        for (const key of ['A','B','START']) {
           const box = await page.locator('[data-key='+key+']').boundingBox();
           assert.ok(box.width >= 40 && box.height >= 40 && box.x >= 0 && box.x + box.width <= size.width, key+' unreachable');
         }

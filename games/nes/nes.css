@@ -43,3 +43,41 @@ body.nes-immersive{overflow:hidden;overscroll-behavior:none}
   .console.immersive .pad button{height:44px}
   .console.immersive .actions button{min-height:44px}
 }
+.screen-glass{position:relative;width:100%;background:#050608;line-height:0}
+#screen{display:block;width:100%;height:auto;aspect-ratio:256/240;object-fit:contain}
+.tv-trim{display:none}
+.direction-disc{display:none;position:relative;width:132px;height:132px;border-radius:50%;border:3px solid #636b7b;background:radial-gradient(circle,#3b4353 0 28%,#202633 30% 58%,#10141e 60%);box-shadow:0 5px 0 #06080d,inset 0 2px 5px #a2acba55;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;justify-self:center;cursor:grab}
+.direction-disc[aria-disabled=true]{opacity:.4}
+.direction-disc span{position:absolute;color:#aeb8c9;pointer-events:none;font-size:19px;line-height:1}
+.direction-disc [data-direction=UP]{top:10px;left:calc(50% - 10px)}
+.direction-disc [data-direction=DOWN]{bottom:10px;left:calc(50% - 10px)}
+.direction-disc [data-direction=LEFT]{left:10px;top:calc(50% - 10px)}
+.direction-disc [data-direction=RIGHT]{right:10px;top:calc(50% - 10px)}
+.direction-disc span.active{color:#ffca82;text-shadow:0 0 8px #ffca82}
+.direction-disc i{position:absolute;width:38%;height:38%;left:31%;top:31%;border-radius:50%;background:linear-gradient(145deg,#505a6d,#252c39);box-shadow:0 2px 8px #0008;transform:translate(var(--stick-x,0px),var(--stick-y,0px));pointer-events:none}
+@media(pointer:coarse),(hover:none){
+  .console .pad{display:none}
+  .direction-disc{display:block;grid-column:1;grid-row:1}
+  .console.immersive .console-layout{border:2px solid #535b70;border-radius:44px;background:linear-gradient(165deg,#333d50,#161c29 48%,#293247);box-shadow:inset 0 0 0 5px #0c111b,inset 0 14px 20px #ffffff0c}
+  .console.immersive .screen{border:6px solid #080c14;border-radius:8px;box-shadow:0 0 0 2px #69758b,0 7px 18px #0009}
+  .actions button{border-radius:50%;background:radial-gradient(circle at 35% 25%,#575a73,#222638);border:2px solid #8a90a6;box-shadow:0 4px 0 #080c16}
+  .actions button:nth-child(n+3){border-radius:18px;font-size:12px}
+  .system button{border-radius:20px;background:linear-gradient(#3e485d,#202839)}
+}
+@media(max-width:650px) and (orientation:portrait){.direction-disc{grid-row:2;grid-column:1}}
+@media(pointer:coarse),(hover:none){
+  .immersive .direction-disc{grid-column:1;grid-row:1;width:clamp(112px,16vw,152px);height:auto;aspect-ratio:1}
+  .immersive.is-rotated .direction-disc{width:132px}
+}
+@media(orientation:portrait){.immersive:not(.landscape-play) .direction-disc{grid-column:1;grid-row:2;width:108px}}
+/* A complete, unmasked image in a deep wooden TV cabinet; no controls overlay it. */
+@media(min-width:900px) and (hover:hover) and (pointer:fine){
+  .console:not(.immersive){background:none;border:0;padding:12px 0 0}
+  .console:not(.immersive) .screen{box-sizing:content-box;width:min(680px,calc(100% - 76px),calc(max(220px,100dvh - 340px)*256/240));max-width:none;padding:24px 30px 12px;border:8px solid #382619;border-radius:30px;background:repeating-linear-gradient(4deg,#775139 0px,#80583e 3px,#735036 6px);box-shadow:inset 0 0 0 3px #bf976b,0 14px 28px #0008}
+  .console .screen-glass{border:10px solid #242525;border-radius:14px;box-shadow:0 0 0 3px #121719,inset 0 0 10px #000}
+  .console .tv-trim{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:36px;padding-top:10px;color:#f2d6a3;font:600 11px monospace;letter-spacing:1px}
+  .tv-trim i{flex:1;height:18px;background:repeating-linear-gradient(0deg,#241f1b 0 2px,transparent 2px 4px)}
+  .console .console-controls{background:#191e2b;border:1px solid #454d61;border-radius:18px;padding:14px 20px;box-shadow:0 6px 15px #0004}
+  .console.immersive .console-layout{grid-template-rows:minmax(0,1fr) 160px}
+  .console.immersive .screen{box-sizing:content-box;width:min(680px,calc(100% - 76px),calc((var(--play-height) - 350px)*256/240));max-height:none;padding:20px 26px 10px;border:8px solid #382619;border-radius:26px;background:repeating-linear-gradient(4deg,#775139 0px,#80583e 3px,#735036 6px);box-shadow:inset 0 0 0 3px #bf976b,0 10px 28px #0008}
+}

@@ -1906,3 +1906,8 @@ img {
 }
 /* Both ends of long game lists share the same pagination state. */
 .game-pagination { display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:center; margin:24px 0; scroll-margin-top:100px; }
+.category-search { margin:0 0 24px; padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--panel); }
+.category-search label { display:block; margin-bottom:10px; font-weight:600; }
+.category-search-row { display:flex; gap:10px; }
+.category-search input { flex:1; min-width:0; min-height:44px; padding:10px 14px; border:1px solid var(--line-strong); border-radius:10px; background:var(--bg); color:var(--text); font:inherit; }
+.category-search p { margin:10px 0 0; color:var(--text-muted); font-size:14px; }
