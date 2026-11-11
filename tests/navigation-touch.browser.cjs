@@ -23,7 +23,7 @@ const base = process.env.GAME_BASE_URL || 'http://127.0.0.1:8765';
     });
     await page.waitForTimeout(120);
     const before = await page.evaluate(() => scrollY);
-    await page.locator('.category-card').first().evaluate(node => node.click());
+    await page.locator('.category-card[href="#/category/retro"]').evaluate(node => node.click());
     await page.waitForSelector('.game-card');
     await page.waitForTimeout(40);
     assert.equal(await page.evaluate(() => scrollY), 0);

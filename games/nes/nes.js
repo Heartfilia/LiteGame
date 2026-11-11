@@ -300,7 +300,19 @@
     for (const game of list.slice(page * 36, (page + 1) * 36)) {
       const link = document.createElement('a'); link.href = '?game=' + game.id + '&from=retro'; link.textContent = game.title;
       const small = document.createElement('small'); small.textContent = game.status === 'boot' ? '启动已检查 · Mapper ' + game.mapper : game.detail;
-      link.append(small); $('library').append(link);
+      const card = document.createElement('div'); card.className = 'cartridge-card';
+      const favorite = document.createElement('button'); favorite.type = 'button'; favorite.dataset.favorite = game.id;
+      const update = () => {
+        const active = window.GameFavorites.read().includes(game.id);
+        favorite.textContent = active ? '♥ 已收藏' : '♡ 收藏'; favorite.setAttribute('aria-pressed', String(active));
+        favorite.setAttribute('aria-label', (active ? '取消收藏：' : '收藏：') + game.title);
+      };
+      update();
+      favorite.onclick = () => {
+        try { window.GameFavorites.toggle(game.id); }
+        catch (e) { status('收藏未保存：浏览器存储不可用，请重试。'); }
+      };
+      link.append(small); card.append(link, favorite); $('library').append(card);
     }
     for (const id of ['pages-top', 'pages']) {
       const nav = $(id); nav.replaceChildren();
@@ -317,6 +329,14 @@
     }
   }
   $('search').oninput = $('compatible').onchange = () => { page = 0; renderLibrary(); };
+  window.addEventListener('favoriteschange', () => {
+    const ids = new Set(window.GameFavorites.read());
+    $('library').querySelectorAll('[data-favorite]').forEach(button => {
+      const active = ids.has(button.dataset.favorite), game = library.find(game => game.id === button.dataset.favorite);
+      button.textContent = active ? '♥ 已收藏' : '♡ 收藏'; button.setAttribute('aria-pressed', String(active));
+      button.setAttribute('aria-label', (active ? '取消收藏：' : '收藏：') + game.title);
+    });
+  });
   renderLibrary();
   buttons(false);
   const requested = new URLSearchParams(location.search).get('game');

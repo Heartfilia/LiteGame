@@ -1911,3 +1911,40 @@ img {
 .category-search-row { display:flex; gap:10px; }
 .category-search input { flex:1; min-width:0; min-height:44px; padding:10px 14px; border:1px solid var(--line-strong); border-radius:10px; background:var(--bg); color:var(--text); font:inherit; }
 .category-search p { margin:10px 0 0; color:var(--text-muted); font-size:14px; }
+
+/* Favorites remain separate buttons, never nested inside game links. */
+.game-card-shell,.feature-game-shell,.showcase-slide { position:relative; min-width:0; }
+.game-card-shell .game-card { height:100%; }
+.search-result-shell { position:relative; padding-right:88px; }
+.search-result-shell .favorite-button { top:8px; right:4px; padding:6px 8px; }
+.search-result-shell .search-thumb { width:44px; }
+.search-result-shell .search-go { display:none; }
+.favorite-button { position:absolute; top:12px; right:12px; z-index:3; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:8px 12px; border:1px solid rgba(255,255,255,.25); border-radius:12px; background:rgba(16,12,29,.9); color:#eee6fc; font-size:13px; box-shadow:0 4px 14px #0004; touch-action:manipulation; transition:background .2s ease,color .2s ease; }
+.favorite-button .ico { width:18px; height:18px; }
+.favorite-button:hover { background:#3c2343; }
+.favorite-button[aria-pressed=true] { color:var(--pink-bright); border-color:#ff8ab077; }
+.favorite-button[aria-pressed=true] svg { fill:currentColor; }
+.feature-game-shell > .favorite-button { top:14px; right:14px; }
+.feature-game-shell .feature-info { padding-top:68px; }
+.favorites-tools { margin:16px 0 24px; }
+.favorites-tools p { color:var(--muted); font-size:13px; }
+.favorites-tools .btn:disabled { opacity:.4; cursor:default; }
+.favorite-notice { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:130; max-width:calc(100% - 32px); width:max-content; margin:0; padding:12px 20px; border:1px solid #ff8ab066; border-radius:14px; background:#21182e; color:#ffe1ed; box-shadow:0 8px 30px #0008; font-size:14px; pointer-events:none; }
+.showcase-stage { display:grid; isolation:isolate; }
+.showcase-slide { grid-area:1/1; }
+.showcase-slide.slide-enter { z-index:2; animation:showcase-in .6s cubic-bezier(.22,1,.36,1) both; }
+.showcase-slide.slide-leave { pointer-events:none; animation:showcase-out .6s ease both; }
+.showcase-pause { position:absolute; right:0; bottom:-38px; min-height:36px; padding:6px 12px; color:var(--muted); font-size:12px; border:1px solid var(--line); border-radius:10px; }
+.showcase-pause[hidden],.game-pagination[hidden] { display:none; }
+.game-badge { max-width:calc(100% - 130px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@keyframes showcase-in { from { opacity:0; transform:translateX(18px) scale(.98); } to { opacity:1; transform:none; } }
+@keyframes showcase-out { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-12px) scale(.98); } }
+@media(max-width:900px) {
+  .header-nav { display:flex; margin-left:auto; }
+  .header-nav .nav-link:not([href="#/category/favorites"]) { display:none; }
+  .feature-game-shell .feature-info { padding-top:26px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .showcase-slide.slide-enter,.showcase-slide.slide-leave { animation:none; }
+  .showcase-slide.slide-leave { visibility:hidden; }
+}

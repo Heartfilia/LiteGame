@@ -50,11 +50,13 @@
       <nav class="header-nav" aria-label="主导航">
         <a class="nav-link" href="#/">首页</a>
         <a class="nav-link" id="allCategoriesLink" href="#/">全部分区</a>
+        <a class="nav-link" href="#/category/favorites">收藏 <span data-favorite-count>0</span></a>
       </nav>
     </div>
   </header>
 
   <main id="app" class="app-shell"></main>
+  <p id="favorite-notice" class="favorite-notice" role="status" hidden></p>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -84,8 +86,8 @@
         </svg>
       </button>
       <span class="data-tag">BACKUP</span>
-      <h2 id="dataModalTitle">游戏进度</h2>
-      <p class="data-desc">游戏记录保存在这台设备的浏览器里，包括最佳成绩、金币、成就和棋局进度。换设备或清理浏览器前，可以先导出本地进度，之后导入恢复。怀旧 FC 游戏使用独立存档，请在对应游戏页面导出／导入。</p>
+      <h2 id="dataModalTitle">游戏进度与收藏</h2>
+      <p class="data-desc">游戏记录与收藏保存在这台设备的浏览器里，包括最佳成绩、金币、成就和棋局进度。导出备份也会包含收藏，换设备后导入即可恢复；只迁移收藏可使用“我的收藏”内的导入／导出。怀旧 FC 游戏使用独立存档，请在对应游戏页面导出／导入。</p>
       <div class="data-stats" id="dataStats"></div>
       <div class="data-actions">
         <button class="data-btn data-btn-primary" id="exportBtn" type="button">
@@ -120,6 +122,7 @@
   </noscript>
 
   <script src="assets/js/games.js"></script>
+  <script src="assets/js/favorites.js"></script>
   <script src="assets/js/main.js"></script>
 </body>
 </html>

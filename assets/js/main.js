@@ -7,8 +7,15 @@
   const searchDropdown = document.getElementById('searchDropdown');
   const searchWrap = document.querySelector('.search-wrap');
   const allCategoriesLink = document.getElementById('allCategoriesLink');
+  const favorites = window.GameFavorites;
+  const favoriteCategory = { id: 'favorites', name: '我的收藏', tagline: '喜欢的游戏，都在这里', description: '收藏各个分区的游戏，下次直接来这里开玩。支持导出到其他电脑浏览器，再导入恢复收藏。', accent: '#ff8ab0', icon: 'heart' };
+  let homeTimer = null;
+  let slideTimer = null;
+  let noticeTimer = null;
+  let refreshFavoriteList = null;
 
   const ICON_PATHS = {
+    heart: '<path d="M20.8 4.9a5.3 5.3 0 0 0-7.5 0L12 6.2l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.6a5.3 5.3 0 0 0 0-7.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
     flag: '<path d="M5 21V3.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M5 4.2c3.2-1.5 6.3 1.1 9.5 0 2.6-.9 4.5-.7 4.5-.7v9.1s-1.9-.2-4.5.7c-3.2 1.1-6.3-1.5-9.5 0" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" fill="currentColor" fill-opacity=".14"/><path d="M9.1 4.6v8.2M13.4 5.4v8.5M17.7 5v8.6" stroke="currentColor" stroke-width="1.2" opacity=".45"/>',
     bolt: '<path d="M13.2 2.5 5.1 13.2h5.3L9.7 21.5l8.9-11.6h-5.6l1.2-7.4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="currentColor" fill-opacity=".12"/>',
     puzzle: '<rect x="3.6" y="3.6" width="7.2" height="7.2" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="13.2" y="3.6" width="7.2" height="7.2" rx="2" stroke="currentColor" stroke-width="1.8" fill="currentColor" fill-opacity=".18"/><rect x="3.6" y="13.2" width="7.2" height="7.2" rx="2" stroke="currentColor" stroke-width="1.8" fill="currentColor" fill-opacity=".18"/><rect x="13.2" y="13.2" width="7.2" height="7.2" rx="2" stroke="currentColor" stroke-width="1.8"/>',
@@ -44,10 +51,12 @@
   }
 
   function categoryById(id) {
+    if (id === 'favorites') return favoriteCategory;
     return categories.find(function (c) { return c.id === id; }) || null;
   }
 
   function gamesInCategory(id) {
+    if (id === 'favorites') { const ids = new Set(favorites.read()); return games.filter(game => ids.has(game.id)); }
     return games.filter(function (g) { return g.category === id; });
   }
 
@@ -78,7 +87,7 @@
         '<h3>' + esc(cat.name) + '</h3>' +
         '<p>' + esc(cat.tagline) + '</p>' +
         '<div class="category-foot">' +
-          '<span class="category-count">' + (count > 0 ? count + ' 款游戏' : '暂无游戏') + '</span>' +
+          '<span class="category-count">' + (count > 0 || cat.id === 'favorites' ? count + ' 款游戏' : '暂无游戏') + '</span>' +
           '<span class="category-dot"></span>' +
         '</div>' +
       '</a>';
@@ -87,7 +96,7 @@
   function gameCard(game) {
     const cat = categoryById(game.category);
     return '' +
-      '<a class="game-card" href="' + esc(game.url) + '">' +
+      '<div class="game-card-shell"><a class="game-card" href="' + esc(game.url) + '">' +
         '<div class="game-cover">' +
           '<img src="' + esc(game.cover) + '" alt="' + esc(game.title) + ' 封面" loading="lazy" />' +
           '<span class="game-shade"></span>' +
@@ -102,13 +111,13 @@
             return '<span>' + esc(tag) + '</span>';
           }).join('') + '</div>' +
         '</div>' +
-      '</a>';
+      '</a>' + favoriteButton(game) + '</div>';
   }
 
   function featureGame(game) {
     const cat = categoryById(game.category);
     return '' +
-      '<a class="feature-game" href="' + esc(game.url) + '">' +
+      '<div class="feature-game-shell"><a class="feature-game" href="' + esc(game.url) + '">' +
         '<div class="feature-cover">' +
           '<img src="' + esc(game.cover) + '" alt="' + esc(game.title) + ' 封面" />' +
           '<span class="game-shade"></span>' +
@@ -128,7 +137,68 @@
           '</div>' +
           '<span class="btn btn-primary btn-inline">开始游戏' + icon('play') + '</span>' +
         '</div>' +
-      '</a>';
+      '</a>' + favoriteButton(game) + '</div>';
+  }
+
+  function favoriteButton(game) {
+    const active = favorites.read().includes(game.id);
+    return '<button class="favorite-button" type="button" data-favorite="' + esc(game.id) + '" aria-pressed="' + active + '" aria-label="' + esc((active ? '取消收藏：' : '收藏：') + game.title) + '">' + icon('heart') + '<span>' + (active ? '已收藏' : '收藏') + '</span></button>';
+  }
+
+  function notifyFavorite(text) {
+    const notice = document.getElementById('favorite-notice');
+    notice.textContent = text; notice.hidden = false;
+    clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { notice.hidden = true; }, 4000);
+  }
+
+  function stopHomeRotation() {
+    clearInterval(homeTimer); clearTimeout(slideTimer); homeTimer = slideTimer = null;
+  }
+
+  function showcaseCard(game, saved) {
+    const cat = categoryById(game.category);
+    return '<div class="showcase-slide" data-game-id="' + esc(game.id) + '"><a class="showcase-card" href="' + esc(game.url) + '">' +
+      '<img src="' + esc(game.cover) + '" alt="' + esc(game.title) + ' 游戏封面" />' +
+      '<span class="showcase-shade"></span><span class="game-badge">' + esc(game.badge || 'PLAY') + '</span>' +
+      '<div class="showcase-meta"><span class="showcase-kicker">' + esc(cat ? cat.name : '精选') + (saved ? ' · 我的收藏' : ' · 竞速') + '</span>' +
+      '<h2>' + esc(game.title) + '</h2><span class="showcase-play">' + icon('play') + '开始游戏</span></div></a>' + favoriteButton(game) + '</div>';
+  }
+
+  function updateHomeFavorites() {
+    stopHomeRotation();
+    const stage = document.getElementById('showcase-stage');
+    if (!stage) return;
+    const saved = gamesInCategory('favorites');
+    const featured = games.find(game => game.featured) || games[0];
+    const queue = saved.slice();
+    for (let i = queue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]];
+    }
+    if (!queue.length && featured) queue.push(featured);
+    const entry = document.getElementById('home-play');
+    entry.href = saved.length ? '#/category/favorites' : featured.url;
+    entry.innerHTML = icon(saved.length ? 'heart' : 'play') + (saved.length ? '我的收藏' : '立即开玩');
+    const chip = app.querySelector('.chip-c');
+    chip.innerHTML = icon(saved.length ? 'heart' : 'clock') + (saved.length ? saved.length + ' 款收藏' : '限时冲线');
+    stage.innerHTML = queue.length ? showcaseCard(queue[0], saved.length > 0) : '';
+    const pause = document.getElementById('showcase-pause');
+    pause.hidden = saved.length < 2;
+    pause.setAttribute('aria-pressed', 'false'); pause.textContent = '暂停轮播';
+    pause.onclick = () => {
+      const paused = pause.getAttribute('aria-pressed') !== 'true';
+      pause.setAttribute('aria-pressed', String(paused)); pause.textContent = paused ? '继续轮播' : '暂停轮播';
+    };
+    let index = 0;
+    if (saved.length > 1) homeTimer = setInterval(() => {
+      if (document.hidden || pause.getAttribute('aria-pressed') === 'true' || stage.contains(document.activeElement) || stage.matches(':hover')) return;
+      const old = stage.querySelector('.showcase-slide');
+      index = (index + 1) % queue.length;
+      stage.insertAdjacentHTML('beforeend', showcaseCard(queue[index], true));
+      const next = stage.lastElementChild;
+      next.classList.add('slide-enter');
+      old.classList.add('slide-leave'); old.inert = true; old.setAttribute('aria-hidden', 'true');
+      slideTimer = setTimeout(() => { old.remove(); next.classList.remove('slide-enter'); }, 600);
+    }, 10000);
   }
 
   function emptyState(title, desc, actionHref, actionLabel) {
@@ -143,7 +213,6 @@
 
   function renderHome() {
     const featured = games.find(function (g) { return g.featured; }) || games[0];
-    const featuredCat = featured ? categoryById(featured.category) : null;
 
     app.innerHTML = '' +
       '<div class="view">' +
@@ -154,29 +223,21 @@
             '<p class="hero-lead">一个轻量的网页小游戏合集。竞速、街机、解谜、棋牌都能玩，手机触屏、电脑键盘随时开局。</p>' +
             '<div class="hero-actions">' +
               (featured
-                ? '<a class="btn btn-primary btn-lg" href="' + esc(featured.url) + '">' + icon('play') + '立即开玩</a>'
+                ? '<a id="home-play" class="btn btn-primary btn-lg" href="' + esc(featured.url) + '">' + icon('play') + '立即开玩</a>'
                 : '') +
               '<button class="btn btn-ghost btn-lg" type="button" data-scroll-categories>浏览分区' + icon('arrowDown') + '</button>' +
             '</div>' +
             '<div class="hero-stats">' +
               '<div><strong>' + games.length + '</strong><span>款游戏</span></div>' +
-              '<div><strong>' + categories.length + '</strong><span>个分区</span></div>' +
+              '<div><strong>' + (categories.length + 1) + '</strong><span>个分区</span></div>' +
               '<div><strong>0</strong><span>次下载</span></div>' +
             '</div>' +
           '</div>' +
           (featured
             ? '<div class="hero-showcase">' +
                 '<div class="showcase-glow" aria-hidden="true"></div>' +
-                '<a class="showcase-card" href="' + esc(featured.url) + '">' +
-                  '<img src="' + esc(featured.cover) + '" alt="' + esc(featured.title) + ' 游戏封面" />' +
-                  '<span class="showcase-shade"></span>' +
-                  '<span class="game-badge">' + esc(featured.badge || 'PLAY') + '</span>' +
-                  '<div class="showcase-meta">' +
-                    '<span class="showcase-kicker">' + esc(featuredCat ? featuredCat.name : '精选') + ' · 竞速</span>' +
-                    '<h2>' + esc(featured.title) + '</h2>' +
-                    '<span class="showcase-play">' + icon('play') + '开始游戏</span>' +
-                  '</div>' +
-                '</a>' +
+                '<div id="showcase-stage" class="showcase-stage" aria-label="推荐游戏"></div>' +
+                '<button id="showcase-pause" class="showcase-pause" type="button" aria-pressed="false" hidden>暂停轮播</button>' +
                 '<span class="float-chip chip-a">' + icon('phone') + '手机触屏</span>' +
                 '<span class="float-chip chip-b">' + icon('keyboard') + '键盘操控</span>' +
                 '<span class="float-chip chip-c">' + icon('clock') + '限时冲线</span>' +
@@ -189,7 +250,7 @@
             '<div><span class="section-kicker">CATEGORIES</span><h2>按分区逛逛</h2></div>' +
             '<p class="section-note">目前有 ' + games.length + ' 款游戏，更多正在路上。</p>' +
           '</div>' +
-          '<div class="category-grid">' + categories.map(categoryCard).join('') + '</div>' +
+          '<div class="category-grid">' + [favoriteCategory].concat(categories).map(categoryCard).join('') + '</div>' +
         '</section>' +
 
         '<section class="section section-last">' +
@@ -202,6 +263,7 @@
       '</div>';
 
     bindHomeEvents();
+    updateHomeFavorites();
   }
 
   function bindHomeEvents() {
@@ -215,6 +277,7 @@
   }
 
   function renderCategory(id) {
+    if (id === 'favorites') { renderFavorites(); return; }
     const cat = categoryById(id);
     if (!cat) {
       app.innerHTML = '<div class="view"><section class="page-head"><a class="back-link" href="#/">' + icon('arrowLeft') + '返回首页</a></section>' +
@@ -317,6 +380,83 @@
       '</div>';
   }
 
+  function downloadJSON(data, filename) {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    const link = document.createElement('a'); link.href = url; link.download = filename;
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function renderFavorites() {
+    app.innerHTML = '<div class="view"><section class="page-head"><a class="back-link" href="#/">' + icon('arrowLeft') + '返回主菜单</a>' +
+      '<div class="page-head-row"><span class="page-icon">' + icon('heart') + '</span><div class="page-title"><span class="section-kicker">FAVORITES</span><h1>我的收藏</h1><p>' + esc(favoriteCategory.description) + '</p></div><span class="page-count"><span data-favorite-count>0</span><small>款游戏</small></span></div></section>' +
+      '<section class="favorites-tools"><div class="data-actions"><button id="favorites-export" class="btn btn-primary" type="button">导出收藏</button><button id="favorites-import" class="btn btn-ghost" type="button">导入收藏</button><input id="favorites-file" type="file" accept="application/json,.json" hidden></div><p>导入会合并到当前收藏并自动去重。收藏备份只记录游戏列表。</p><p id="favorites-message" role="status"></p></section>' +
+      '<section class="category-search" role="search" aria-label="搜索我的收藏"><label for="favorites-search">搜索我的收藏</label><div class="category-search-row"><input id="favorites-search" type="search" placeholder="输入游戏名称或关键词"><button id="favorites-clear" class="btn btn-ghost" type="button">清空</button></div></section>' +
+      '<nav id="favorites-pages-top" class="game-pagination" aria-label="收藏顶部分页"></nav><div id="favorites-cards" class="game-grid"></div><div id="favorites-empty"></div><nav id="favorites-pages" class="game-pagination" aria-label="收藏底部分页"></nav></div>';
+    const field = document.getElementById('favorites-search');
+    let page = 0;
+    refreshFavoriteList = () => {
+      const all = gamesInCategory('favorites'), q = field.value.trim().toLowerCase();
+      const list = all.filter(game => [game.title, game.description, (game.tags || []).join(' '), categoryById(game.category).name].join(' ').toLowerCase().includes(q));
+      const pages = Math.max(1, Math.ceil(list.length / 36)); page = Math.min(page, pages - 1);
+      document.getElementById('favorites-cards').innerHTML = list.slice(page * 36, (page + 1) * 36).map(gameCard).join('');
+      document.getElementById('favorites-empty').innerHTML = list.length ? '' : emptyState(all.length ? '没有匹配的收藏' : '还没有收藏游戏', all.length ? '换个关键词或清空搜索试试。' : '点击游戏卡片上的“收藏”，把喜欢的游戏放到这里。', '#/', '去挑选游戏');
+      document.getElementById('favorites-export').disabled = !all.length;
+      document.querySelectorAll('[data-favorite-count]').forEach(node => { node.textContent = all.length; });
+      for (const id of ['favorites-pages-top', 'favorites-pages']) {
+        const nav = document.getElementById(id); nav.replaceChildren(); nav.hidden = !list.length;
+        for (const step of [-1, 1]) {
+          const button = document.createElement('button'); button.className = 'btn btn-ghost'; button.textContent = step < 0 ? '上一页' : '下一页';
+          button.disabled = page + step < 0 || page + step >= pages;
+          button.onclick = () => { page += step; refreshFavoriteList(); document.getElementById('favorites-pages-top').scrollIntoView({ block: 'start' }); };
+          nav.append(button);
+          if (step < 0) { const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + pages; nav.append(label); }
+        }
+      }
+    };
+    field.oninput = () => { page = 0; refreshFavoriteList(); };
+    document.getElementById('favorites-clear').onclick = () => { field.value = ''; page = 0; refreshFavoriteList(); field.focus(); };
+    document.getElementById('favorites-export').onclick = () => downloadJSON(favorites.export(), 'litegame-favorites-' + new Date().toISOString().slice(0, 10) + '.json');
+    const fileInput = document.getElementById('favorites-file');
+    document.getElementById('favorites-import').onclick = () => fileInput.click();
+    fileInput.onchange = async () => {
+      const file = fileInput.files[0], message = document.getElementById('favorites-message');
+      if (!file) return;
+      try {
+        const result = favorites.import(JSON.parse(await file.text()));
+        message.textContent = '导入完成，新增 ' + result.added + ' 款收藏。' + (result.skipped ? '已跳过 ' + result.skipped + ' 款当前目录不存在的游戏。' : '');
+      } catch (e) { message.textContent = '导入失败：' + e.message; }
+      fileInput.value = '';
+    };
+    refreshFavoriteList();
+  }
+
+  app.addEventListener('click', event => {
+    const button = event.target.closest('[data-favorite]');
+    if (!button) return;
+    const id = button.dataset.favorite;
+    try {
+      const ids = favorites.toggle(id);
+      notifyFavorite(ids.includes(id) ? '已加入我的收藏' : '已取消收藏');
+    } catch (e) { notifyFavorite('收藏未保存：浏览器存储不可用，请重试。'); }
+  });
+
+  function syncFavorites() {
+    const ids = new Set(favorites.read());
+    document.querySelectorAll('[data-favorite-count]').forEach(node => { node.textContent = ids.size; });
+    app.querySelectorAll('[data-favorite]').forEach(button => {
+      const game = games.find(game => game.id === button.dataset.favorite), active = ids.has(game.id);
+      button.setAttribute('aria-pressed', String(active));
+      button.setAttribute('aria-label', (active ? '取消收藏：' : '收藏：') + game.title);
+      button.querySelector('span').textContent = active ? '已收藏' : '收藏';
+    });
+    const count = app.querySelector('a[href="#/category/favorites"] .category-count');
+    if (count) count.textContent = ids.size + ' 款游戏';
+    if (refreshFavoriteList) refreshFavoriteList();
+    updateHomeFavorites();
+  }
+  window.addEventListener('favoriteschange', syncFavorites);
+
   function showSearchDropdown() {
     const q = searchInput.value.trim();
     if (!q) {
@@ -327,14 +467,14 @@
     const items = results.map(function (game) {
       const cat = categoryById(game.category);
       return '' +
-        '<a class="search-result" href="' + esc(game.url) + '">' +
+        '<div class="search-result-shell"><a class="search-result" href="' + esc(game.url) + '">' +
           '<span class="search-thumb"><img src="' + esc(game.cover) + '" alt="" loading="lazy" /></span>' +
           '<span class="search-result-text">' +
             '<strong>' + esc(game.title) + '</strong>' +
             '<small>' + esc(cat ? cat.name : '游戏') + ' · ' + esc((game.tags || []).slice(0, 2).join(' / ')) + '</small>' +
           '</span>' +
           icon('arrow', 'search-go') +
-        '</a>';
+        '</a>' + favoriteButton(game) + '</div>';
     }).join('');
 
     searchDropdown.innerHTML = results.length
@@ -419,6 +559,7 @@
   }
 
   function route() {
+    stopHomeRotation(); refreshFavoriteList = null;
     const nextRouteKey = routeKey(location.hash);
     let navigation = routeNavigation;
     if (currentRouteKey && currentRouteKey !== nextRouteKey) {
@@ -469,6 +610,7 @@
       document.title = 'LiteGame 轻量游戏厅 · 网页小游戏合集';
     }
     applyRouteScroll(nextRouteKey, navigation);
+    document.querySelectorAll('[data-favorite-count]').forEach(node => { node.textContent = favorites.read().length; });
     routeNavigation = 'forward';
   }
 
@@ -487,6 +629,12 @@
   });
 
   searchDropdown.addEventListener('click', function (event) {
+    const button = event.target.closest('[data-favorite]');
+    if (button) {
+      try { favorites.toggle(button.dataset.favorite); showSearchDropdown(); }
+      catch (e) { notifyFavorite('收藏未保存：浏览器存储不可用，请重试。'); }
+      return;
+    }
     const link = event.target.closest('a');
     if (link) {
       hideSearchDropdown();
@@ -534,9 +682,9 @@
 
   window.addEventListener('popstate', function () { routeNavigation = 'back'; });
   window.addEventListener('hashchange', route);
-  window.addEventListener('pagehide', function () { saveRouteScroll(currentRouteKey); });
+  window.addEventListener('pagehide', function () { saveRouteScroll(currentRouteKey); stopHomeRotation(); });
   window.addEventListener('pageshow', function (event) {
-    if (event.persisted && currentRouteKey) applyRouteScroll(currentRouteKey, 'back');
+    if (event.persisted && currentRouteKey) { syncFavorites(); applyRouteScroll(currentRouteKey, 'back'); }
   });
 
   /* -------------------------------------------- 进度导入 / 导出 */
@@ -572,6 +720,7 @@
   function gameIdsOf(entries) {
     const ids = new Set();
     entries.forEach(function (pair) {
+      if (pair[0] === favorites.key) return;
       const parts = pair[0].split('.');
       if (parts[0] === 'chogan' && parts[1] && parts[1] !== 'app') ids.add(parts[1]);
       else if (parts[0] === 'litegame') ids.add(parts.slice(1).join('.'));
@@ -590,7 +739,7 @@
     const entries = storedEntries();
     const ids = gameIdsOf(entries);
     dataStats.textContent = entries.length
-      ? '当前已有 ' + entries.length + ' 条记录，来自 ' + ids.size + ' 款游戏。'
+      ? '当前已有 ' + entries.length + ' 条记录，来自 ' + ids.size + ' 款游戏；已收藏 ' + favorites.read().length + ' 款。'
       : '当前还没有任何游戏记录，玩过一局后这里就会有数据。';
     dataMsg.hidden = true;
     dataConfirm.hidden = true;
@@ -656,6 +805,10 @@
         return;
       }
       const keys = Object.keys(parsed.data);
+      if (Object.prototype.hasOwnProperty.call(parsed.data, favorites.key)) {
+        try { favorites.validate(JSON.parse(parsed.data[favorites.key])); }
+        catch (e) { showDataMsg('导入失败：备份中的收藏记录格式不正确。', false); return; }
+      }
       if (!keys.length) {
         showDataMsg('这个备份文件里没有记录。', false);
         return;

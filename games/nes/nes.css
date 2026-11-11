@@ -27,6 +27,7 @@ body.nes-immersive{overflow:hidden;overscroll-behavior:none}
 .console-menu-card h2{font-size:19px;margin:0 0 8px}.console-menu-card p{font-size:13px;line-height:1.4;margin:6px 0;color:#f3cc91}.menu-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.menu-buttons #menu-resume{grid-column:1/-1}
 @media(orientation:portrait){.immersive:not(.landscape-play) .console-layout{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) 112px 48px}.immersive:not(.landscape-play) .screen{grid-column:1/-1;grid-row:1;width:min(100%,calc((var(--play-height) - 300px)*256/240))}.immersive:not(.landscape-play) .pad{grid-column:1;grid-row:2}.immersive:not(.landscape-play) .actions{grid-column:2;grid-row:2}.immersive:not(.landscape-play) .system{grid-row:3}}
 .screen-glass{position:relative;width:100%;background:#050608;line-height:0}
+.cartridge-card{min-width:0;display:flex;flex-direction:column;gap:6px}.cartridge-card a{flex:1}.cartridge-card button{align-self:flex-end;min-height:44px}.cartridge-card button[aria-pressed=true]{color:#ffd0df;border-color:#d690ab}
 #screen{display:block;width:100%;height:auto;aspect-ratio:256/240;object-fit:contain}
 .tv-trim{display:none}
 .direction-disc{display:none;position:relative;width:132px;height:132px;border-radius:50%;border:3px solid #636b7b;background:radial-gradient(circle,#3b4353 0 28%,#202633 30% 58%,#10141e 60%);box-shadow:0 5px 0 #06080d,inset 0 2px 5px #a2acba55;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;justify-self:center;cursor:grab}
