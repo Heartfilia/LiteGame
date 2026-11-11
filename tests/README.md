@@ -67,6 +67,7 @@ node tests/nes-system-buttons.browser.cjs
 node tests/pagination-desktop.browser.cjs
 node tests/category-search.browser.cjs
 node tests/favorites.browser.cjs
+node tests/ai-games.browser.cjs
 node tests/nes-direction.browser.cjs
 node tests/jigsaw-free.browser.cjs
 node tests/jigsaw-photos.browser.cjs
@@ -88,6 +89,8 @@ BROWSER_ENGINE=webkit node tests/mobile-tutorials.browser.cjs
 `category-search.browser.cjs`（8766）在两种浏览器逐分区验证限定分类搜索、无结果、清空、怀旧分页重置与返回记忆。`nes-direction.browser.cjs`（8766）直接读取模拟器控制器状态，验证圆盘八方向、连续滑动、中心死区、旋转、释放、菜单暂停；Chromium 另覆盖斜向＋A 多触点、第二根手指不能增加第三方向、触摸取消。
 
 `favorites.browser.cjs`（8766）在 Chromium／WebKit 验证跨分区收藏、取消与刷新持久化、收藏搜索和上下分页、真实下载后在独立浏览器上下文导入、合并去重／未知 ID／损坏文件、完整进度备份往返、跨标签同步、存储失败提示。虚拟时钟检查首页 10 秒切换、进出动画、完整轮播周期、暂停／恢复、单收藏静态展示及清空回退；另覆盖手机搜索下拉收藏、320px 触摸目标与游戏跳转、NES 内部卡带收藏。
+
+`ai-games.browser.cjs`（8766）在 Chromium／WebKit 桌面与触屏上下文实际启动两款 3D 游戏，验证赛车加速、射击消耗弹药、暂停冻结与输入释放、分区返回／收藏、无外部请求；手机检查 844×390 和 568×320 控件边界／中心命中，Chromium 另用真实双触点验证移动＋开火及取消。桌面支持原生鼠标锁定或浏览器拒绝后的拖动瞄准回退。首次程序生成场景可能需要较长时间。
 
 `nes-display.browser.cjs` 和 `nes-system-buttons.browser.cjs` 默认连接 8766 端口（`node tests/static-server.cjs`），同时使用 Chromium 与 WebKit；可通过 `GAME_BASE_URL` 指向其他测试端口。
 

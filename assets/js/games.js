@@ -25,6 +25,14 @@ window.GAME_DATA = {
       icon: 'flag'
     },
     {
+      id: 'shooting',
+      name: '射击游戏',
+      tagline: '瞄准目标，协同出击',
+      description: '第一人称射击与团队竞技，练习移动、瞄准和战术配合。',
+      accent: '#f5b321',
+      icon: 'target'
+    },
+    {
       id: 'action',
       name: '动作',
       tagline: '反应与操作的试炼',
@@ -82,6 +90,8 @@ window.GAME_DATA = {
     }
   ],
   games: [
+    {id:'ai-speed',title:'Ai飞车',category:'racing',url:'games/ai-speed/index.html?from=racing',cover:'assets/images/covers/ai-speed.svg',tags:['3D','漂移竞速','触屏'],description:'四条程序生成赛道，漂移集气、小喷与氮气加速，挑战电脑车手或道具赛。',badge:'NEW'},
+    {id:'ai-cf',title:'AiCF·运输船',category:'shooting',url:'games/ai-cf/index.html?from=shooting',cover:'assets/images/covers/ai-cf.svg',tags:['3D','团队射击','机器人对战'],description:'在运输船集装箱间移动、瞄准与换弹，选择阵营和武器，与机器人展开团队竞技。',badge:'NEW'},
     // ORIGINAL COLLECTION START
     {"id":"lantern-quest","title":"灯塔守夜人","category":"rpg","url":"games/lantern-quest/index.html?from=rpg","cover":"assets/images/covers/lantern-quest.svg","tags":["原创","触屏","进度保存"],"description":"收集灯油并点亮三座灯塔。黑暗每回合消耗照明，灯塔可补给。","badge":"NEW"},
     {"id":"tide-ruins","title":"潮汐遗迹","category":"rpg","url":"games/tide-ruins/index.html?from=rpg","cover":"assets/images/covers/tide-ruins.svg","tags":["原创","触屏","进度保存"],"description":"潮位每三回合变化；退潮时穿越水道，找齐遗迹碎片。","badge":"NEW"},

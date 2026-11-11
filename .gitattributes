@@ -1,3 +1,6 @@
 # Preserve pinned upstream bytes, including CRLF and whitespace in pixel sprites.
 games/crisp/*/main.js -text -whitespace
 games/crisp/vendor/*.js -text -whitespace
+# Generated Three.js bundles contain upstream GLSL template-string whitespace.
+games/ai-speed/game.js -whitespace
+games/ai-cf/game.js -whitespace

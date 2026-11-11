@@ -15,6 +15,7 @@
   let refreshFavoriteList = null;
 
   const ICON_PATHS = {
+    target: '<circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M12 1v6m0 10v6M1 12h6m10 0h6" stroke="currentColor" stroke-width="1.8"/>',
     heart: '<path d="M20.8 4.9a5.3 5.3 0 0 0-7.5 0L12 6.2l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.6a5.3 5.3 0 0 0 0-7.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
     flag: '<path d="M5 21V3.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M5 4.2c3.2-1.5 6.3 1.1 9.5 0 2.6-.9 4.5-.7 4.5-.7v9.1s-1.9-.2-4.5.7c-3.2 1.1-6.3-1.5-9.5 0" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" fill="currentColor" fill-opacity=".14"/><path d="M9.1 4.6v8.2M13.4 5.4v8.5M17.7 5v8.6" stroke="currentColor" stroke-width="1.2" opacity=".45"/>',
     bolt: '<path d="M13.2 2.5 5.1 13.2h5.3L9.7 21.5l8.9-11.6h-5.6l1.2-7.4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="currentColor" fill-opacity=".12"/>',
