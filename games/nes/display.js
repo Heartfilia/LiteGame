@@ -9,7 +9,8 @@ window.NESDisplay = function (api) {
   function size() {
     if (!active) return;
     api.release();
-    const w = host.clientWidth, h = host.clientHeight, rotated = landscape && h > w;
+    const desktop = matchMedia('(hover:hover) and (pointer:fine)').matches;
+    const w = host.clientWidth, h = host.clientHeight, rotated = landscape && h > w && !desktop;
     host.classList.toggle('is-rotated', rotated);
     layout.style.setProperty('--play-width', (rotated ? h : w) + 'px');
     layout.style.setProperty('--play-height', (rotated ? w : h) + 'px');
