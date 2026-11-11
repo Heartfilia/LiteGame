@@ -9,6 +9,7 @@ async function loadFixture(page,save,prefs){
   await route.fulfill({response,body:html.replace('var saved = ctx.loadSave();',setup+'var saved = ctx.loadSave();')});
  },{times:1});
  await page.reload();
+ await page.locator('.jg-slot').first().waitFor({state:'visible'});
 }
 async function canvasPoint(page,x,y){
  await page.locator('.jg-free-canvas').scrollIntoViewIfNeeded();
@@ -26,18 +27,23 @@ async function referencePreview(page){
  const before=(await session(page)).s;
  await page.getByRole('button',{name:'查看完整参考图',exact:true}).tap();
  assert.ok(await page.locator('.jg-preview').isVisible());
- assert.ok(await page.evaluate(()=>{
+ const differences=await page.evaluate(async()=>{
   const pic=Chogan.storage('jigsaw').get('session').s.pic;
-  return ['.jg-reference canvas','.jg-preview'].every(selector=>{
+  const image=JigsawPhotos.get(pic)?await JigsawPhotos.load(pic):null;
+  return ['.jg-reference canvas','.jg-preview'].map(selector=>{
    const actual=document.querySelector(selector),expected=document.createElement('canvas');
    expected.width=actual.width;expected.height=actual.height;
-   JigsawPictures().draw(pic,expected.getContext('2d'),expected.width,expected.height);
+   if(image)expected.getContext('2d').drawImage(image,0,0,expected.width,expected.height);
+   else JigsawPictures().draw(pic,expected.getContext('2d'),expected.width,expected.height);
    const a=actual.getContext('2d').getImageData(0,0,actual.width,actual.height).data;
    const b=expected.getContext('2d').getImageData(0,0,expected.width,expected.height).data;
    let error=0;for(let i=0;i<a.length;i++)error+=Math.abs(a[i]-b[i]);
-   return error/a.length<1; // Allow minor GPU/CPU rasterization differences in WebKit.
+   return {selector,error:error/a.length};
   });
- }),'thumbnail and modal show the current complete picture');
+ });
+ // WebKit can use different downsampling paths for an onscreen thumbnail and an
+ // offscreen canvas. Allow <3/255 mean error there, while keeping the large view strict.
+ assert.ok(differences.every(d=>d.error<(d.selector==='.jg-reference canvas'?3:1)),'thumbnail and modal show the current complete picture: '+JSON.stringify(differences));
  await page.getByRole('button',{name:'返回拼图',exact:true}).tap();
  await page.locator('.jg-preview').waitFor({state:'detached'});
  assert.equal(await page.locator('.jg-preview').count(),0);
@@ -60,6 +66,7 @@ async function worldPoint(page,id){
    const count=cols*cols,label='自由 · '+cols+'×'+cols;
    await page.getByRole('tab',{name:label,exact:true}).tap();
    await page.waitForFunction(n=>Chogan.storage('jigsaw').get('session')?.s.count===n,count);
+   await page.locator('.jg-free-canvas').waitFor({state:'visible'});
    assert.equal(await page.locator('.jg-slot').count(),count);
    assert.equal(await page.locator('.jg-grid').isVisible(),false);
    assert.ok(await page.locator('.jg-free-canvas').evaluate(c=>c.getContext('2d').getImageData(0,0,c.width,c.height).data.every(v=>v===0)),'empty workspace has no guide lines or picture');
@@ -93,7 +100,7 @@ async function worldPoint(page,id){
    p=await worldPoint(page,0);const beforeScaled=(await session(page)).s.free.groups[0].x;
    await drag(page,p,{x:p.x+30,y:p.y+15});
    assert.ok(Math.abs((await session(page)).s.free.groups[0].x-beforeScaled-30/1.25/48)<.001,'drag uses zoomed world coordinates');
-   const beforeReload=(await session(page)).s;await page.reload();
+   const beforeReload=(await session(page)).s;await page.reload();await page.locator('.jg-slot').first().waitFor({state:'visible'});
    assert.deepEqual((await session(page)).s,beforeReload,'positions, groups, view and tray survive refresh');
    await referencePreview(page);await referencePreview(page);
    await page.getByRole('button',{name:'查看全部',exact:true}).tap();
@@ -133,7 +140,7 @@ async function worldPoint(page,id){
    assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
    p=await worldPoint(page,count-1);await drag(page,p,{x:p.x+20,y:p.y+15});
    assert.ok((await session(page)).s.free.groups[0].x>0,'completed puzzle remains movable');
-   await page.reload();assert.equal(await page.locator('.jg-slot').count(),0);assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
+   await page.reload();await page.locator('.jg-free-canvas').waitFor({state:'visible'});assert.equal(await page.locator('.jg-slot').count(),0);assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
    await referencePreview(page);
    assert.deepEqual(errors,[]);console.log(name+': '+count+' pieces, blank workspace, touch placement, group joins/drag/cancel, pan/zoom, refresh, four sizes and completion passed');
    }

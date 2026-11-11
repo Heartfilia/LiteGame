@@ -66,6 +66,7 @@ node tests/nes-display.browser.cjs
 node tests/nes-system-buttons.browser.cjs
 node tests/pagination-desktop.browser.cjs
 node tests/jigsaw-free.browser.cjs
+node tests/jigsaw-photos.browser.cjs
 node tests/five-games.browser.cjs
 node tests/casual-ports.browser.cjs
 node tests/all-games.browser.cjs
@@ -86,6 +87,8 @@ BROWSER_ENGINE=webkit node tests/mobile-tutorials.browser.cjs
 `jigsaw-free.browser.cjs` 同样默认连接 8766，同时运行 Chromium 和 WebKit：分别验证 10×10、20×20 的空白工作区、难度入口、触摸放置、组间合并、整体拖动／取消、缩放坐标、平移、刷新恢复、四尺寸与可达控件。Chromium 另用 CDP 验证真实触摸拖动和取消；结局采用合法的 99／399 块组合存档，再通过 UI 拼入最后一块。包含旧 20×20 存档和经典模式回归。
 
 自由拼图专项也验证下方完整图缩略图及弹窗与当前图案一致、反复查看与关闭、四尺寸和完成后的参考入口，以及参考前后进度与视图保持一致。
+
+`jigsaw-photos.browser.cjs` 默认 8766，Chromium／WebKit 逐张验证六张本地 WebP 的加载、尺寸、切块、参考图和存档恢复，另检查失败重试和加载期间切换模式的旧请求隔离。
 
 ### 检查范围
 

@@ -65,6 +65,7 @@
   .jg-wrap--free { max-width: 1200px; flex: none; }
   .jg-top .ch-seg { flex-wrap: wrap; }
   .jg-wrap--free .jg-status { font-size: 12px; }
+  .jg-mid[hidden], .jg-wrap > button[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -73,6 +74,8 @@
 <script src="../lib/litegame.js"></script>
 <script src="free.js"></script>
 <script src="free-board.js"></script>
+<script src="images/catalog.js"></script>
+<script src="photos.js"></script>
 
 <script>
 /* ==== ENGINE START ==== */
@@ -223,8 +226,9 @@ function JigsawEngineFactory() {
     return true;
   }
   function miss(S) { S.misses++; }
-  function restore(o) {
-    if (!o || !CUTS[o.count] || PICS.indexOf(o.pic) < 0 || !Array.isArray(o.tray) || !Array.isArray(o.placed)) return null;
+  function restore(o, photoIds) {
+    if (!o || !CUTS[o.count] || !Array.isArray(o.tray) || !Array.isArray(o.placed)) return null;
+    if (PICS.indexOf(o.pic) < 0 && !((o.count === 100 || o.count === 400) && photoIds && photoIds.indexOf(o.pic) >= 0)) return null;
     if (!(o.seed >= 0) || o.seed !== Math.floor(o.seed) || !(o.misses >= 0)) return null;
     var all = o.tray.concat(o.placed), seen = [];
     if (all.length !== o.count) return null;
@@ -2222,6 +2226,7 @@ function JigsawPictures() {
   var E = JigsawEngineFactory();
   var F = window.JigsawFree;
   var P = JigsawPictures();
+  var Photos = window.JigsawPhotos, photoImage = null, loading = false, loadRevision = 0;
 
   C.boot({});
   var ctx = C.game({
@@ -2341,6 +2346,8 @@ function JigsawPictures() {
   var aside = el('div', { class: 'jg-aside' });
   var mid = el('div', { class: 'jg-mid' }, [frame, tray]);
   var wrap = el('div', { class: 'jg-wrap' }, [top, mid, status]);
+  var retryImage = el('button', { class: 'ch-btn', type: 'button', text: '重试加载图片', hidden: true, onclick: function () { start(S, S.daily, 0); } });
+  wrap.appendChild(retryImage);
   var freeTools = el('div', { class: 'jg-free-tools', hidden: true });
   var referenceImage = document.createElement('canvas');
   referenceImage.setAttribute('aria-hidden', 'true');
@@ -2374,12 +2381,17 @@ function JigsawPictures() {
   /* --------------------------------------------------------- drawing */
 
   function dpr() { return Math.min(2, window.devicePixelRatio || 1); }
+  function pictureTitle() { var entry = Photos.get(S.pic); return entry ? entry.title : C.t('pic_' + S.pic); }
+  function drawPicture(g, w, h) {
+    if (photoImage && Photos.get(S.pic)) g.drawImage(photoImage, 0, 0, w, h);
+    else P.draw(S.pic, g, w, h);
+  }
 
   // The picture at frame size, drawn once per layout and cut from for every piece
   function makePicture() {
     var d = dpr(), cv = document.createElement('canvas');
     cv.width = Math.round(L.w * d); cv.height = Math.round(L.h * d);
-    P.draw(S.pic, cv.getContext('2d'), cv.width, cv.height);
+    drawPicture(cv.getContext('2d'), cv.width, cv.height);
     return cv;
   }
   function tracePath(g, cmds, ox, oy, k) {
@@ -2441,6 +2453,7 @@ function JigsawPictures() {
     return ok.indexOf(n) >= 0 ? n : ok[ok.length - 1];
   }
   function layout() {
+    if (loading) return;
     ctx.main.classList.toggle('ch-gamemain--scroll', isFree());
     freeBoard.setEnabled(isFree());
     freeBoard.canvas.hidden = !isFree(); freeTools.hidden = !isFree(); reference.hidden = !isFree();
@@ -2482,7 +2495,7 @@ function JigsawPictures() {
     side = false; wrap.classList.remove('jg-wrap--side'); aside.remove();
     mid.append(frame, tray); wrap.prepend(top); wrap.insertBefore(freeTools, mid); wrap.append(reference, status);
     referenceImage.width = Math.round(60 * dpr()); referenceImage.height = Math.round(80 * dpr());
-    P.draw(S.pic, referenceImage.getContext('2d'), referenceImage.width, referenceImage.height);
+    drawPicture(referenceImage.getContext('2d'), referenceImage.width, referenceImage.height);
     // Keep pieces large enough to handle; the camera, not the puzzle, fits the viewport.
     L = { w: S.cols * 48, h: S.rows * 64, cols: S.cols, rows: S.rows, cw: 48, ch: 64, m: 22 };
     var width = Math.max(240, Math.min(1160, ctx.main.clientWidth - 24));
@@ -2551,7 +2564,7 @@ function JigsawPictures() {
         }
       ));
     }
-    top.appendChild(el('span', { class: 'ch-badge', text: C.t('pic_' + S.pic) }));
+    top.appendChild(el('span', { class: 'ch-badge', text: pictureTitle() }));
   }
 
   /* ------------------------------------------------------------ moves */
@@ -2675,21 +2688,45 @@ function JigsawPictures() {
       seed = Math.floor(Math.random() * 4294967296) >>> 0;
       rnd = C.rng(seed);
       var got = E.pick(n, prefs.done[n], prefs.last, rnd);
+      if (freeCount(n)) {
+        var photos = Photos.entries.filter(function (p) { return p.id !== prefs.lastPhoto; });
+        if (!photos.length) photos = Photos.entries;
+        got = { id: photos[Math.floor(rnd() * photos.length)].id, finished: [] };
+        prefs.lastPhoto = got.id;
+      }
       id = got.id;
       prefs.done[n] = got.finished;
       prefs.last = id; ctx.store.set('prefs', prefs);
     }
     S = E.deal(n, seed, rnd, id);
-    if (freeCount(n)) S.free = F.create(S.cols);
+    if (freeCount(n)) { S.pic = id; S.free = F.create(S.cols); }
     start(S, daily || null, 0);
     save();
   }
   // The cut comes from the seed after the picture and the order, so a save rebuilds it exactly
-  function start(st, daily, elapsed) {
+  async function start(st, daily, elapsed) {
     if (drag) endDrag({ pointerId: drag.id }, false);
     freeBoard.cancel();
     S = st;
     S.daily = daily;
+    var revision = ++loadRevision;
+    photoImage = null; loading = true; busy = true;
+    mid.hidden = true; freeTools.hidden = true; reference.hidden = true; retryImage.hidden = true;
+    freeBoard.setEnabled(false);
+    startedAt = Date.now() - elapsed; pausedAt = 0;
+    status.textContent = '正在加载图片…'; renderTop();
+    if (Photos.get(S.pic)) {
+      var loadedImage;
+      try { loadedImage = await Photos.load(S.pic); }
+      catch (error) {
+        if (revision !== loadRevision) return;
+        status.textContent = error.message + '，点击重试可继续当前拼图。'; retryImage.hidden = false;
+        return;
+      }
+      if (revision !== loadRevision) return;
+      photoImage = loadedImage;
+    }
+    loading = false; mid.hidden = false;
     var rnd = C.rng(S.seed ^ 0x9e3779b9);
     S.cut = E.cut(S.cols, S.rows, rnd);
     startedAt = Date.now() - elapsed;
@@ -2710,15 +2747,15 @@ function JigsawPictures() {
   /* ------------------------------------------------------- dialogs */
 
   function showPreview() {
-    if (!S) return;
+    if (!S || loading) return;
     var w = isFree() ? Math.max(100, Math.min(400, window.innerWidth - 100, (window.innerHeight - 200) / E.ASPECT)) : Math.min(260, window.innerWidth - 120);
     var h = Math.round(w * E.ASPECT), d = dpr();
     var cv = document.createElement('canvas');
     cv.width = Math.round(w * d); cv.height = Math.round(h * d);
     cv.style.width = w + 'px'; cv.style.height = h + 'px';
     cv.className = 'jg-preview';
-    P.draw(S.pic, cv.getContext('2d'), cv.width, cv.height);
-    C.ui.modal({ title: (isFree() ? '完整图参考 · ' : '') + C.t('pic_' + S.pic), body: [cv], actions: [{ label: isFree() ? '返回拼图' : C.t('done'), kind: 'primary' }] });
+    drawPicture(cv.getContext('2d'), cv.width, cv.height);
+    C.ui.modal({ title: (isFree() ? '完整图参考 · ' : '') + pictureTitle(), body: [cv], actions: [{ label: isFree() ? '返回拼图' : C.t('done'), kind: 'primary' }] });
   }
 
   function showHelp() {
@@ -2962,7 +2999,7 @@ function JigsawPictures() {
   lastW = window.innerWidth; lastH = window.innerHeight;
   var saved = ctx.loadSave();
   // a save that fails its checks is dropped and a fresh picture is dealt
-  var resume = saved && saved.s && (saved.daily || null) === (dailyDate || null) ? E.restore(saved.s) : null;
+  var resume = saved && saved.s && (saved.daily || null) === (dailyDate || null) ? E.restore(saved.s, Photos.entries.map(function (p) { return p.id; })) : null;
   if (resume && freeCount(resume.count)) {
     resume.free = F.restore(saved.s.free, resume.placed, resume.cols);
     if (!resume.free || dailyDate) resume = null;

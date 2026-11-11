@@ -4,6 +4,17 @@ const F=require('../games/jigsaw/free.js');
 const {load,rng}=require('./engine-loader.cjs');
 const copy=x=>JSON.parse(JSON.stringify(x));
 
+test('Photo IDs restore only in free modes; classic and legacy pictures keep their original identity',()=>{
+ const J=load('jigsaw'),photos=require('../games/jigsaw/images/manifest.json'),ids=photos.map(p=>p.id);
+ for(const n of [100,400]){
+  const s=J.deal(n,42,rng(42),'lake');s.pic=ids[0];
+  assert.equal(J.restore(s,ids).pic,ids[0]);assert.equal(J.restore({...s,pic:'missing-photo'},ids),null);
+ }
+ const classic=J.deal(12,42,rng(42),'lake');assert.equal(J.restore(classic,ids).pic,'lake');
+ assert.equal(J.restore({...classic,pic:ids[0]},ids),null);
+ assert.equal(J.restore(J.deal(400,42,rng(42),'lake'),ids).pic,'lake');
+});
+
 test('Free jigsaw permits arbitrary placement, rejects false neighbours and merges whole assemblies',()=>{
  const s=F.create(),a=F.add(s,0,2.37,-4.81),b=F.add(s,1,8,9);
  assert.equal(F.join(s,b),0);assert.equal(b.x,7);assert.equal(b.y,9);
