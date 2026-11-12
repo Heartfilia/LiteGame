@@ -1961,4 +1961,9 @@ img {
 .server-conflict pre{white-space:pre-wrap;max-height:180px;overflow:auto;font-size:12px}
 #serverStatus{white-space:pre-line}
 .data-actions{flex-wrap:wrap}
-.data-panel{max-height:90dvh;overflow-y:auto}
+.data-panel{max-height:90dvh;overflow-y:auto;scrollbar-width:none}
+.data-panel::-webkit-scrollbar{display:none}
+.server-settings .server-project{margin:20px 0 0;padding-top:16px;border-top:1px solid #ffffff26;text-align:center}
+.server-project a{color:#e8a3ec;text-decoration:underline;text-underline-offset:3px}
+.server-project a:hover{color:#ffd0f5}
+.server-project a:focus-visible{outline:2px solid #e8a3ec;outline-offset:4px;border-radius:2px}
