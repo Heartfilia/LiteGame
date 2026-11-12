@@ -104,9 +104,30 @@
           </svg>
           导入进度
         </button>
+        <button class="data-btn" id="serverBtn" type="button" aria-expanded="false" aria-controls="serverSettings">载入服务器</button>
         <input type="file" id="importFile" accept="application/json,.json" hidden />
       </div>
       <p class="data-msg" id="dataMsg" hidden></p>
+      <section id="serverSettings" class="server-settings" hidden aria-label="游戏服务器">
+        <h3>游戏服务器</h3>
+        <p>登录后自动同步进度、收藏和已保存的 FC 即时存档。每 20 秒核对，回到页面或恢复网络时立即检查。同一记录两边都修改时由你选择。</p>
+        <form id="serverForm">
+          <label>服务器 URL<input id="serverUrl" type="url" placeholder="https://save.example.com" autocomplete="url" aria-describedby="serverUrlHint" required></label>
+          <p id="serverUrlHint">公网服务器仅支持 HTTPS 访问，不支持 http://域名 或 http://IP:端口。可使用不同域名的 HTTPS 服务，服务端需配置 CORS 允许本站访问。仅本机开发允许 localhost / 127.0.0.1 使用 HTTP。</p>
+          <label>账号<input id="serverUsername" autocomplete="username" required></label>
+          <label>密码<input id="serverPassword" type="password" autocomplete="current-password" required></label>
+          <label class="server-check"><input id="serverImport" type="checkbox" checked>将本机已有、云端尚无的记录导入此账号（切换账号前请确认）</label>
+          <p>点击连接即在此浏览器记住登录令牌，以便游戏独立页面和下次访问自动同步；不保存密码。令牌不进入进度备份。账号由服务器管理员创建。</p>
+          <button class="data-btn data-btn-primary" id="serverConnect" type="submit">连接并同步</button>
+        </form>
+        <p id="serverStatus" role="status" aria-live="polite">未连接服务器</p>
+        <div class="data-actions" id="serverConnected" hidden>
+          <button class="data-btn" id="serverSyncNow" type="button">立即同步 / 重试</button>
+          <button class="data-btn" id="serverRecovery" type="button">导出恢复副本</button>
+          <button class="data-btn" id="serverDisconnect" type="button">断开服务器</button>
+        </div>
+        <div id="serverConflicts"></div>
+      </section>
       <div class="data-confirm" id="dataConfirm" hidden>
         <p id="dataConfirmText"></p>
         <div class="data-actions">
@@ -121,6 +142,8 @@
     <div class="noscript">这个游戏厅需要启用 JavaScript 才能运行。</div>
   </noscript>
 
+  <script src="assets/js/server-sync.js"></script>
+  <script src="assets/js/server-settings.js"></script>
   <script src="assets/js/games.js"></script>
   <script src="assets/js/favorites.js"></script>
   <script src="assets/js/main.js"></script>

@@ -15,7 +15,7 @@ const root = path.resolve(__dirname, '..');
       .replace(/<link\b[^>]*href=["'](?:\.\/)?style\.css["'][^>]*>/g, '')
       .replace('width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no', 'width=device-width,initial-scale=1,viewport-fit=cover');
     if (id === 'ai-cf') html = html.replace('</head>', '<link rel="stylesheet" href="src/style.css">\n</head>');
-    html = html.replace('</head>', '<link rel="stylesheet" href="../lib/ai-shell.css">\n</head>')
+    html = html.replace('<head>', '<head><script src="../../assets/js/server-sync.js"></script>').replace('</head>', '<link rel="stylesheet" href="../lib/ai-shell.css">\n</head>')
       .replace('<body>', '<body data-game-id="' + id + '" data-category="' + category + '">')
       .replace('</body>', '<script src="../../assets/js/games.js"></script><script src="../../assets/js/favorites.js"></script><script src="../lib/ai-shell.js"></script><script src="game.js"></script></body>');
     fs.writeFileSync(path.join(dir, 'index.html'), html);

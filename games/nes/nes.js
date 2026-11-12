@@ -224,11 +224,13 @@
     });
   }
   async function storedState(key, value) {
+    if (value) window.LiteSync?.guard();
     const db = await database();
+    if (value) { try { window.LiteSync?.guard(); } catch (e) { db.close(); throw e; } }
     return new Promise((resolve, reject) => {
       const tx = db.transaction('states', value ? 'readwrite' : 'readonly');
       const request = value ? tx.objectStore('states').put(value, key) : tx.objectStore('states').get(key);
-      tx.oncomplete = () => { db.close(); resolve(request.result); };
+      tx.oncomplete = () => { db.close(); if (value) window.LiteSync?.nesSaved(key); resolve(request.result); };
       tx.onerror = tx.onabort = () => { db.close(); reject(tx.error || Error('存档写入失败')); };
     });
   }
@@ -266,6 +268,7 @@
   $('restore').onclick = async () => {
     pause(); const token = generation;
     try {
+      await window.LiteSync?.sync();
       const data = await storedState(current.sha256);
       if (token !== generation) return;
       if (!data) throw Error('此卡带还没有存档');

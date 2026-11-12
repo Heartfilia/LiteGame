@@ -1948,3 +1948,17 @@ img {
   .showcase-slide.slide-enter,.showcase-slide.slide-leave { animation:none; }
   .showcase-slide.slide-leave { visibility:hidden; }
 }
+/* Server connection lives alongside the existing portable backups. */
+.server-settings{border-top:1px solid var(--border,#ffffff26);margin-top:20px;padding-top:16px;overflow-wrap:anywhere}
+.server-settings[hidden],#serverConnected[hidden]{display:none}
+.server-settings h3,.server-settings h4{margin:10px 0}
+.server-settings p{font-size:13px;line-height:1.7;opacity:.85}
+.server-settings label{display:block;margin:12px 0;font-size:14px}
+.server-settings input:not([type=checkbox]){display:block;box-sizing:border-box;width:100%;margin-top:6px;min-height:44px;border:1px solid #7778;border-radius:9px;padding:10px;background:#161622;color:#fff;font:inherit}
+.server-settings .server-check{display:flex;align-items:flex-start;gap:8px;line-height:1.6}
+.server-check input{margin-top:5px;flex-shrink:0}
+.server-conflict{padding:12px;margin:12px 0;background:#8881;border:1px solid #8885;border-radius:10px}
+.server-conflict pre{white-space:pre-wrap;max-height:180px;overflow:auto;font-size:12px}
+#serverStatus{white-space:pre-line}
+.data-actions{flex-wrap:wrap}
+.data-panel{max-height:90dvh;overflow-y:auto}

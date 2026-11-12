@@ -1,5 +1,13 @@
 # 游戏检查与回归测试
 
+## 游戏服务器同步
+
+`node tests/server-sync.browser.cjs` 使用 Playwright Chromium／WebKit 与独立 HTTP 协议模拟服务，网站默认 `http://127.0.0.1:8766`（可用 `GAME_BASE_URL` 覆盖）。不需要真实账号。
+
+覆盖服务器设置 UI、密码清除、备份排除令牌、两个独立浏览器的前台恢复／分页／不同键同步、写回执游标隔离、上传中的本地继续修改、冲突持久化与选择、显式删除、断网重试、提交成功但响应丢失、413 单项隔离、429 退避、服务器 revision 回退、NES 快照、游戏旧内存写入保护、账号切换与 401 停止。使用真实浏览器存储、Web Locks 和跨 origin HTTP/CORS。
+
+重新生成 HTML 后执行 `node deploy/sync-entrypoints.cjs`；同步模块必须位于所有游戏脚本之前。
+
 ## 规则测试（无需安装依赖）
 
 ```sh

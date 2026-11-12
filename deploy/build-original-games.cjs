@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path');
 const games=require('../games/lib/collection-data.js'),root=path.join(__dirname,'..');
-const write=(p,s)=>{p=path.join(root,p);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,s);};
+const write=(p,s)=>{if(p.endsWith('.html'))s=s.replace('<head>','<head><script src="../../assets/js/server-sync.js"></script>');p=path.join(root,p);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,s);};
 const entries=[];
 for(const g of games){
  write('games/'+g.id+'/index.html',`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${g.title} · LiteGame</title><link rel="icon" href="../../assets/images/covers/${g.id}.svg"><link rel="stylesheet" href="../lib/chogan.css"><link rel="stylesheet" href="../lib/litegame.css"><link rel="stylesheet" href="../lib/arcade.css"></head><body data-game="${g.id}"><script src="../version.js"></script><script src="../lib/chogan.js"></script><script src="../lib/litegame.js"></script><script src="../lib/arcade.js"></script><script src="../lib/collection-data.js"></script><script src="../lib/collection-engines.js"></script><script src="../lib/collection-ui.js"></script></body></html>\n`);

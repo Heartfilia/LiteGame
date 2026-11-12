@@ -40,7 +40,7 @@ def main():
             data = (Path(cache)/'www/games'/game_id/name).read_bytes() if cache else urllib.request.urlopen(url, timeout=60).read()
             files[name] = hashlib.sha256(data).hexdigest()
             if name == 'index.html':
-                text = data.decode().replace('lang="fa" dir="rtl"', 'lang="zh-CN" dir="ltr"')
+                text = data.decode().replace('lang="fa" dir="rtl"', 'lang="zh-CN" dir="ltr"').replace('<head>', '<head><script src="../../assets/js/server-sync.js"></script>')
                 text = text.replace('../../lib/', '../lib/').replace('../../version.js', '../version.js')
                 text = text.replace('../lib/cue.js', '../lib/cue-expansion.js')
                 if game_id == 'trio':

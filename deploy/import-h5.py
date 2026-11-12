@@ -15,6 +15,8 @@ def fetch(url):
     return urllib.request.urlopen(url, timeout=60).read()
 
 def write(path, data):
+    if path.suffix == '.html' and isinstance(data, str):
+        data = data.replace('<head>', '<head><script src="../../../assets/js/server-sync.js"></script>')
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data if isinstance(data, bytes) else data.encode())
 
