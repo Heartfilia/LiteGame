@@ -1967,3 +1967,8 @@ img {
 .server-project a{color:#e8a3ec;text-decoration:underline;text-underline-offset:3px}
 .server-project a:hover{color:#ffd0f5}
 .server-project a:focus-visible{outline:2px solid #e8a3ec;outline-offset:4px;border-radius:2px}
+.footer-data.server-linked{opacity:1;color:#8ae5af;border-color:#54ce8c;animation:server-linked-breathe 2.6s ease-in-out infinite}
+@keyframes server-linked-breathe{0%,100%{box-shadow:0 0 0 0 #54ce8c22,0 0 5px #54ce8c22}50%{box-shadow:0 0 0 5px #54ce8c16,0 0 16px #54ce8c55}}
+@media(prefers-reduced-motion:reduce){.footer-data.server-linked{animation:none;box-shadow:0 0 0 2px #54ce8c33}}
+#serverForm[hidden],#serverBtn[hidden],#serverIdentity[hidden]{display:none}
+.server-settings .server-identity{white-space:pre-line;padding:12px 14px;border:1px solid #54ce8c55;border-radius:10px;background:#54ce8c0c;opacity:1}

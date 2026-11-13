@@ -89,3 +89,4 @@
   .ft-world { gap: 5px; }
   .ft-lore, .ft-hint { display: none; }
 }
+button,button *,[role="button"],[role="button"] *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none;font-variant-emoji:text}

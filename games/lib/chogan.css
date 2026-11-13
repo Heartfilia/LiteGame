@@ -1286,3 +1286,5 @@ a  { color: var(--c-accent); text-decoration: none; }
   .ch-nav__item:hover { color: var(--c-text-dim); }
   .ch-day:hover:not(.ch-day--empty):not(.ch-day--future) { background: var(--c-surface-3); }
 }
+/* Game controls must not select text or open the iOS long-press callout. */
+button,button *,[role="button"],[role="button"] *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none;font-variant-emoji:text}

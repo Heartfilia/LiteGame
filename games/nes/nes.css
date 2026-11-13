@@ -79,3 +79,8 @@ body.nes-immersive{overflow:hidden;overscroll-behavior:none}
   .console .console-controls .system{order:3;flex-basis:100%}
   .console .console-controls .actions{order:2;flex-basis:140px;width:140px}
 }
+button,button *,[role="button"],[role="button"] *,.direction-disc,.direction-disc *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}
+.nes-arrow::before{content:"";display:inline-block;width:14px;height:14px;background:currentColor;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.nes-arrow[data-direction="RIGHT"]::before{transform:rotate(90deg)}
+.nes-arrow[data-direction="DOWN"]::before{transform:rotate(180deg)}
+.nes-arrow[data-direction="LEFT"]::before{transform:rotate(270deg)}

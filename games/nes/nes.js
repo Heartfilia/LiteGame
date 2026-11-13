@@ -203,16 +203,6 @@
       status('无法加载：' + e.message + '。可从下方选择其他版本或重新打开本页重试。');
     }
   }
-  $('rom-file').onchange = async e => {
-    const file = e.target.files[0]; e.target.value = '';
-    if (!file) return;
-    pause(); const token = ++generation;
-    try {
-      if (file.size > 16 * 1024 * 1024) throw Error('卡带文件超过 16 MB');
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      if (token === generation) await load({ title: file.name }, bytes);
-    } catch (err) { status(err.message); }
-  };
   // IndexedDB avoids the small localStorage quota of multi-megabyte emulator snapshots.
   function database() {
     return new Promise((resolve, reject) => {

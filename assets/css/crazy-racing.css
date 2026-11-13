@@ -1126,3 +1126,4 @@ body.touch-device .hud-tip {
     transition-duration: 0.01ms !important;
   }
 }
+button,button *,[role="button"],[role="button"] *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none;font-variant-emoji:text}

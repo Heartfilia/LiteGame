@@ -27,3 +27,4 @@ body:not(.cf-controls)[data-game-id=ai-cf] #touch{display:none}#touch #cf-fire{r
   body[data-game-id=ai-cf] #toast{top:37%;max-width:70vw;white-space:normal;font-size:13px;text-align:center}
   body[data-game-id=ai-cf] #feed{font-size:10px;max-height:48px;overflow:hidden}
 }
+button,button *,[role="button"],[role="button"] *,#touch,#touch *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none;font-variant-emoji:text}

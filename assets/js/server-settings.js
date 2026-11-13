@@ -9,7 +9,21 @@
     const generation = ++rendering;
     try {
       const state = await api.details(); if (generation !== rendering) return;
-      $('serverStatus').textContent = error || (state.connection ? state.connection.username + ' · ' + state.connection.server + '\n' : '') + state.message;
+      const connected = !!state.connection, active = connected && !state.connection.expired;
+      $('dataBtn').classList.toggle('server-linked', active);
+      $('dataBtn').title = active ? '进度备份 · 已连接游戏服务器' : connected ? '进度备份 · 服务器登录已失效' : '导入 / 导出游戏进度';
+      $('dataBtn').setAttribute('aria-label', $('dataBtn').title);
+      $('serverForm').hidden = connected;
+      $('serverBtn').hidden = connected;
+      if (connected) {
+        $('serverSettings').hidden = false;
+        $('serverBtn').setAttribute('aria-expanded', 'true');
+        $('serverUrl').value = state.connection.server;
+        $('serverUsername').value = state.connection.username;
+      }
+      $('serverIdentity').hidden = !connected;
+      $('serverIdentity').textContent = connected ? (active ? '已连接服务器' : '登录已失效，请断开后重新连接') + '\n服务器：' + state.connection.server + '\n账号：' + state.connection.username : '';
+      $('serverStatus').textContent = error || state.message;
       $('serverConnected').hidden = !state.connection;
       const box = $('serverConflicts'); box.replaceChildren();
       for (const item of state.conflicts) {
@@ -51,6 +65,7 @@
     const a = document.createElement('a'); a.href = url; a.download = 'litegame-sync-recovery.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
   });
   window.addEventListener('litesyncchange', render);
+  $('dataBtn').addEventListener('click', render);
   if (location.hash === '#server') { $('dataModal').hidden = false; open(); }
   render();
 })();

@@ -373,7 +373,7 @@
     });
   }
   async function details() {
-    const c = connection(), out = { connection: c ? { server: c.server, username: c.user.username, expired: !!c.expired } : null, message, conflicts: [], blocked: [] };
+    const c = connection(), out = { connection: c ? { server: c.server, username: c.user.username, expired: !!c.expired || c.expires_at * 1000 <= Date.now() } : null, message, conflicts: [], blocked: [] };
     if (!c) return out;
     const meta = await get(metaKey(c));
     for (const ref of Object.values(meta?.ids || {})) {

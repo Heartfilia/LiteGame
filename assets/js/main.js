@@ -309,7 +309,7 @@
           '<p id="category-search-status" role="status"></p>' +
         '</section>' +
         (cat.id === 'retro'
-          ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机 / 导入本地卡带</a><nav id="retro-pages-top" class="game-pagination" aria-label="怀旧游戏顶部分页"></nav><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" class="game-pagination" aria-label="怀旧游戏底部分页"></nav></section>'
+          ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机</a><nav id="retro-pages-top" class="game-pagination" aria-label="怀旧游戏顶部分页"></nav><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" class="game-pagination" aria-label="怀旧游戏底部分页"></nav></section>'
           : list.length
           ? '<section class="section section-tight"><div id="category-cards" class="game-grid">' + list.map(gameCard).join('') + '</div></section>'
           : '<section class="section section-tight">' + emptyState('这个分区还是空的', '我们正在给它攒一个好玩的开局，先去其他分区逛逛吧。', '#/', '回到主菜单') + '</section>') +

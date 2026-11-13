@@ -17,11 +17,11 @@
     <div class="screen"><div class="screen-glass"><canvas id="screen" width="256" height="240" aria-label="FC 游戏画面" tabindex="0"></canvas><span id="screen-label">LITEGAME · FAMILY COMPUTER</span></div><div class="tv-trim" aria-hidden="true"><span>LITEGAME · COLOR TV</span><i></i><span>● POWER</span></div></div>
     <div class="console-controls">
     <div class="pad" aria-label="方向键">
-      <button data-key="UP" aria-label="上">▲</button><button data-key="LEFT" aria-label="左">◀</button>
-      <button data-key="DOWN" aria-label="下">▼</button><button data-key="RIGHT" aria-label="右">▶</button>
+      <button data-key="UP" aria-label="上"><span class="nes-arrow" data-direction="UP" aria-hidden="true"></span></button><button data-key="LEFT" aria-label="左"><span class="nes-arrow" data-direction="LEFT" aria-hidden="true"></span></button>
+      <button data-key="DOWN" aria-label="下"><span class="nes-arrow" data-direction="DOWN" aria-hidden="true"></span></button><button data-key="RIGHT" aria-label="右"><span class="nes-arrow" data-direction="RIGHT" aria-hidden="true"></span></button>
     </div>
     <div id="direction-disc" class="direction-disc" role="group" aria-label="八方向圆盘，滑动支持斜向双键" aria-disabled="true">
-      <span data-direction="UP">▲</span><span data-direction="RIGHT">▶</span><span data-direction="DOWN">▼</span><span data-direction="LEFT">◀</span><i aria-hidden="true"></i>
+      <span class="nes-arrow" data-direction="UP" aria-hidden="true"></span><span class="nes-arrow" data-direction="RIGHT" aria-hidden="true"></span><span class="nes-arrow" data-direction="DOWN" aria-hidden="true"></span><span class="nes-arrow" data-direction="LEFT" aria-hidden="true"></span><i aria-hidden="true"></i>
     </div>
     <div class="actions"><button data-key="B">B</button><button data-key="A">A</button><button data-key="TURBO_B">连发 B</button><button data-key="TURBO_A">连发 A</button></div>
     <div class="system"><button data-key="SELECT">选择 SELECT</button><button data-key="START">开始 START</button><button id="console-pause" disabled>开始</button></div>
@@ -48,7 +48,6 @@
     <button id="reset" disabled>重新开机</button><button id="mute" aria-pressed="false">开启声音</button>
     <button id="fullscreen">全屏</button>
     <button id="landscape" aria-pressed="false">横屏游玩</button>
-    <label class="file">导入本地 .nes<input id="rom-file" type="file" accept=".nes"></label>
   </div>
   <p id="status" role="status">选择卡带后开始游戏。</p>
   <details open><summary>玩法与存档</summary>

@@ -50,7 +50,10 @@ const server = http.createServer(async (req, res) => {
   send(200, { records: [meta(r)], revision: a.revision });
 });
 const key = 'litegame.sync-test.progress'; // Allowed ordinary key, not reserved litegame.sync.*.
-async function flush(page) { await page.evaluate(() => LiteSync.sync()); }
+async function flush(page) {
+  // A reload/foreground pull may already be running; join it, then reconcile the latest local writes.
+  await page.evaluate(async () => { await LiteSync.sync(); await LiteSync.sync(); });
+}
 async function set(page, name, value) { await page.evaluate(([k, v]) => v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v), [name, value]); }
 async function value(page, name = key) { return page.evaluate(k => localStorage.getItem(k), name); }
 async function login(page, serverURL, username, importLocal = true) {
@@ -81,6 +84,13 @@ async function snapshot(page, sha, value) {
         await a.locator('#serverUrl').fill(serverURL); await a.locator('#serverUsername').fill(engineName); await a.locator('#serverPassword').fill('fixture-only');
         await a.locator('#serverConnect').click(); await a.waitForFunction(() => document.querySelector('#serverStatus').textContent.includes('已同步'));
         assert.equal(await a.locator('#serverPassword').inputValue(), '');
+        assert.ok(await a.locator('#serverForm').isHidden());
+        assert.ok(await a.locator('#serverBtn').isHidden());
+        assert.ok((await a.locator('#dataBtn').getAttribute('class')).includes('server-linked'));
+        await a.reload(); await a.locator('#dataBtn').click();
+        await a.locator('#serverIdentity').waitFor();
+        assert.ok((await a.locator('#serverIdentity').textContent()).includes(serverURL));
+        assert.ok(await a.locator('#serverForm').isHidden());
         const cloud = account(engineName); assert.equal(cloud.records.get('local:' + key).value, 'first');
         const backup = a.waitForEvent('download'); await a.locator('#exportBtn').click();
         const stream = await (await backup).createReadStream(); let raw = ''; for await (const chunk of stream) raw += chunk;
@@ -155,7 +165,11 @@ async function snapshot(page, sha, value) {
         cloud.records = savedRecords; cloud.revision = Math.max(...[...savedRecords.values()].map(r => r.version));
         // Switch account excludes local-only records. Foreign same-name data requires explicit choice.
         const other = account(engineName + '-other'); write(other, 'local', 'litegame.empty', 'foreign');
-        await a.evaluate(() => LiteSync.disconnect()); await login(a, serverURL, engineName + '-other', false);
+        await a.locator('#dataBtn').click();
+        await a.locator('#serverDisconnect').click();
+        await a.locator('#serverForm').waitFor();
+        assert.ok(!(await a.locator('#dataBtn').getAttribute('class')).includes('server-linked'));
+        await login(a, serverURL, engineName + '-other', false);
         assert.ok(!other.records.has('local:litegame.offline'));
         assert.equal((await a.evaluate(() => LiteSync.details())).conflicts.length, 1);
         await a.evaluate(() => LiteSync.resolve('local', 'litegame.empty', 'local')); await flush(a);
@@ -163,6 +177,7 @@ async function snapshot(page, sha, value) {
         // Authentication failure stops automatic uploads without erasing local records.
         forcedError = 401; await flush(a); forcedError = 0;
         assert.equal((await a.evaluate(() => LiteSync.details())).connection.expired, true);
+        await a.waitForFunction(() => !document.getElementById('dataBtn').classList.contains('server-linked'));
         await set(a, 'litegame.after-expiry', 'local only'); await flush(a); assert.ok(!other.records.has('local:litegame.after-expiry'));
         const recovery = await b.evaluate(() => LiteSync.exportRecovery()); assert.ok(!JSON.stringify(recovery).includes('test-token-'));
         assert.deepEqual(errors, []);

@@ -1,7 +1,6 @@
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const path = require('node:path');
 const catalog = require('../games/nes/catalog.json');
 const base = process.env.GAME_BASE_URL || 'http://127.0.0.1:8765';
 (async () => {
@@ -72,15 +71,10 @@ const base = process.env.GAME_BASE_URL || 'http://127.0.0.1:8765';
     }
     await page.goto(base + '/games/nes/');
     const local = catalog.games.find(g => g.title === '魂斗罗');
-    await page.locator('#rom-file').setInputFiles(path.join(__dirname, '../games/nes', local.rom));
-    await page.waitForFunction(() => !document.getElementById('play').disabled);
-    await page.locator('#play').click();
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(150);
-    assert.equal(await page.locator('#play').textContent(), '运行中');
-    await page.locator('#rom-file').setInputFiles({name:'bad.nes',mimeType:'application/octet-stream',buffer:Buffer.from('not a rom')});
-    await page.waitForFunction(() => document.getElementById('status').textContent.includes('无法加载'));
-    assert.ok(await page.locator('#play').isDisabled());
+    assert.equal(await page.locator('#rom-file,input[accept=".nes"]').count(), 0);
+    assert.equal(await page.locator('.nes-arrow').count(), 8);
+    assert.equal(await page.locator('.nes-arrow').first().textContent(), '');
+    assert.equal(await page.locator('[data-key=A]').evaluate(n => getComputedStyle(n).userSelect), 'none');
     await page.route('**/roms/*.nes', route => route.abort());
     await page.goto(base + '/games/nes/index.html?game=' + local.id);
     await page.waitForFunction(() => document.getElementById('status').textContent.includes('无法加载'));
