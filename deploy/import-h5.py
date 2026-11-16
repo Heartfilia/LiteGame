@@ -16,7 +16,7 @@ def fetch(url):
 
 def write(path, data):
     if path.suffix == '.html' and isinstance(data, str):
-        data = data.replace('<head>', '<head><script src="../../../assets/js/server-sync.js"></script>')
+        data = data.replace('<head>', '<head><script src="../../../assets/js/mobile-ui.js"></script><script src="../../../assets/js/server-sync.js"></script>')
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data if isinstance(data, bytes) else data.encode())
 

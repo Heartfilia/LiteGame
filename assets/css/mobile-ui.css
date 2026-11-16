@@ -1,0 +1,26 @@
+/* Explicit descendants cover spans, SVG labels, div controls and dynamically rendered HUDs on iOS. */
+html.lg-touch-ui body,
+html.lg-touch-ui body *,
+button,button *,[role="button"],[role="button"] *,[data-key],[data-key] *,[data-hold],[data-hold] *{
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-touch-callout:none!important;
+}
+html.lg-touch-ui img,html.lg-touch-ui a,html.lg-touch-ui svg{
+  -webkit-user-drag:none;
+}
+/* Search, login, text import and explicitly copyable status information retain normal editing/copy. */
+html.lg-touch-ui body input,
+html.lg-touch-ui body textarea,
+html.lg-touch-ui body select,
+html.lg-touch-ui body [contenteditable]:not([contenteditable="false"]),
+html.lg-touch-ui body [contenteditable]:not([contenteditable="false"]) *,
+html.lg-touch-ui body [data-allow-select],
+html.lg-touch-ui body [data-allow-select] *{
+  -webkit-user-select:text!important;
+  user-select:text!important;
+  -webkit-touch-callout:default!important;
+}
+/* Prevent iOS focus zoom while leaving page pinch zoom and native scrolling available. */
+html.lg-touch-ui input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+html.lg-touch-ui textarea,html.lg-touch-ui select{font-size:16px!important}

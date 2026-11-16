@@ -80,11 +80,14 @@
   <div class="data-modal" id="dataModal" hidden role="dialog" aria-modal="true" aria-labelledby="dataModalTitle">
     <div class="data-backdrop" data-close></div>
     <div class="data-panel">
+      <div class="data-modal-toolbar">
+      <span>进度备份</span>
       <button class="data-close" type="button" aria-label="关闭" data-close>
         <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="m6.4 6.4 11.2 11.2M17.6 6.4 6.4 17.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
         </svg>
       </button>
+      </div>
       <span class="data-tag">BACKUP</span>
       <h2 id="dataModalTitle">游戏进度与收藏</h2>
       <p class="data-desc">游戏记录与收藏保存在这台设备的浏览器里，包括最佳成绩、金币、成就和棋局进度。导出备份也会包含收藏，换设备后导入即可恢复；只迁移收藏可使用“我的收藏”内的导入／导出。怀旧 FC 游戏使用独立存档，请在对应游戏页面导出／导入。</p>
@@ -110,7 +113,7 @@
       <p class="data-msg" id="dataMsg" hidden></p>
       <section id="serverSettings" class="server-settings" hidden aria-label="游戏服务器">
         <h3>游戏服务器</h3>
-        <p id="serverIdentity" class="server-identity" hidden></p>
+        <p id="serverIdentity" class="server-identity" data-allow-select hidden></p>
         <p>登录后自动同步进度、收藏和已保存的 FC 即时存档。每 20 秒核对，回到页面或恢复网络时立即检查。同一记录两边都修改时由你选择。</p>
         <form id="serverForm">
           <label>服务器 URL<input id="serverUrl" type="url" placeholder="https://save.example.com" autocomplete="url" aria-describedby="serverUrlHint" required></label>
@@ -144,6 +147,7 @@
     <div class="noscript">这个游戏厅需要启用 JavaScript 才能运行。</div>
   </noscript>
 
+  <script src="assets/js/mobile-ui.js"></script>
   <script src="assets/js/server-sync.js"></script>
   <script src="assets/js/server-settings.js"></script>
   <script src="assets/js/games.js"></script>

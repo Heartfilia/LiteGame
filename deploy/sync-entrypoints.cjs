@@ -9,10 +9,16 @@ function visit(dir) {
     if (entry.isDirectory()) visit(file);
     else if (entry.name.endsWith('.html')) {
       const text = fs.readFileSync(file, 'utf8');
+      let updated = text;
       if (!text.includes('assets/js/server-sync.js') && /<head(?:\s[^>]*)?>/i.test(text)) {
         const src = path.relative(path.dirname(file), path.join(root, 'assets/js/server-sync.js')).split(path.sep).join('/');
-        fs.writeFileSync(file, text.replace(/(<head(?:\s[^>]*)?>)/i, '$1<script src="' + src + '"></script>'));
+        updated = updated.replace(/(<head(?:\s[^>]*)?>)/i, '$1<script src="' + src + '"></script>');
       }
+      if (!updated.includes('assets/js/mobile-ui.js') && /<head(?:\s[^>]*)?>/i.test(updated)) {
+        const src = path.relative(path.dirname(file), path.join(root, 'assets/js/mobile-ui.js')).split(path.sep).join('/');
+        updated = updated.replace(/(<head(?:\s[^>]*)?>)/i, '$1<script src="' + src + '"></script>');
+      }
+      if (updated !== text) fs.writeFileSync(file, updated);
     }
   }
 }

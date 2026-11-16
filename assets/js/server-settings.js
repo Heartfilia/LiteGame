@@ -32,7 +32,7 @@
         const note = document.createElement('p'); note.textContent = '本机与云端均有不同记录。此条已暂停上传，稍后处理会保留双方副本。云端版本：' + item.remote.version;
         const preview = document.createElement('details'), summary = document.createElement('summary'); summary.textContent = '查看双方内容'; preview.append(summary);
         for (const [label, value] of [['本机', item.local], ['云端', item.remote.value]]) {
-          const pre = document.createElement('pre'); pre.textContent = label + '：\n' + (value === null ? '（删除 / 无记录）' : (typeof value === 'string' ? value : JSON.stringify(value)).slice(0, 4000)); preview.append(pre);
+          const pre = document.createElement('pre'); pre.setAttribute('data-allow-select', ''); pre.textContent = label + '：\n' + (value === null ? '（删除 / 无记录）' : (typeof value === 'string' ? value : JSON.stringify(value)).slice(0, 4000)); preview.append(pre);
         }
         const buttons = document.createElement('div'); buttons.className = 'data-actions';
         for (const [choice, text] of [['cloud', '使用云端'], ['local', '保留本地'], ['defer', '稍后处理']]) {

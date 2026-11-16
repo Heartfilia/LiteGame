@@ -113,6 +113,8 @@ LiteGame/
 
 独立游戏 HTML 必须在游戏脚本之前载入 `assets/js/server-sync.js`。新增或重新生成页面后执行 `node deploy/sync-entrypoints.cjs` 补齐相对路径；现有生成脚本已包含接入。NES 存档使用独立的保存通知及读取前核对。
 
+同一脚本也会接入 `assets/js/mobile-ui.js`：统一触屏防文字选中、长按菜单和拖图，支持动态控件及 iframe。输入框保持可编辑；需要允许用户复制的展示区域标记 `data-allow-select`。
+
 目录中的游戏会自动参与大厅搜索和卡片收藏。**游戏 ID 应保持稳定**，收藏记录通过 ID 关联游戏。
 
 ### 3D 游戏构建

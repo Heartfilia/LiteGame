@@ -755,6 +755,26 @@
     importFile.value = '';
   }
 
+  // Also handles the direct #server entry, which opens the dialog from server-settings.js.
+  let modalOpen = false, modalScroll = 0, modalFocus = null, bodyStyle = null;
+  function syncModalVisibility() {
+    if (modalOpen === !dataModal.hidden) return;
+    modalOpen = !dataModal.hidden;
+    document.documentElement.classList.toggle('has-data-modal', modalOpen);
+    if (modalOpen) {
+      modalScroll = window.scrollY; modalFocus = document.activeElement;
+      bodyStyle = ['position','top','width'].map(key => [key, document.body.style[key]]);
+      Object.assign(document.body.style, { position: 'fixed', top: -modalScroll + 'px', width: '100%' });
+      dataModal.querySelector('.data-close').focus({ preventScroll: true });
+    } else {
+      for (const [key, value] of bodyStyle || []) document.body.style[key] = value;
+      window.scrollTo(0, modalScroll);
+      if (modalFocus?.isConnected) modalFocus.focus({ preventScroll: true });
+    }
+  }
+  new MutationObserver(syncModalVisibility).observe(dataModal, { attributes: true, attributeFilter: ['hidden'] });
+  syncModalVisibility();
+
   function pad2(n) { return n < 10 ? '0' + n : '' + n; }
 
   exportBtn.addEventListener('click', function () {
@@ -864,6 +884,12 @@
   });
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && !dataModal.hidden) closeDataModal();
+    if (event.key === 'Tab' && !dataModal.hidden) {
+      const nodes = Array.from(dataModal.querySelectorAll('button,a[href],input,select,textarea,summary,[tabindex="0"]')).filter(n => !n.disabled && n.getClientRects().length);
+      const first = nodes[0], last = nodes[nodes.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dataModal.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !dataModal.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
+    }
   });
 
   try { history.scrollRestoration = 'manual'; } catch (e) { /* older browsers */ }
