@@ -24,3 +24,10 @@ html.lg-touch-ui body [data-allow-select] *{
 /* Prevent iOS focus zoom while leaving page pinch zoom and native scrolling available. */
 html.lg-touch-ui input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
 html.lg-touch-ui textarea,html.lg-touch-ui select{font-size:16px!important}
+.lg-return{width:auto!important;min-width:44px;min-height:44px;white-space:nowrap;font-size:13px!important;padding:8px!important;display:inline-flex;align-items:center}
+.lg-navigation-menu{position:relative;margin:0!important;padding:0!important;z-index:110;font:14px/1.5 system-ui}
+.lg-navigation-menu>summary{list-style:none;cursor:pointer;min-height:44px;padding:11px 12px;box-sizing:border-box;border:1px solid #7778;border-radius:8px;background:#232435;color:#fff}
+.lg-navigation-menu>summary::-webkit-details-marker{display:none}
+.lg-navigation-links{position:absolute;right:0;top:100%;min-width:160px;padding:8px;background:#191b2a;border:1px solid #7778;border-radius:8px;box-shadow:0 6px 18px #0006}
+.lg-navigation-menu:not([open])>.lg-navigation-links{display:none!important}
+.lg-navigation-links a,.lg-navigation-links button{display:flex!important;align-items:center;min-height:44px;width:100%!important;white-space:nowrap;color:#f4eafa!important;text-decoration:none;box-sizing:border-box;padding:8px!important}

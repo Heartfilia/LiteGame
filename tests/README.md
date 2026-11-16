@@ -45,6 +45,8 @@ ABA 检查真实触摸、暂停、外部资源及四种尺寸。原创专项逐�
 
 ## 浏览器测试
 
+`node tests/ux-navigation.browser.cjs`（默认 8766）验证 Chromium／WebKit 的收藏／搜索来源返回、刷新后来源保持、分区分页与滚动恢复、顶部设置、移植游戏状态按钮和存档管理、NES 空状态选卡／兼容版本筛选／横屏直接返回，以及 ABA 单一开始入口。导航 `returnTo` 仅接受本站首页、分区和搜索路由。
+
 `node tests/mobile-ui.browser.cjs`（默认 8766）验证 Chromium／WebKit 的统一触屏防选中策略：动态嵌套元素、iframe、输入与可复制信息例外、原生指针事件保留；390×844、320×568、568×320 下备份弹窗关闭入口、键盘焦点循环、背景滚动锁定和页面宽度。实体 iOS 长按系统菜单仍需真机复核。
 
 需安装 `playwright`，并准备 Chromium 或本机 Chrome。测试依赖可安装在项目外，然后通过 `NODE_PATH` 指向其 `node_modules`；生产站点仍为纯静态文件，无需构建。

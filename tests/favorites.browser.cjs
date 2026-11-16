@@ -86,7 +86,7 @@ const upload=data=>({name:'favorites.json',mimeType:'application/json',buffer:Bu
    await page.clock.runFor(10000);
    const third=await page.locator('.showcase-slide').getAttribute('data-game-id');assert.deepEqual(new Set([first,second,third]),new Set(selected));
    const shown=await page.evaluate(()=>{const slide=document.querySelector('.showcase-slide'),g=GAME_DATA.games.find(g=>g.id===slide.dataset.gameId);return {url:slide.querySelector('a').getAttribute('href'),expected:g.url,title:slide.querySelector('h2').textContent,expectedTitle:g.title};});
-   assert.equal(shown.url,shown.expected);assert.equal(shown.title,shown.expectedTitle);
+    const shownURL=new URL(shown.url,base);assert.equal(shownURL.searchParams.get('returnTo'),'#/');shownURL.searchParams.delete('returnTo');assert.equal(shownURL.href,new URL(shown.expected,base+'/').href);assert.equal(shown.title,shown.expectedTitle);
    await page.locator('#showcase-pause').click();await page.mouse.move(0,0);await page.clock.runFor(20000);
    assert.equal(await page.locator('.showcase-slide').getAttribute('data-game-id'),third);
    await page.locator('#showcase-pause').click();await page.mouse.move(0,0);await page.clock.runFor(10000);

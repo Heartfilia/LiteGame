@@ -84,3 +84,6 @@ button,button *,[role="button"],[role="button"] *,.direction-disc,.direction-dis
 .nes-arrow[data-direction="RIGHT"]::before{transform:rotate(90deg)}
 .nes-arrow[data-direction="DOWN"]::before{transform:rotate(180deg)}
 .nes-arrow[data-direction="LEFT"]::before{transform:rotate(270deg)}
+body:not(.nes-has-game) #console,body:not(.nes-has-game) #game-toolbar,body:not(.nes-has-game) #game-help{display:none}
+button[hidden],nav[hidden]{display:none!important}
+.cartridge-card a[aria-disabled=true]{opacity:.55;cursor:default}

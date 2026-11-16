@@ -1,5 +1,6 @@
 // LiteGame adaptation, MIT, 2026. Rebuild prototypes from a validated seed journal.
 window.entombedSeed=0;
+window.LitePortState={isPlaying:()=>state===STATE_PLAY};
 const portEntityTypes={Bat,Ghost,Urn,Ladder,Cobweb,Key,ManaPotion,HealthPotion};
 const portFields=['x','y','health','attackCooldown'];
 function entombedValidate(s){try{

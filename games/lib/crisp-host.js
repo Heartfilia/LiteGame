@@ -10,7 +10,7 @@
   try{const saved=JSON.parse(localStorage.getItem(key)||'{}');best=Number.isFinite(saved.best)?saved.best:0;muted=!!saved.muted;}catch(e){}
   function save(){try{localStorage.setItem(key,JSON.stringify({best,muted}));}catch(e){}}
   function send(type){frame.contentWindow.postMessage({liteCrisp:true,type,muted},location.origin);}
-  function render(){cover.hidden=!paused;pause.textContent=paused?'继续':'暂停';sound.textContent=muted?'声音：关':'声音：开';sound.setAttribute('aria-pressed',String(!muted));}
+   function render(){cover.hidden=!paused;pause.hidden=paused;pause.disabled=!ready;pause.textContent='暂停';sound.textContent=muted?'声音：关':'声音：开';sound.setAttribute('aria-pressed',String(!muted));}
   function resume(){if(!ready)return;paused=false;send('resume');render();frame.focus();}
   function stop(){paused=true;send('pause');render();}
   window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow||!e.data.liteCrisp)return;

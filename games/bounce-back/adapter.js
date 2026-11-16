@@ -1,5 +1,6 @@
 // LiteGame adaptation, GPL-2.0-or-later, 2026. Level-entry journals, touch and pause.
 window.portPaused=true;
+window.LitePortState={isPlaying:()=>!window.portPaused,canRetry:()=>!!window.player&&(player.IsDead()||winTimer.IsSet())};
 window.bounceMeta={coins:0,warp:0,bestTime:0,won:0};
 let bounceCheckpoint=null,bounceLoading=false;
 function bounceValidate(s){try{const n=(v,a,b)=>Number.isFinite(v)&&v>=a&&v<=b;return s&&s.version===1&&Number.isInteger(s.floor)&&n(s.floor,0,10)&&s.data&&['health','healthMax','boomerangs','bigBoomerangs','coins'].every(k=>n(s.data[k],0,1000000))&&s.data.health>0&&s.data.health<=s.data.healthMax&&s.meta&&n(s.meta.coins,0,1000000)&&n(s.meta.warp,0,10)&&n(s.meta.bestTime,0,10000000)&&[0,1].includes(s.meta.won)?JSON.parse(JSON.stringify(s)):null;}catch(e){return null;}}

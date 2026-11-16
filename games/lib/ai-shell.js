@@ -16,6 +16,11 @@
   favorite.onclick = () => { try { GameFavorites.toggle(id); } catch (e) { message('收藏未保存：浏览器存储不可用。'); } };
   window.addEventListener('favoriteschange', syncFavorite); syncFavorite();
   document.getElementById('lite-pause').onclick = () => api?.pause();
+  const pauseButton = document.getElementById('lite-pause'); pauseButton.hidden = true;
+  setInterval(() => {
+    const game = id === 'ai-speed' ? window.game : window.__game;
+    pauseButton.hidden = !game || (id === 'ai-speed' ? !['race','countdown'].includes(game.state) : !game.playing || game.paused || game.ended);
+  }, 150);
   document.getElementById('lite-fullscreen').onclick = async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();

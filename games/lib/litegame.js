@@ -53,6 +53,7 @@
   if (themeMeta) themeMeta.setAttribute('content', '#07070f');
 
   C.back = function () {
+    if (window.LiteNavigation) { window.LiteNavigation.back(); return; }
     var target = new URL('../../index.html', location.href);
     target.search = '';
     target.hash = categoryName ? '#/category/' + from : '#/';

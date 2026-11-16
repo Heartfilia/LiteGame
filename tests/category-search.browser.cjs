@@ -13,7 +13,7 @@ const base=process.env.GAME_BASE_URL||'http://127.0.0.1:8766';
     const field=page.locator('#category-search');await field.waitFor();
     const title=await page.evaluate(id=>GAME_DATA.games.find(g=>g.category===id).title,cat);
     await field.fill(title);
-    const expected=await page.evaluate(({cat,title})=>GAME_DATA.games.filter(g=>g.category===cat&&[g.title,g.subtitle,g.description,(g.tags||[]).join(' ')].join(' ').toLowerCase().includes(title.toLowerCase())).map(g=>g.url),{cat,title});
+     const expected=await page.evaluate(({cat,title})=>GAME_DATA.games.filter(g=>g.category===cat&&(cat!=='retro'||!g.tags.includes('暂不兼容'))&&[g.title,g.subtitle,g.description,(g.tags||[]).join(' ')].join(' ').toLowerCase().includes(title.toLowerCase())).map(g=>{const u=new URL(g.url,location.href);u.searchParams.set('returnTo',location.hash);return u.pathname+u.search;}),{cat,title});
     const urls=await page.locator('#app .game-card').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));
     assert.deepEqual(urls,expected.slice(0,cat==='retro'?36:expected.length));
     await field.fill('<不存在的游戏XYZ>');assert.equal(await page.locator('#app .game-card').count(),0);

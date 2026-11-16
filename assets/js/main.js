@@ -65,6 +65,7 @@
     const q = query.trim().toLowerCase();
     if (!q) return [];
     return games.filter(function (game) {
+      if (game.category === 'retro' && game.tags.includes('暂不兼容')) return false;
       const cat = categoryById(game.category);
       const haystack = [
         game.title,
@@ -94,10 +95,16 @@
       '</a>';
   }
 
+  function gameURL(game, returnTo) {
+    const url = new URL(game.url, location.href);
+    url.searchParams.set('returnTo', returnTo || (location.hash.startsWith('#/') ? location.hash : '#/'));
+    return url.pathname + url.search + url.hash;
+  }
   function gameCard(game) {
     const cat = categoryById(game.category);
+    const unavailable = game.category === 'retro' && game.tags.includes('暂不兼容');
     return '' +
-      '<div class="game-card-shell"><a class="game-card" href="' + esc(game.url) + '">' +
+      '<div class="game-card-shell"><a class="game-card" ' + (unavailable ? 'aria-disabled="true"' : 'href="' + esc(gameURL(game)) + '"') + '>' +
         '<div class="game-cover">' +
           '<img src="' + esc(game.cover) + '" alt="' + esc(game.title) + ' 封面" loading="lazy" />' +
           '<span class="game-shade"></span>' +
@@ -107,7 +114,7 @@
         '<div class="game-body">' +
           '<span class="game-kicker">' + esc(cat ? cat.name : '游戏') + '</span>' +
           '<h3>' + esc(game.title) + '</h3>' +
-          '<p>' + esc(game.description) + '</p>' +
+          '<p>' + esc(unavailable ? '此版本暂不兼容，请选择其他版本。' : game.description) + '</p>' +
           '<div class="game-tags">' + (game.tags || []).map(function (tag) {
             return '<span>' + esc(tag) + '</span>';
           }).join('') + '</div>' +
@@ -118,7 +125,7 @@
   function featureGame(game) {
     const cat = categoryById(game.category);
     return '' +
-      '<div class="feature-game-shell"><a class="feature-game" href="' + esc(game.url) + '">' +
+      '<div class="feature-game-shell"><a class="feature-game" href="' + esc(gameURL(game)) + '">' +
         '<div class="feature-cover">' +
           '<img src="' + esc(game.cover) + '" alt="' + esc(game.title) + ' 封面" />' +
           '<span class="game-shade"></span>' +
@@ -158,7 +165,7 @@
 
   function showcaseCard(game, saved) {
     const cat = categoryById(game.category);
-    return '<div class="showcase-slide" data-game-id="' + esc(game.id) + '"><a class="showcase-card" href="' + esc(game.url) + '">' +
+    return '<div class="showcase-slide" data-game-id="' + esc(game.id) + '"><a class="showcase-card" href="' + esc(gameURL(game)) + '">' +
       '<img src="' + esc(game.cover) + '" alt="' + esc(game.title) + ' 游戏封面" />' +
       '<span class="showcase-shade"></span><span class="game-badge">' + esc(game.badge || 'PLAY') + '</span>' +
       '<div class="showcase-meta"><span class="showcase-kicker">' + esc(cat ? cat.name : '精选') + (saved ? ' · 我的收藏' : ' · 竞速') + '</span>' +
@@ -177,7 +184,7 @@
     }
     if (!queue.length && featured) queue.push(featured);
     const entry = document.getElementById('home-play');
-    entry.href = saved.length ? '#/category/favorites' : featured.url;
+    entry.href = saved.length ? '#/category/favorites' : gameURL(featured);
     entry.innerHTML = icon(saved.length ? 'heart' : 'play') + (saved.length ? '我的收藏' : '立即开玩');
     const chip = app.querySelector('.chip-c');
     chip.innerHTML = icon(saved.length ? 'heart' : 'clock') + (saved.length ? saved.length + ' 款收藏' : '限时冲线');
@@ -307,6 +314,7 @@
           '<label for="category-search">搜索本分区的游戏</label>' +
           '<div class="category-search-row"><input id="category-search" type="search" placeholder="输入游戏名称或关键词" autocomplete="off" value="' + esc(categoryQuery) + '"><button id="category-search-clear" class="btn btn-ghost" type="button">清空</button></div>' +
           '<p id="category-search-status" role="status"></p>' +
+          (cat.id === 'retro' ? '<label><input type="checkbox" id="retro-other">显示其他版本（可能无法运行）</label>' : '') +
         '</section>' +
         (cat.id === 'retro'
           ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机</a><nav id="retro-pages-top" class="game-pagination" aria-label="怀旧游戏顶部分页"></nav><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" class="game-pagination" aria-label="怀旧游戏底部分页"></nav></section>'
@@ -315,9 +323,11 @@
           : '<section class="section section-tight">' + emptyState('这个分区还是空的', '我们正在给它攒一个好玩的开局，先去其他分区逛逛吧。', '#/', '回到主菜单') + '</section>') +
       '</div>';
     const field = document.getElementById('category-search');
+    if (cat.id === 'retro') { try { document.getElementById('retro-other').checked = sessionStorage.getItem('litegame.retro-other') === 'true'; } catch (_) {} }
     function filterCategory() {
       const q = field.value.trim().toLowerCase();
-      list = allGames.filter(game => [game.title, game.subtitle, game.description, (game.tags || []).join(' ')].join(' ').toLowerCase().includes(q));
+      document.getElementById('category-search-clear').hidden = !field.value;
+      list = allGames.filter(game => (cat.id !== 'retro' || document.getElementById('retro-other').checked || !game.tags.includes('暂不兼容')) && [game.title, game.subtitle, game.description, (game.tags || []).join(' ')].join(' ').toLowerCase().includes(q));
       document.getElementById('category-search-status').textContent = list.length ? '找到 ' + list.length + ' 款本分区游戏' : '本分区没有匹配的游戏，请换个关键词或清空搜索。';
       try { sessionStorage.setItem('litegame.category-search.' + cat.id, field.value); } catch (e) {}
     }
@@ -329,7 +339,7 @@
       function renderRetroPage() {
         document.getElementById('retro-cards').innerHTML = list.slice(page * 36, (page + 1) * 36).map(gameCard).join('');
         for (const id of ['retro-pages-top', 'retro-pages']) {
-          const nav = document.getElementById(id); nav.replaceChildren();
+          const nav = document.getElementById(id); nav.replaceChildren(); nav.hidden = list.length <= 36;
           const label = document.createElement('span'); label.textContent = (page + 1) + ' / ' + Math.max(1, Math.ceil(list.length / 36));
           for (const [text, step] of [['上一页', -1], ['下一页', 1]]) {
             const button = document.createElement('button'); button.className = 'btn btn-ghost'; button.textContent = text;
@@ -352,6 +362,8 @@
     }
     field.addEventListener('input', () => { filterCategory(); updateCategory(); });
     document.getElementById('category-search-clear').onclick = () => { field.value = ''; filterCategory(); updateCategory(); field.focus(); };
+    const otherVersions = document.getElementById('retro-other');
+    if (otherVersions) otherVersions.onchange = () => { try { sessionStorage.setItem('litegame.retro-other', String(otherVersions.checked)); } catch (_) {} filterCategory(); updateCategory(); };
   }
 
   function renderSearch(query) {
@@ -396,6 +408,7 @@
       '<nav id="favorites-pages-top" class="game-pagination" aria-label="收藏顶部分页"></nav><div id="favorites-cards" class="game-grid"></div><div id="favorites-empty"></div><nav id="favorites-pages" class="game-pagination" aria-label="收藏底部分页"></nav></div>';
     const field = document.getElementById('favorites-search');
     let page = 0;
+    try { field.value = sessionStorage.getItem('litegame.favorites-search') || ''; page = Math.max(0, Number(sessionStorage.getItem('litegame.favorites-page')) || 0); } catch (_) {}
     refreshFavoriteList = () => {
       const all = gamesInCategory('favorites'), q = field.value.trim().toLowerCase();
       const list = all.filter(game => [game.title, game.description, (game.tags || []).join(' '), categoryById(game.category).name].join(' ').toLowerCase().includes(q));
@@ -403,9 +416,12 @@
       document.getElementById('favorites-cards').innerHTML = list.slice(page * 36, (page + 1) * 36).map(gameCard).join('');
       document.getElementById('favorites-empty').innerHTML = list.length ? '' : emptyState(all.length ? '没有匹配的收藏' : '还没有收藏游戏', all.length ? '换个关键词或清空搜索试试。' : '点击游戏卡片上的“收藏”，把喜欢的游戏放到这里。', '#/', '去挑选游戏');
       document.getElementById('favorites-export').disabled = !all.length;
+      document.getElementById('favorites-export').hidden = !all.length;
+      document.getElementById('favorites-clear').hidden = !field.value;
+      try { sessionStorage.setItem('litegame.favorites-search', field.value); sessionStorage.setItem('litegame.favorites-page', String(page)); } catch (_) {}
       document.querySelectorAll('[data-favorite-count]').forEach(node => { node.textContent = all.length; });
       for (const id of ['favorites-pages-top', 'favorites-pages']) {
-        const nav = document.getElementById(id); nav.replaceChildren(); nav.hidden = !list.length;
+        const nav = document.getElementById(id); nav.replaceChildren(); nav.hidden = pages <= 1;
         for (const step of [-1, 1]) {
           const button = document.createElement('button'); button.className = 'btn btn-ghost'; button.textContent = step < 0 ? '上一页' : '下一页';
           button.disabled = page + step < 0 || page + step >= pages;
@@ -468,7 +484,7 @@
     const items = results.map(function (game) {
       const cat = categoryById(game.category);
       return '' +
-        '<div class="search-result-shell"><a class="search-result" href="' + esc(game.url) + '">' +
+        '<div class="search-result-shell"><a class="search-result" href="' + esc(gameURL(game, '#/search/' + encodeURIComponent(q))) + '">' +
           '<span class="search-thumb"><img src="' + esc(game.cover) + '" alt="" loading="lazy" /></span>' +
           '<span class="search-result-text">' +
             '<strong>' + esc(game.title) + '</strong>' +
@@ -601,7 +617,7 @@
 
     if (routeName === 'category') {
       renderCategory(routeId);
-      document.title = '分区 · LiteGame 轻量游戏厅';
+      document.title = (routeId === 'favorites' ? '我的收藏' : (categoryById(routeId)?.name || '分区')) + ' · LiteGame 轻量游戏厅';
     } else if (routeName === 'search') {
       searchInput.value = routeQuery;
       renderSearch(routeQuery);
@@ -879,6 +895,7 @@
   });
 
   dataBtn.addEventListener('click', openDataModal);
+  document.getElementById('settingsBtn').addEventListener('click', openDataModal);
   dataModal.addEventListener('click', function (event) {
     if (event.target.closest('[data-close]')) closeDataModal();
   });

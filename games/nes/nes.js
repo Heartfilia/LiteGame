@@ -19,6 +19,7 @@
   });
   function status(text) { $('status').textContent = $('menu-status').textContent = text; }
   function buttons(ready) {
+    document.body.classList.toggle('nes-has-game', ready);
     for (const id of ['play', 'pause', 'reset', 'save', 'restore', 'export', 'console-pause']) $(id).disabled = !ready;
     for (const id of ['menu-resume', 'menu-save', 'menu-restore']) $(id).disabled = !ready;
     document.querySelectorAll('[data-key]').forEach(button => { button.disabled = !ready; });
@@ -73,6 +74,7 @@
   function pause(message) {
     running = false; cancelAnimationFrame(frame); frame = 0; releaseAll(); flushAudio();
     $('play').textContent = '开始 / 继续';
+    $('play').hidden = false; $('pause').hidden = true;
     $('console-pause').textContent = hasStarted ? '继续' : '开始';
     if (message) status(message);
   }
@@ -98,6 +100,7 @@
     running = true; lastTime = performance.now(); debt = 0;
     hasStarted = true; $('console-pause').textContent = '暂停';
     $('screen-label').hidden = true; $('play').textContent = '运行中';
+    $('play').hidden = true; $('pause').hidden = false;
     status('运行中 · 按 START 开始游戏，SELECT 选择模式。');
     frame = requestAnimationFrame(tick);
   }
@@ -180,6 +183,7 @@
     status('正在读取 ' + entry.title + '…');
     try {
       if (entry.status === 'timeout') throw Error('此版本在启动检查中超时，为避免页面卡住，请选择其他版本');
+      if (entry.status === 'unsupported') throw Error('此卡带版本暂不兼容，请从下方选择通过启动检查的版本');
       if (!bytes) {
         const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 30000);
         try {
@@ -286,13 +290,16 @@
   };
   function renderLibrary() {
     const query = $('search').value.trim().toLowerCase();
-    const list = library.filter(g => g.title.toLowerCase().includes(query) && (!$('compatible').checked || g.status === 'boot'));
+    const list = library.filter(g => g.title.toLowerCase().includes(query) && ($('show-other').checked || g.status === 'boot'));
     const pages = Math.max(1, Math.ceil(list.length / 36)); page = Math.min(page, pages - 1);
     $('count').textContent = list.length + ' 个卡带版本 · 第 ' + (page + 1) + ' / ' + pages + ' 页';
     $('library').replaceChildren();
     for (const game of list.slice(page * 36, (page + 1) * 36)) {
-      const link = document.createElement('a'); link.href = '?game=' + game.id + '&from=retro'; link.textContent = game.title;
-      const small = document.createElement('small'); small.textContent = game.status === 'boot' ? '启动已检查 · Mapper ' + game.mapper : game.detail;
+      const link = document.createElement('a');
+      const returnTo = new URLSearchParams(location.search).get('returnTo');
+      link.href = '?game=' + game.id + '&from=retro' + (returnTo ? '&returnTo=' + encodeURIComponent(returnTo) : ''); link.textContent = game.title;
+      const small = document.createElement('small'); small.textContent = game.status === 'boot' ? '已通过启动检查' : '此版本暂不兼容，请选择其他版本';
+      if (game.status !== 'boot') { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); }
       const card = document.createElement('div'); card.className = 'cartridge-card';
       const favorite = document.createElement('button'); favorite.type = 'button'; favorite.dataset.favorite = game.id;
       const update = () => {
@@ -308,7 +315,7 @@
       link.append(small); card.append(link, favorite); $('library').append(card);
     }
     for (const id of ['pages-top', 'pages']) {
-      const nav = $(id); nav.replaceChildren();
+      const nav = $(id); nav.replaceChildren(); nav.hidden = pages <= 1;
       for (const [label, step] of [['上一页', -1], ['下一页', 1]]) {
         const button = document.createElement('button'); button.textContent = label;
         button.disabled = page + step < 0 || page + step >= pages;
@@ -321,7 +328,11 @@
       }
     }
   }
-  $('search').oninput = $('compatible').onchange = () => { page = 0; renderLibrary(); };
+  $('search').oninput = $('show-other').onchange = () => { page = 0; renderLibrary(); };
+  $('change-game').onclick = () => { pause(); document.querySelector('.library').scrollIntoView({ behavior: 'smooth' }); $('search').focus({ preventScroll: true }); };
+  $('menu-back').onclick = async () => { pause(); await display.exit(); if (window.LiteNavigation) window.LiteNavigation.back(); else location.href = '../../index.html#/category/retro'; };
+  const destination = window.LiteNavigation?.destination();
+  if (destination) $('menu-back').textContent = '返回' + destination.label;
   window.addEventListener('favoriteschange', () => {
     const ids = new Set(window.GameFavorites.read());
     $('library').querySelectorAll('[data-favorite]').forEach(button => {

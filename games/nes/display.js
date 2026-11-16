@@ -82,5 +82,5 @@ window.NESDisplay = function (api) {
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   });
-  return { menuOpen: () => !panel.hidden };
+  return { menuOpen: () => !panel.hidden, exit };
 };
