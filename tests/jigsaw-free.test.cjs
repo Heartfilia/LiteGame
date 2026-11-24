@@ -55,6 +55,18 @@ test('Free jigsaw saves preserve positions/view and reject corrupted or disconne
  assert.equal(F.move(s.groups[0],NaN,0),false);
 });
 
+test('Picture selection prioritizes unfinished libraries and reports exhaustion without erasing records',()=>{
+ const J=load('jigsaw');
+ const picked=J.choose(['a','b','c'],['a','unknown'],'b',()=>0);
+ assert.equal(picked.id,'c');assert.equal(picked.exhausted,false);assert.deepEqual(picked.finished,['a']);
+ const only=J.choose(['a','b'],['a'],'a',()=>0);assert.equal(only.id,'b');
+ const done=J.choose(['a','b'],['a','b'],'a',()=>0);
+ assert.equal(done.id,null);assert.equal(done.exhausted,true);assert.deepEqual(done.finished,['a','b']);
+ assert.equal(J.pick(12,J.picsFor(12),null,()=>0).exhausted,true);
+ const pool=J.picsFor(24),finished=pool.slice(0,-1),last=pool[pool.length-2];
+ assert.equal(J.pick(24,finished,last,()=>0).id,pool[pool.length-1]);
+});
+
 test('10x10 uses its own neighbours, piece limits and completion; legacy 20x20 saves remain compatible',()=>{
  const J=load('jigsaw'),deal=J.deal(100,42,rng(42),'lake'),s=F.create(10);
  assert.equal(deal.cols,10);assert.equal(deal.rows,10);assert.equal(deal.tray.length,100);

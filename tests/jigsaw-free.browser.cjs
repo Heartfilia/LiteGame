@@ -135,12 +135,17 @@ async function worldPoint(page,id){
    nearComplete.s.free={version:1,cols,groups:[{pieces:nearComplete.s.placed.slice(),x:0,y:0}],view:{x:(cols-1)*48,y:(cols-1)*64,zoom:1}};
    if(cols===20)delete nearComplete.s.free.cols; // Legacy 400-piece saves have no dimensions.
    await loadFixture(page,nearComplete);
-   const r=await page.locator('.jg-free-canvas').boundingBox();await drop(page,count-1,r.width/2+24,r.height/2+32);
-   s=(await session(page)).s;assert.equal(s.free.groups[0].pieces.length,count);assert.equal(s.tray.length,0);
+   const completedId=nearComplete.s.pic;
+   const r=await page.locator('.jg-free-canvas').boundingBox(),completedPoint={x:r.x+r.width/2+24,y:r.y+r.height/2+32};
+   await drop(page,count-1,r.width/2+24,r.height/2+32);
+   assert.equal(await session(page),null,'completed free puzzle is collected instead of kept as a resumable save');
+   assert.ok((await page.evaluate(()=>Chogan.storage('jigsaw').get('prefs').donePhotos)).includes(completedId));
    assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
-   p=await worldPoint(page,count-1);await drag(page,p,{x:p.x+20,y:p.y+15});
-   assert.ok((await session(page)).s.free.groups[0].x>0,'completed puzzle remains movable');
-   await page.reload();await page.locator('.jg-free-canvas').waitFor({state:'visible'});assert.equal(await page.locator('.jg-slot').count(),0);assert.ok((await page.locator('.jg-status').textContent()).includes('拼图完成'));
+   const canvas=page.locator('.jg-free-canvas'),beforeImage=await canvas.evaluate(c=>c.toDataURL());
+   await drag(page,completedPoint,{x:completedPoint.x+20,y:completedPoint.y+15});
+   assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),beforeImage,'completed puzzle remains movable');
+   await page.reload();await page.locator('.jg-free-canvas').waitFor({state:'visible'});
+   s=(await session(page)).s;assert.equal(s.pic!==completedId,true);assert.equal(s.tray.length,count,'next visit advances to an unfinished picture');
    await referencePreview(page);
    assert.deepEqual(errors,[]);console.log(name+': '+count+' pieces, blank workspace, touch placement, group joins/drag/cancel, pan/zoom, refresh, four sizes and completion passed');
    }

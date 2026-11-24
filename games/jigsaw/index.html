@@ -65,7 +65,41 @@
   .jg-wrap--free { max-width: 1200px; flex: none; }
   .jg-top .ch-seg { flex-wrap: wrap; }
   .jg-wrap--free .jg-status { font-size: 12px; }
-  .jg-mid[hidden], .jg-wrap > button[hidden] { display: none; }
+  @media (max-width: 420px) {
+    /* The back button already returns home; keep every game action reachable on a phone. */
+    .jg-root .ch-homebtn, .jg-root .lg-navigation-menu { display: none; }
+    .jg-root .lg-return { width: 44px !important; padding: 0 !important; display: grid !important; place-items: center; font-size: 0 !important; }
+    .jg-root .lg-return::before { content: '←'; font-size: 22px; }
+  }
+  .jg-mid[hidden], .jg-wrap > button[hidden], .jg-empty[hidden] { display: none; }
+  .jg-empty {
+    width: min(100%, 560px); display: flex; flex-direction: column; align-items: center; gap: 12px;
+    margin: auto; padding: clamp(24px, 6vw, 48px) 20px; border: 1px solid var(--c-line);
+    border-radius: var(--r-xl); background: var(--c-surface); text-align: center;
+  }
+  .jg-empty__icon { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: var(--game-soft, var(--c-surface-2)); color: var(--game, var(--c-accent)); }
+  .jg-empty__icon svg { width: 30px; height: 30px; }
+  .jg-empty h2 { margin: 0; font-size: clamp(20px, 4vw, 26px); }
+  .jg-empty p { max-width: 420px; margin: 0; color: var(--c-text-dim); line-height: 1.7; }
+  .jg-empty__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+  .jg-empty__actions [hidden] { display: none; }
+  .jg-collection-modal { width: min(100%, 760px); }
+  .jg-collection__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .jg-collection__tools select { min-height: 40px; padding: 6px 10px; border: 1px solid var(--c-line); border-radius: var(--r-md); background: var(--c-surface-2); color: var(--c-text); }
+  .jg-collection__summary { margin: 0 0 12px; color: var(--c-text-dim); line-height: 1.6; }
+  .jg-collection__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .jg-collection__item {
+    min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 9px 7px 10px;
+    border: 1px solid var(--c-line); border-radius: var(--r-md); background: var(--c-surface-2);
+    color: var(--c-text); cursor: pointer; touch-action: manipulation; text-align: center;
+  }
+  .jg-collection__item:hover, .jg-collection__item:focus-visible { border-color: var(--game, var(--c-accent)); outline: none; }
+  .jg-collection__item--done { border-color: var(--game, var(--c-accent)); }
+  .jg-collection__item:disabled { cursor: default; opacity: .65; }
+  .jg-collection__item img, .jg-collection__item canvas { display: block; width: 72px; height: 96px; object-fit: cover; border-radius: 5px; }
+  .jg-collection__name { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 700; }
+  .jg-collection__state { color: var(--c-text-dim); font-size: 11px; }
+  .jg-collection__item--done .jg-collection__state { color: var(--game, var(--c-accent)); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -193,16 +227,17 @@ function JigsawEngineFactory() {
     var small = SMALL.indexOf(count) >= 0;
     return PICS.filter(function (id) { return FITS[id] === 'both' || FITS[id] === (small ? 'simple' : 'detailed'); });
   }
-  // A new picture for one count: random among those not yet finished at that count, never the
-  // one just played while another is left; once all are finished the round starts over.
-  // Returns the picture and the finished list to keep.
-  function pick(count, finished, last, rnd) {
-    var pool = picsFor(count), done = (finished || []).filter(function (id) { return pool.indexOf(id) >= 0; });
+  // Pick from a library without erasing its history: unfinished pictures come first and the
+  // previous picture is avoided while another remains. An exhausted library is an explicit
+  // state, not an invitation to silently cycle through completed pictures again.
+  function choose(pool, finished, last, rnd) {
+    var done = (finished || []).filter(function (id) { return pool.indexOf(id) >= 0; });
     var left = pool.filter(function (id) { return done.indexOf(id) < 0; });
-    if (!left.length) { done = []; left = pool.slice(); }
+    if (!left.length) return { id: null, finished: done, exhausted: true };
     if (left.length > 1) left = left.filter(function (id) { return id !== last; });
-    return { id: left[Math.floor(rnd() * left.length)], finished: done };
+    return { id: left[Math.floor(rnd() * left.length)], finished: done, exhausted: false };
   }
+  function pick(count, finished, last, rnd) { return choose(picsFor(count), finished, last, rnd); }
 
   function deal(count, seed, rnd, pic) {
     var cr = CUTS[count], n = count, tray = [];
@@ -242,7 +277,7 @@ function JigsawEngineFactory() {
   }
 
   var api = { CUTS: CUTS, COUNTS: COUNTS, BIG_ONLY: BIG_ONLY, MIN_PIECE: MIN_PIECE, DAILY_COUNT: DAILY_COUNT, PICS: PICS, FITS: FITS, ASPECT: ASPECT, TAB: TAB, SNAP: SNAP, GAP: GAP,
-    room: room, offered: offered, picsFor: picsFor, pick: pick, cut: cut, edges: edges, outline: outline, layout: layout, deal: deal, fits: fits, fitsCell: fitsCell, place: place, miss: miss, restore: restore };
+    room: room, offered: offered, picsFor: picsFor, choose: choose, pick: pick, cut: cut, edges: edges, outline: outline, layout: layout, deal: deal, fits: fits, fitsCell: fitsCell, place: place, miss: miss, restore: restore };
   if (typeof self !== 'undefined') self.JigsawEngine = api;
   return api;
 }
@@ -2328,10 +2363,24 @@ function JigsawPictures() {
 
   var prefs = ctx.store.get('prefs', null);
   if (!prefs || (!freeCount(prefs.count) && E.COUNTS.indexOf(prefs.count) < 0)) prefs = { count: 24, last: null };
-  // the pictures finished at each count, so a new game shows one not finished there yet (#376)
-  if (!prefs.done || typeof prefs.done !== 'object') prefs.done = {};
+  // Classic history is per piece count. Free history is per picture and shared by 10x10/20x20:
+  // finishing a photograph at either free difficulty adds it to the collection.
+  if (!prefs.done || typeof prefs.done !== 'object' || Array.isArray(prefs.done)) prefs.done = {};
+  var photoIds = Photos.entries.map(function (p) { return p.id; });
+  var completedPhotos = Array.isArray(prefs.donePhotos) ? prefs.donePhotos : [];
+  // Migrate any early free records without confusing them with classic picture IDs.
+  [100, 400].forEach(function (n) {
+    if (Array.isArray(prefs.done[n])) completedPhotos = completedPhotos.concat(prefs.done[n]);
+  });
+  prefs.donePhotos = photoIds.filter(function (id) { return completedPhotos.indexOf(id) >= 0; });
+  E.COUNTS.forEach(function (n) {
+    if (!Array.isArray(prefs.done[n])) prefs.done[n] = [];
+    else prefs.done[n] = prefs.done[n].filter(function (id) { return E.picsFor(n).indexOf(id) >= 0; });
+  });
+  ctx.store.set('prefs', prefs);
 
   var S = null, L = null, side = false, pic = null, slots = {}, placedNodes = {}, drag = null, sel = -1, aim = -1, lifted = false;
+  var exhausted = false;
   var startedAt = Date.now(), pausedAt = 0, busy = false;
 
   var top = el('div', { class: 'jg-top' });
@@ -2348,6 +2397,17 @@ function JigsawPictures() {
   var wrap = el('div', { class: 'jg-wrap' }, [top, mid, status]);
   var retryImage = el('button', { class: 'ch-btn', type: 'button', text: '重试加载图片', hidden: true, onclick: function () { start(S, S.daily, 0); } });
   wrap.appendChild(retryImage);
+  var emptyClassicBtn = el('button', { class: 'ch-btn', type: 'button', text: '经典模式', onclick: function () { prefs.count = 24; ctx.store.set('prefs', prefs); newGame(24); } });
+  var emptyState = el('div', { class: 'jg-empty', hidden: true, 'aria-live': 'polite' }, [
+    el('div', { class: 'jg-empty__icon' }, [Chogan.icon('check', 30)]),
+    el('h2', { text: '当前图库已全部完成' }),
+    el('p', { text: '这个难度的图片都已收录。等待后续新增更多图片，也可以从收藏中挑选已完成图片重新挑战。' }),
+    el('div', { class: 'jg-empty__actions' }, [
+      el('button', { class: 'ch-btn ch-btn--primary', type: 'button', text: '挑选图片重玩', onclick: showCollection }),
+      emptyClassicBtn
+    ])
+  ]);
+  wrap.appendChild(emptyState);
   var freeTools = el('div', { class: 'jg-free-tools', hidden: true });
   var referenceImage = document.createElement('canvas');
   referenceImage.setAttribute('aria-hidden', 'true');
@@ -2367,15 +2427,27 @@ function JigsawPictures() {
     freeTool('＋ 放大', function () { freeBoard.zoom(1.25); }), freeTool('查看全部', function () { freeBoard.fit(); }));
   wrap.insertBefore(freeTools, mid);
   function freeCount(n) { return n === 100 || n === 400; }
-  function isFree() { return S && freeCount(S.count); }
+  function isFree() { return !exhausted && S && freeCount(S.count); }
+  function updateCollectionButton() {
+    if (!collectionBtn) return;
+    var free = S && freeCount(S.count), n = S && S.count;
+    var done = free ? prefs.donePhotos.length : (prefs.done[n] || []).length;
+    var total = free ? Photos.entries.length : E.picsFor(n).length;
+    collectionBtn.title = '拼图收藏 · ' + done + '/' + total;
+    collectionBtn.setAttribute('aria-label', '拼图收藏，已完成 ' + done + ' 张，共 ' + total + ' 张');
+  }
 
   // one number in the bar: with two, the title had no room left on a phone
   ctx.stat('left', C.t('left'));
   ctx.button({ icon: 'help', label: C.t('help'), onClick: showHelp });
   ctx.button({ icon: 'eye', label: C.t('preview'), onClick: showPreview });
+  var collectionBtn = ctx.button({ icon: 'check', label: '拼图收藏', onClick: showCollection });
+  collectionBtn.dataset.action = 'collection';
   var newBtn = ctx.button({ icon: 'refresh', label: C.t('newPicture'), onClick: askNew });
+  newBtn.dataset.action = 'new';
   if (dailyDate) newBtn.classList.add('ch-hidden');
   ctx.main.appendChild(wrap);
+  ctx.root.classList.add('jg-root');
   ctx.mount();
 
   /* --------------------------------------------------------- drawing */
@@ -2453,7 +2525,7 @@ function JigsawPictures() {
     return ok.indexOf(n) >= 0 ? n : ok[ok.length - 1];
   }
   function layout() {
-    if (loading) return;
+    if (loading || exhausted) return;
     ctx.main.classList.toggle('ch-gamemain--scroll', isFree());
     freeBoard.setEnabled(isFree());
     freeBoard.canvas.hidden = !isFree(); freeTools.hidden = !isFree(); reference.hidden = !isFree();
@@ -2535,6 +2607,7 @@ function JigsawPictures() {
   }
   function render() {
     ctx.setStat('left', C.num(S.tray.length));
+    if (exhausted) { ctx.setStat('left', '0'); updateCollectionButton(); return; }
     if (isFree()) {
       status.textContent = (S.done ? '拼图完成！' : '工作区 ' + S.placed.length + '/' + S.count + ' 块 · ' + S.free.groups.length + ' 组') + ' · 拖动拼块；空白处拖动平移。也可点选散块，再点工作区放下。正确邻块靠近后自动拼接。';
       return;
@@ -2564,10 +2637,28 @@ function JigsawPictures() {
         }
       ));
     }
-    top.appendChild(el('span', { class: 'ch-badge', text: pictureTitle() }));
+    if (S.pic) top.appendChild(el('span', { class: 'ch-badge', text: pictureTitle() }));
+    updateCollectionButton();
   }
 
   /* ------------------------------------------------------------ moves */
+
+  function recordPhoto(id) {
+    if (photoIds.indexOf(id) < 0 || prefs.donePhotos.indexOf(id) >= 0) return;
+    prefs.donePhotos.push(id);
+    ctx.store.set('prefs', prefs);
+  }
+  function recordComplete() {
+    if (!S || !S.pic) return;
+    if (freeCount(S.count)) recordPhoto(S.pic);
+    else {
+      var got = prefs.done[S.count] || [];
+      if (got.indexOf(S.pic) < 0) got.push(S.pic);
+      prefs.done[S.count] = got;
+      ctx.store.set('prefs', prefs);
+    }
+    updateCollectionButton();
+  }
 
   function freeChanged(merged) {
     if (!isFree()) return;
@@ -2576,8 +2667,9 @@ function JigsawPictures() {
     if (merged) C.feedback('place');
     render();
     if (S.done && !wasDone) {
+      recordComplete();
       C.feedback('good'); frame.classList.add('jg-frame--done');
-      C.ui.toast({ icon: 'check', title: S.count + ' 块拼图完成！', sub: '完整拼图仍可整体拖动，进度已保存。' });
+      C.ui.toast({ icon: 'check', title: S.count + ' 块拼图完成！', sub: '已收录到拼图收藏。完整拼图仍可整体拖动，点击“换一张图”继续。' });
     }
     save();
   }
@@ -2617,6 +2709,7 @@ function JigsawPictures() {
   function won() {
     busy = true;
     sel = -1; aim = -1; showAim();
+    recordComplete();
     save();
     frame.classList.add('jg-frame--done');
     C.feedback('good');
@@ -2639,9 +2732,8 @@ function JigsawPictures() {
     } else if (C.stats.best('jigsaw', 'ms' + n, elapsed, true)) {
       note = C.t('bestN', { t: C.time(elapsed) });
     }
-    var id = S.pic, got = prefs.done[n] || [];
-    if (got.indexOf(id) < 0) got.push(id);
-    prefs.done[n] = got; ctx.store.set('prefs', prefs);
+    var id = S.pic;
+    recordComplete();
     ctx.clearSave();
     ctx.finish({
       won: true, title: C.t('doneIt'), note: note, timeMs: elapsed, coins: coins, points: points,
@@ -2670,15 +2762,34 @@ function JigsawPictures() {
 
   ctx.autosave(function () {
     if (freeBoard.active()) freeBoard.cancel();
+    // A finished free picture lives in the collection, not as a save that would keep reopening
+    // it. Unfinished positions and camera state are still restored exactly.
+    if (!S || exhausted || (isFree() && S.done)) return { inProgress: false };
     if (isFree()) return { s: { count: S.count, seed: S.seed, pic: S.pic, tray: S.tray, placed: S.placed, misses: 0, free: S.free }, daily: null, elapsed: (pausedAt || Date.now()) - startedAt };
-    if (!S || S.done || busy || (!S.placed.length && !S.misses)) return { inProgress: false };
+    if (S.done || busy || (!S.placed.length && !S.misses)) return { inProgress: false };
     return { s: { count: S.count, seed: S.seed, pic: S.pic, tray: S.tray, placed: S.placed, misses: S.misses }, daily: S.daily || null, elapsed: (pausedAt || Date.now()) - startedAt };
   });
   function save() { ctx.save(); }
 
-  // A new picture is one not finished yet at this count and never the one just played;
-  // the daily one comes from the day's seed
-  function newGame(n, daily) {
+  function showLibraryComplete(n) {
+    if (drag) endDrag({ pointerId: drag.id }, false);
+    freeBoard.cancel(); freeBoard.setEnabled(false);
+    ++loadRevision;
+    exhausted = true; loading = false; busy = false; sel = -1; aim = -1; lifted = false;
+    Object.keys(placedNodes).forEach(function (k) { placedNodes[k].remove(); });
+    S = { count: n, pic: null, tray: [], placed: [], done: true, daily: null };
+    slots = {}; placedNodes = {}; tray.innerHTML = '';
+    mid.hidden = true; freeTools.hidden = true; reference.hidden = true; retryImage.hidden = true;
+    freeBoard.canvas.hidden = true; emptyState.hidden = false; emptyClassicBtn.hidden = !freeCount(n);
+    frame.classList.remove('jg-frame--done');
+    ctx.main.classList.remove('ch-gamemain--scroll');
+    status.textContent = '';
+    renderTop(); render(); showAim(); ctx.clearSave();
+  }
+
+  // A new picture is one not finished yet in its library and never the one just played;
+  // the daily one comes from the day's seed. An explicit picture is used only for replay.
+  function newGame(n, daily, forcedId) {
     var seed, rnd, id;
     if (daily) {
       var dd = C.daily('jigsaw', daily), pool = E.picsFor(n);
@@ -2687,16 +2798,15 @@ function JigsawPictures() {
     } else {
       seed = Math.floor(Math.random() * 4294967296) >>> 0;
       rnd = C.rng(seed);
-      var got = E.pick(n, prefs.done[n], prefs.last, rnd);
-      if (freeCount(n)) {
-        var photos = Photos.entries.filter(function (p) { return p.id !== prefs.lastPhoto; });
-        if (!photos.length) photos = Photos.entries;
-        got = { id: photos[Math.floor(rnd() * photos.length)].id, finished: [] };
-        prefs.lastPhoto = got.id;
+      var got = freeCount(n) ? E.choose(photoIds, prefs.donePhotos, prefs.lastPhoto || prefs.last, rnd) : E.pick(n, prefs.done[n], prefs.last, rnd);
+      if (got.exhausted && !forcedId) {
+        prefs.count = n; ctx.store.set('prefs', prefs);
+        showLibraryComplete(n); return;
       }
-      id = got.id;
-      prefs.done[n] = got.finished;
-      prefs.last = id; ctx.store.set('prefs', prefs);
+      id = forcedId || got.id;
+      prefs.last = id;
+      if (freeCount(n)) prefs.lastPhoto = id;
+      ctx.store.set('prefs', prefs);
     }
     S = E.deal(n, seed, rnd, id);
     if (freeCount(n)) { S.pic = id; S.free = F.create(S.cols); }
@@ -2707,6 +2817,7 @@ function JigsawPictures() {
   async function start(st, daily, elapsed) {
     if (drag) endDrag({ pointerId: drag.id }, false);
     freeBoard.cancel();
+    exhausted = false; emptyState.hidden = true;
     S = st;
     S.daily = daily;
     var revision = ++loadRevision;
@@ -2740,14 +2851,87 @@ function JigsawPictures() {
 
   function askNew() {
     if (!S || busy || S.daily) return;
+    if (exhausted) { showCollection(); return; }
     if (S.done || !S.placed.length) { newGame(S.count); return; }
     C.ui.confirm({ title: C.t('newPicture'), body: C.t('resetWarn'), onOk: function () { newGame(S.count); } });
   }
 
   /* ------------------------------------------------------- dialogs */
 
+  function startSpecific(mode, n, id) {
+    if (dailyDate) return;
+    var go = function () {
+      prefs.count = n; ctx.store.set('prefs', prefs);
+      newGame(n, null, id);
+    };
+    if (!exhausted && S && !S.done && S.placed.length) {
+      C.ui.confirm({ title: C.t('newPicture'), body: '当前拼图尚未完成，选择其他图片会丢失这次的拼接进度。', onOk: go });
+    } else go();
+  }
+
+  function showCollection() {
+    if (!S) return;
+    var mode = freeCount(S.count) ? 'free' : 'classic';
+    var classicN = mode === 'classic' ? S.count : 24;
+    var content = el('div', { class: 'jg-collection' });
+    var countSelect = el('select', { 'aria-label': '经典拼图难度', hidden: mode !== 'classic' });
+    E.COUNTS.forEach(function (n) {
+      countSelect.appendChild(el('option', { value: n, text: C.num(n) + ' 块' }));
+    });
+    countSelect.value = classicN;
+    countSelect.addEventListener('change', function () { classicN = Number(countSelect.value); draw(); });
+    var tools = el('div', { class: 'jg-collection__tools' }, [
+      C.ui.segmented([{ value: 'free', label: '自由图库' }, { value: 'classic', label: '经典图案' }], mode, function (value) {
+        mode = value; countSelect.hidden = mode !== 'classic'; draw();
+      }),
+      countSelect
+    ]);
+    function draw() {
+      content.innerHTML = '';
+      var free = mode === 'free', n = free ? 100 : classicN;
+      var pool = free ? photoIds : E.picsFor(n);
+      var entries = free ? Photos.entries : pool.map(function (id) { return { id: id, title: C.t('pic_' + id) }; });
+      var done = free ? prefs.donePhotos : (prefs.done[n] || []);
+      var completed = pool.filter(function (id) { return done.indexOf(id) >= 0; }).length;
+      var summary = el('p', { class: 'jg-collection__summary', text: (free ? '自由难度 10×10 / 20×20 共用这份收藏。' : '经典模式按块数分别记录。') + ' 已完成 ' + completed + ' / ' + pool.length + ' 张；新局始终优先选择未完成图片。' });
+      var grid = el('div', { class: 'jg-collection__grid' });
+      entries.slice().sort(function (a, b) {
+        return (done.indexOf(b.id) >= 0 ? 1 : 0) - (done.indexOf(a.id) >= 0 ? 1 : 0);
+      }).forEach(function (entry) {
+        var isDone = done.indexOf(entry.id) >= 0;
+        var thumb;
+        if (free) thumb = el('img', { src: entry.src, alt: '', loading: 'lazy' });
+        else {
+          thumb = document.createElement('canvas'); thumb.width = 72; thumb.height = 96;
+          P.draw(entry.id, thumb.getContext('2d'), 72, 96);
+        }
+        var card = el('button', {
+          class: 'jg-collection__item' + (isDone ? ' jg-collection__item--done' : ''), type: 'button',
+          dataset: { collectionId: entry.id, collectionMode: mode }, disabled: !!dailyDate,
+          'aria-label': (isDone ? '重玩：' : '开始：') + entry.title,
+          onclick: function () { dialog.close('action'); startSpecific(mode, n, entry.id); }
+        }, [
+          thumb,
+          el('span', { class: 'jg-collection__name', text: entry.title, title: entry.title }),
+          el('span', { class: 'jg-collection__state', text: isDone ? '已完成 · 重玩' : '未完成' })
+        ]);
+        grid.appendChild(card);
+      });
+      if (completed === pool.length) summary.textContent += ' 当前图库已全部完成，等待后续新增更多图片。';
+      content.append(summary, grid);
+    }
+    draw();
+    var dialog = C.ui.modal({
+      title: '拼图收藏', body: [tools, content], closeButton: true,
+      actions: [{ label: C.t('done'), kind: 'primary' }]
+    });
+    dialog.box.classList.add('jg-collection-modal');
+    updateCollectionButton();
+  }
+
   function showPreview() {
     if (!S || loading) return;
+    if (exhausted) { showCollection(); return; }
     var w = isFree() ? Math.max(100, Math.min(400, window.innerWidth - 100, (window.innerHeight - 200) / E.ASPECT)) : Math.min(260, window.innerWidth - 120);
     var h = Math.round(w * E.ASPECT), d = dpr();
     var cv = document.createElement('canvas');
@@ -2759,6 +2943,7 @@ function JigsawPictures() {
   }
 
   function showHelp() {
+    if (exhausted) { showCollection(); return; }
     if (isFree()) {
       C.ui.modal({ title: '自由难度 · ' + S.cols + '×' + S.rows + '（' + S.count + ' 块）', body: [
         el('p', { text: '工作区没有底图、网格或固定位置。拖入拼块后可以任意摆放；正确相邻的拼块在对应边靠近时会吸附，自动合成一组。抓住组内任意拼块即可移动整个组合，组合之间也能继续拼接。' }),
@@ -3005,7 +3190,13 @@ function JigsawPictures() {
     if (!resume.free || dailyDate) resume = null;
     else resume.done = F.complete(resume.free);
   }
-  if (resume && (!resume.done || freeCount(resume.count))) {
+  if (resume && resume.done && freeCount(resume.count)) {
+    // Older versions saved completed free boards. Collect the picture once, then advance to
+    // an unfinished one (or the exhausted state) instead of reopening the same finished board.
+    recordPhoto(resume.pic);
+    prefs.count = resume.count; ctx.store.set('prefs', prefs); ctx.clearSave();
+    newGame(resume.count);
+  } else if (resume && !resume.done) {
     start(resume, saved.daily || null, saved.elapsed || 0);
   } else if (dailyDate) {
     newGame(E.DAILY_COUNT, dailyDate);
@@ -3016,7 +3207,7 @@ function JigsawPictures() {
   } else {
     newGame(usable(prefs.count));
   }
-  if (!isFree()) ctx.tutorialIfNew(TUT);
+  if (!exhausted && !isFree()) ctx.tutorialIfNew(TUT);
   // the first layout can run before the page has its final height: lay out again once it settles
   setTimeout(function () { if (S && !drag && !freeBoard.active()) layout(); }, 60);
 })();
