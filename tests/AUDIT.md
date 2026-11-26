@@ -1,5 +1,12 @@
 # 游戏检查记录
 
+## FC / NES 双人在线联机与协议规范（2026-11-24）
+
+- 新增 `deploy/NETPLAY_PROTOCOL_V1.md`（定义 `LiteGameServer` 内存房间接口 `POST /api/v1/rooms`、`GET /api/v1/rooms/:code`、`POST /api/v1/rooms/:code/join` 与 `wss://` 控制／10 字节二进制帧同步协议）及共享前端模块 `assets/js/netplay.js`、`assets/css/netplay.css`。
+- 1P 房主复用 `LiteSync` 登录令牌建房并生成邀请链接／6 位房间码；2P 好友免账号通过邀请链接或大厅／游戏机房间号入口加入，自动校验同款卡带 SHA-256，本地常规方向键／触屏圆盘与 A、B 自动映射为 2P 控制器。支持 WebRTC `DataChannel` 升级与 WebSocket 二进制回退、暂停／继续联动、快捷互动短语，以及房主读档／中途画面 gzip 快照同步。
+- `node --test tests/*.test.cjs` 全部 110 项测试通过（含新增双实例《魂斗罗》双人帧同步与快照重同步确定性测试）。
+- `tests/netplay.browser.cjs` 在 Chromium（WebSocket 中继与 WebRTC 升级两种模式）及 WebKit 通过双独立浏览器上下文联机、大厅房间码跳转、409 满员拒绝、双人同时输入、暂停联动、跨卡带切换、快照重同步 256×240 像素逐字节一致及手机横屏掌机菜单检查；既有 `server-sync`、`nes`、`nes-display`、`nes-direction`、`nes-system-buttons`、`pagination-desktop`、`ux-navigation`、`favorites`、`category-search` 回归通过。尚未连接公网实体 `LiteGameServer` 及跨移动网络真机实测。
+
 ## 二级页面导航与操作精简（2026-11-16）
 
 - 大厅游戏链接携带经过限制的 `returnTo` 路由，游戏主返回入口显示实际来源；收藏搜索词／分页和分区滚动恢复。主页、备份与服务器移到游戏次级菜单，大厅顶部新增设置入口。

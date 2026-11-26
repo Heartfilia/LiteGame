@@ -8,6 +8,10 @@
 
 重新生成 HTML 后执行 `node deploy/sync-entrypoints.cjs`；同步模块必须位于所有游戏脚本之前。
 
+## 双人在线联机（Netplay v1）
+
+`node tests/netplay.browser.cjs` 使用 Playwright Chromium／WebKit 与内置 HTTP + RFC 6455 WebSocket 模拟房间服务（默认连接 `http://127.0.0.1:8766`），覆盖未登录提示、1P 登录后建房、2P 免账号从大厅输入 6 位房间码自动跳转卡带、第三人 409 满员拦截、WebSocket 中继与 WebRTC DataChannel 双模式、1P+2P 同时操作《魂斗罗》的控制器掩码一致性、暂停／继续联动、快捷气泡、跨卡带自动切换、房主中途 gzip 快照重同步像素级一致性，以及手机横屏掌机菜单与断开恢复。
+
 ## 规则测试（无需安装依赖）
 
 ```sh
@@ -23,6 +27,7 @@ node --test tests/*.test.cjs
 - `casual-ports.test.cjs`：泡泡龙与三消以合法动作走完各 20 关（允许重试），泡泡簇与反弹、三消交叉消除与恢复确定性、围猫 BFS／胜负／撤销、无效存档拒绝。
 - `deploy-cache.test.cjs`：检查 Nginx 对 HTML、CSS、JS、图片和字体使用重新验证缓存，并确认部署在同步文件前后校验 Nginx 配置。
 - `nes.test.cjs`：怀旧目录完整性、ROM 内容校验与三款代表游戏的启动／存档确定性。
+- `netplay.test.cjs`：房间号与服务器地址校验、10 字节二进制输入帧编解码、单包丢失冗余恢复、旧会话隔离，以及双实例《魂斗罗》异采样率双人帧同步与中途快照重同步像素一致性。
 - `jigsaw-free.test.cjs`：100／400 块自由拼图的任意摆放、真实邻接吸附、组合合并／移动、完整拼接、存档恢复与损坏校验，以及旧 20×20 存档兼容。
 - `five-games.test.cjs`：山路拉力与车流穿梭的合法通关／失败、节拍回声的复奏／超时、和弦工坊的选音／评分、四款存档恢复。
 - `collection.test.cjs`：53 款原创初始化与存档、接龙牌张守恒／撤销、音乐答案及节奏判定、赛车通关、体育目标可达性。

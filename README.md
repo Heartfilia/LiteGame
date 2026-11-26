@@ -17,7 +17,7 @@
 
 | 游戏／模块 | 入口 | 特点 |
 | --- | --- | --- |
-| 怀旧游戏机 | `games/nes/` | JSNES 模拟器、站内卡带搜索、即时存档；电脑老电视布局、手机八方向圆盘与横屏掌机布局 |
+| 怀旧游戏机 | `games/nes/` | JSNES 模拟器、站内卡带搜索、即时存档、异地双人帧同步联机；电脑老电视布局、手机八方向圆盘与横屏掌机布局 |
 | 自由拼图 | `games/jigsaw/` | 10×10／20×20，自由摆放、邻接吸附、组合移动、进度保存与完整图参考 |
 | Ai飞车 | `games/ai-speed/` | 3D 赛车、四条赛道、漂移集气、小喷与氮气、电脑车手和道具赛 |
 | AiCF·运输船 | `games/ai-cf/` | 3D 团队射击、机器人对战、多种武器、键鼠与独立多点触控 |
@@ -78,6 +78,15 @@ node tests/static-server.cjs
 
 接入协议为 LiteGameServer v1，部署需允许本站 origin 的 CORS（`Authorization`、`Content-Type`，GET/POST/PUT/DELETE，暴露 `Retry-After`）。已有增量查询及乐观并发接口足够使用，无需新增接口；若以后希望更低延迟，可增加仅通知 revision 的长轮询或推送，客户端仍按现有 API 拉取并核对。
 
+### FC / NES 双人在线联机（Netplay v1）
+
+在支持 `/api/v1/rooms` 的 LiteGameServer 上，怀旧游戏机支持异地双人同屏游玩（如《魂斗罗》《90坦克》等双人卡带）：
+
+- **1P 房主开房**：已连接游戏服务器账号的玩家在 FC 游戏页面点击 **双人联机 → 创建房间**，生成 6 位数字房间号与邀请链接。
+- **2P 好友免账号加入**：受邀好友打开邀请链接（或在大厅“联机”／怀旧分区“加入双人房间”输入 6 位房间号与服务器地址），无需登录账号即可自动校验同款卡带并作为 2P 加入。
+- **帧同步与按键映射**：双端各自本地渲染画面与音频，仅交换 10 字节定长手柄状态（支持 WebRTC `DataChannel` 直连升级与 `wss://` 自动回退）；2P 直接使用自己习惯的方向键／触屏圆盘和 A、B 操作玩家二。支持暂停／继续联动、快捷短语及房主存档／当前画面中途同步给 2P。
+- 服务端接入协议与 Nginx WebSocket 配置参考见 [deploy/NETPLAY_PROTOCOL_V1.md](deploy/NETPLAY_PROTOCOL_V1.md)。
+
 ## 项目结构
 
 ```text
@@ -90,6 +99,7 @@ LiteGame/
 │   ├── js/favorites.js        # 收藏存储、校验、导入导出与跨标签同步
 │   ├── js/server-sync.js      # 服务器认证、版本同步、冲突与游戏写入保护
 │   ├── js/server-settings.js  # 进度备份中的服务器设置与冲突选择
+│   ├── js/netplay.js          # 双人房间信令、帧同步队列与联机面板
 │   └── images/                # 站点图标、游戏封面
 ├── games/
 │   ├── lib/                   # 共享游戏组件与适配层
@@ -163,6 +173,7 @@ node tests/nes-display.browser.cjs
 node tests/jigsaw-free.browser.cjs
 node tests/ai-games.browser.cjs
 node tests/server-sync.browser.cjs
+node tests/netplay.browser.cjs
 ```
 
 完整测试范围、参数与运行方法见 [tests/README.md](tests/README.md)，历史检查结果见 [tests/AUDIT.md](tests/AUDIT.md)。浏览器自动化覆盖不等同于实体手机实测或所有游戏完整通关。

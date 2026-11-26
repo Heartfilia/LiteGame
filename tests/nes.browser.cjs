@@ -38,6 +38,7 @@ const base = process.env.GAME_BASE_URL || 'http://127.0.0.1:8765';
       await cdp.detach();
       await page.locator('#save').click();
       await page.waitForFunction(() => document.getElementById('status').textContent.startsWith('已保存'));
+      if (!(await page.locator('#game-help').evaluate(d => d.open))) await page.locator('#game-help summary').click();
       const download = page.waitForEvent('download'); await page.locator('#export').click();
       const file = await download, data = fs.readFileSync(await file.path());
       await page.reload(); await page.waitForFunction(() => !document.getElementById('play').disabled);

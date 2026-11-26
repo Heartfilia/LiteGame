@@ -317,7 +317,7 @@
           (cat.id === 'retro' ? '<label><input type="checkbox" id="retro-other">显示其他版本（可能无法运行）</label>' : '') +
         '</section>' +
         (cat.id === 'retro'
-          ? '<section class="section section-tight"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机</a><nav id="retro-pages-top" class="game-pagination" aria-label="怀旧游戏顶部分页"></nav><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" class="game-pagination" aria-label="怀旧游戏底部分页"></nav></section>'
+          ? '<section class="section section-tight"><div class="retro-entry-actions"><a class="btn btn-ghost" href="games/nes/index.html">打开游戏机</a><button class="btn btn-ghost" type="button" data-open-netplay-join>加入双人房间</button></div><nav id="retro-pages-top" class="game-pagination" aria-label="怀旧游戏顶部分页"></nav><div id="retro-cards" class="game-grid"></div><nav id="retro-pages" class="game-pagination" aria-label="怀旧游戏底部分页"></nav></section>'
           : list.length
           ? '<section class="section section-tight"><div id="category-cards" class="game-grid">' + list.map(gameCard).join('') + '</div></section>'
           : '<section class="section section-tight">' + emptyState('这个分区还是空的', '我们正在给它攒一个好玩的开局，先去其他分区逛逛吧。', '#/', '回到主菜单') + '</section>') +
@@ -896,6 +896,12 @@
 
   dataBtn.addEventListener('click', openDataModal);
   document.getElementById('settingsBtn').addEventListener('click', openDataModal);
+  const hallNetplay = window.LiteNetplay ? window.LiteNetplay.createController({ hallMode: true }) : null;
+  const netplayHallBtn = document.getElementById('netplayHallBtn');
+  if (netplayHallBtn && hallNetplay) netplayHallBtn.addEventListener('click', function () { hallNetplay.open('join'); });
+  app.addEventListener('click', function (event) {
+    if (hallNetplay && event.target.closest('[data-open-netplay-join]')) hallNetplay.open('join');
+  });
   dataModal.addEventListener('click', function (event) {
     if (event.target.closest('[data-close]')) closeDataModal();
   });

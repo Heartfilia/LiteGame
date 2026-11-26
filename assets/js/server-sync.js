@@ -411,6 +411,16 @@
     return { app: 'litegame', type: 'progress-backup', version: 1, exportedAt: new Date().toISOString(), data, records, conflicts: report.conflicts };
   }
   window.LiteSync = { connect, disconnect, sync, details, resolve, exportRecovery, normalizeServer, guard,
+    session() {
+      const c = connection();
+      if (!c || !c.server || !c.access_token) return null;
+      const expired = !!c.expired || !(c.expires_at * 1000 > Date.now());
+      return { server: c.server, accessToken: expired ? null : c.access_token, username: c.user?.username || '', expired };
+    },
+    markExpired() {
+      const c = connection();
+      if (c && !c.expired) { c.expired = true; nativeSet.call(localStorage, CONNECTION, JSON.stringify(c)); status('登录已失效，请重新连接'); }
+    },
     // NES calls this only after a durable user save. Scanning covers saves made while disconnected.
     nesSaved(key) { const c = connection(); if (c) nativeRemove.call(localStorage, journal(c, 'nes', key)); schedule(2000); },
     async retryBlocked() {

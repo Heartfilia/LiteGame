@@ -10,14 +10,27 @@
   const audioLeft = new Float32Array(16384), audioRight = new Float32Array(16384);
   const held = new Map();
   const systemPulses = new Map();
-  let playedFrames = 0, hasStarted = false;
+  const netApplied = [0, 0, 0];
+  const netPulses = new Uint8Array(10);
+  let playedFrames = 0, hasStarted = false, suppressNetNotify = false, netplay = null;
   let page = 0;
   const display = window.NESDisplay({ release: releaseAll, pause, start });
   const directionPad = window.NESDirectionPad($('direction-disc'), {
-    enabled: () => running && !display.menuOpen(),
+    enabled: () => running && !display.menuOpen() && !netplay?.isOpen(),
     down: (source, name) => hold(source, 1, name), up: release
   });
   function status(text) { $('status').textContent = $('menu-status').textContent = text; }
+  function syncNetplayButtons(ready = !!nes) {
+    const inRoom = !!netplay?.inRoom();
+    const guest = inRoom && netplay.role() === 2;
+    const label = inRoom ? ('联机房间 ' + netplay.roomCode()) : '双人联机';
+    $('netplay').disabled = !ready && !inRoom;
+    $('menu-netplay').disabled = !ready && !inRoom;
+    $('netplay').textContent = $('menu-netplay').textContent = label;
+    $('reset').disabled = !ready || guest;
+    $('restore').disabled = !ready || guest;
+    $('menu-restore').disabled = !ready || guest;
+  }
   function buttons(ready) {
     document.body.classList.toggle('nes-has-game', ready);
     for (const id of ['play', 'pause', 'reset', 'save', 'restore', 'export', 'console-pause']) $(id).disabled = !ready;
@@ -25,6 +38,7 @@
     document.querySelectorAll('[data-key]').forEach(button => { button.disabled = !ready; });
     $('direction-disc').setAttribute('aria-disabled', String(!ready));
     $('console-pause').textContent = hasStarted ? '继续' : '开始';
+    syncNetplayButtons(ready);
   }
   function draw(buffer) {
     for (let i = 0; i < pixels.length; i++) pixels[i] = 0xff000000 | buffer[i];
@@ -65,61 +79,120 @@
       }
     } catch (e) { status('声音未开启：' + e.message); }
   }
+  function applyPlayerMask(player, nextMask) {
+    const diff = netApplied[player] ^ nextMask;
+    if (!diff) return;
+    for (let b = 0; b < 10; b++) {
+      if (diff & (1 << b)) {
+        if (nextMask & (1 << b)) nes.buttonDown(player, b);
+        else nes.buttonUp(player, b);
+      }
+    }
+    netApplied[player] = nextMask;
+  }
+  function sampleLocalNetMask() {
+    let mask = 0;
+    for (const v of held.values()) if (v.button >= 0 && v.button < 10) mask |= (1 << v.button);
+    for (let b = 0; b < 10; b++) {
+      if (netPulses[b] > 0) { mask |= (1 << b); netPulses[b]--; }
+    }
+    return mask;
+  }
   function releaseAll() {
     directionPad.reset();
-    if (nes) for (let p = 1; p <= 2; p++) for (let b = 0; b < 10; b++) nes.buttonUp(p, b);
+    if (nes && !netplay?.active()) for (let p = 1; p <= 2; p++) for (let b = 0; b < 10; b++) nes.buttonUp(p, b);
     held.clear(); systemPulses.clear();
     document.querySelectorAll('[data-held]').forEach(b => b.removeAttribute('data-held'));
   }
-  function pause(message) {
+  function pause(message, fromRemote = false) {
+    const wasRunning = running;
     running = false; cancelAnimationFrame(frame); frame = 0; releaseAll(); flushAudio();
     $('play').textContent = '开始 / 继续';
     $('play').hidden = false; $('pause').hidden = true;
     $('console-pause').textContent = hasStarted ? '继续' : '开始';
     if (message) status(message);
+    if (wasRunning && !fromRemote && !suppressNetNotify) netplay?.notifyLocalPause(message || '对方已暂停游戏');
   }
   function tick(time) {
     if (!running) return;
     debt += Math.min(time - lastTime, 100); lastTime = time;
     try {
       let count = 0;
-      while (debt >= 1000 / 60 && count < 4) {
-        nes.frame(); debt -= 1000 / 60; count++; playedFrames++;
-        for (const [source, until] of systemPulses) if (playedFrames >= until) { systemPulses.delete(source); release(source); }
+      if (!netplay?.active()) {
+        while (debt >= 1000 / 60 && count < 4) {
+          nes.frame(); debt -= 1000 / 60; count++; playedFrames++;
+          for (const [source, until] of systemPulses) if (playedFrames >= until) { systemPulses.delete(source); release(source); }
+        }
+        if (count === 4) debt = 0;
+      } else {
+        while (debt >= 1000 / 60 && count < 4) {
+          const step = netplay.stepFrame(sampleLocalNetMask);
+          if (!step.ready) {
+            debt = Math.min(debt, 1000 / 60);
+            if (step.stalledMs > 450) status('等待对方网络同步…');
+            break;
+          }
+          applyPlayerMask(1, step.p1);
+          applyPlayerMask(2, step.p2);
+          nes.frame();
+          debt -= 1000 / 60; count++; playedFrames++;
+          if (step.catchUp && count < 4) {
+            const extra = netplay.stepFrame(sampleLocalNetMask);
+            if (extra.ready) {
+              applyPlayerMask(1, extra.p1);
+              applyPlayerMask(2, extra.p2);
+              nes.frame();
+              count++; playedFrames++;
+            }
+          }
+        }
+        if (count === 4) debt = 0;
       }
-      if (count === 4) debt = 0;
     } catch (e) {
       pause('此版本运行异常：' + e.message + '。可以重新开机或选择其他版本。');
       return;
     }
     frame = requestAnimationFrame(tick);
   }
-  function start() {
-    if (!nes || running || display.menuOpen()) return;
+  function start(fromRemote = false) {
+    if (!nes || running || display.menuOpen() || netplay?.isOpen()) return;
     if (!muted) enableAudio();
     running = true; lastTime = performance.now(); debt = 0;
     hasStarted = true; $('console-pause').textContent = '暂停';
     $('screen-label').hidden = true; $('play').textContent = '运行中';
     $('play').hidden = true; $('pause').hidden = false;
-    status('运行中 · 按 START 开始游戏，SELECT 选择模式。');
+    status(netplay?.active()
+      ? ('双人联机运行中（你是 ' + netplay.role() + 'P）· 1P 按 SELECT 选双人，START 开始。')
+      : '运行中 · 按 START 开始游戏，SELECT 选择模式。');
+    if (!fromRemote && !suppressNetNotify) netplay?.notifyLocalResume();
     frame = requestAnimationFrame(tick);
   }
   function hold(source, player, name) {
     if (!nes || !running || held.has(source)) return;
     const button = jsnes.Controller['BUTTON_' + name];
+    if (netplay?.active()) {
+      held.set(source, { player: netplay.role(), button, name, net: true });
+      return;
+    }
     held.set(source, { player, button, name }); nes.buttonDown(player, button);
   }
   function release(source) {
     const value = held.get(source);
     if (!value) return;
     held.delete(source);
-    if (![...held.values()].some(v => v.player === value.player && v.button === value.button)) nes.buttonUp(value.player, value.button);
+    if (value.net) return;
+    if (![...held.values()].some(v => !v.net && v.player === value.player && v.button === value.button)) nes.buttonUp(value.player, value.button);
   }
   function systemButton(name) {
-    if (!nes || display.menuOpen()) return;
+    if (!nes || display.menuOpen() || netplay?.isOpen()) return;
     // Wake the emulator without accidentally toggling the cartridge's own pause.
     // Boot screens may ignore START: the next press after boot is the game input.
     if (!running) { start(); return; }
+    if (netplay?.active()) {
+      const btn = jsnes.Controller['BUTTON_' + name];
+      netPulses[btn] = Math.max(netPulses[btn], 2);
+      return;
+    }
     const source = 'system-' + name;
     hold(source, 1, name);
     systemPulses.set(source, playedFrames + 2);
@@ -145,7 +218,7 @@
     KeyZ:[1,'A'], KeyX:[1,'B'], ShiftRight:[1,'SELECT'], Enter:[1,'START'],
     KeyI:[2,'UP'], KeyK:[2,'DOWN'], KeyJ:[2,'LEFT'], KeyL:[2,'RIGHT'], KeyG:[2,'A'], KeyH:[2,'B'], KeyT:[2,'SELECT'], KeyY:[2,'START'] };
   window.addEventListener('keydown', e => {
-    if (e.target.closest('input,textarea,select') || display.menuOpen()) return;
+    if (e.target.closest('input,textarea,select') || display.menuOpen() || netplay?.isOpen()) return;
     if (e.code === 'Enter' && e.target.closest('button,a')) return;
     if (!running) {
       if (keys[e.code] && ['START', 'SELECT'].includes(keys[e.code][1]) && !e.repeat) { e.preventDefault(); start(); }
@@ -154,7 +227,10 @@
     if (keys[e.code]) { e.preventDefault(); hold('key-' + e.code, ...keys[e.code]); }
   });
   window.addEventListener('keyup', e => release('key-' + e.code));
-  window.addEventListener('blur', () => pause(nes ? '已暂停，点击继续。' : ''));
+  window.addEventListener('blur', () => {
+    if (netplay?.active()) { releaseAll(); return; }
+    pause(nes ? '已暂停，点击继续。' : '');
+  });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(nes ? '已暂停，点击继续。' : ''); });
   window.addEventListener('pagehide', () => pause());
   $('play').onclick = () => { start(); canvas.focus({ preventScroll: true }); };
@@ -165,8 +241,9 @@
     $('mute').textContent = $('menu-mute').textContent = muted ? '开启声音' : '静音'; $('mute').setAttribute('aria-pressed', String(!muted));
     if (!muted) await enableAudio();
   };
-  $('reset').onclick = () => {
-    if (!nes || !window.confirm('重新开机将丢弃未保存的当前进度，继续吗？')) return;
+  $('reset').onclick = async () => {
+    if (!nes || !window.confirm(netplay?.inRoom() ? '重新开机将同步重置双人进度，继续吗？' : '重新开机将丢弃未保存的当前进度，继续吗？')) return;
+    if (netplay?.inRoom() && netplay.role() === 1 && netplay.active()) { await netplay.syncFromHost('reset'); return; }
     pause(); try { nes = makeNES(); nes.loadROM(rom); start(); } catch (e) { status(e.message); }
   };
   function validateROM(bytes) {
@@ -175,8 +252,10 @@
     const minimum = 16 + ((bytes[6] & 4) ? 512 : 0) + bytes[4] * 16384 + bytes[5] * 8192;
     if (bytes.length < minimum) throw Error('卡带文件不完整');
   }
+  let loadingForNetplay = false;
   async function load(entry, bytes) {
     const token = ++generation;
+    if (!loadingForNetplay && netplay?.inRoom() && current?.id !== entry.id) netplay.disconnect({ notice: '' });
     pause(); hasStarted = false; buttons(false); nes = null; rom = null; current = null;
     $('screen-label').hidden = false; $('screen-label').textContent = '正在读取卡带…';
     $('title').textContent = entry.title; document.title = entry.title + ' · 怀旧 · LiteGame';
@@ -200,7 +279,8 @@
       const candidate = makeNES(); candidate.loadROM(bytes);
       nes = candidate; rom = bytes; current = { ...entry, sha256: digest };
       buttons(true); $('screen-label').textContent = 'READY · 点击开始 / 继续';
-      status('卡带已就绪。可点击底部“开始”、START / SELECT 启动，或点击“读档”。' + (entry.status && entry.status !== 'boot' ? ' 此版本尚未通过启动检查。' : ''));
+      status('卡带已就绪。可点击底部“开始”、START / SELECT 启动，点击“读档”或开启“双人联机”。' + (entry.status && entry.status !== 'boot' ? ' 此版本尚未通过启动检查。' : ''));
+      if (!loadingForNetplay) await netplay?.onGameLoaded();
     } catch (e) {
       if (token !== generation) return;
       $('screen-label').textContent = '卡带加载失败';
@@ -266,7 +346,13 @@
       const data = await storedState(current.sha256);
       if (token !== generation) return;
       if (!data) throw Error('此卡带还没有存档');
-      applySnapshot(data); $('screen-label').hidden = true; status('已读档，点击继续。');
+      applySnapshot(data); hasStarted = true; $('screen-label').hidden = true;
+      if (netplay?.inRoom() && netplay.role() === 1) {
+        await netplay.syncFromHost('snapshot');
+        status('已读档并同步给 2P，正在继续双人游戏。');
+      } else {
+        status('已读档，点击继续。');
+      }
     } catch (e) { status('读档失败：' + e.message); }
   };
   $('export').onclick = () => {
@@ -341,11 +427,90 @@
       button.setAttribute('aria-label', (active ? '取消收藏：' : '收藏：') + game.title);
     });
   });
+  if (window.LiteNetplay) {
+    netplay = window.LiteNetplay.createController({
+      getGame: () => current ? {
+        id: current.id,
+        title: current.title,
+        kind: 'nes',
+        romSha256: current.sha256,
+        url: 'games/nes/index.html?game=' + encodeURIComponent(current.id) + '&from=retro'
+      } : null,
+      canSyncCurrent: () => !!(nes && current && hasStarted),
+      exportSnapshot: () => snapshot(),
+      async loadGameById(gameId) {
+        const entry = library.find(g => g.id === gameId);
+        if (!entry) throw new Error('本地卡带目录中没有找到房间指定的游戏');
+        loadingForNetplay = true;
+        try { await load(entry); } finally { loadingForNetplay = false; }
+      },
+      async onSessionStart({ mode, snapshot: snap }) {
+        suppressNetNotify = true;
+        try {
+          pause('', true);
+          netApplied[1] = netApplied[2] = 0;
+          netPulses.fill(0);
+          if (mode === 'snapshot' && snap) {
+            applySnapshot(snap);
+          } else {
+            const fresh = makeNES();
+            fresh.loadROM(rom);
+            nes = fresh;
+            draw(nes.ppu.buffer);
+          }
+          if (window.nesTest) window.nesTest = nes;
+          syncNetplayButtons(true);
+        } finally {
+          suppressNetNotify = false;
+        }
+        start(true);
+      },
+      onRemotePause(reason) { pause(reason, true); },
+      onRemoteResume() { start(true); },
+      onPeerLeft(reason) { pause(reason, true); syncNetplayButtons(!!nes); },
+      onExitNetplay(notice) {
+        suppressNetNotify = true;
+        try { pause('', true); } finally { suppressNetNotify = false; }
+        netApplied[1] = netApplied[2] = 0;
+        netPulses.fill(0);
+        if (nes) for (let p = 1; p <= 2; p++) for (let b = 0; b < 10; b++) nes.buttonUp(p, b);
+        syncNetplayButtons(!!nes);
+        if (notice) status(notice);
+      },
+      async onUnlockAudio() {
+        if (muted) {
+          muted = false;
+          flushAudio();
+          $('mute').textContent = $('menu-mute').textContent = '静音';
+          $('mute').setAttribute('aria-pressed', 'true');
+        }
+        await enableAudio();
+      },
+      onOpenModal() {
+        if (running) pause('已打开联机面板，游戏已暂停。');
+        syncNetplayButtons(!!nes);
+      },
+      mountModalTarget: () => $('console').classList.contains('immersive') ? $('console').querySelector('.console-layout') : document.body,
+      mountPillTarget: () => $('console').querySelector('.screen-glass')
+    });
+    new MutationObserver(() => { netplay.refreshMount(); syncNetplayButtons(!!nes); })
+      .observe($('console'), { attributes: true, attributeFilter: ['class'] });
+    $('netplay').onclick = () => netplay.open();
+    $('menu-netplay').onclick = () => {
+      if (display.menuOpen()) $('console-menu').click();
+      netplay.open();
+    };
+    $('library-join-room').onclick = () => netplay.open('join');
+    window.nesNetplay = netplay;
+  }
   renderLibrary();
   buttons(false);
-  const requested = new URLSearchParams(location.search).get('game');
+  const searchParams = new URLSearchParams(location.search);
+  const requested = searchParams.get('game');
   if (requested) {
     const entry = library.find(g => g.id === requested);
     if (entry) load(entry); else status('没有找到这张卡带，请从下方选择。');
+  } else if (searchParams.get('room')) {
+    netplay?.onGameLoaded();
   }
 })();

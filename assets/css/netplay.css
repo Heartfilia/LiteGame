@@ -1,0 +1,350 @@
+.lg-netplay-modal[hidden],
+.lg-netplay-pill[hidden],
+.lg-netplay-toast[hidden],
+.lg-netplay-modal [hidden] {
+  display: none !important;
+}
+
+.lg-netplay-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  display: grid;
+  place-items: center;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: rgba(8, 10, 20, 0.84);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #f4efe6;
+  font: 14px/1.55 system-ui, -apple-system, sans-serif;
+  touch-action: auto;
+}
+
+.console-layout > .lg-netplay-modal {
+  position: absolute;
+  z-index: 6;
+}
+
+.lg-netplay-backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.lg-netplay-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 480px);
+  max-height: min(100%, 90dvh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  background: linear-gradient(165deg, #25283d, #181b2a);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  padding: 0 16px 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+.console-layout > .lg-netplay-modal .lg-netplay-panel {
+  max-height: 100%;
+}
+
+.lg-netplay-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 -16px 10px;
+  padding: 10px 16px;
+  background: rgba(26, 29, 45, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lg-netplay-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #f5c98b;
+}
+
+.lg-netplay-close {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font: 600 14px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lg-netplay-title {
+  margin: 4px 0 6px;
+  font-size: 19px;
+  line-height: 1.3;
+  color: #fff;
+}
+
+.lg-netplay-sub {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #c8c4d8;
+}
+
+.lg-netplay-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lg-netplay-tab {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #d8d4e6;
+  font: 600 13px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lg-netplay-tab[aria-selected="true"] {
+  background: rgba(243, 192, 124, 0.18);
+  border-color: #f3c07c;
+  color: #fff3dd;
+}
+
+.lg-netplay-card {
+  background: rgba(10, 12, 22, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.lg-netplay-code-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lg-netplay-code-label {
+  font-size: 12px;
+  color: #b7b3c9;
+  display: block;
+}
+
+.lg-netplay-code {
+  font: 800 26px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+  color: #ffd79a;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.lg-netplay-link-preview {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #bdb9cf;
+  font: 12px/1.45 ui-monospace, SFMono-Regular, monospace;
+  overflow-wrap: anywhere;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.lg-netplay-seats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 380px) {
+  .lg-netplay-seats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lg-netplay-seat {
+  padding: 10px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lg-netplay-seat.is-ready {
+  border-color: rgba(114, 230, 166, 0.55);
+  background: rgba(114, 230, 166, 0.08);
+}
+
+.lg-netplay-seat strong {
+  display: block;
+  font-size: 13px;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.lg-netplay-seat span {
+  display: block;
+  font-size: 12px;
+  color: #c7c3d6;
+}
+
+.lg-netplay-field {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.lg-netplay-field span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #e9e4f5;
+}
+
+.lg-netplay-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(9, 11, 20, 0.72);
+  color: #fff;
+  font: 16px/1.3 system-ui, sans-serif;
+}
+
+.lg-netplay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lg-netplay-btn {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #2c3147;
+  color: #fff3df;
+  font: 600 14px system-ui, sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lg-netplay-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.lg-netplay-btn-primary {
+  background: linear-gradient(135deg, #ff6b98, #9b72ff);
+  border-color: transparent;
+  color: #fff;
+}
+
+.lg-netplay-btn-danger {
+  background: rgba(235, 87, 105, 0.16);
+  border-color: rgba(235, 87, 105, 0.48);
+  color: #ffc5cd;
+}
+
+.lg-netplay-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.lg-netplay-quick button {
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ece7fa;
+  font: 600 12px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lg-netplay-msg {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffe2a8;
+  overflow-wrap: anywhere;
+}
+
+.lg-netplay-msg.is-error {
+  background: rgba(235, 87, 105, 0.18);
+  color: #ffd0d6;
+}
+
+.lg-netplay-pill {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(15, 18, 30, 0.84);
+  color: #f7f3ea;
+  font: 600 12px/1.2 system-ui, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.lg-netplay-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6ee7a8;
+  flex: none;
+}
+
+.lg-netplay-pill[data-state="waiting"] .lg-netplay-dot {
+  background: #f6c465;
+}
+
+.lg-netplay-pill[data-state="offline"] .lg-netplay-dot {
+  background: #f27484;
+}
+
+.lg-netplay-toast {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: 86%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(20, 24, 38, 0.92);
+  border: 1px solid rgba(243, 192, 124, 0.55);
+  color: #ffe7b8;
+  font: 600 12px/1.35 system-ui, sans-serif;
+  pointer-events: none;
+  text-align: center;
+}
