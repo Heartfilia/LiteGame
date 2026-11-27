@@ -23,6 +23,7 @@
 - *.php
 - *.py
 + /index.html
++ /diag.html
 + /assets/***
 + /games/***
 - *
