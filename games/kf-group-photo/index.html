@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>集体照 · LiteGame</title>
+  <meta name="description" content="所有人同时睁眼的那一瞬按下快门。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="集体照 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/group-photo/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/group-photo/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #bfe3f5; color: #2f2414;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif;
+      display: flex; flex-direction: column; overflow: hidden;
+      -webkit-user-select: none; user-select: none;
+    }
+    header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; position: relative; z-index: 5; }
+    header a { color: #2f2414; font-size: 14px; text-decoration: none; margin-right: auto; }
+    header button, header select {
+      background: #fff; border: 1px solid #c2a77e; border-radius: 8px;
+      height: 34px; min-width: 40px; padding: 0 10px; font-size: 13px; color: #2f2414; cursor: pointer;
+    }
+    header svg { width: 18px; height: 18px; display: block; }
+    #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; }
+    #stage canvas { display: block; width: 100%; height: 100%; }
+    /* ファインダーの四隅 */
+    #finder { position: absolute; pointer-events: none; }
+    #finder i { position: absolute; width: 9%; height: 12%; max-width: 46px; max-height: 46px; border: 0 solid rgba(255,255,255,.92); filter: drop-shadow(0 0 2px rgba(0,0,0,.35)); }
+    #finder i:nth-child(1) { left: 0; top: 0; border-left-width: 3px; border-top-width: 3px; }
+    #finder i:nth-child(2) { right: 0; top: 0; border-right-width: 3px; border-top-width: 3px; }
+    #finder i:nth-child(3) { left: 0; bottom: 0; border-left-width: 3px; border-bottom-width: 3px; }
+    #finder i:nth-child(4) { right: 0; bottom: 0; border-right-width: 3px; border-bottom-width: 3px; }
+    #finder.focus i { border-color: #6dff7a; animation: focus .45s ease-out; }
+    @keyframes focus { from { transform: scale(1.6); opacity: .3; } }
+    #finder b { position: absolute; right: 5%; top: 6%; width: 12px; height: 12px; border-radius: 50%; background: #ff3b30; box-shadow: 0 0 6px rgba(255,59,48,.8); animation: rec 1s steps(2) infinite; }
+    @keyframes rec { 50% { opacity: .15; } }
+    #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+    .print { position: absolute; background: #fbfaf6; box-shadow: 0 8px 24px rgba(0,0,0,.35); display: none; pointer-events: none; }
+    .print canvas { display: block; width: 100%; }
+    .print.move { transition: left .5s ease, top .5s ease, width .5s ease, padding .5s, transform .5s; }
+    .print.develop canvas { animation: develop .7s ease-out; }
+    .print.pop { animation: pop .25s ease-out; }
+    @keyframes develop { from { filter: brightness(4) saturate(0); } to { filter: none; } }
+    @keyframes pop { from { opacity: 0; scale: 1.15; } to { opacity: 1; scale: 1; } }
+    #msg { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+    /* ゲーム画面は下まで描き、ボタンは下の80pxを空けて上に重ねる（Xアプリ内ブラウザの投稿文で隠れるため） */
+    #controls { position: fixed; left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom)); display: flex; gap: 8px; padding: 8px 12px 0; max-width: 640px; width: 100%; margin: 0 auto; z-index: 4; }
+    #controls button, #controls a {
+      flex: 1; height: clamp(56px, 8vmin, 72px); border: none; border-radius: 14px; font-size: clamp(18px, 3vmin, 24px); font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none;
+      touch-action: manipulation;
+    }
+    .go { background: #e0603a; color: #fff; box-shadow: 0 4px 0 #8f3518; }
+    .post { background: #111; color: #fff; box-shadow: 0 4px 0 #000; flex: 0 0 34% !important; font-size: clamp(16px, 2.6vmin, 20px) !important; }
+    #controls button:active, #controls a:active { transform: translateY(3px); box-shadow: none; }
+    #controls.hide { visibility: hidden; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">集体照</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="sound" aria-label="sound"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <main style="display:contents">
+  <div id="stage">
+    <div id="finder"><i></i><i></i><i></i><i></i><b></b></div>
+    <div class="print" id="print"><canvas></canvas></div>
+    <div id="flash"></div>
+    <div id="msg"></div>
+  </div>
+  <div id="controls" class="hide"></div>
+
+  </main>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+  <script>
+    // CDN が読めないときの一言
+    setTimeout(() => { if (!window.PHOTO_READY) { const m = document.getElementById('msg'); m.style.display = 'flex'; m.textContent = 'Failed to load. Please reload. / 読み込めませんでした。再読み込みしてください。'; } }, 8000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 集体照 · 中文文案
+window.__KF_ZH__ = {
+  title: '集体照',
+  back: '← 大厅',
+  again: '再来一次',
+  post: '分享到 X'
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    window.PHOTO_READY = true;
+
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/group-photo/';
+    const OPEN = 0.8; // これ以上開いていれば「目を開けている」
+
+    // ---------- 言語 ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('group-photo:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('group-photo:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (['ja', 'ko', 'en', 'th'].includes(c)) return c; } return 'en'; };
+    const DICT = {
+      ja: { title: '集体照', back: '← トップへ戻る', again: 'もう一度', post: 'Xに投稿', share: () => '集体照を撮りました #集体照ゲーム' },
+      ko: { title: '단체 사진', back: '← 처음으로', again: '다시 하기', post: 'X에 게시', share: () => '단체 사진을 찍었습니다 #集体照ゲーム' },
+      en: { title: 'Group Photo', back: '← Back to top', again: 'Play again', post: 'Post on X', share: () => 'I took a group photo #集体照ゲーム' },
+      th: { title: 'ถ่ายรูปหมู่', back: '← กลับหน้าแรก', again: 'เล่นอีกครั้ง', post: 'โพสต์ลง X', share: () => 'ถ่ายรูปหมู่แล้ว #集体照ゲーム' },
+    }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    const t = k => DICT[lang][k];
+    const langSel = document.getElementById('lang');
+    langSel.value = lang;
+    langSel.addEventListener('change', () => { lang = langSel.value; store.set('lang', lang); applyLang(); });
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('back').textContent = t('back');
+      renderControls();
+      if (state === 'result') { shareCache = null; prepareShare(); }
+    }
+
+    // ---------- 音 ----------
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const drawSoundBtn = () => {
+      soundBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+    };
+    drawSoundBtn();
+    soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('sound', soundOn); drawSoundBtn(); });
+    let ac = null;
+    // iPhone の消音モードでも鳴らす: 音の種類を「再生」にし、対応していない端末では無音の <audio> をループ再生する
+    function unmuteIOS() {
+      try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch {}
+      try {
+        const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+        const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+        const a = document.createElement('audio');
+        a.src = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.loop = true; a.setAttribute('playsinline', '');
+        a.play().catch(() => {});
+      } catch {}
+    }
+    function initAudio() {
+      if (ac) return;
+      unmuteIOS();
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+        o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
+      } catch { ac = null; }
+    }
+    addEventListener('pointerdown', initAudio, { capture: true });
+    addEventListener('keydown', initAudio, { capture: true });
+    const on = () => soundOn && ac;
+    function tone(type, f0, f1, dur, vol, delay = 0) {
+      if (!on()) return;
+      const now = ac.currentTime + delay;
+      const o = ac.createOscillator(); o.type = type;
+      o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      const g = ac.createGain(); g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.connect(g).connect(ac.destination); o.start(now); o.stop(now + dur + 0.02);
+    }
+    // 短いノイズを複数の共鳴に通す（カシャ・パチ など）
+    function hit(delay, len, decay, bands, vol) {
+      if (!on()) return;
+      const now = ac.currentTime + delay;
+      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * len), ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * decay));
+      const s = ac.createBufferSource(); s.buffer = buf;
+      for (const [f, q, g0] of bands) {
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * (0.95 + Math.random() * 0.1); bp.Q.value = q;
+        const g = ac.createGain(); g.gain.value = g0 * vol; s.connect(bp).connect(g).connect(ac.destination);
+      }
+      s.start(now);
+    }
+    // シャッター: 幕が走る「カ」とミラーが戻る「シャ」、本体の小さな胴鳴り
+    function sShutter() {
+      hit(0, 0.04, 0.004, [[2400, 3, 1.4], [5200, 4, 0.8], [900, 5, 0.6]], 1);
+      hit(0.075, 0.09, 0.012, [[3200, 1.5, 0.9], [6500, 2, 0.6], [1400, 4, 0.5]], 0.9);
+      tone('sine', 140, 60, 0.09, 0.25);
+    }
+    // 声: 声帯の振動（のこぎり波＋ゆらぎ）を、母音ごとの共鳴（フォルマント）に通す
+    const VOWEL = { a: [800, 1200, 2600], i: [300, 2300, 3000], u: [350, 1250, 2500], e: [500, 1900, 2600], o: [500, 850, 2500] };
+    function voice(f0, seq, dur, vol = 0.5, shake = 0.04, breath = 0.15, delay = 0, rise = false) {
+      if (!on()) return;
+      const now = ac.currentTime + delay;
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      if (rise) { // 不満げに上がって落ちる「えー↑↓」
+        o.frequency.setValueAtTime(f0 * 0.95, now);
+        o.frequency.linearRampToValueAtTime(f0 * 1.3, now + dur * 0.55);
+        o.frequency.exponentialRampToValueAtTime(f0 * 0.85, now + dur);
+      } else { // 高く出て下がる抑揚
+        o.frequency.setValueAtTime(f0 * 1.25, now);
+        o.frequency.linearRampToValueAtTime(f0 * 1.4, now + dur * 0.15);
+        o.frequency.exponentialRampToValueAtTime(f0 * 0.7, now + dur);
+      }
+      const vib = ac.createOscillator(); vib.frequency.value = 5.5 + Math.random() * 3;
+      const vg = ac.createGain(); vg.gain.value = f0 * shake; vib.connect(vg).connect(o.frequency);
+      const nb = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate), nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      const ns = ac.createBufferSource(); ns.buffer = nb;
+      const ng = ac.createGain(); ng.gain.value = breath;
+      const src = ac.createGain();
+      o.connect(src); ns.connect(ng).connect(src);
+      const out = ac.createGain();
+      out.gain.setValueAtTime(0, now);
+      out.gain.linearRampToValueAtTime(vol, now + 0.02);
+      out.gain.setValueAtTime(vol, now + dur * 0.6);
+      out.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      const k = f0 > 260 ? 1.15 : 1;
+      [1, 0.6, 0.25].forEach((amp, fi) => {
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = fi === 0 ? 6 : 9;
+        seq.forEach((v, si) => { const tt = now + dur * si / Math.max(1, seq.length - 1) * 0.7; bp.frequency[si ? 'linearRampToValueAtTime' : 'setValueAtTime'](VOWEL[v][fi] * k, tt); });
+        const g = ac.createGain(); g.gain.value = amp * 3;
+        src.connect(bp).connect(g).connect(out);
+      });
+      out.connect(ac.destination);
+      o.start(now); vib.start(now); ns.start(now);
+      o.stop(now + dur); vib.stop(now + dur); ns.stop(now + dur);
+    }
+    // 撮れた: 小さな歓声と拍手
+    function sCheer() {
+      if (!on()) return;
+      const ps = persons.slice().sort(() => Math.random() - 0.5).slice(0, 5);
+      ps.forEach((p, i) => {
+        if (p.cat) voice(560, ['i', 'a', 'u'], 0.4, 0.25, 0.03, 0.1, 0.05 + Math.random() * 0.15);
+        else voice(p.f0 * 1.25, pick([['i', 'e'], ['e', 'i'], ['a', 'a'], ['i', 'a']]), 0.22 + Math.random() * 0.12, 0.2, 0.05, 0.2, Math.random() * 0.2);
+      });
+      for (let i = 0; i < 14; i++) hit(0.05 + Math.random() * 0.6, 0.03, 0.005, [[1300, 2, 1], [2600, 3, 0.5]], 0.25 + Math.random() * 0.2);
+    }
+    // 目をつぶった人の「えー」
+    function sComplain(p, delay) {
+      if (p.cat) { voice(520, ['i', 'a', 'u'], 0.55, 0.45, 0.03, 0.1, delay); return; }
+      voice(p.f0 * 1.05, ['e', 'e'], 0.5 + Math.random() * 0.15, 0.5, 0.05, 0.15, delay, true);
+    }
+    const sPop = () => { tone('sine', 280 + Math.random() * 80, 640, 0.07, 0.1); };
+
+    // ---------- 3D ----------
+    const stage = document.getElementById('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    stage.prepend(renderer.domElement);
+    const scene = new THREE.Scene();
+    const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
+    scene.background = canvasTex(4, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#5aa8ea'); gr.addColorStop(0.55, '#a9d8f4'); gr.addColorStop(1, '#eaf6ea'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    scene.fog = new THREE.Fog('#d6ecdf', 22, 60);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+    scene.add(new THREE.HemisphereLight('#e2f1ff', '#5a7a3a', 1.15));
+    const sun = new THREE.DirectionalLight('#fff1dc', 2.3); sun.position.set(-5, 11, 9);
+    sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.radius = 4; sun.shadow.bias = -0.0006;
+    Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -6, near: 1, far: 40 });
+    scene.add(sun);
+
+    const mat = (c, rough = 0.75) => new THREE.MeshStandardMaterial({ color: c, roughness: rough });
+    const shade = o => { o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; };
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const SPH = new THREE.SphereGeometry(1, 28, 18), CYL = new THREE.CylinderGeometry(1, 1, 1, 20);
+    const TORSO = new THREE.CapsuleGeometry(1, 1, 8, 20), BOX = new THREE.BoxGeometry(1, 1, 1);
+    const CAP = new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const LID = new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const LASH = new THREE.TorusGeometry(1, 0.07, 4, 24, Math.PI);
+    const part = (geo, m, x, y, z, sx, sy = sx, sz = sx, parent) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); parent?.add(o); return o; };
+
+    // 地面・ひな壇・まわりの木
+    const SP = 1.08, STEP_H = 0.72, STEP_D = 0.8;
+    {
+      const grass = canvasTex(256, 256, (c, w, h) => { c.fillStyle = '#6cbf4a'; c.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { c.fillStyle = `hsl(${95 + Math.random() * 20},${45 + Math.random() * 20}%,${34 + Math.random() * 22}%)`; c.fillRect(Math.random() * w, Math.random() * h, 1.5, 3 + Math.random() * 3); } });
+      grass.wrapS = grass.wrapT = THREE.RepeatWrapping; grass.repeat.set(24, 24);
+      const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 48), new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }));
+      ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+      // ひな壇: 木目の段
+      const wood = canvasTex(256, 64, (c, w, h) => { c.fillStyle = '#b07a48'; c.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { c.strokeStyle = `rgba(80,40,12,${0.1 + Math.random() * 0.2})`; c.lineWidth = 1 + Math.random() * 2; const y = Math.random() * h; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(w * .3, y + Math.random() * 6 - 3, w * .6, y + Math.random() * 6 - 3, w, y); c.stroke(); } for (let x = 0; x < w; x += 64) { c.fillStyle = 'rgba(60,30,10,.35)'; c.fillRect(x, 0, 2, h); } });
+      wood.wrapS = wood.wrapT = THREE.RepeatWrapping; wood.repeat.set(3, 1);
+      const woodM = new THREE.MeshStandardMaterial({ map: wood, roughness: 0.8 });
+      for (let k = 1; k <= 3; k++) {
+        const b = new THREE.Mesh(BOX, woodM);
+        b.scale.set(7.4, STEP_H * k, STEP_D); b.position.set(0, STEP_H * k / 2, -STEP_D * k);
+        b.castShadow = b.receiveShadow = true; scene.add(b);
+      }
+      const back = part(BOX, woodM, 0, STEP_H * 1.5, -STEP_D * 4 + 0.1, 7.4, STEP_H * 3, 0.6); back.castShadow = back.receiveShadow = true; scene.add(back);
+      // 草と花
+      const tuft = new THREE.ConeGeometry(0.06, 0.35, 5), tuftM = mat('#4f9a35');
+      const petal = new THREE.SphereGeometry(0.09, 8, 6);
+      for (let i = 0; i < 110; i++) {
+        const x = rnd(-14, 14), z = rnd(-14, 6);
+        if (Math.abs(x) < 4.2 && z > -4 && z < 2.6) continue; // ひな壇と手前は空ける
+        if (Math.random() < 0.3) {
+          const f = new THREE.Group(); f.position.set(x, 0, z);
+          part(CYL, tuftM, 0, 0.18, 0, 0.015, 0.36, 0.015, f);
+          const fc = mat(pick(['#ffffff', '#ffd23a', '#ff8ab0', '#ff6a4a', '#b08aff']));
+          for (let k = 0; k < 5; k++) part(petal, fc, Math.cos(k * 1.26) * 0.08, 0.38, Math.sin(k * 1.26) * 0.08, 1, 0.5, 1, f);
+          part(petal, mat('#ffcf3a'), 0, 0.4, 0, 0.6, 0.5, 0.6, f);
+          scene.add(f);
+        } else for (let k = 0; k < 3; k++) { const m = part(tuft, tuftM, x + rnd(-.1, .1), 0.15, z + rnd(-.1, .1), 1, rnd(0.7, 1.3), 1); m.rotation.z = rnd(-.4, .4); scene.add(m); }
+      }
+      const leafs = ['#3f8f3a', '#4a9c3e', '#357f34'].map(c => mat(c, 0.9)), trunk = mat('#7a4a28');
+      for (let i = 0; i < 18; i++) {
+        const x = (i % 2 ? 1 : -1) * rnd(5, 20), z = rnd(-22, -5);
+        const tr = new THREE.Group(); tr.position.set(x, 0, z); const k = rnd(1.1, 1.9); tr.scale.setScalar(k);
+        const lf = pick(leafs);
+        part(CYL, trunk, 0, 0.9, 0, 0.22, 1.8, 0.22, tr);
+        part(SPH, lf, 0, 2.6, 0, 1.4, 1.3, 1.4, tr); part(SPH, lf, 0.7, 2.2, 0.3, 0.9, 0.9, 0.9, tr); part(SPH, lf, -0.7, 2.3, -0.2, 1, 0.9, 1, tr);
+        scene.add(shade(tr));
+      }
+      // 遠くの丘
+      const hillM = mat('#8cc66a', 1);
+      for (let i = 0; i < 5; i++) { const h = part(SPH, hillM, -40 + i * 20 + rnd(-4, 4), -6, -45 - rnd(0, 8), rnd(14, 20), rnd(9, 13), 8); scene.add(h); }
+    }
+
+    // ---------- 人 ----------
+    const SKIN = ['#fbe0cf', '#f3c8a5', '#e5b088', '#cf9468', '#b07548', '#8c5a36', '#6a4026'];
+    const HAIR = ['#1b1410', '#3a2414', '#6b4423', '#c99a4f', '#e8d08a', '#a63c1f', '#7a7a7a', '#e85a9a', '#3a6ad8'];
+    const CLOTH = ['#e0603a', '#3a7be0', '#f2c43a', '#4ab07a', '#9a5ad0', '#ffffff', '#333333', '#e04a8a', '#3ac4d0', '#f08a3a'];
+    const PANTS = ['#2a3550', '#3a3a3a', '#5a4a3a', '#2f4a7a', '#7a6a50'];
+    const BLACK = new THREE.MeshStandardMaterial({ color: '#141018', roughness: 0.3 }), EYEW = mat('#fbfbf8', 0.25), PINK = mat('#ec8a9c', 0.5);
+    const SHINE = new THREE.MeshBasicMaterial({ color: '#fff' }), RED = new THREE.MeshBasicMaterial({ color: '#e01010' });
+    const IRIS = ['#3a2416', '#2a1a10', '#4a3020', '#2f4f7a', '#3f5f3a'].map(c => mat(c, 0.2));
+    const OPEN_A = -0.75, CLOSE_A = 1.02; // 上まぶたの回転（開いた時〜閉じた時）
+    function addEyes(head, skin, r) {
+      const eyes = [];
+      for (const s of [-1, 1]) {
+        const e = new THREE.Group(); e.position.set(s * 0.17, 0.06, 0.41); head.add(e);
+        part(SPH, EYEW, 0, 0, 0, r, r, r, e);
+        const look = new THREE.Group(); e.add(look);
+        const iris = pick(IRIS);
+        part(SPH, iris, 0, 0, 0.8 * r, 0.52 * r, 0.56 * r, 0.24 * r, look);
+        part(SPH, BLACK, 0, 0, 0.92 * r, 0.27 * r, 0.3 * r, 0.14 * r, look);
+        part(SPH, SHINE, 0.16 * r, 0.2 * r, 0.97 * r, 0.1 * r, 0.1 * r, 0.1 * r, look);
+        // まぶた: 半球をくるっと回して、開き具合をなめらかに変える
+        const lid = part(LID, skin, 0, 0, 0, 1.14 * r, 1.14 * r, 1.14 * r, e);
+        const lash = part(LASH, BLACK, 0, 0, 0, 1, 1, 1, lid); lash.rotation.x = Math.PI / 2;
+        const low = part(LID, skin, 0, 0, 0, 1.1 * r, 1.1 * r, 1.1 * r, e); low.rotation.x = -2.18;
+        eyes.push({ lid, look });
+      }
+      return eyes;
+    }
+    function addHair(head, style, color) {
+      const m = mat(color, 0.8);
+      if (style === 'bald') return;
+      if (style === 'afro') { part(SPH, m, 0, 0.36, -0.18, 0.64, 0.5, 0.56, head); return; }
+      if (style === 'cap') { const c = mat(pick(CLOTH), 0.8); part(CAP, c, 0, 0.08, -0.02, 0.54, 0.5, 0.54, head); const b = part(CYL, c, 0, 0.12, 0.42, 0.3, 0.03, 0.24, head); b.rotation.x = 0.15; return; }
+      if (style === 'sides') { for (const s of [-1, 1]) part(SPH, m, s * 0.46, 0, -0.1, 0.14, 0.2, 0.25, head); return; }
+      part(CAP, m, 0, 0.03, -0.05, 0.53, 0.56, 0.52, head).rotation.x = -0.72;
+      if (style === 'long') part(BOX, m, 0, -0.25, -0.25, 1.0, 0.85, 0.45, head);
+      if (style === 'bob') part(SPH, m, 0, -0.05, -0.12, 0.56, 0.5, 0.5, head);
+      if (style === 'bun') part(SPH, m, 0, 0.62, -0.12, 0.22, 0.22, 0.22, head);
+      if (style === 'pony') part(SPH, m, 0, 0.1, -0.6, 0.16, 0.36, 0.16, head).rotation.x = 0.6;
+      if (style === 'spiky') for (let i = 0; i < 5; i++) { const c = part(new THREE.ConeGeometry(0.12, 0.35, 8), m, (i - 2) * 0.17, 0.52, -0.05, 1, 1, 1, head); c.rotation.z = -(i - 2) * 0.25; }
+    }
+
+    // まばたきの癖
+    const KIND = {
+      normal: { gap: [1.2, 3.2] },
+      quick: { gap: [0.4, 1.2] },        // まばたきが多い
+      double: { gap: [1.2, 3.0], dbl: 0.7 }, // 2回続けてする
+      sleepy: { gap: [1.8, 4.0], sleepy: true }, // だんだん半目になる
+      cat: { gap: [1.4, 3.6] },
+    };
+    function baseEyes(p, kind) {
+      Object.assign(p, { kind, o: 1, base: 1, bt: -1, next: rnd(0.3, 1) * rnd(...KIND[kind].gap), drowse: 0, drowseIn: rnd(1.5, 4), waking: false, look: 0, lookT: rnd(1, 3), lx: 0, ly: 0 });
+    }
+
+    function makeHuman(kind) {
+      const age = pick(['child', 'adult', 'adult', 'adult', 'elder']);
+      const skin = mat(pick(SKIN), 0.6);
+      const g = new THREE.Group();
+      const cloth = mat(pick(CLOTH), 0.9), pants = mat(pick(PANTS), 0.9);
+      for (const s of [-1, 1]) {
+        part(CYL, pants, s * 0.15, 0.42, 0, 0.13, 0.8, 0.13, g);
+        part(SPH, BLACK, s * 0.15, 0.05, 0.06, 0.14, 0.08, 0.2, g);
+      }
+      part(TORSO, cloth, 0, 1.25, 0, 0.4, 0.3, 0.27, g);
+      // 腕: たまにピース
+      const peace = Math.random() < 0.3 ? pick([-1, 1]) : 0;
+      for (const s of [-1, 1]) {
+        const arm = new THREE.Group(); arm.position.set(s * 0.42, 1.58, 0); g.add(arm);
+        part(TORSO, cloth, 0, -0.27, 0, 0.1, 0.17, 0.1, arm);
+        part(SPH, skin, 0, -0.6, 0, 0.09, 0.1, 0.09, arm);
+        if (s === peace) {
+          arm.rotation.set(-0.35, 0, s * 2.55);
+          for (const f of [-1, 1]) { const fg = part(CYL, skin, f * 0.03, -0.72, 0, 0.025, 0.14, 0.025, arm); fg.rotation.z = f * 0.25; }
+        } else arm.rotation.z = s * 0.1;
+      }
+      part(CYL, skin, 0, 1.8, 0, 0.1, 0.18, 0.1, g);
+      const head = new THREE.Group(); head.position.y = 2.17; head.scale.setScalar(0.86); g.add(head);
+      part(SPH, skin, 0, 0, 0, 0.5, 0.53, 0.48, head);
+      for (const s of [-1, 1]) part(SPH, skin, s * 0.5, 0, 0, 0.1, 0.14, 0.08, head);
+      const eyes = addEyes(head, skin, age === 'child' ? 0.095 : 0.085);
+      const smile = part(new THREE.TorusGeometry(0.1, 0.025, 6, 12, Math.PI), BLACK, 0, -0.19, 0.45, 1, 1, 1, head); smile.rotation.z = Math.PI;
+      const ooh = part(SPH, BLACK, 0, -0.2, 0.44, 0.07, 0.09, 0.04, head); ooh.visible = false;
+      part(SPH, skin, 0, -0.04, 0.49, 0.06, 0.07, 0.06, head);
+      const elder = age === 'elder';
+      let style, hairC;
+      if (age === 'child') { style = pick(['short', 'bob', 'pony', 'spiky', 'afro', 'bun', 'cap']); hairC = pick(HAIR.slice(0, 6)); }
+      else if (elder) { style = pick(['bald', 'sides', 'short', 'bun', 'bob', 'cap']); hairC = pick(['#9a9a9a', '#d8d8d8', '#f2f2f2']); }
+      else { style = pick(['short', 'long', 'bob', 'bun', 'pony', 'spiky', 'afro', 'bald', 'cap']); hairC = pick(HAIR); }
+      addHair(head, style, hairC);
+      const browM = mat(style === 'bald' || style === 'cap' ? '#3a2414' : hairC, 0.8);
+      const brows = [-1, 1].map(s => { const b = part(BOX, browM, s * 0.17, 0.2, 0.44, 0.15, 0.035, 0.03, head); b.rotation.z = s * -0.08; return b; });
+      if (age === 'child') { for (const s of [-1, 1]) part(SPH, PINK, s * 0.28, -0.1, 0.4, 0.08, 0.05, 0.03, head); }
+      if (age !== 'child' && Math.random() < 0.25) {
+        const bm = mat(elder ? '#e0e0e0' : pick(HAIR.slice(0, 4)));
+        part(BOX, bm, 0, -0.11, 0.47, 0.22, 0.05, 0.05, head);
+      }
+      if ((elder && Math.random() < 0.6) || Math.random() < 0.15) {
+        const gm = new THREE.MeshBasicMaterial({ color: '#222' });
+        for (const s of [-1, 1]) part(new THREE.TorusGeometry(0.12, 0.016, 6, 18), gm, s * 0.17, 0.06, 0.53, 1, 1, 1, head);
+        part(BOX, gm, 0, 0.08, 0.53, 0.1, 0.02, 0.02, head);
+      }
+      g.scale.setScalar(age === 'child' ? 0.8 : elder ? 0.95 : 1);
+      const f0 = age === 'child' ? 300 + Math.random() * 80 : elder ? 120 + Math.random() * 110 : pick([110, 130, 200, 230]) * (0.9 + Math.random() * 0.2);
+      const p = { g, head, eyes, smile, ooh, brows, f0, cat: false, sway: rnd(0, 6) };
+      talkState(p);
+      baseEyes(p, kind);
+      return p;
+    }
+
+    // いつもの猫（ひな壇の真ん中で、ちゃんとまばたきする）
+    const CAT_EYES = [[108, 152, 17], [204, 163, 17]];
+    const catCanvas = document.createElement('canvas'); catCanvas.width = catCanvas.height = 320;
+    const catTex = new THREE.CanvasTexture(catCanvas); catTex.colorSpace = THREE.SRGBColorSpace;
+    let catImg = null, catLidColor = '#7a6450', catLevel = -1;
+    { const img = new Image(); img.onload = () => {
+        catImg = img;
+        const c = document.createElement('canvas'); c.width = c.height = 320; const g = c.getContext('2d'); g.drawImage(img, 0, 0, 320, 320);
+        try { // まぶたの色は目の上の毛の色
+          let r = 0, gg = 0, b = 0, n = 0;
+          for (const [x, y] of CAT_EYES) { const d = g.getImageData(x - 8, y - 36, 16, 10).data; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++; } }
+          catLidColor = `rgb(${r / n | 0},${gg / n | 0},${b / n | 0})`;
+        } catch {}
+        catLevel = -1;
+      }; img.src = 'cat.png'; }
+    function drawCat(o) {
+      const lv = Math.round(o * 20);
+      if (lv === catLevel || !catImg) return;
+      catLevel = lv;
+      const g = catCanvas.getContext('2d');
+      g.clearRect(0, 0, 320, 320); g.drawImage(catImg, 0, 0, 320, 320);
+      const q = lv / 20;
+      if (q < 0.98) for (const [x, y, r] of CAT_EYES) {
+        const rx = r * 1.45, ry = r * 1.35, edge = y - ry + (1 - q) * ry * 2.05;
+        g.save(); g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.clip();
+        const gr = g.createLinearGradient(0, y - ry, 0, edge); gr.addColorStop(0, catLidColor); gr.addColorStop(1, '#5a4636');
+        g.fillStyle = gr; g.beginPath(); g.moveTo(x - rx - 2, y - ry - 2); g.lineTo(x + rx + 2, y - ry - 2); g.lineTo(x + rx + 2, edge); g.quadraticCurveTo(x, edge + ry * 0.35 * q, x - rx - 2, edge); g.fill();
+        g.restore();
+        g.strokeStyle = '#1a120c'; g.lineWidth = 2.6; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(x - rx * 0.92, edge - 1); g.quadraticCurveTo(x, edge + ry * 0.35 * q, x + rx * 0.92, edge - 1); g.stroke();
+      }
+      catTex.needsUpdate = true;
+    }
+    function makeCat() {
+      const g = new THREE.Group();
+      const fur = canvasTex(128, 128, (c, w, h) => { c.fillStyle = '#8a7360'; c.fillRect(0, 0, w, h); for (let i = 0; i < 12; i++) { c.strokeStyle = `rgba(50,36,24,${0.2 + Math.random() * 0.2})`; c.lineWidth = 4 + Math.random() * 6; c.beginPath(); const y = i * h / 12; c.moveTo(0, y); for (let x = 0; x <= w; x += 8) c.lineTo(x, y + Math.sin(x * 0.08 + i) * 4); c.stroke(); } for (let i = 0; i < 1500; i++) { c.fillStyle = `rgba(${Math.random() < 0.5 ? '240,230,215' : '40,30,20'},.2)`; c.fillRect(Math.random() * w, Math.random() * h, 1, 3); } });
+      const furM = new THREE.MeshStandardMaterial({ map: fur, roughness: 0.95 }), whiteM = mat('#f1ece3', 0.95);
+      part(SPH, furM, 0, 0.62, -0.05, 0.5, 0.62, 0.45, g);
+      part(SPH, whiteM, 0, 0.7, 0.16, 0.3, 0.4, 0.2, g);
+      for (const s of [-1, 1]) { part(SPH, furM, s * 0.33, 0.28, 0.05, 0.25, 0.28, 0.38, g); part(SPH, furM, s * 0.15, 0.07, 0.3, 0.11, 0.07, 0.17, g); }
+      const tail = part(TORSO, furM, 0.45, 0.12, 0.25, 0.08, 0.3, 0.08, g); tail.rotation.set(Math.PI / 2, 0, -0.8);
+      const head = new THREE.Group(); head.position.set(0, 1.42, 0.05); g.add(head);
+      part(SPH, furM, 0, -0.05, -0.12, 0.42, 0.38, 0.32, head);
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.25), new THREE.MeshStandardMaterial({ map: catTex, roughness: 0.9, alphaTest: 0.5, side: THREE.DoubleSide }));
+      face.position.z = 0.2; head.add(face); face.castShadow = true;
+      g.scale.setScalar(1.05);
+      const p = { g, head, eyes: [], f0: 520, cat: true, sway: rnd(0, 6) };
+      baseEyes(p, 'cat');
+      talkState(p);
+      return p;
+    }
+
+    // ---------- 並び ----------
+    let persons = [];
+    const START = 7;
+    function layoutSlots(n) {
+      const R = n <= 5 ? 1 : n <= 10 ? 2 : 3;
+      const base = Math.floor(n / R), extra = n % R;
+      const rows = [];
+      for (let k = 0; k < R; k++) rows.push(base + (k >= R - extra ? 1 : 0)); // 後ろの段に多めに
+      const slots = [];
+      rows.forEach((c, k) => {
+        // 前の段と同じ人数なら半人分ずらして、顔が重ならないようにする
+        const off = k > 0 && c === rows[k - 1] ? SP / 2 * (k % 2 ? 1 : -1) : 0;
+        for (let i = 0; i < c; i++) slots.push(new THREE.Vector3((i - (c - 1) / 2) * SP + off, STEP_H * k, -STEP_D * k + 0.1));
+      });
+      // 猫は一番前の真ん中
+      const front = rows[0], mid = Math.floor((front - 1) / 2);
+      const order = [mid, ...slots.map((_, i) => i).filter(i => i !== mid)];
+      return { slots: order.map(i => slots[i]), R, rows };
+    }
+    let fit = { d: 10, cy: 1.4, cz: 0 }, fitTarget = { ...fit };
+    function arrange(instant) {
+      const { slots, R, rows } = layoutSlots(persons.length);
+      persons.forEach((p, i) => {
+        const to = slots[i];
+        if (instant) { p.pos = to.clone(); p.from = to.clone(); p.to = to.clone(); p.mt = 1; }
+        else if (!p.to || !p.to.equals(to)) { p.from = p.pos.clone(); p.to = to.clone(); p.mt = 0; }
+      });
+      const wMax = Math.max(...rows) * SP + 0.5;
+      const top = STEP_H * (R - 1) + 3.0, bottom = 0.35;
+      fitTarget = { w: Math.max(wMax, 3.6), h: top - bottom, cy: (top + bottom) / 2, cz: -STEP_D * (R - 1) / 2 };
+      if (instant) fit = { ...fitTarget };
+    }
+    function addPerson(p, enter) {
+      persons.push(p);
+      scene.add(shade(p.g));
+      p.pos = new THREE.Vector3(enter ? 7 * (Math.random() < 0.5 ? -1 : 1) : 0, 0, 0.6);
+      p.prevPos = p.pos.clone();
+    }
+    function clearPersons() {
+      for (const p of persons) { scene.remove(p.g); p.g.traverse(o => { if (o.isMesh && o.material !== BLACK && o.material !== EYEW && o.material !== PINK && o.material !== SHINE && o.material !== RED && !IRIS.includes(o.material) && o.material.map !== catTex) o.material.dispose?.(); }); }
+      persons = [];
+    }
+
+    // ---------- 画面サイズ ----------
+    const finder = document.getElementById('finder');
+    const controls = document.getElementById('controls');
+    let frame = { x: 0, y: 0, w: 1, h: 1 }, W = 1, H = 1;
+    function btnReserve() {
+      const btnH = Math.min(72, Math.max(56, 0.08 * Math.min(innerWidth, innerHeight))) + 12;
+      return Math.max(0, stage.getBoundingClientRect().bottom - controls.getBoundingClientRect().bottom) + btnH;
+    }
+    function resize() {
+      W = stage.clientWidth; H = stage.clientHeight;
+      renderer.setSize(W, H, false);
+      // プレイ中は下の80px（Xの投稿文が重なる所）を空け、その上の範囲にファインダーを置く
+      const bottom = Math.max(0, stage.getBoundingClientRect().bottom - controls.getBoundingClientRect().bottom) + 8;
+      const aw = W - 24, ah = Math.max(120, H - bottom - 12);
+      const a = THREE.MathUtils.clamp(aw / ah, 1, 1.5);
+      let fw = Math.min(aw, ah * a, 1200); const fh = fw / a;
+      frame = { x: (W - fw) / 2, y: 6 + (ah - fh) / 2, w: fw, h: fh };
+      Object.assign(finder.style, { left: frame.x + 'px', top: frame.y + 'px', width: frame.w + 'px', height: frame.h + 'px' });
+      updateCamera();
+      if (state === 'result') layoutResult();
+    }
+    function updateCamera() {
+      camera.aspect = frame.w / frame.h;
+      camera.setViewOffset(frame.w, frame.h, -frame.x, -frame.y, W, H);
+      const vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+      const d = Math.max(fit.w / 2 / Math.tan(hf / 2), fit.h / 2 / Math.tan(vf / 2)) * 1.06 + 0.6;
+      const target = new THREE.Vector3(0, fit.cy, fit.cz);
+      camera.position.set(0, fit.cy + d * 0.16, fit.cz + d);
+      camera.lookAt(target);
+      camera.updateProjectionMatrix();
+      camera.updateMatrixWorld();
+    }
+    addEventListener('resize', resize);
+
+    // ---------- 目の動き ----------
+    const ease = x => x * x * (3 - 2 * x);
+    function stepEyes(p, dt, fat) {
+      const K = KIND[p.kind];
+      // まばたき: 閉じる 0.06秒・閉じたまま 0.04秒・開く 0.11秒 くらい
+      let bf = 1;
+      if (p.bt >= 0) {
+        p.bt += dt;
+        const c = p.bc, h = p.bh, u = p.bu;
+        if (p.bt < c) bf = 1 - ease(p.bt / c);
+        else if (p.bt < c + h) bf = 0;
+        else if (p.bt < c + h + u) bf = ease((p.bt - c - h) / u);
+        else { bf = 1; p.bt = -1; if (K.dbl && !p.dbl && Math.random() < K.dbl) { p.dbl = true; p.next = rnd(0.05, 0.12); } else { p.dbl = false; p.next = rnd(...K.gap); } }
+      } else {
+        p.next -= dt * fat;
+        if (p.next <= 0) startBlink(p);
+      }
+      // 眠い人: まぶたがゆっくり下がり、はっと開く
+      if (K.sleepy) {
+        if (p.waking) { p.base = Math.min(1, p.base + dt * 7); if (p.base >= 1) p.waking = false; }
+        else if (p.drowse > 0) {
+          p.drowse -= dt; p.base = Math.max(0.22, p.base - dt * p.drowseRate);
+          if (p.drowse <= 0 || p.base <= 0.22) { p.waking = true; if (Math.random() < 0.6) startBlink(p, 0.15); p.drowseIn = rnd(1.2, 3.5) / fat; }
+        } else { p.drowseIn -= dt; if (p.drowseIn <= 0) { p.drowse = rnd(1.5, 3.5); p.drowseRate = rnd(0.18, 0.4); } }
+      }
+      p.o = p.base * bf;
+      // 黒目がときどき動く
+      p.lookT -= dt;
+      if (p.lookT <= 0) { p.lookT = rnd(0.6, 2.5); const c = Math.random() < 0.5; p.lx = c ? 0 : rnd(-0.25, 0.25); p.ly = c ? 0 : rnd(-0.1, 0.12); }
+    }
+    function startBlink(p, delay = 0) {
+      if (p.bt >= 0) return;
+      if (delay) { p.next = delay; return; } // 少しあとにまばたきさせる
+      p.bc = rnd(0.05, 0.075); p.bh = rnd(0.02, 0.05); p.bu = rnd(0.09, 0.13);
+      p.bt = 0;
+    }
+
+    // ---------- 雑談 ----------
+    // 近くの人の方を向いてしゃべり、聞いている人はうなずき、ときどきみんなで笑う
+    let gameT = 0, chatNext = 0.3;
+    const VS = ['a', 'i', 'u', 'e', 'o'];
+    function talkState(p) {
+      Object.assign(p, { turn: 0, m: 0, syl: [], talkEnd: 0, partner: null, listenTo: null, listenEnd: 0, laughStart: 0, laughEnd: 0, catLook: 0, catLookEnd: 0 });
+    }
+    function speak(sp, li) {
+      let t0 = gameT + 0.05;
+      const syl = [], n = 2 + Math.floor(Math.random() * 4), base = sp.f0 * rnd(0.95, 1.15);
+      for (let i = 0; i < n; i++) {
+        const d = rnd(0.08, 0.17);
+        syl.push([t0, t0 + d]);
+        voice(base * rnd(0.92, 1.18), [pick(VS), pick(VS)], d + 0.03, 0.06, 0.03, 0.25, t0 - gameT);
+        t0 += d + rnd(0.02, 0.08);
+        if (Math.random() < 0.15) t0 += 0.2;
+      }
+      sp.syl = syl; sp.talkEnd = t0; sp.partner = li;
+      if (!li.cat && li.talkEnd < gameT) { li.listenTo = sp; li.listenEnd = t0 + 0.4; }
+      // ときどき、話のあとにみんなで笑う
+      if (Math.random() < 0.2) {
+        const near = persons.filter(q => !q.cat && q.complain === undefined && q.pos.distanceTo(sp.pos) < 2.4);
+        for (const q of near) {
+          if (q !== sp && q !== li && Math.random() < 0.6) continue;
+          q.laughStart = t0 + rnd(0.05, 0.25); q.laughEnd = q.laughStart + rnd(0.6, 1.1);
+          const k = Math.floor((q.laughEnd - q.laughStart) / 0.16);
+          for (let j = 0; j < k; j++) voice(q.f0 * 1.35 * (1 - j * 0.03), ['a', 'a'], 0.1, 0.1, 0.02, 0.6, q.laughStart - gameT + j * 0.16);
+        }
+      }
+    }
+    function chatter(dt) {
+      gameT += dt;
+      const free = persons.filter(p => !p.cat && p.complain === undefined && p.talkEnd < gameT && p.laughEnd < gameT);
+      chatNext -= dt;
+      if (chatNext <= 0 && state === 'play') { // 撮ったあと（結果）は話さない
+        chatNext = rnd(1.8, 4.2);
+        // 話すのは一度にひとりだけ
+        if (free.length && !persons.some(p => p.talkEnd > gameT || p.laughEnd > gameT)) {
+          const sp = pick(free);
+          const others = persons.filter(q => q !== sp).sort((a, b) => a.pos.distanceTo(sp.pos) - b.pos.distanceTo(sp.pos)).slice(0, 3);
+          if (others.length) speak(sp, pick(others));
+        }
+      }
+      for (const p of persons) {
+        let target = 0;
+        const face = q => THREE.MathUtils.clamp((q.pos.x - p.pos.x) * 0.6, -0.55, 0.55) || 0.3;
+        if (p.cat) {
+          if (state === 'play' && p.catLookEnd < gameT && Math.random() < dt * 0.12) {
+            p.catLook = rnd(-0.6, 0.6); p.catLookEnd = gameT + rnd(0.8, 2);
+            if (Math.random() < 0.25) voice(rnd(480, 600), ['i', 'a', 'u'], rnd(0.3, 0.45), 0.12, 0.03, 0.1);
+          }
+          target = p.catLookEnd > gameT ? p.catLook : 0;
+        } else if (p.talkEnd > gameT && p.partner) target = face(p.partner);
+        else if (p.listenEnd > gameT && p.listenTo) target = face(p.listenTo);
+        p.turn += (target - p.turn) * (1 - Math.exp(-dt * 6));
+        // 口: しゃべっている音節に合わせて開く。笑う時は大きく
+        let m = 0;
+        for (const [s, e] of p.syl) if (gameT >= s && gameT < e) { m = Math.sin(Math.PI * (gameT - s) / (e - s)); break; }
+        if (gameT >= p.laughStart && gameT < p.laughEnd) m = 0.6 + 0.4 * Math.abs(Math.sin(gameT * 20));
+        p.m = m;
+      }
+    }
+
+    // ---------- 入力 ----------
+    let shotReq = false, primed = false;
+    // 最初のタップはピント合わせ（ここで音が出せるようになり、雑談の声が聞こえ出す）。シャッターは次から
+    function press() {
+      if (state !== 'play') return;
+      if (!primed) {
+        primed = true;
+        tone('sine', 2300, 2300, 0.05, 0.07); tone('sine', 2300, 2300, 0.05, 0.07, 0.1);
+        finder.classList.remove('focus'); void finder.offsetWidth; finder.classList.add('focus');
+        return;
+      }
+      shotReq = true;
+    }
+    stage.addEventListener('pointerdown', e => { e.preventDefault(); press(); }, { passive: false });
+    addEventListener('keydown', e => { if ((e.code === 'Space' || e.code === 'Enter') && document.activeElement?.tagName !== 'SELECT') { e.preventDefault(); press(); } });
+    stage.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    // ---------- ゲーム ----------
+    let state = 'play', roundT = 0, shotT = 0, shotOk = false, closedOnes = [], score = 0, total = 0, flown = false;
+    const print = document.getElementById('print'), printCv = print.querySelector('canvas');
+    const flash = document.getElementById('flash');
+    let photo = null, printTilt = 0;
+
+    function pickKind(n) {
+      if (n === 4) return 'double';
+      if (n === 5) return 'quick';
+      if (n === 6) return 'sleepy';
+      if (n < 4) return 'normal';
+      const r = Math.random();
+      return r < 0.4 ? 'normal' : r < 0.6 ? 'quick' : r < 0.8 ? 'double' : 'sleepy';
+    }
+    function start() {
+      try { ac?.resume(); } catch {}
+      clearPersons();
+      addPerson(makeCat(), false);
+      for (let n = 2; n <= START; n++) addPerson(makeHuman(pickKind(n)), false); // 最初から7人
+      arrange(true);
+      for (const p of persons) p.prevPos.copy(p.pos);
+      state = 'play'; roundT = 0; score = 0;
+      print.style.display = 'none';
+      finder.style.display = '';
+      renderControls(); resize();
+    }
+
+    function takePhoto() {
+      // ファインダーの中をそのまま写真にする
+      const src = renderer.domElement, pr = src.width / W;
+      const scale = Math.min(1, 1000 / (frame.w * pr));
+      const pw = Math.round(frame.w * pr * scale), ph = Math.round(frame.h * pr * scale);
+      photo = document.createElement('canvas'); photo.width = pw; photo.height = ph;
+      const g = photo.getContext('2d');
+      g.drawImage(src, frame.x * pr, frame.y * pr, frame.w * pr, frame.h * pr, 0, 0, pw, ph);
+      return { g, k: pw / frame.w };
+    }
+    function markClosed(g, k) {
+      // 目をつぶった人を赤丸で囲む
+      for (const p of closedOnes) {
+        const c = p.head.localToWorld(new THREE.Vector3(0, p.cat ? 0.05 : 0.06, 0.45));
+        const e = p.head.localToWorld(new THREE.Vector3(p.cat ? 0.5 : 0.42, p.cat ? 0.05 : 0.06, 0.45));
+        const a = c.clone().project(camera), b = e.clone().project(camera);
+        const sx = v => ((v.x + 1) / 2 * W - frame.x) * k, sy = v => ((1 - v.y) / 2 * H - frame.y) * k;
+        const r = Math.hypot(sx(b) - sx(a), sy(b) - sy(a)) * 1.05;
+        g.strokeStyle = '#e8202a'; g.lineWidth = Math.max(3, r * 0.12); g.lineCap = 'round';
+        g.beginPath(); g.ellipse(sx(a), sy(a), r * 1.1, r * 0.85, -0.1, 0.15, Math.PI * 2 + 0.05); g.stroke();
+      }
+    }
+
+    function doShot() {
+      sShutter();
+      render(1); // 写真に写る瞬間を描き、その状態で判定する
+      // ファインダーに目が写っている人だけを判定する
+      const inFrame = p => {
+        const v = p.head.localToWorld(new THREE.Vector3(0, 0.06, 0.45)).project(camera);
+        const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;
+        return x > frame.x && x < frame.x + frame.w && y > frame.y && y < frame.y + frame.h;
+      };
+      closedOnes = persons.filter(p => p.o < OPEN && inFrame(p));
+      shotOk = closedOnes.length === 0;
+      const { g, k } = takePhoto();
+      if (!shotOk) markClosed(g, k);
+      // フラッシュ
+      flash.animate([{ opacity: 0.95 }, { opacity: 0 }], { duration: 380, easing: 'ease-out' });
+      // 写真がプリントされて出てくる
+      printCv.width = photo.width; printCv.height = photo.height;
+      printCv.getContext('2d').drawImage(photo, 0, 0);
+      printTilt = rnd(-4, 4);
+      const w = Math.min(frame.w * 0.62, 520);
+      placePrint(frame.x + frame.w / 2 - w / 2, frame.y + frame.h * 0.5 - (w / (frame.w / frame.h) + w * 0.12) / 2, w, printTilt);
+      print.className = 'print';
+      print.style.display = 'block';
+      void print.offsetWidth;
+      print.className = 'print develop pop';
+      state = 'shot'; shotT = 0; flown = false;
+      total = persons.length; score = total - closedOnes.length; // 目を開けていた人数
+      // フラッシュにつられて、みんな少しあとでまばたき
+      for (const p of persons) if (p.bt < 0 && (shotOk || !closedOnes.includes(p))) p.next = rnd(0.12, 0.4);
+    }
+    function placePrint(x, y, w, tilt) {
+      const pad = w * 0.04;
+      Object.assign(print.style, { left: x + 'px', top: y + 'px', width: w + 'px', padding: `${pad}px ${pad}px ${pad * 3}px`, transform: `rotate(${tilt}deg)` });
+    }
+    function stepGame(dt) {
+      chatter(dt);
+      for (const p of persons) {
+        stepEyes(p, dt, 1);
+        // 位置の移動（段を移るときはぴょんと跳ぶ）
+        p.prevPos.copy(p.pos);
+        if (p.mt < 1) {
+          const dist = p.from.distanceTo(p.to);
+          p.mt = Math.min(1, p.mt + dt / Math.max(0.35, dist * 0.08));
+          const e = ease(p.mt);
+          p.pos.lerpVectors(p.from, p.to, e);
+          p.pos.y += Math.abs(Math.sin(p.mt * Math.PI * Math.max(1, Math.round(dist / 1.2)))) * 0.25;
+        }
+      }
+      // カメラの寄り引き
+      const kf = 1 - Math.exp(-dt * 3);
+      for (const key of ['w', 'h', 'cy', 'cz']) fit[key] += (fitTarget[key] - fit[key]) * kf;
+      if (state === 'shot') {
+        shotT += dt;
+        if (shotOk) {
+          if (shotT > 0.25 && !flown) { flown = true; sCheer(); }
+          if (shotT > 1.5) finish();
+        } else {
+          if (shotT > 0.3 && !flown) {
+            flown = true;
+            closedOnes.forEach((p, i) => {
+              sComplain(p, i * 0.12);
+              if (!p.cat) { p.smile.visible = false; p.ooh.visible = true; p.ooh.scale.set(0.07, 0.09, 0.04); p.brows.forEach((b, s) => b.rotation.z = (s ? 1 : -1) * 0.3); }
+              p.base = 1; p.drowse = 0; p.waking = false; p.complain = 0;
+            });
+          }
+          if (shotT > 1.5) finish();
+        }
+      }
+      for (const p of closedOnes) if (p.complain !== undefined && state !== 'play') p.complain += dt;
+    }
+
+    // ---------- 画面 ----------
+    function renderControls() {
+      controls.innerHTML = '';
+      controls.classList.toggle('hide', state !== 'result');
+      if (state !== 'result') return;
+      const b = document.createElement('button');
+      b.className = 'go'; b.textContent = t('again');
+      b.addEventListener('click', start);
+      controls.append(b);
+      const a = document.createElement('a');
+      a.className = 'post'; a.textContent = t('post');
+      a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(score, total))}&url=${encodeURIComponent(SHARE_URL)}`;
+      const coarse = matchMedia('(pointer: coarse)').matches;
+      if (!coarse) { a.target = '_blank'; a.rel = 'noopener'; }
+      // スマホは画像ごと共有シートへ。PCは画像を保存してから投稿画面を開く
+      a.addEventListener('click', e => {
+        const text = t('share')(score, total);
+        if (coarse && navigator.share) {
+          e.preventDefault();
+          const file = shareFile();
+          const data = file && navigator.canShare?.({ files: [file] }) ? { files: [file], text: `${text}\n${SHARE_URL}` } : { text: `${text}\n${SHARE_URL}` };
+          navigator.share(data).catch(() => {});
+          return;
+        }
+        const img = resultImage();
+        if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'group-photo.png'; d.click(); }
+      });
+      controls.append(a);
+    }
+    function layoutResult() {
+      // 撮った写真を大きく真ん中に
+      const top = 8, bottom = btnReserve() + 8, aw = W - 24, ah = Math.max(100, H - top - bottom);
+      const a = photo.width / photo.height;
+      const ratio = w => (w * 0.92) / a + w * 0.16; // プリントの高さ（余白込み）
+      const w = Math.min(aw * 0.92, ah / ratio(1), 900), h = ratio(w);
+      placePrint((W - w) / 2, top + (ah - h) / 2, w, -2);
+    }
+    function finish() {
+      state = 'result';
+      try { ac?.suspend(); } catch {} // 結果の間は鳴り残りも含めて静かに
+      finder.style.display = 'none';
+      print.className = 'print move';
+      print.style.display = 'block';
+      layoutResult();
+      renderControls();
+      shareCache = null; prepareShare();
+    }
+
+    // 結果画像: 撮った写真をプリントにして、人数を重ねる
+    let shareCache = null;
+    function resultImage() {
+      if (!photo) return null;
+      const c = document.createElement('canvas'); c.width = c.height = 1080;
+      const g = c.getContext('2d');
+      // 背景: 写真を大きく薄く敷く
+      g.fillStyle = '#3d5a34'; g.fillRect(0, 0, 1080, 1080);
+      const s = Math.max(1080 / photo.width, 1080 / photo.height);
+      g.globalAlpha = 0.35; g.drawImage(photo, (1080 - photo.width * s) / 2, (1080 - photo.height * s) / 2, photo.width * s, photo.height * s); g.globalAlpha = 1;
+      const a = photo.width / photo.height;
+      let pw = 900, ph = pw / a; if (ph > 760) { ph = 760; pw = ph * a; }
+      const pad = pw * 0.04;
+      g.save(); g.translate(540, 590); g.rotate(-0.03);
+      g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
+      g.fillStyle = '#fbfaf6'; g.fillRect(-pw / 2 - pad, -(ph + pad * 4) / 2, pw + pad * 2, ph + pad * 4);
+      g.shadowColor = 'transparent';
+      g.drawImage(photo, -pw / 2, -(ph + pad * 4) / 2 + pad, pw, ph);
+      g.restore();
+      g.textAlign = 'center'; g.fillStyle = '#fff'; g.lineJoin = 'round';
+      const font = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+      const text = (str, y, px, max) => {
+        g.font = font(px);
+        const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = font(px); }
+        g.lineWidth = px * .16; g.strokeStyle = '#6b3d1c'; g.strokeText(str, 540, y); g.fillText(str, 540, y);
+      };
+      text(t('title'), 80, 52, 900);
+      return c;
+    }
+    function prepareShare() {
+      if (!photo) return;
+      const key = lang;
+      if (shareCache?.key === key) return;
+      shareCache = { key, file: null };
+      resultImage().toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'group-photo.png', { type: 'image/png' }); }, 'image/png');
+    }
+    const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+
+    // ---------- まわりの生き物と空 ----------
+    const skyMat = (c, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, fog: false, ...extra });
+    // 雲: ふわふわの球を集めて、ゆっくり流す
+    const clouds = [];
+    {
+      const cm = skyMat('#ffffff', { emissive: '#dfe9f2', emissiveIntensity: 0.55 });
+      for (let i = 0; i < 7; i++) {
+        const c = new THREE.Group();
+        const n = 4 + Math.floor(Math.random() * 3);
+        for (let k = 0; k < n; k++) part(SPH, cm, (k - n / 2) * 2.2 + rnd(-0.5, 0.5), rnd(0, 1.2) - Math.abs(k - n / 2) * 0.35, rnd(-1, 1), rnd(2, 3.2), rnd(1.6, 2.4), 2, c);
+        c.position.set(-90 + i * 28 + rnd(-8, 8), rnd(20, 32), rnd(-85, -70));
+        scene.add(c); clouds.push(c);
+      }
+    }
+    // 飛行機と飛行機雲
+    const plane = new THREE.Group();
+    {
+      const body = skyMat('#f4f6f8', { roughness: 0.4, metalness: 0.2 }), stripe = skyMat('#2a6ad8');
+      const f = part(TORSO, body, 0, 0, 0, 0.45, 2.2, 0.45, plane); f.rotation.z = Math.PI / 2;
+      part(BOX, stripe, 0, 0, 0, 6.2, 0.12, 0.92, plane);
+      part(BOX, body, 0.2, -0.05, 0, 1.3, 0.08, 7, plane);
+      part(BOX, body, -2.9, 0.05, 0, 0.6, 0.06, 2.4, plane);
+      const fin = part(BOX, stripe, -3, 0.65, 0, 0.8, 1.2, 0.08, plane); fin.rotation.z = -0.4;
+      for (const s of [-1, 1]) { const en = part(CYL, skyMat('#9aa4ae'), 0.5, -0.35, s * 1.7, 0.22, 0.8, 0.22, plane); en.rotation.z = Math.PI / 2; }
+      plane.scale.setScalar(0.9);
+      scene.add(plane);
+    }
+    const trail = [], trailM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.7, fog: false, depthWrite: false });
+    let planeT = 9, planeDir = 1, planeZ = -60, trailEmit = 0;
+    // 鳥の群れ
+    const birds = [];
+    {
+      const bm = mat('#3a3a44', 0.8);
+      for (let i = 0; i < 6; i++) {
+        const b = new THREE.Group();
+        part(SPH, bm, 0, 0, 0, 0.18, 0.12, 0.12, b);
+        const w = [-1, 1].map(s => { const pv = new THREE.Group(); b.add(pv); part(BOX, bm, 0.05, 0, s * 0.3, 0.22, 0.03, 0.6, pv); return pv; });
+        b.userData = { w, off: new THREE.Vector3(-Math.abs(i - 2.5) * 0.9, rnd(-0.3, 0.3) + (i % 2) * 0.4, (i - 2.5) * 0.8), ph: rnd(0, 6) };
+        scene.add(b); birds.push(b);
+      }
+    }
+    let flockT = 3, flockX = -40, flockZ = -22, flockDir = 1;
+    // 蝶々: ひらひら飛んで、ときどき誰かの頭にとまる
+    const butterflies = [];
+    {
+      const wing = new THREE.Shape();
+      wing.moveTo(0, 0); wing.bezierCurveTo(0.1, 0.35, 0.45, 0.4, 0.42, 0.12); wing.bezierCurveTo(0.42, -0.05, 0.3, -0.12, 0.2, -0.1); wing.bezierCurveTo(0.3, -0.3, 0.1, -0.35, 0, -0.08);
+      const wg = new THREE.ShapeGeometry(wing, 10);
+      const bodyM = mat('#2a2018', 0.6);
+      for (const col of ['#ffd23a', '#ffffff', '#ff8a3a', '#5aa0ff']) {
+        const b = new THREE.Group();
+        const wm = new THREE.MeshStandardMaterial({ color: col, roughness: 0.6, side: THREE.DoubleSide, emissive: col, emissiveIntensity: 0.35 });
+        part(TORSO, bodyM, 0, 0, 0, 0.025, 0.06, 0.025, b).rotation.x = Math.PI / 2;
+        const w = [-1, 1].map(s => { const pv = new THREE.Group(); b.add(pv); const m = new THREE.Mesh(wg, wm); m.rotation.x = -Math.PI / 2; m.scale.set(s * 0.55, 0.55, 0.55); m.rotation.z = s > 0 ? 0 : 0; pv.add(m); return pv; });
+        b.scale.setScalar(0.95);
+        b.position.set(rnd(-4, 4), rnd(1, 3.5), rnd(-1, 2.5));
+        b.userData = { w, v: new THREE.Vector3(), target: new THREE.Vector3(rnd(-4, 4), rnd(1, 3.5), rnd(-1, 2.5)), t: rnd(0, 6), on: null, stay: 0, next: rnd(4, 12) };
+        scene.add(b); butterflies.push(b);
+      }
+    }
+    // 風船: ときどき木の向こうから上がっていく
+    const balloon = new THREE.Group();
+    const balloonM = new THREE.MeshStandardMaterial({ color: '#e8344a', roughness: 0.25 });
+    part(SPH, balloonM, 0, 0, 0, 0.55, 0.65, 0.55, balloon);
+    part(new THREE.ConeGeometry(0.1, 0.15, 8), balloonM, 0, -0.7, 0, 1, 1, 1, balloon).rotation.x = Math.PI;
+    part(CYL, mat('#eeeeee'), 0, -1.5, 0, 0.01, 1.5, 0.01, balloon);
+    scene.add(balloon);
+    let balloonT = 6, balloonOn = false;
+
+    function sChirp() {
+      if (!on()) return;
+      const n = 2 + Math.floor(Math.random() * 3), f = rnd(2600, 3600);
+      for (let i = 0; i < n; i++) { tone('sine', f, f * 1.35, 0.06, 0.035, i * 0.11); tone('sine', f * 1.3, f * 0.95, 0.05, 0.025, i * 0.11 + 0.06); }
+    }
+    const tmpV = new THREE.Vector3();
+    // 画面の上から見て ny（-1〜1）の高さに見える、奥行き z での y
+    function skyY(z, ny) {
+      const v = new THREE.Vector3(0, ny, 0.5).unproject(camera).sub(camera.position);
+      return camera.position.y + v.y * (z - camera.position.z) / v.z;
+    }
+    clouds.forEach(c => c.userData.ny = rnd(0.55, 0.92));
+    let planeNy = 0.72, flockNy = 0.5;
+    function ambient(dt) {
+      const now = performance.now() / 1000;
+      for (const c of clouds) { c.position.x += dt * 0.6; if (c.position.x > 110) c.position.x = -110; c.position.y = skyY(c.position.z, c.userData.ny); }
+      // 飛行機: 空をゆっくり横切る
+      planeT += dt;
+      if (planeT > 0) {
+        plane.visible = true;
+        plane.position.set(planeDir * (-90 + planeT * 7), skyY(planeZ, planeNy) + planeT * 0.06, planeZ);
+        plane.rotation.y = planeDir > 0 ? 0 : Math.PI;
+        trailEmit -= dt;
+        if (trailEmit <= 0) {
+          trailEmit = 0.08;
+          const m = new THREE.Mesh(SPH, trailM.clone());
+          tmpV.set(-3.2, 0, 0); plane.localToWorld(tmpV);
+          for (const s of [-1, 1]) { const mm = s < 0 ? m : new THREE.Mesh(SPH, m.material); mm.position.copy(tmpV).add(new THREE.Vector3(0, -0.3, s * 1.5)); mm.scale.setScalar(0.35); mm.userData.t = 0; scene.add(mm); trail.push(mm); }
+        }
+        if (planeT * 7 > 190) { planeT = -rnd(14, 24); planeDir = Math.random() < 0.5 ? 1 : -1; planeNy = rnd(0.62, 0.85); planeZ = rnd(-70, -50); plane.visible = false; }
+      } else plane.visible = false;
+      for (let i = trail.length - 1; i >= 0; i--) {
+        const m = trail[i]; m.userData.t += dt;
+        const q = m.userData.t / 7;
+        m.scale.setScalar(0.35 + q * 1.6); m.material.opacity = 0.65 * (1 - q);
+        if (q >= 1) { scene.remove(m); m.material.dispose(); trail.splice(i, 1); }
+      }
+      // 鳥: 羽ばたきながら群れで横切る
+      flockT -= dt;
+      if (flockT <= 0) {
+        flockX += flockDir * dt * 5;
+        if (Math.abs(flockX) > 45) { flockT = rnd(8, 16); flockDir = Math.random() < 0.5 ? 1 : -1; flockX = -flockDir * 45; flockNy = rnd(0.35, 0.6); flockZ = rnd(-28, -16); }
+        if (state === 'play' && Math.random() < dt * 0.6 && Math.abs(flockX) < 25) sChirp(); // 結果の時は鳴かない
+      }
+      for (const b of birds) {
+        const u = b.userData;
+        b.visible = flockT <= 0;
+        b.position.set(flockX + u.off.x * flockDir, skyY(flockZ, flockNy) + u.off.y + Math.sin(now * 2 + u.ph) * 0.2, flockZ + u.off.z);
+        b.rotation.y = flockDir > 0 ? 0 : Math.PI;
+        const f = Math.sin(now * 12 + u.ph) * 0.7;
+        u.w[0].rotation.x = f; u.w[1].rotation.x = -f;
+      }
+      // 蝶々
+      for (const b of butterflies) {
+        const u = b.userData; u.t += dt;
+        if (u.on) {
+          u.on.head.updateWorldMatrix(true, false);
+          tmpV.set(u.side, 0.62, 0.05); u.on.head.localToWorld(tmpV);
+          b.position.copy(tmpV);
+          const f = 0.2 + Math.abs(Math.sin(u.t * 2)) * 0.9; // 止まって羽をゆっくり開閉
+          u.w[0].rotation.z = f; u.w[1].rotation.z = -f;
+          u.stay -= dt;
+          if (u.stay <= 0 || !persons.includes(u.on)) { u.on = null; u.next = rnd(5, 12); u.target.set(rnd(-4, 4), rnd(1, 3.5), rnd(-1, 2.5)); }
+          continue;
+        }
+        u.next -= dt;
+        let landing = null;
+        if (u.next <= 0 && persons.length) {
+          if (!u.want) { u.want = pick(persons); u.side = rnd(-0.15, 0.15); }
+          if (butterflies.some(o => o !== b && o.userData.on === u.want)) { u.want = null; u.next = 2; }
+          else { u.want.head.updateWorldMatrix(true, false); landing = u.want.head.localToWorld(tmpV.set(u.side, 0.62, 0.05)).clone(); }
+        }
+        const goal = landing || u.target;
+        if (!landing && b.position.distanceTo(u.target) < 0.4) u.target.set(rnd(-4.5, 4.5), rnd(0.8, 4), rnd(-1.5, 3));
+        // ふらふら: 目標に向かいながら上下に揺れる
+        const dir = goal.clone().sub(b.position);
+        const dist = dir.length();
+        if (landing && dist < 0.08) { u.on = u.want; u.want = null; u.stay = rnd(3, 7); continue; }
+        dir.normalize().multiplyScalar(landing ? Math.min(1.6, dist * 2.5) : 1.4);
+        u.v.lerp(dir, 1 - Math.exp(-dt * 2.5));
+        b.position.addScaledVector(u.v, dt);
+        if (!landing) b.position.y += Math.sin(u.t * 7) * dt * 0.8;
+        b.rotation.y = Math.atan2(u.v.x, u.v.z);
+        const f = Math.sin(u.t * 28) * 1.1;
+        u.w[0].rotation.z = f; u.w[1].rotation.z = -f;
+      }
+      // 風船
+      balloonT -= dt;
+      if (!balloonOn && balloonT <= 0) { balloonOn = true; balloon.position.set(rnd(-9, 9), 1, rnd(-14, -9)); balloonM.color.set(pick(['#e8344a', '#ffd23a', '#3a7be0', '#4ab07a', '#ff8ab0'])); }
+      balloon.visible = balloonOn;
+      if (balloonOn) {
+        balloon.position.y += dt * 1.1; balloon.position.x += Math.sin(now * 0.7) * dt * 0.4;
+        balloon.rotation.z = Math.sin(now * 1.3) * 0.12;
+        if (balloon.position.y > 40) { balloonOn = false; balloonT = rnd(10, 22); }
+      }
+    }
+
+    // ---------- ループ ----------
+    const STEP = 1 / 60;
+    function render(alpha) {
+      for (const p of persons) {
+        p.g.position.lerpVectors(p.prevPos, p.pos, alpha);
+        const tt = performance.now() / 1000 + p.sway;
+        const laughing = gameT >= p.laughStart && gameT < p.laughEnd, listening = p.listenEnd > gameT && p.talkEnd < gameT;
+        if (laughing) p.g.position.y += Math.abs(Math.sin(gameT * 18)) * 0.05;
+        p.g.rotation.z = Math.sin(tt * 1.3) * 0.015;
+        p.g.rotation.y = p.turn * 0.3;
+        p.head.rotation.z = Math.sin(tt * 0.9) * 0.04;
+        p.head.rotation.x = laughing ? -0.18 : listening ? Math.max(0, Math.sin(gameT * 7)) * 0.12 : 0;
+        if (p.complain !== undefined && state !== 'play') p.head.rotation.y = Math.sin(p.complain * 22) * 0.12 * Math.max(0, 1 - p.complain * 1.2);
+        else p.head.rotation.y = p.turn * 0.7 + Math.sin(tt * 0.6) * 0.05;
+        if (p.cat) { drawCat(p.o); continue; }
+        if (p.complain === undefined) { p.ooh.visible = p.m > 0.04; p.ooh.scale.set(0.07, 0.015 + 0.08 * p.m, 0.04); }
+        const a = OPEN_A + (CLOSE_A - OPEN_A) * (1 - p.o);
+        for (const e of p.eyes) { e.lid.rotation.x = a; e.look.rotation.y += (p.lx - e.look.rotation.y) * 0.3; e.look.rotation.x += (-p.ly - e.look.rotation.x) * 0.3; }
+      }
+      updateCamera();
+      renderer.render(scene, camera);
+    }
+    let last = performance.now(), acc = 0;
+    function loop(now) {
+      window.resultAd?.(state === 'result'); // 結果画面の広告（../../ad.js）
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      acc += dt;
+      while (acc >= STEP) { stepGame(STEP); acc -= STEP; }
+      ambient(dt);
+      if (shotReq) { shotReq = false; if (state === 'play') { doShot(); requestAnimationFrame(loop); return; } }
+      render(acc / STEP);
+      requestAnimationFrame(loop);
+    }
+
+    resize();
+    start();
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+    // 最初の1回が重くならないように、一度描いておく
+    { const extra = makeHuman('normal'); scene.add(shade(extra.g)); extra.g.position.set(0, 0, -30); renderer.compile(scene, camera); renderer.render(scene, camera); scene.remove(extra.g); }
+    requestAnimationFrame(t0 => { last = t0; loop(t0); });
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

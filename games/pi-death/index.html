@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e0d0b" />
+  <meta name="description" content="π 死亡游戏：选一个数字，等它从圆周率里出现，撑到最后。" />
+  <title>π 死亡游戏 · LiteGame</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../../assets/css/room-client.css" />
+  <link rel="stylesheet" href="../premium/theme.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-game="pi-death">
+  <div class="px-stage">
+    <header class="px-top">
+      <a class="px-back" href="../../index.html#/category/premium">← 大厅</a>
+      <div class="px-name">π 死亡游戏</div>
+      <div class="px-tools">
+        <span class="px-netbadge" id="netBadge" hidden><i></i>联机中</span>
+        <button id="btnRoom" type="button">双人</button>
+        <button id="btnSound" type="button" class="is-on" aria-pressed="true" aria-label="音效开关">音</button>
+      </div>
+    </header>
+
+    <main class="ch-gamemain">
+      <section class="px-screen px-start" id="screen-start">
+        <div class="px-seal" aria-hidden="true">π</div>
+        <h1 class="px-title">π 死亡游戏</h1>
+        <p class="px-sub">选一个数字，等它从 π 里出现</p>
+        <div class="px-modes">
+          <button id="startSingle" type="button">单人挑战</button>
+          <button id="startNet" type="button" class="is-ghost">和好友联机（2 人）</button>
+        </div>
+        <p class="px-rules">
+          双方各选一个数字，圆周率逐位往下翻。<br />
+          <b>你的数字每出现一次，掉一条命</b>，三条命掉光就出局。<br />
+          先撑不住的人输；同一位双双出局算平局。
+        </p>
+      </section>
+
+      <section class="px-screen" id="screen-game" hidden>
+        <div class="pd-wrap">
+          <div class="pd-hud">
+            <div class="pd-side is-me">
+              <span class="pd-who" id="youName">你</span>
+              <div class="pd-lives" id="youLives"></div>
+            </div>
+            <div class="pd-pos">π 第<b id="posNum">0</b>位</div>
+            <div class="pd-side is-right">
+              <span class="pd-who" id="rivalName">电脑</span>
+              <div class="pd-lives" id="rivalLives"></div>
+            </div>
+          </div>
+
+          <div class="pd-stage">
+            <div class="pd-stream" id="stream" aria-live="polite"></div>
+            <div class="pd-status" id="status">选一个数字</div>
+          </div>
+
+          <div class="pd-pickbox" id="pickbox">
+            <div>
+              <div class="pd-label">你的数字</div>
+              <div class="pd-digit" id="yourDigit">–</div>
+            </div>
+            <div class="pd-tip" id="pickTip">它每出现一次，你就掉一条命</div>
+          </div>
+
+          <div class="pd-picker" id="picker" role="group" aria-label="选择数字"></div>
+          <div class="pd-legend"><span>三条命 · π 逐位揭示</span><span class="pd-hit" id="flash"></span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../assets/js/mobile-ui.js"></script>
+  <script src="../../assets/js/server-sync.js"></script>
+  <script src="../../assets/js/room-client.js"></script>
+  <script src="../premium/util.js"></script>
+  <script src="engine.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

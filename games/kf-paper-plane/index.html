@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>纸飞机 · LiteGame</title>
+<meta name="description" content="甩出去，再控机头，看能飞多远。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ふるかわけい面白チャンネル">
+<meta property="og:title" content="纸飞机 · LiteGame">
+<meta property="og:url" content="https://keifurukawafunnych.com/games/paper-plane/">
+<meta property="og:image" content="https://keifurukawafunnych.com/games/paper-plane/icon.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#cfe8f7;color:#16324a;font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Noto Sans KR","Noto Sans Thai",sans-serif;overscroll-behavior:none}
+body{display:flex;flex-direction:column;padding:8px 12px calc(80px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:8px;flex:none}
+header a{color:#1d4f78;text-decoration:none;font-size:14px;margin-right:auto}
+header button,header select{background:#fff;color:#16324a;border:1px solid #9cc3de;border-radius:8px;height:34px;padding:0 8px;font-size:14px}
+#sound{width:40px;display:grid;place-items:center}
+#stage{flex:1;min-height:0;position:relative;margin-top:8px;border-radius:14px;overflow:hidden}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#stage,#c{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:0 16px;background:rgba(10,30,50,.45)}
+.panel[hidden]{display:none}
+.panel button,.panel a{font:inherit;font-size:18px;font-weight:700;border:0;border-radius:999px;padding:12px 28px;min-width:180px;cursor:pointer;text-decoration:none;display:inline-block}
+#retry{background:#f2c14e;color:#2a1a05;box-shadow:0 4px 0 #9b6f12}
+#share{background:#000;color:#fff;box-shadow:0 4px 0 #444}
+#dist{font-size:clamp(44px,14vw,72px);font-weight:800;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4)}
+#best{font-size:17px;font-weight:700;color:#fff;min-height:1.2em}
+#best.new{color:#ffd75a}
+</style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">纸飞机</h1>
+<header>
+  <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+  <button id="sound" aria-label="sound"></button>
+  <select id="lang" aria-label="language">
+    <option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option>
+  </select>
+</header>
+<main style="display:contents">
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div class="panel" id="result" hidden>
+    <div id="dist"></div><div id="best"></div>
+    <a id="share" href="#"></a>
+    <button id="retry"></button>
+  </div>
+</div>
+</main>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 纸飞机 · 中文文案
+window.__KF_ZH__ = {
+  title: '纸飞机',
+  back: '← 大厅',
+  retry: '再来一次',
+  share: '分享到 X',
+  best: (n) => `最佳 ${n}m`,
+  newBest: '新纪录',
+  saved: '图片已保存',
+  shareText: (n) => `纸飞机飞了 ${n}m #LiteGame`
+};
+</script>
+<script>
+const $=id=>document.getElementById(id);
+const SHARE_URL='https://x.com/furukawakeigame/status/2111706256411107640',TAG='#纸飞机',SHARE_NAME='paper-plane.png';
+const m1=n=>n.toFixed(1)+'m';
+const L={
+ ja:{title:'纸飞机',back:'← トップへ戻る',retry:'もう一度',share:'X に投稿',best:n=>`自己ベスト ${m1(n)}`,newBest:'自己ベスト更新',saved:'画像を保存しました',shareText:n=>`紙飛行機を${m1(n)}飛ばした\n${TAG}`},
+ ko:{title:'종이비행기 게임',back:'← 처음으로',retry:'다시 하기',share:'X에 게시',best:n=>`최고 기록 ${m1(n)}`,newBest:'최고 기록 갱신',saved:'이미지를 저장했어요',shareText:n=>`종이비행기를 ${m1(n)} 날렸다\n${TAG}`},
+ en:{title:'Paper Plane Game',back:'← Back to top',retry:'Play again',share:'Post on X',best:n=>`Best ${m1(n)}`,newBest:'New best',saved:'Image saved',shareText:n=>`My paper plane flew ${m1(n)}\n${TAG}`},
+ th:{title:'เกมเครื่องบินกระดาษ',back:'← กลับหน้าแรก',retry:'เล่นอีกครั้ง',share:'โพสต์ลง X',best:n=>`สถิติสูงสุด ${m1(n)}`,newBest:'ทำสถิติใหม่',saved:'บันทึกรูปแล้ว',shareText:n=>`ร่อนเครื่องบินกระดาษได้ไกล ${m1(n)}\n${TAG}`}
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const LANGS=['ja','ko','en','th','zh'];
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');try{lang=window.__KF_ZH__?'zh':localStorage.getItem('paper-plane-lang')}catch{}
+if(!LANGS.includes(lang)){lang='en';for(const l of navigator.languages||[navigator.language||'']){const k=String(l).toLowerCase().slice(0,2);if(LANGS.includes(k)){lang=k;break}}}
+const t=k=>L[lang][k];
+let best=0;try{best=+localStorage.getItem('paper-plane-best')||0}catch{}
+
+// ---- sound ----
+let sound=true;try{sound=localStorage.getItem('paper-plane-sound')!=='0'}catch{}
+let ac=null;
+function actx(){ac=ac||new AudioContext();if(ac.state==='suspended')ac.resume();return ac}
+function tone(f,d,v=.08,type='sine',slide=0){if(!sound)return;try{const a=actx(),o=a.createOscillator(),g=a.createGain(),s=a.currentTime;o.type=type;o.frequency.setValueAtTime(f,s);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),s+d);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g).connect(a.destination);o.start(s);o.stop(s+d)}catch{}}
+function noise(d,v=.15,freq=1200){if(!sound)return;try{const a=actx(),b=a.createBuffer(1,a.sampleRate*d,a.sampleRate),c=b.getChannelData(0);for(let i=0;i<c.length;i++)c[i]=(Math.random()*2-1)*(1-i/c.length);const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();f.type='bandpass';f.frequency.value=freq;s.buffer=b;g.gain.value=v;s.connect(f).connect(g).connect(a.destination);s.start()}catch{}}
+// continuous wind while flying
+let wind=null;
+function windStart(){if(!sound||wind)return;try{const a=actx(),b=a.createBuffer(1,a.sampleRate*2,a.sampleRate),c=b.getChannelData(0);for(let i=0;i<c.length;i++)c[i]=Math.random()*2-1;const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=b;s.loop=true;f.type='bandpass';f.Q.value=.8;f.frequency.value=600;g.gain.value=0;s.connect(f).connect(g).connect(a.destination);s.start();wind={s,f,g}}catch{}}
+function windSet(v){if(!wind)return;const n=Math.min(1,v/30);wind.g.gain.setTargetAtTime(.02+n*.07,ac.currentTime,.1);wind.f.frequency.setTargetAtTime(300+n*1200,ac.currentTime,.1)}
+function windStop(){if(!wind)return;try{wind.g.gain.setTargetAtTime(0,ac.currentTime,.05);const s=wind.s;setTimeout(()=>s.stop(),300)}catch{}wind=null}
+
+// ---- canvas ----
+const cv=$('c'),cx=cv.getContext('2d',{alpha:false});
+let W=0,H=0,DPR=1,sky=null;
+function resize(){const r=$('stage').getBoundingClientRect();DPR=Math.min(3,devicePixelRatio||1);W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);sky=cx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#5fa8e0');sky.addColorStop(1,'#d6effb')}
+addEventListener('resize',()=>{resize();if(p)draw(performance.now()/1000)});
+
+// ---- physics (meters, seconds, y up) ----
+const VIEW=22,G=9.8,AIR=.255,STALL=.28,CLMAX=2*Math.PI*STALL*.55,MAXPULL=120,LAUNCH_V=22,SLING={x:0,y:1.6};
+let mode='ready',p,trail,pull=null,drag=null,cam={x:0,y:0,s:30},t0=0,flyT=0,passedBest=false,isNew=false;
+function reset(){acc=0;prev=null;p={x:SLING.x,y:SLING.y,vx:0,vy:0,th:0,tt:0,stall:0};trail=[];pull=null;drag=null;mode='ready';passedBest=false;flyT=0;$('result').hidden=true}
+function cl(a){const s=Math.sign(a),x=Math.abs(a);if(x<STALL)return 2*Math.PI*a*.55;return s*Math.max(CLMAX*.25,CLMAX*(1-(x-STALL)*2.5))}
+function step(dt){
+  const v=Math.hypot(p.vx,p.vy)||1e-6,gam=Math.atan2(p.vy,p.vx);
+  let a=p.th-gam;a=Math.atan2(Math.sin(a),Math.cos(a));
+  const stalled=Math.abs(a)>STALL;p.stall+=((stalled?1:0)-p.stall)*Math.min(1,dt*6);
+  if(drag)p.tt+=1.5*dt; // holding: nose up
+  else p.tt+=(gam-p.tt)*3*dt; // released: nose settles along the flight path
+  if(stalled)p.tt-=Math.sign(a)*1.2*dt; // nose drops when stalled
+  p.tt=Math.max(-1.4,Math.min(1.4,p.tt));
+  p.th+=(p.tt-p.th)*Math.min(1,dt*8);
+  const CL=cl(a),CD=.035+.11*CL*CL+(stalled?1.1*(Math.abs(a)-STALL):0);
+  const q=AIR*v*v,lx=-p.vy/v,ly=p.vx/v;
+  p.vx+=(q*CL*lx-q*CD*p.vx/v)*dt;
+  p.vy+=(q*CL*ly-q*CD*p.vy/v-G)*dt;
+  const sp=Math.hypot(p.vx,p.vy);if(!(sp<60)){const k=sp>0&&isFinite(sp)?60/sp:0;p.vx*=k;p.vy*=k} // safety cap
+  p.x+=p.vx*dt;p.y+=p.vy*dt;
+}
+
+// ---- input ----
+const pt=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+const toScr=(x,y)=>({x:(x-cam.x)*cam.s+W*.35,y:H-(y-cam.y)*cam.s-H*.12});
+cv.addEventListener('pointerdown',e=>{
+  e.preventDefault();cv.setPointerCapture(e.pointerId);const q=pt(e);
+  if(mode==='ready'){mode='pull';pull={sx:q.x,sy:q.y,dx:0,dy:0};tone(220,.15,.05,'triangle',120)}
+  else if(mode==='fly'){drag=true}
+});
+cv.addEventListener('pointermove',e=>{
+  const q=pt(e);
+  if(mode==='pull'&&pull){let dx=q.x-pull.sx,dy=-(q.y-pull.sy);const l=Math.hypot(dx,dy);if(l>MAXPULL){dx*=MAXPULL/l;dy*=MAXPULL/l}pull.dx=dx;pull.dy=dy;if(dx<-6)p.th=Math.atan2(-dy,-dx);else p.th=0}
+});
+function up(){
+  if(mode==='pull'){const l=Math.hypot(pull.dx,pull.dy);
+    if(l<18||pull.dx>-6){mode='ready';pull=null;p.th=0;return}
+    const sp=LAUNCH_V*l/MAXPULL,ang=Math.atan2(-pull.dy,-pull.dx);
+    p.vx=Math.cos(ang)*sp;p.vy=Math.sin(ang)*sp;p.th=p.tt=ang;p.x=SLING.x;p.y=SLING.y;pull=null;mode='fly';
+    noise(.25,.25,900);tone(140,.12,.08,'triangle',-60);windStart()}
+  drag=null;
+}
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+
+// ---- game loop ----
+let last=0,sdt=1/60;
+// physics runs on a fixed 1/240 s step so the result never depends on frame rate or screen;
+// drawing interpolates between the last two physics states to stay smooth
+const STEP=1/240;let acc=0,prev=null;
+function frame(now){
+  const raw=Math.max(0,Math.min(.05,(now-(last||now))/1000))||0;last=now;sdt+=(raw-sdt)*.1;const dt=sdt;
+  let alpha=1;
+  if(mode==='fly'){flyT+=dt;acc+=dt;while(acc>=STEP){acc-=STEP;prev={x:p.x,y:p.y,th:p.th};step(STEP);if(p.y<=0){p.y=0;land();acc=0;break}}
+    alpha=prev&&mode==='fly'?acc/STEP:1;
+    if(trail.length===0||Math.hypot(p.x-trail[trail.length-1].x,p.y-trail[trail.length-1].y)>.6)trail.push({x:p.x,y:p.y});
+    windSet(Math.hypot(p.vx,p.vy));
+    if(!passedBest&&best>0&&p.x>best){passedBest=true;tone(880,.12,.06);setTimeout(()=>tone(1320,.15,.06),90)}}
+  if($('result').hidden){
+    const real={x:p.x,y:p.y,th:p.th};
+    if(alpha<1){p.x=prev.x+(real.x-prev.x)*alpha;p.y=prev.y+(real.y-prev.y)*alpha;p.th=prev.th+(real.th-prev.th)*alpha}
+    updateCam(dt);draw(now/1000);Object.assign(p,real)}
+  requestAnimationFrame(frame);
+}
+function land(){mode='result';windStop();noise(.18,.3,300);tone(90,.2,.1,'sine',-40);
+  const d=Math.max(0,p.x);isNew=d>best;if(isNew){best=d;try{localStorage.setItem('paper-plane-best',best)}catch{}}
+  setTimeout(()=>{if(mode==='result'){renderResult();$('result').hidden=false;setTimeout(prepareShare,30)}},700)}
+function updateCam(dt){
+  // fixed zoom; follow the plane vertically once it climbs above mid-screen
+  cam.s=H/VIEW;
+  if(mode==='fly'||mode==='result'){cam.x=p.x;cam.y=Math.max(0,p.y-VIEW*.45);return}
+  cam.y+=(0-cam.y)*Math.min(1,dt*4);
+  const tx=SLING.x-W*.25/cam.s;
+  cam.x+=(tx-cam.x)*Math.min(1,dt*(mode==='fly'?10:4));
+}
+
+// ---- drawing ----
+// clouds tile the whole sky (every altitude) from a hash grid, in two parallax layers
+const hash=(i,j,k)=>{const h=Math.sin(i*127.1+j*311.7+k*74.7)*43758.5453;return h-Math.floor(h)};
+function cloudLayer(c,par,cell,rr,col,k){
+  const cx0=cam.x*par,cy0=cam.y*par,ox=W*.35,oy=H*.88,w=W/cam.s,h=H/cam.s;
+  c.fillStyle=col;c.beginPath();
+  for(let i=Math.floor((cx0-ox/cam.s)/cell)-1;i<=Math.ceil((cx0+w)/cell);i++)for(let j=Math.max(0,Math.floor((cy0-1)/cell));j<=Math.ceil((cy0+h)/cell)+1;j++){
+    if(hash(i,j,k)<.45)continue;
+    const wx=(i+hash(i,j,k+1))*cell,wy=(j+hash(i,j,k+2))*cell;if(wy<4)continue;
+    const sx=ox+(wx-cx0)*cam.s,sy=oy-(wy-cy0)*cam.s,r=rr*(.7+hash(i,j,k+3)*.6)*cam.s;
+    c.moveTo(sx+r,sy);c.arc(sx,sy,r,0,7);c.moveTo(sx+r*2,sy+r*.2);c.arc(sx+r*1.1,sy+r*.2,r*.8,0,7);c.moveTo(sx-r*.4,sy+r*.25);c.arc(sx-r*1.1,sy+r*.25,r*.7,0,7)}
+  c.fill()}
+function draw(time){
+  const c=cx;c.setTransform(DPR,0,0,DPR,0,0);
+  c.fillStyle=sky;c.fillRect(0,0,W,H);
+  const gy=toScr(0,0).y;
+  // far mountains (parallax)
+  if(gy-H*.2<H){c.fillStyle='#a9cbe0';c.beginPath();c.moveTo(0,gy);const off=cam.x*cam.s*.15,s0=Math.floor(off/6)*6-off;for(let sx=s0;sx<=W+6;sx+=6){const wx=(sx+off)/60;c.lineTo(sx,gy-H*.12-Math.sin(wx)*H*.05-Math.sin(wx*2.3)*H*.03)}c.lineTo(W,gy);c.fill()}
+  // clouds (parallax)
+  cloudLayer(c,.4,9,.7,'rgba(255,255,255,.45)',1);cloudLayer(c,.8,13,1.1,'rgba(255,255,255,.85)',7);
+  // ground
+  if(gy<H){c.fillStyle='#7cc46a';c.fillRect(0,gy,W,H-gy);c.fillStyle='#5ea84f';c.fillRect(0,gy,W,4);
+  // ground ticks
+  const x0=cam.x-(W*.35)/cam.s,x1=x0+W/cam.s,stepM=cam.s>12?5:cam.s>4?10:50;
+  c.fillStyle='#3f7d34';c.font='bold 12px system-ui';c.textAlign='center';
+  for(let m=Math.max(0,Math.ceil(x0/stepM)*stepM);m<=x1;m+=stepM){const s=toScr(m,0);const big=m%(stepM*2)===0;c.fillRect(s.x-1,gy,2,big?12:6);if(big&&m>0)c.fillText(m+'m',s.x,gy+26)}}
+  // best flag
+  if(best>0){const s=toScr(best,0),h=Math.max(30,2.2*cam.s);c.fillStyle='#6b4a2a';c.fillRect(s.x-1.5,gy-h,3,h);c.fillStyle='#e8453c';c.beginPath();c.moveTo(s.x+1.5,gy-h);c.lineTo(s.x+h*.5,gy-h+h*.15);c.lineTo(s.x+1.5,gy-h+h*.3);c.fill()}
+  // slingshot
+  drawSling(c,true);
+  // trail
+  if(trail.length>1){c.fillStyle='rgba(255,255,255,.75)';c.beginPath();const xmin=cam.x-W*.35/cam.s-1;for(let i=trail.length-1;i>=0&&trail[i].x>xmin;i--){const s=toScr(trail[i].x,trail[i].y);c.rect(s.x-1.5,s.y-1.5,3,3)}c.fill()}
+  // plane
+  let px=p.x,py=p.y;if(mode==='pull'){px+=pull.dx/cam.s;py=Math.max(.35,py+pull.dy/cam.s)}
+  const ps=toScr(px,py);
+  if(mode==='pull'||mode==='ready'){drawBands(c,ps)}
+  drawPlane(c,ps.x,ps.y,p.th,Math.max(24,.9*cam.s),p.stall);
+  drawSling(c,false);
+  // pull aim preview
+  if(mode==='pull'){const l=Math.hypot(pull.dx,pull.dy);if(l>18&&pull.dx<-6){const ang=Math.atan2(-pull.dy,-pull.dx),n=l/MAXPULL;c.fillStyle='rgba(255,255,255,.9)';for(let i=1;i<=6;i++){const d=i*n*28;c.beginPath();c.arc(ps.x+Math.cos(ang)*d,ps.y-Math.sin(ang)*d,3.5-i*.35,0,7);c.fill()}}}
+  // hints
+  if(mode==='ready')hintPull(c,ps,time);
+  if(mode==='fly'&&flyT<2.5)hintPitch(c,time);
+}
+function drawSling(c,back){
+  const b=toScr(SLING.x,0),top=toScr(SLING.x,SLING.y+.15),s=cam.s;
+  c.strokeStyle='#7a4f2a';c.lineCap='round';
+  if(back){c.lineWidth=Math.max(5,.22*s);c.beginPath();c.moveTo(b.x,b.y);c.lineTo(b.x,b.y-(b.y-top.y)*.55);c.lineTo(top.x-.3*s,top.y);c.stroke()}
+  else{c.lineWidth=Math.max(5,.22*s);c.beginPath();c.moveTo(b.x,b.y-(b.y-top.y)*.55);c.lineTo(top.x+.3*s,top.y);c.stroke()}
+}
+function drawBands(c,ps){const top=toScr(SLING.x,SLING.y+.15),s=cam.s;c.strokeStyle='#3b2a20';c.lineWidth=Math.max(2,.07*s);c.beginPath();c.moveTo(top.x-.3*s,top.y);c.lineTo(ps.x,ps.y);c.lineTo(top.x+.3*s,top.y);c.stroke()}
+function drawPlane(c,x,y,th,sz,st){
+  c.save();c.translate(x,y);c.rotate(-th);
+  if(st>.5){const k=performance.now()/1000;c.rotate(Math.sin(k*40)*.05)}
+  c.lineJoin='round';
+  // lower wing (shade)
+  c.fillStyle='#c9d4de';c.beginPath();c.moveTo(sz,0);c.lineTo(-sz*.8,sz*.12);c.lineTo(-sz*.55,sz*.42);c.closePath();c.fill();
+  // body/upper wing
+  c.fillStyle='#fff';c.strokeStyle='#5d7891';c.lineWidth=1.5;
+  c.beginPath();c.moveTo(sz,0);c.lineTo(-sz*.8,-sz*.38);c.lineTo(-sz*.55,0);c.lineTo(-sz*.8,sz*.12);c.closePath();c.fill();c.stroke();
+  c.beginPath();c.moveTo(sz,0);c.lineTo(-sz*.55,0);c.stroke();
+  c.restore();
+}
+function hand(c,x,y,down){c.save();c.translate(x,y);c.fillStyle=down?'rgba(255,255,255,.95)':'rgba(255,255,255,.7)';c.strokeStyle='rgba(20,50,80,.6)';c.lineWidth=2;c.beginPath();c.arc(0,0,down?13:16,0,7);c.fill();c.stroke();c.restore()}
+function hintPull(c,ps,time){const k=(time%2)/2;let ox=0,oy=0,down=false;if(k>.15&&k<.75){const u=Math.min(1,(k-.15)/.45);ox=-u*55;oy=u*35;down=true}else if(k>=.75){ox=-55;oy=35}
+  if(k<.75){c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=3;c.setLineDash([5,6]);c.beginPath();c.moveTo(ps.x,ps.y);c.lineTo(ps.x-55,ps.y+35);c.stroke();c.setLineDash([])}
+  if(k<.85)hand(c,ps.x+ox,ps.y+oy,down)}
+function hintPitch(c,time){const x=W-48,y=H*.45,k=(time*1.2)%1,down=k<.5;c.globalAlpha=Math.min(1,(2.5-flyT)*2);if(down){c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=3;c.beginPath();c.arc(x,y,16+k*40,0,7);c.stroke()}hand(c,x,y,down);c.globalAlpha=1}
+
+// ---- result / share ----
+// square image of the whole flight: path, landing spot, best flag and the distance
+function resultImage(){
+  const S=1080,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');
+  const pts=trail.concat([{x:p.x,y:0}]),maxX=Math.max(20,p.x,best)*1.08,maxY=Math.max(8,...pts.map(q=>q.y))*1.15;
+  const top=S*.3,gy=S*.84,k=Math.min((S-120)/(maxX+2),(gy-top)/maxY),ox=60+2*k,X=x=>ox+x*k,Y=y=>gy-y*k;
+  const sk=g.createLinearGradient(0,0,0,S);sk.addColorStop(0,'#5fa8e0');sk.addColorStop(1,'#d6effb');g.fillStyle=sk;g.fillRect(0,0,S,S);
+  g.fillStyle='#7cc46a';g.fillRect(0,gy,S,S-gy);g.fillStyle='#5ea84f';g.fillRect(0,gy,S,8);
+  if(best>0&&!isNew){const fx=X(best),h=70;g.fillStyle='#6b4a2a';g.fillRect(fx-3,gy-h,6,h);g.fillStyle='#e8453c';g.beginPath();g.moveTo(fx+3,gy-h);g.lineTo(fx+40,gy-h+12);g.lineTo(fx+3,gy-h+24);g.fill()}
+  g.strokeStyle='#7a4f2a';g.lineCap='round';g.lineWidth=10;g.beginPath();g.moveTo(X(0),gy);g.lineTo(X(0),Y(SLING.y*.6));g.moveTo(X(0),Y(SLING.y*.6));g.lineTo(X(0)-14,Y(SLING.y)-10);g.moveTo(X(0),Y(SLING.y*.6));g.lineTo(X(0)+14,Y(SLING.y)-10);g.stroke();
+  g.fillStyle='rgba(255,255,255,.9)';for(const q of trail){g.beginPath();g.arc(X(q.x),Y(q.y),4,0,7);g.fill()}
+  drawPlane(g,X(p.x),Y(0)-30,p.th,60,0);
+  g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.shadowColor='rgba(0,0,0,.35)';g.shadowOffsetY=6;
+  g.font='800 150px system-ui,"Hiragino Sans","Noto Sans JP","Noto Sans KR","Noto Sans Thai",sans-serif';g.fillText(m1(dist()),S/2,S*.13);
+  g.font='700 52px system-ui,"Hiragino Sans","Noto Sans JP","Noto Sans KR","Noto Sans Thai",sans-serif';g.fillStyle=isNew?'#ffd75a':'#fff';g.fillText(isNew?t('newBest'):t('best')(best),S/2,S*.235);
+  return c;
+}
+let shareFile=null,shareKey='';
+function prepareShare(){if(mode!=='result')return;const key=lang+':'+dist();if(key===shareKey)return;shareKey=key;shareFile=null;resultImage().toBlob(b=>{if(b&&shareKey===key)shareFile=new File([b],SHARE_NAME,{type:'image/png'})},'image/png')}
+const coarse=()=>matchMedia('(pointer: coarse)').matches;
+const dist=()=>Math.max(0,p.x);
+const intent=()=>`https://x.com/intent/post?text=${encodeURIComponent(t('shareText')(dist()))}&url=${encodeURIComponent(SHARE_URL)}`;
+function renderResult(){$('dist').textContent=m1(dist());const b=$('best');b.textContent=isNew?t('newBest'):t('best')(best);b.classList.toggle('new',isNew);const a=$('share');a.textContent=t('share');a.href=intent();if(coarse()){a.removeAttribute('target');a.removeAttribute('rel')}else{a.target='_blank';a.rel='noopener'}}
+$('share').onclick=e=>{
+  if(coarse()&&typeof navigator.share==='function'&&shareFile&&navigator.canShare?.({files:[shareFile]})){e.preventDefault();navigator.share({files:[shareFile],text:`${t('shareText')(dist())}\n${SHARE_URL}`}).catch(err=>{if(err.name!=='AbortError')location.href=intent()});return}
+  if(coarse())return;
+  const a=document.createElement('a');a.href=resultImage().toDataURL('image/png');a.download=SHARE_NAME;a.click();$('best').textContent=t('saved')};
+$('retry').onclick=()=>{reset();tone(520,.06,.04)};
+function drawSpeaker(){$('sound').innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${sound?'<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/>':'<path d="M16 9l6 6M22 9l-6 6"/>'}</svg>`}
+$('sound').onclick=()=>{sound=!sound;try{localStorage.setItem('paper-plane-sound',sound?'1':'0')}catch{}if(!sound)windStop();else if(mode==='fly')windStart();drawSpeaker();tone(660,.08,.05)};
+function applyLang(){document.documentElement.lang=lang;document.title=t('title');$('lang').value=lang;$('back').textContent=t('back');$('retry').textContent=t('retry');if(mode==='result'){renderResult();prepareShare()}}
+$('lang').onchange=()=>{lang=$('lang').value;try{localStorage.setItem('paper-plane-lang',lang)}catch{}applyLang()};
+// warm up the JIT and canvas paths with a throwaway flight so the first real throw is already smooth
+function warmup(){const sv=W;reset();p.vx=15;p.vy=8;p.th=p.tt=.5;mode='fly';for(let i=0;i<4000&&p.y>0;i++){step(1/240);if(i%8===0)trail.push({x:p.x,y:p.y});if(i%40===0){updateCam(1/60);draw(i/240)}}reset();cam.x=SLING.x-W*.25/cam.s;cam.y=0}
+resize();warmup();drawSpeaker();applyLang();requestAnimationFrame(frame);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

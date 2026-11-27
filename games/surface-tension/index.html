@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e0d0b" />
+  <meta name="description" content="表面张力：按住倒满一杯，停在将溢未溢的那一刻。" />
+  <title>表面张力 · LiteGame</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../premium/theme.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-game="surface-tension">
+  <div class="px-stage">
+    <header class="px-top">
+      <a class="px-back" href="../../index.html#/category/premium">← 大厅</a>
+      <div class="px-name">表面张力</div>
+      <div class="px-tools">
+        <button id="btnSound" type="button" class="is-on" aria-pressed="true" aria-label="音效开关">音</button>
+      </div>
+    </header>
+
+    <main class="ch-gamemain">
+      <section class="px-screen px-start" id="screen-start">
+        <div class="px-seal" aria-hidden="true">满</div>
+        <h1 class="px-title">表面张力</h1>
+        <p class="px-sub">倒到将溢未溢的那一刻</p>
+        <div class="px-modes">
+          <button id="startSingle" type="button">开始倒一杯</button>
+        </div>
+        <p class="px-rules">
+          按住杯子开始倒，松手停。<br />
+          液面会拱起来，<b>一旦溢出就失败</b>。<br />
+          停在越接近杯口的位置，分数越高。
+        </p>
+      </section>
+
+      <section class="px-screen" id="screen-game" hidden>
+        <div class="st-wrap">
+          <div class="st-hud">
+            <span>最佳 <b id="bestScore">0</b></span>
+            <span id="attempts">第 1 杯</span>
+          </div>
+          <div class="st-stage" id="stage">
+            <canvas id="cv"></canvas>
+          </div>
+          <div class="st-bar"><i id="fillBar"></i></div>
+          <div class="st-tip" id="tip">按住倒酒</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../assets/js/mobile-ui.js"></script>
+  <script src="../../assets/js/server-sync.js"></script>
+  <script src="../premium/util.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

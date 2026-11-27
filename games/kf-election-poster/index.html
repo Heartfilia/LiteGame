@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>竞选海报 · LiteGame</title>
+  <meta name="description" content="照片加口号，五分钟做一张正经得像真的竞选海报。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="竞选海报 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/election-poster/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/election-poster/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; background: #e9e4dc; color: #333; }
+    /* スクロールさせず、ポスターを残りの高さいっぱいに収める */
+    body {
+      font-family: "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif; display: flex; flex-direction: column;
+      height: 100dvh; overflow: hidden; padding-bottom: calc(80px + env(safe-area-inset-bottom)); box-sizing: border-box;
+    }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; }
+    header a { color: #333; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 8px; }
+    .pill {
+      height: 36px; min-width: 36px; border: 1px solid #bbb; border-radius: 18px; background: #fff;
+      color: #333; font-size: 15px; padding: 0 10px; cursor: pointer; font-family: inherit;
+    }
+    main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 16px; }
+    #stage { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+    #editbox {
+      display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 12px;
+      background: #fff; box-shadow: 0 0 0 3px #ffe33b, 0 4px 12px rgba(0,0,0,.2);
+    }
+    #ok { align-self: stretch; }
+    #tsize { flex: 1; min-width: 0; height: 36px; accent-color: #333; }
+    #editbox[hidden] { display: none; }
+    #editor { flex: 1; min-width: 0; font-size: 16px; padding: 8px 10px; border: 1px solid #bbb; border-radius: 8px; }
+    #ok {
+      flex: none; font-size: 16px; font-weight: bold; padding: 0 16px; border: none; border-radius: 8px;
+      background: #bc002d; color: #fff; cursor: pointer; font-family: inherit;
+    }
+    #poster {
+      display: block; box-shadow: 0 3px 14px rgba(0,0,0,.25); touch-action: none; cursor: grab; background: #fff;
+    }
+    #panel { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; flex: none; }
+    #styles { display: flex; flex-direction: column; gap: 8px; }
+    #panel.editing #styles { display: none; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    input[type=text], textarea {
+      width: 100%; box-sizing: border-box; font-size: 16px; padding: 9px 10px; border: 1px solid #bbb;
+      border-radius: 8px; background: #fff; font-family: inherit; color: #333; resize: none;
+    }
+    .colors button {
+      width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; box-shadow: 0 0 0 1px #bbb;
+    }
+    .colors button.on, .layouts button.on { box-shadow: 0 0 0 3px #333; }
+    .layouts button { width: 32px; height: 44px; padding: 3px; border: none; border-radius: 4px; background: #fff; cursor: pointer; box-shadow: 0 0 0 1px #bbb; }
+    .layouts svg { width: 100%; height: 100%; display: block; }
+    .btn {
+      flex: 1; font-size: 16px; padding: 11px 12px; border-radius: 24px; border: none; cursor: pointer; text-align: center;
+      background: #bc002d; color: #fff; text-decoration: none; font-family: inherit;
+    }
+    .btn.sub { background: #fff; color: #333; box-shadow: inset 0 0 0 1px #bbb; }
+    .btn.x { background: #111; }
+    #panel { position: relative; }
+    #saved { position: absolute; left: 0; right: 0; top: 100%; margin: 6px 0 0; font-size: 13px; color: #777; text-align: center; }
+    #saved:empty { display: none; }
+    #file { display: none; }
+    @media (min-width: 760px) {
+      main { flex-direction: row; justify-content: center; align-items: stretch; gap: 28px; }
+      #stage { width: auto; flex: 0 1 auto; aspect-ratio: 2 / 3; max-width: 60vw; }
+      #panel { width: 320px; align-self: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">竞选海报</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns"><button id="lang" class="pill">EN</button></div>
+  </header>
+  <main>
+    <div id="stage"><canvas id="poster" width="800" height="1200"></canvas></div>
+    <div id="panel">
+      <div id="editbox" hidden>
+        <div class="row"><textarea id="editor" rows="1" enterkeyhint="done"></textarea><button id="ok" type="button"></button></div>
+        <div class="row">
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><text x="10" y="16" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">A</text></svg>
+          <input id="tsize" type="range" min="0.3" max="3" step="0.01" value="1">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="21" font-size="22" font-weight="bold" text-anchor="middle" fill="#333">A</text></svg>
+        </div>
+      </div>
+      <div id="styles">
+        <div class="row colors" id="colors"></div>
+        <div class="row layouts" id="layouts"></div>
+      </div>
+      <div class="row">
+        <button id="save" class="btn sub"></button>
+        <a id="post" class="btn x" href="#"></a>
+      </div>
+      <p id="saved"></p>
+    </div>
+  </main>
+  <input id="file" type="file" accept="image/*">
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 竞选海报 · 中文文案
+window.__KF_ZH__ = {
+  title: '竞选海报',
+  back: '← 大厅',
+  langLabel: '切换语言',
+  ok: '确定',
+  save: '保存图片',
+  post: '分享到 X',
+  saved: '图片已保存，发帖时附上',
+  ph: { catch: '标语', name: '姓名', kana: '注音', party: '党派', slogan: '一句话' },
+  def: {
+    catch: '让这座城\n更有意思',
+    name: '王大锤',
+    kana: 'wáng dà chuí',
+    party: '乐子党',
+    slogan: '请投我一票，谢谢！'
+  },
+  share: (f) => `做了一张竞选海报：${f.party} ${f.name} #LiteGame`
+};
+</script>
+<script>
+    const $ = id => document.getElementById(id);
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('election-poster-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('election-poster-' + k, JSON.stringify(v)); } catch {} },
+    };
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/election-poster/';
+    const FIELDS = ['catch', 'name', 'kana', 'party', 'slogan'];
+
+    // ---- 文言 ----
+    const L = {
+      ja: {
+        title: '竞选海报', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        ok: '決定', save: '画像を保存', post: 'Xにポスト',
+        saved: '画像を保存しました。ポストに添付してください',
+        ph: { catch: 'キャッチコピー', name: '名前', kana: 'ふりがな', party: '政党名', slogan: 'ひとこと' },
+        def: { catch: 'この町を\nもっと面白く', name: '山田太郎', kana: 'やまだ たろう', party: '面白党', slogan: '清き一票を、よろしくお願いします' },
+        share: f => `選挙ポスターを作りました。${f.party} ${f.name}`,
+      },
+      en: {
+        title: 'Election Poster Maker', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        ok: 'Done', save: 'Save image', post: 'Post on X',
+        saved: 'Image saved. Attach it to your post.',
+        ph: { catch: 'Catchphrase', name: 'Name', kana: 'Subtitle', party: 'Party', slogan: 'Slogan' },
+        def: { catch: 'Make our town\nmore fun.', name: 'Taro Yamada', kana: 'FOR MAYOR', party: 'Fun Party', slogan: 'Your vote matters. Thank you!' },
+        share: f => `I made an election poster: ${f.name} (${f.party})`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+
+    // ---- 状態 ----
+    const COLORS = ['#2a62d8', '#c8102e', '#14834a', '#e86a10', '#6b2fa0', '#222222'];
+    const LAYOUTS = ['tate', 'yoko', 'naname'];
+    const W = 800, H = 1200;
+    const st = Object.assign({ color: COLORS[0], layout: 'tate', zoom: 1, ox: 0, oy: 0 }, store.get('state', {}));
+    let fields = store.get('fields', null) || { ...t('def') };
+    let img = null;
+    const savedPhoto = store.get('photo', null);
+    if (savedPhoto) { const im = new Image(); im.onload = () => { img = im; draw(); }; im.src = savedPhoto; }
+
+    const cv = $('poster'), ctx = cv.getContext('2d');
+    const FONT = '"Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", system-ui, sans-serif';
+    const font = (px, w = 900) => `${w} ${px}px ${FONT}`;
+    const YELLOW = '#ffe33b';
+    // 帯の色を暗くしてフチ取りに使う
+    const dark = c => '#' + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * 0.35).toString(16).padStart(2, '0')).join('');
+    const CA = () => { ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; };
+    const CJK = /[　-鿿＀-￯]/;
+
+    // 幅に収まるまで文字を小さくする
+    function fit(text, maxW, size, w = 900) {
+      ctx.font = font(size, w);
+      while (size > 10 && ctx.measureText(text).width > maxW) ctx.font = font(--size, w);
+      return size;
+    }
+    function textOut(text, x, y, size, fill, stroke, w = 900) {
+      ctx.font = font(size, w);
+      if (stroke) { ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.22; ctx.strokeStyle = stroke; ctx.strokeText(text, x, y); }
+      ctx.fillStyle = fill; ctx.fillText(text, x, y);
+    }
+    // 縦書き。改行で列を分け、右から左へ並べる。英字だけなら横書きのまま90度回す
+    function vertical(text, xRight, yTop, maxH, maxSize, fill, stroke, maxW = 1e9) {
+      const cols = text.split('\n').filter(s => s.trim());
+      if (!cols.length) return;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (!CJK.test(text)) {
+        let size = maxSize;
+        cols.forEach(c => { size = Math.min(size, fit(c, maxH, maxSize)); });
+        size = Math.min(size, maxW / cols.length / 1.15);
+        cols.forEach((c, i) => {
+          ctx.save(); ctx.translate(xRight - size / 2 - i * size * 1.15, yTop + maxH / 2); ctx.rotate(Math.PI / 2);
+          textOut(c, 0, 0, size, fill, stroke); ctx.restore();
+        });
+        return;
+      }
+      const longest = Math.max(...cols.map(c => [...c].length));
+      const size = Math.min(maxSize, maxH / longest, maxW / cols.length / 1.12);
+      cols.forEach((c, i) => {
+        const x = xRight - size / 2 - i * size * 1.12;
+        [...c].forEach((ch, j) => {
+          const y = yTop + size * (j + 0.5);
+          ctx.save(); ctx.translate(x, y);
+          if ('ー―-−〜~…'.includes(ch)) ctx.rotate(Math.PI / 2);
+          else if ('、。，．'.includes(ch)) ctx.translate(size * 0.55, -size * 0.55);
+          textOut(ch === ' ' || ch === '　' ? '' : ch, 0, 0, size, fill, stroke);
+          ctx.restore();
+        });
+      });
+    }
+
+    function drawPhoto(x, y, w, h) {
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+      ctx.fillStyle = '#d9d6d0'; ctx.fillRect(x, y, w, h);
+      const cx = x + w / 2 + st.ox, cy = y + h / 2 + st.oy;
+      if (img) {
+        const s = Math.max(w / img.width, h / img.height) * st.zoom;
+        ctx.drawImage(img, cx - img.width * s / 2, cy - img.height * s / 2, img.width * s, img.height * s);
+      } else {
+        // 写真がないときは仮のシルエット
+        const r = Math.min(w, h) * 0.2 * st.zoom;
+        ctx.fillStyle = '#a9a49c';
+        ctx.beginPath(); ctx.arc(cx, cy - r * 0.6, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx, cy + r * 2.6, r * 2.1, r * 1.9, 0, Math.PI, 0); ctx.fill();
+        ctx.fillRect(cx - r * 2.1, cy + r * 2.6, r * 4.2, h);
+      }
+      ctx.restore();
+    }
+    function partyBox(x, y, c) {
+      const p = fields.party.trim(); if (!p) return;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      const size = fit(p, 340, 44);
+      const w = ctx.measureText(p).width + 36;
+      ctx.fillStyle = '#fff'; ctx.fillRect(x, y, w, size + 30);
+      ctx.strokeStyle = c; ctx.lineWidth = 6; ctx.strokeRect(x + 3, y + 3, w - 6, size + 24);
+      textOut(p, x + 18, y + (size + 30) / 2 + 2, size, c);
+    }
+
+    // ポスター上で文字を直接編集する範囲（ポスターの座標）。タップした場所の文字を編集する
+    const BOX = {
+      tate: { party: [10, 30, 270, 90], kana: [10, 122, 270, 50], name: [20, 185, 250, 990], slogan: [300, 20, 490, 60], catch: [310, 940, 480, 240] },
+      yoko: { party: [20, 20, 380, 110], catch: [450, 110, 320, 690], kana: [50, 850, 700, 70], name: [30, 925, 740, 155], slogan: [30, 1095, 740, 100] },
+      naname: { party: [20, 20, 380, 110], catch: [450, 110, 320, 590], kana: [100, 770, 600, 70], name: [40, 845, 720, 150], slogan: [60, 1085, 680, 80] },
+    };
+    let editing = null;
+    // 文字ごとの移動量と拡大率（レイアウトごとに覚える）
+    const T = k => ((st.tx ||= {})[st.layout] ||= {})[k] ||= { x: 0, y: 0, s: 1 };
+    function tbox(k) {
+      const [x, y, w, h] = BOX[st.layout][k], t = T(k), cx = x + w / 2 + t.x, cy = y + h / 2 + t.y;
+      return [cx - w * t.s / 2, cy - h * t.s / 2, w * t.s, h * t.s];
+    }
+    function fx(k, fn) {
+      const [x, y, w, h] = BOX[st.layout][k], t = T(k), cx = x + w / 2, cy = y + h / 2;
+      ctx.save(); ctx.translate(cx + t.x, cy + t.y); ctx.scale(t.s, t.s); ctx.translate(-cx, -cy); fn(); ctx.restore();
+    }
+    function hitText(px, py) {
+      const inside = k => { const [x, y, w, h] = tbox(k); return px >= x && px <= x + w && py >= y && py <= y + h; };
+      if (editing && inside(editing)) return editing;
+      return [...FIELDS].reverse().find(inside);
+    }
+    function draw() {
+      const c = st.color, f = fields;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+      if (st.layout === 'yoko') {
+        drawPhoto(0, 0, W, 830);
+        ctx.fillStyle = c; ctx.fillRect(0, 830, W, 260);
+        fx('catch', () => vertical(f.catch, 760, 120, 660, 110, YELLOW, dark(c), 300));
+        fx('party', () => partyBox(30, 30, c));
+        fx('kana', () => { CA(); textOut(f.kana, W / 2, 885, fit(f.kana, 700, 38, 700), '#fff', null, 700); });
+        fx('name', () => { CA(); textOut(f.name, W / 2, 1000, fit(f.name, 740, 160), '#fff'); });
+        fx('slogan', () => { CA(); textOut(f.slogan, W / 2, 1145, fit(f.slogan, 740, 46), c); });
+      } else if (st.layout === 'tate') {
+        // 見本：左に色の縦帯、白い極太の縦書きの名前、右下に黄色の横書きキャッチ
+        drawPhoto(290, 0, W - 290, H);
+        ctx.fillStyle = c; ctx.fillRect(0, 0, 290, H);
+        fx('party', () => { CA(); textOut(f.party, 145, 80, fit(f.party, 240, 60), '#fff'); });
+        const nm = CJK.test(f.name) ? f.name.replace(/[ 　]/g, '') : f.name;
+        fx('name', () => vertical(nm, 270, 190, 980, 250, '#fff', null, 250));
+        fx('kana', () => { CA(); textOut(f.kana, 145, 145, fit(f.kana, 250, 30, 700), '#fff', null, 700); });
+        fx('slogan', () => { ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; textOut(f.slogan, 775, 50, fit(f.slogan, 460, 32, 700), '#fff', dark(c), 700); });
+        fx('catch', () => {
+          const lines = f.catch.split('\n').filter(l => l.trim()).slice(-3);
+          let cs = 78; lines.forEach(l => { cs = Math.min(cs, fit(l, 450, 78)); });
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          const cx = 320 + (460 - Math.max(0, ...lines.map(l => (ctx.font = font(cs), ctx.measureText(l).width)))) / 2;
+          lines.forEach((l, i) => textOut(l, cx, 1140 - (lines.length - 1 - i) * cs * 1.25, cs, YELLOW, dark(c)));
+        });
+      } else {
+        drawPhoto(0, 0, W, H);
+        ctx.fillStyle = c;
+        ctx.beginPath(); ctx.moveTo(0, 800); ctx.lineTo(W, 680); ctx.lineTo(W, 1020); ctx.lineTo(0, 1140); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.moveTo(0, 1140); ctx.lineTo(W, 1020); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+        const tilt = (y, fn) => { ctx.translate(W / 2, y); ctx.rotate(-Math.atan2(120, W)); CA(); fn(); };
+        fx('kana', () => tilt(910, () => textOut(f.kana, 0, -105, fit(f.kana, 640, 36, 700), '#fff', null, 700)));
+        fx('name', () => tilt(910, () => textOut(f.name, 0, 15, fit(f.name, 720, 160), '#fff')));
+        fx('slogan', () => tilt(1128, () => textOut(f.slogan, 0, 0, fit(f.slogan, 680, 36), c)));
+        fx('catch', () => vertical(f.catch, 760, 120, 560, 110, YELLOW, dark(c), 300));
+        fx('party', () => partyBox(30, 30, c));
+      }
+    }
+    let psTimer = 0;
+    function save() { store.set('state', st); store.set('fields', fields); draw(); loadFont(); clearTimeout(psTimer); psTimer = setTimeout(prepareShare, 300); }
+
+    // ---- 入力 ----
+    const ed = $('editor'), box = $('editbox');
+    function openEditor(k, focus) {
+      if (editing !== k) { editing = k; ed.value = fields[k]; }
+      box.hidden = false; $('panel').classList.add('editing');
+      ed.rows = k === 'catch' ? 3 : 1; ed.placeholder = t('ph')[k]; ed.setAttribute('aria-label', t('ph')[k]);
+      $('tsize').value = T(k).s;
+      // スマホはキーボードで画面が隠れるので、入力欄を触ったときだけ文字入力にする
+      if (focus && !matchMedia('(pointer: coarse)').matches) { ed.focus(); ed.select(); }
+      draw();
+    }
+    function closeEditor() { if (!editing) return; editing = null; ed.blur(); box.hidden = true; $('panel').classList.remove('editing'); draw(); }
+    ed.oninput = () => { if (editing) { fields[editing] = ed.value; save(); } };
+    ed.onkeydown = e => { if ((e.key === 'Enter' && editing !== 'catch' && !e.isComposing) || e.key === 'Escape') { e.preventDefault(); closeEditor(); } };
+    $('ok').onclick = closeEditor;
+    $('tsize').oninput = e => { if (editing) { T(editing).s = +e.target.value; save(); } };
+    // 編集中に、ポスターと編集欄の外を触ったら編集を終える
+    document.addEventListener('pointerdown', e => {
+      if (editing && !box.contains(e.target) && e.target !== cv) closeEditor();
+    }, true);
+
+    function fillInputs() { if (editing) ed.value = fields[editing]; }
+
+    COLORS.forEach(c => {
+      const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c);
+      b.onclick = () => { st.color = c; save(); marks(); };
+      $('colors').append(b);
+    });
+    const LAYOUT_SVG = {
+      yoko: '<rect width="30" height="45" fill="#ddd"/><rect y="28" width="30" height="10" fill="#888"/>',
+      tate: '<rect width="30" height="45" fill="#ddd"/><rect width="11" height="45" fill="#888"/>',
+      naname: '<rect width="30" height="45" fill="#ddd"/><path d="M0 30L30 25V37L0 42Z" fill="#888"/>',
+    };
+    LAYOUTS.forEach(l => {
+      const b = document.createElement('button'); b.dataset.l = l; b.setAttribute('aria-label', l);
+      b.innerHTML = `<svg viewBox="0 0 30 45">${LAYOUT_SVG[l]}</svg>`;
+      b.onclick = () => { closeEditor(); st.layout = l; save(); marks(); };
+      $('layouts').append(b);
+    });
+    function marks() {
+      [...$('colors').children].forEach((b, i) => b.classList.toggle('on', COLORS[i] === st.color));
+      [...$('layouts').children].forEach(b => b.classList.toggle('on', b.dataset.l === st.layout));
+    }
+
+
+    // 写真は縮小して端末内（localStorage）にだけ保存する
+    $('file').onchange = e => {
+      const file = e.target.files[0]; if (!file) return;
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        const s = Math.min(1, 1000 / Math.max(im.width, im.height));
+        const c = document.createElement('canvas'); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        const data = c.toDataURL('image/jpeg', 0.85);
+        const small = new Image(); small.onload = () => { img = small; draw(); }; small.src = data;
+        st.ox = st.oy = 0; st.zoom = 1;
+        store.set('photo', data); save();
+      };
+      im.src = url; e.target.value = '';
+    };
+
+    // ---- ポスターの操作：文字をタップで編集、文字をドラッグで移動、それ以外は写真を動かす ----
+    const pts = new Map(); let pinch = null, tap = null, grab = null;
+    const toPoster = () => W / cv.getBoundingClientRect().width;
+    const posterXY = e => { const r = cv.getBoundingClientRect(), k = W / r.width; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; };
+    const clampS = v => Math.min(3, Math.max(0.3, v));
+    cv.addEventListener('pointerdown', e => {
+      cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); pinch = null;
+      if (pts.size === 1) { tap = [e.clientX, e.clientY]; grab = hitText(...posterXY(e)) || null; } else tap = null;
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) return;
+      const prev = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (tap && Math.hypot(e.clientX - tap[0], e.clientY - tap[1]) > 8) { tap = null; if (grab && editing !== grab) openEditor(grab); }
+      if (tap) return;
+      if (pts.size >= 2) {
+        const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+        if (pinch) {
+          if (editing) { T(editing).s = clampS(T(editing).s * d / pinch); $('tsize').value = T(editing).s; }
+          else { st.zoom = Math.min(3, Math.max(0.5, st.zoom * d / pinch)); }
+        }
+        pinch = d;
+      } else {
+        const k = toPoster(), dx = (e.clientX - prev[0]) * k, dy = (e.clientY - prev[1]) * k;
+        if (grab) { T(grab).x += dx; T(grab).y += dy; }
+        else { st.ox += dx; st.oy += dy; }
+      }
+      draw();
+    });
+    const up = e => {
+      if (!pts.delete(e.pointerId)) return;
+      pinch = null;
+      if (tap && e.type === 'pointerup') {
+        // 動かさずに離したらタップ。文字なら編集、編集中なら終える
+        const hit = hitText(...posterXY(e));
+        if (hit) openEditor(hit, true);
+        else if (editing) closeEditor();
+        else $('file').click(); // 文字以外をタップしたら写真を選ぶ
+      }
+      tap = null; if (!pts.size) grab = null; save();
+    };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    cv.addEventListener('wheel', e => {
+      e.preventDefault();
+      const f = Math.exp(-e.deltaY * 0.001);
+      if (editing) { T(editing).s = clampS(T(editing).s * f); $('tsize').value = T(editing).s; }
+      else { st.zoom = Math.min(3, Math.max(0.5, st.zoom * f)); }
+      save();
+    }, { passive: false });
+
+    // ---- 保存・ポスト ----
+    function download() {
+      draw();
+      const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'election-poster.png'; a.click();
+      $('saved').textContent = t('saved');
+    }
+    $('save').onclick = download;
+    let shareFile = null;
+    function prepareShare() {
+      $('post').href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(fields))}&url=${encodeURIComponent(SHARE_URL)}`;
+      shareFile = null;
+      cv.toBlob(b => { if (b) shareFile = new File([b], 'election-poster.png', { type: 'image/png' }); }, 'image/png');
+    }
+    $('post').addEventListener('pointerdown', prepareShare);
+    $('post').addEventListener('focus', prepareShare);
+    // スマホは共有シートに画像と文を渡す。PCは画像を保存してから x.com を新しいタブで開く（Webの投稿画面には画像を添付できない）
+    $('post').onclick = e => {
+      const coarse = matchMedia('(pointer: coarse)').matches;
+      $('post').href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(fields))}&url=${encodeURIComponent(SHARE_URL)}`;
+      if (coarse && typeof navigator.share === 'function' && shareFile && navigator.canShare?.({ files: [shareFile] })) {
+        e.preventDefault();
+        navigator.share({ files: [shareFile], text: `${t('share')(fields)}\n${SHARE_URL}` }).catch(err => { if (err.name !== 'AbortError') location.href = $('post').href; });
+        return;
+      }
+      if (!coarse) download();
+    };
+
+    // ---- 言語 ----
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+      $('ok').textContent = t('ok');
+      $('save').textContent = t('save'); $('post').textContent = t('post');
+      if (matchMedia('(pointer: coarse)').matches) $('post').removeAttribute('target');
+      else { $('post').target = '_blank'; $('post').rel = 'noopener'; }
+      $('saved').textContent = '';
+      prepareShare();
+    }
+    $('lang').onclick = () => {
+      const old = L[lang].def;
+      lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang);
+      // 書き換えていない初期文は、新しい言語の初期文に差し替える
+      FIELDS.forEach(k => { if (fields[k] === old[k]) fields[k] = t('def')[k]; });
+      fillInputs(); applyLang(); save();
+    };
+
+    // ポスターを、置き場所に収まる最大の 2:3 にする
+    function fitPoster() {
+      const sg = $('stage'), w = Math.min(sg.clientWidth, sg.clientHeight * 2 / 3);
+      cv.style.width = w + 'px'; cv.style.height = w * 1.5 + 'px';
+    }
+    new ResizeObserver(fitPoster).observe($('stage'));
+    fitPoster();
+    fillInputs(); marks(); applyLang(); draw();
+    // Webフォントは使う文字の分だけ読み込まれるので、文字が変わるたびに読み込んで描き直す
+    let fontKey = '';
+    function loadFont() {
+      const text = Object.values(fields).join('') + t('def').party;
+      if (!document.fonts || text === fontKey) return; fontKey = text;
+      Promise.all([document.fonts.load(font(100), text), document.fonts.load(font(100, 700), text)]).then(draw, () => {});
+    }
+    loadFont();
+  </script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

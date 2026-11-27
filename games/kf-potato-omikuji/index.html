@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>土豆签 · LiteGame</title>
+  <meta name="description" content="拉一根薯条，比谁拉得长。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="土豆签 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/potato-omikuji/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/potato-omikuji/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #ffe6b8; color: #5a2a10;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif;
+      display: flex; flex-direction: column; overflow: hidden;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      -webkit-user-select: none; user-select: none;
+    }
+    header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+    header a { color: #5a2a10; font-size: 14px; text-decoration: none; margin-right: auto; }
+    header button, header select {
+      background: #fff; border: 1px solid #e0b070; border-radius: 8px;
+      height: 34px; min-width: 40px; padding: 0 10px; font-size: 13px; color: #5a2a10; cursor: pointer;
+    }
+    header svg { width: 18px; height: 18px; display: block; }
+    #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; cursor: grab; touch-action: none; }
+    #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #result { position: absolute; left: 0; right: 0; top: 2%; display: none; flex-direction: column; align-items: center; pointer-events: none; }
+    #result b { font-size: clamp(44px, min(15vw, 13vh), 120px); font-weight: 900; line-height: 1.1; color: #fff; text-shadow: 0 4px 0 #b3261e, 0 0 18px rgba(0,0,0,.2); }
+    #result span { font-size: clamp(15px, min(4.5vw, 3.6vh), 26px); font-weight: 800; color: #8a4a1a; }
+    #result span.new { color: #d0261c; }
+    /* 横長の画面では、結果の文字を左、ポテトを右に並べる */
+    @media (min-aspect-ratio: 5/4) {
+      #result { top: 0; bottom: 0; right: 50%; justify-content: center; }
+      #result b { font-size: clamp(44px, min(9vw, 18vh), 120px); }
+    }
+    #msg { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+    #controls { display: flex; gap: 8px; padding: 8px 12px 0; max-width: 640px; width: 100%; margin: 0 auto; }
+    #controls button, #controls a {
+      flex: 1; height: 64px; border: none; border-radius: 14px; font-size: 22px; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none;
+      touch-action: manipulation;
+    }
+    .go { background: #d9302a; color: #fff; box-shadow: 0 4px 0 #8f1a14; }
+    .post { background: #111; color: #fff; box-shadow: 0 4px 0 #000; flex: 0 0 34% !important; font-size: 17px !important; }
+    #controls button:active, #controls a:active { transform: translateY(3px); box-shadow: none; }
+    #controls.hide { visibility: hidden; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">土豆签</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="sound" aria-label="sound"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><div id="result"><b></b><span></span></div><div id="msg"></div></div>
+  <div id="controls"></div>
+
+  </main>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+  <script>
+    // CDN が読めないときの一言
+    setTimeout(() => { if (!window.POTATO_READY) { const m = document.getElementById('msg'); m.style.display = 'flex'; m.textContent = 'Failed to load. Please reload. / 読み込めませんでした。再読み込みしてください。'; } }, 8000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 土豆签 · 中文文案
+window.__KF_ZH__ = {
+  title: '土豆签',
+  back: '← 大厅',
+  again: '再来一次',
+  post: '分享到 X',
+  best: (s) => `最佳 ${s}`,
+  share: (s) => `拉出了 ${s} #LiteGame`
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    window.POTATO_READY = true;
+
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/potato-omikuji/';
+
+    // ---------- 言語 ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('potato-omikuji:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('potato-omikuji:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (['ja', 'ko', 'en', 'th'].includes(c)) return c; } return 'en'; };
+    const DICT = {
+      ja: { title: '土豆签', back: '← トップへ戻る', again: 'もう一回', post: 'Xに投稿', best: s => `自己ベスト ${s}`, share: s => `${s}のポテトが出た #土豆签ゲーム` },
+      ko: { title: '감자튀김 뽑기', back: '← 처음으로', again: '다시 뽑기', post: 'X에 게시', best: s => `최고 기록 ${s}`, share: s => `${s}짜리 감자튀김이 나왔다 #土豆签ゲーム` },
+      en: { title: 'Fry Fortune', back: '← Back to top', again: 'Pull again', post: 'Post on X', best: s => `Best ${s}`, share: s => `I pulled a ${s} fry #土豆签ゲーム` },
+      th: { title: 'เสี่ยงทายเฟรนช์ฟราย', back: '← กลับหน้าแรก', again: 'ดึงอีกครั้ง', post: 'โพสต์ลง X', best: s => `สถิติดีที่สุด ${s}`, share: s => `ได้เฟรนช์ฟรายยาว ${s} #土豆签ゲーム` },
+    }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    const t = k => DICT[lang][k];
+    const langSel = document.getElementById('lang');
+    langSel.value = lang;
+    langSel.addEventListener('change', () => { lang = langSel.value; store.set('lang', lang); applyLang(); });
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('back').textContent = t('back');
+      renderControls();
+      if (state === 'result') { showResult(); prepareShare(); }
+    }
+
+    // ---------- 音 ----------
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const drawSoundBtn = () => {
+      soundBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+    };
+    drawSoundBtn();
+    soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('sound', soundOn); drawSoundBtn(); });
+    let ac = null;
+    function initAudio() {
+      if (ac) return;
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+        o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
+      } catch { ac = null; }
+    }
+    addEventListener('pointerdown', initAudio, { capture: true });
+    addEventListener('keydown', initAudio, { capture: true });
+    // 引く音: 1cmごとに短くキュッと鳴り、だんだん高くなる
+    function tick(cm) {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime, f = 260 * Math.pow(2, Math.min(cm, 100) / 40);
+      const o = ac.createOscillator(); o.type = 'triangle';
+      o.frequency.setValueAtTime(f, now);
+      o.frequency.linearRampToValueAtTime(f * 1.15, now + 0.06);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.12, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      o.connect(g).connect(ac.destination);
+      o.start(now); o.stop(now + 0.1);
+    }
+    function popSound(big) {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime;
+      const o = ac.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(big ? 900 : 600, now);
+      o.frequency.exponentialRampToValueAtTime(big ? 1800 : 1100, now + 0.08);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.3, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + (big ? 0.6 : 0.25));
+      o.connect(g).connect(ac.destination);
+      o.start(now); o.stop(now + 0.7);
+      if (big) [1320, 1760, 2200].forEach((f, i) => {
+        const o2 = ac.createOscillator(), g2 = ac.createGain(), t0 = now + 0.12 + i * 0.1;
+        o2.frequency.value = f; g2.gain.setValueAtTime(0.15, t0); g2.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4);
+        o2.connect(g2).connect(ac.destination); o2.start(t0); o2.stop(t0 + 0.45);
+      });
+    }
+
+    // ---------- 3D（1単位 = 1cm） ----------
+    const stage = document.getElementById('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.localClippingEnabled = true;
+    stage.prepend(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#ffe6b8');
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.5, 2000);
+    scene.add(new THREE.HemisphereLight('#fff6e0', '#c08850', 1.6));
+    const sun = new THREE.DirectionalLight('#ffffff', 1.8);
+    sun.position.set(20, 40, 30);
+    scene.add(sun);
+
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(400, 64), new THREE.MeshStandardMaterial({ color: '#f5c98a', roughness: 1 }));
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    // ポテトの入れ物（赤い紙の箱。上が広い四角すい台）
+    const BOX_H = 11, BOX_TOP_W = 10, BOX_BOT_W = 7, BOX_D = 0.55;
+    const box = new THREE.Group();
+    scene.add(box);
+    const boxGeo = new THREE.CylinderGeometry(BOX_TOP_W / Math.SQRT2, BOX_BOT_W / Math.SQRT2, BOX_H, 4, 1, true);
+    boxGeo.rotateY(Math.PI / 4);
+    boxGeo.scale(1, 1, BOX_D);
+    boxGeo.translate(0, BOX_H / 2, 0);
+    const red = new THREE.MeshStandardMaterial({ color: '#d9302a', roughness: 0.6, side: THREE.DoubleSide });
+    box.add(new THREE.Mesh(boxGeo, red));
+    const bottom = new THREE.Mesh(new THREE.PlaneGeometry(BOX_BOT_W, BOX_BOT_W * BOX_D), red);
+    bottom.rotation.x = -Math.PI / 2; bottom.position.y = 0.01;
+    box.add(bottom);
+    // 正面の黄色いアーチ模様
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.35, 8, 32, Math.PI), new THREE.MeshStandardMaterial({ color: '#ffc81e', roughness: 0.5 }));
+    arch.position.set(0, 3.8, BOX_TOP_W * BOX_D / 2 * 0.86 + 0.25);
+    arch.rotation.x = -0.14;
+    box.add(arch);
+
+    const FRY_W = 0.8;
+    const fryGeo = new THREE.BoxGeometry(FRY_W, 1, FRY_W); fryGeo.translate(0, 0.5, 0);
+    const fryMat = new THREE.MeshStandardMaterial({ color: '#f4c552', roughness: 0.75 });
+    // 箱の中のポテト。どれも引っぱれて、長さは1本ずつ違う（抜けるまで分からない）
+    const rand = (a, b) => a + Math.random() * (b - a);
+    // 箱の下のほうは描かない（長いポテトが箱の底や床から突き出ないように）
+    const floorClip = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2);
+    const FRY_N = 20;
+    const fries = [];
+    for (let i = 0; i < FRY_N; i++) {
+      const m = new THREE.Mesh(fryGeo, new THREE.MeshStandardMaterial({ color: '#f4c552', roughness: 0.72, emissive: '#000000', clippingPlanes: [floorClip] }));
+      m.userData = { base: new THREE.Vector3(), dir: new THREE.Vector3(), rot: new THREE.Euler(), L: 8, peek: 3, pulled: 0 };
+      box.add(m);
+      fries.push(m);
+    }
+    function fillBox() {
+      // 箱の口に、ほどよくばらけるように並べる
+      fries.forEach((m, i) => {
+        const u = m.userData;
+        const col = i % 5, row = Math.floor(i / 5);
+        const x = -2.4 + col * 1.2 + rand(-0.2, 0.2), z = -0.9 + row * 0.6 + rand(-0.1, 0.1);
+        u.L = rollLength();
+        u.peek = rand(1.5, 5.5);
+        u.pulled = 0;
+        // 長いポテトほど傾きを小さくして、箱の底や横から突き出ないようにする
+        const tilt = Math.min(1, 8 / u.L);
+        u.rot.set((z * 0.04 + rand(-0.02, 0.02)) * tilt, rand(0, Math.PI), (x * -0.05 + rand(-0.05, 0.05)) * tilt);
+        u.dir.set(0, 1, 0).applyEuler(u.rot);
+        // 箱の口（RIM）の高さで x, z の位置に来るように根元を決める
+        u.base.set(x, RIM, z).addScaledVector(u.dir, u.peek - u.L);
+        m.scale.y = u.L;
+        m.rotation.copy(u.rot);
+        m.position.copy(u.base);
+        m.material.color.set('#f4c552');
+        m.material.emissive.set('#000000');
+        m.visible = true;
+        if (!m.material.clippingPlanes?.length) { m.material.clippingPlanes = [floorClip]; m.material.needsUpdate = true; }
+      });
+    }
+
+    // ものさし（10cmごとの目盛りの絵をくり返す）
+    const rc = document.createElement('canvas'); rc.width = 64; rc.height = 640;
+    {
+      const g = rc.getContext('2d');
+      g.fillStyle = '#fffbe8'; g.fillRect(0, 0, 64, 640);
+      g.fillStyle = '#5a2a10';
+      for (let i = 0; i < 20; i++) {
+        const y = 640 - i * 32, w = i % 10 === 0 ? 40 : i % 2 === 0 ? 26 : 16;
+        g.fillRect(0, y - 3, w, 6);
+      }
+    }
+    const rulerTex = new THREE.CanvasTexture(rc);
+    rulerTex.colorSpace = THREE.SRGBColorSpace;
+    rulerTex.wrapT = THREE.RepeatWrapping;
+    rulerTex.anisotropy = 4;
+    const ruler = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1), new THREE.MeshBasicMaterial({ map: rulerTex }));
+    ruler.geometry.translate(0, 0.5, 0);
+    scene.add(ruler);
+
+    // ---------- 長さ ----------
+    // ほとんどは12〜30cm、まれに40cm超え、ごくまれに70cm超え
+    const rollLength = () => Math.round((10 + -Math.log(1 - Math.random()) * 10) * 10) / 10;
+    const fmt = L => `${L.toFixed(1)}cm`;
+    const RIM = BOX_H - 0.5;
+
+    let state = 'idle', L = 8, best = store.get('best', 0), isNewBest = false;
+    let pick = null, grabbing = false, lastY = 0, keyHold = false, lastTick = 0, needSnap = false, hint = 0;
+    const cam = { y: 9, d: 60, x: 0 };
+    // 抜けきるまでに引く長さ
+    const needPull = m => m.userData.L - m.userData.peek + 0.6;
+
+    function reset() {
+      state = 'idle';
+      fillBox();
+      pick = null; grabbing = false; lastTick = 0;
+      ruler.visible = false;
+      resultEl.style.display = 'none';
+      snap = null; needSnap = false;
+      renderControls();
+    }
+    // 引くポテトを決める（前に抜いたポテトは食べたことにして消す）
+    function choose(m) {
+      if (state === 'result') { pick.visible = false; ruler.visible = false; resultEl.style.display = 'none'; snap = null; needSnap = false; }
+      pick = m; L = m.userData.L; lastTick = Math.floor(m.userData.pulled);
+      state = 'pull';
+      renderControls();
+    }
+    // 自分で引いた分だけ抜ける
+    function pullBy(dy) {
+      if (state !== 'pull' || !pick || dy === 0) return;
+      const u = pick.userData;
+      u.pulled = Math.max(0, Math.min(needPull(pick), u.pulled + dy));
+      // 1cm引くごとにキュッと鳴る（少しずつ高く）
+      const cm = Math.floor(u.pulled);
+      if (cm > lastTick) { lastTick = cm; tick(cm); }
+      if (cm < lastTick) lastTick = cm;
+      if (u.pulled >= needPull(pick)) finish();
+    }
+    // 抜けたポテトは箱の右の床へ飛んでいき、立ったところで結果を出す
+    const FX = BOX_TOP_W / 2 + 2.5, FZ = 1.5;
+    const flyFrom = new THREE.Vector3(), flyRot = new THREE.Vector2();
+    let flyT = 0, landed = false;
+    function finish() {
+      state = 'result'; grabbing = false; keyHold = false;
+      flyT = 0; landed = false;
+      // 箱から出たポテトは下まで全部見せる
+      pick.material.clippingPlanes = []; pick.material.needsUpdate = true;
+      flyFrom.copy(pick.position); flyRot.set(pick.rotation.x, pick.rotation.z);
+      popSound(L >= 40);
+      renderControls();
+    }
+    function land() {
+      landed = true;
+      isNewBest = L > best;
+      if (isNewBest) { best = L; store.set('best', best); }
+      // 長いほどきつね色、70cm超えは光る
+      pick.material.color.set(L >= 40 ? '#f0a83a' : '#f4c552');
+      pick.material.emissive.set(L >= 70 ? '#7a4a00' : '#000000');
+      ruler.visible = true;
+      ruler.scale.y = Math.ceil(L) + 1;
+      rulerTex.repeat.set(1, ruler.scale.y / 10);
+      rulerTex.offset.set(0, 0);
+      showResult();
+      resultEl.style.display = 'flex';
+      needSnap = true;
+      renderControls();
+    }
+
+    // 画面サイズに合わせて、見せたい範囲（下端〜上端、幅）が入るカメラ位置を求める
+    const resultEl = document.getElementById('result');
+    // 見せたい範囲: 待ち・引いている間は箱とポテト、結果では箱と右に立つポテト
+    function view() {
+      const top = Math.max(17, pick && pick.visible ? pick.position.y + L + 1 : 0);
+      return state === 'result' ? [0, top, FX + 3 + BOX_TOP_W / 2 + 0.5, (FX + 2.5 - BOX_TOP_W / 2) / 2] : [0, top, 14, 0];
+    }
+    function frameFor(y0, y1, w, cx = 0) {
+      const aspect = camera.aspect, tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      // 結果の文字のぶん、縦長なら上を、横長なら左を空ける
+      const side = state === 'result' && aspect >= 1.25 && !shooting;
+      const topFrac = state === 'result' && !side ? 0.26 : 0.08;
+      const bot = shooting ? 0.1 : 0.04;
+      const h = (y1 - y0) / (1 - topFrac - bot);
+      const wFrac = side ? 0.45 : 1;
+      const d = Math.max(h / 2 / tan, w / 2 / (tan * aspect * wFrac)) * 1.02;
+      // 横長のときは、中身が画面の右寄り（75%の位置）に来るようカメラを左へずらす
+      const x = side ? -0.5 * tan * aspect * d : 0;
+      return { y: y0 - h * bot + h / 2, d, x: x + cx };
+    }
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / Math.max(1, h);
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', resize);
+    resize();
+
+    let time = 0;
+    function update(dt) {
+      time += dt;
+      if (keyHold) pullBy(dt * 25);
+      // 待っている間は、ときどきどれか1本がピョコッと浮く（引けそうに見せる）
+      const hk = time % 1.2;
+      if (hk < dt) hint = Math.floor(Math.random() * FRY_N);
+      const lift = 1 - Math.exp(-dt * 12);
+      for (let i = 0; i < FRY_N; i++) {
+        const m = fries[i], u = m.userData;
+        if (m === pick && state === 'result') {
+          // 箱から完全に出て、右の床にまっすぐ立つ
+          flyT += dt;
+          const a = Math.min(1, flyT / 0.8), e = a * a * (3 - 2 * a);
+          m.position.set(
+            flyFrom.x + (FX - flyFrom.x) * e,
+            flyFrom.y + (0 - flyFrom.y) * e + Math.sin(a * Math.PI) * (Math.min(L, 15) + 4),
+            flyFrom.z + (FZ - flyFrom.z) * e);
+          m.rotation.x = flyRot.x * (1 - e); m.rotation.z = flyRot.y * (1 - e);
+          if (a >= 1 && !landed) land();
+          continue;
+        }
+        const bob = state === 'idle' && i === hint && hk < 0.5 ? Math.sin(hk / 0.5 * Math.PI) * 0.8 : 0;
+        m.position.copy(u.base).addScaledVector(u.dir, u.pulled + bob);
+        if (m === pick && grabbing) m.rotation.z = u.rot.z + Math.sin(time * 30) * 0.01;
+        else m.rotation.z = u.rot.z;
+      }
+      if (state === 'result') {
+        ruler.position.set(FX + FRY_W / 2 + 0.9, 0, FZ);
+        pick.material.emissiveIntensity = L >= 70 ? 0.7 + Math.sin(time * 5) * 0.3 : 1;
+      }
+      const f = frameFor(...view());
+      const k = 1 - Math.exp(-dt * 6);
+      cam.y += (f.y - cam.y) * k; cam.d += (f.d - cam.d) * k; cam.x += (f.x - cam.x) * k;
+    }
+    function draw() {
+      camera.position.set(cam.x, cam.y + cam.d * 0.12, cam.d);
+      camera.lookAt(cam.x, cam.y, 0);
+      renderer.render(scene, camera);
+      if (needSnap && state === 'result') {
+        // カメラが落ち着いてから撮る
+        const f = frameFor(...view());
+        if (landed && Math.abs(f.d - cam.d) < f.d * 0.01) { needSnap = false; setTimeout(() => { if (state === 'result') { takeSnap(); prepareShare(); } }); }
+      }
+    }
+    let last = 0;
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // ---------- 操作 ----------
+    // 押したところにいちばん近いポテト（見えている先っぽ）をつかむ
+    const v = new THREE.Vector3();
+    function fryAt(cx, cy) {
+      const r = stage.getBoundingClientRect();
+      let best = null, bd = Infinity;
+      for (const m of fries) {
+        if (!m.visible || (m === pick && state === 'result')) continue;
+        const u = m.userData;
+        // 箱から出ている部分（口〜先っぽ）の線分に一番近い点との距離
+        for (let s = 0; s <= 4; s++) {
+          v.copy(u.base).addScaledVector(u.dir, u.L - u.peek + (u.peek + u.pulled) * s / 4).project(camera);
+          const px = r.left + (v.x + 1) / 2 * r.width, py = r.top + (1 - v.y) / 2 * r.height;
+          const d = Math.hypot(px - cx, py - cy);
+          if (d < bd) { bd = d; best = m; }
+        }
+      }
+      return bd < Math.max(40, r.width * 0.12) ? best : null;
+    }
+    stage.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      // 1本さわったら、結果が出て「もう一回」を押すまでそのポテトだけ（どこを押してもそれをつかむ）
+      if (state === 'result') return;
+      if (state === 'idle') { const m = fryAt(e.clientX, e.clientY); if (!m) return; choose(m); }
+      grabbing = true; lastY = e.clientY;
+      stage.setPointerCapture?.(e.pointerId);
+    });
+    stage.addEventListener('pointermove', e => {
+      if (!grabbing) return;
+      // 画面上の指の移動を、3D空間のcmに直す
+      const perPx = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * cam.d / stage.clientHeight;
+      pullBy((lastY - e.clientY) * perPx);
+      lastY = e.clientY;
+    });
+    const release = () => { grabbing = false; };
+    stage.addEventListener('pointerup', release);
+    stage.addEventListener('pointercancel', release);
+    const isKey = e => (e.code === 'Space' || e.code === 'ArrowUp') && !['SELECT', 'A', 'BUTTON'].includes(e.target.tagName);
+    addEventListener('keydown', e => {
+      if (!isKey(e)) return;
+      e.preventDefault();
+      if (e.repeat) return;
+      // キーのときは、箱のポテトからランダムに1本
+      if (state === 'result') return;
+      if (state === 'idle') choose(fries[Math.floor(Math.random() * FRY_N)]);
+      keyHold = true;
+    });
+    addEventListener('keyup', e => { if (isKey(e)) keyHold = false; });
+
+    // ---------- 画面 ----------
+    const controls = document.getElementById('controls');
+    function renderControls() {
+      controls.innerHTML = '';
+      controls.classList.toggle('hide', state !== 'result');
+      if (state !== 'result') return;
+      const b = document.createElement('button');
+      b.className = 'go'; b.textContent = t('again');
+      b.addEventListener('click', reset);
+      controls.append(b);
+      if (state === 'result') {
+        const a = document.createElement('a');
+        a.className = 'post'; a.textContent = t('post');
+        a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(fmt(L)))}&url=${encodeURIComponent(SHARE_URL)}`;
+        const coarse = matchMedia('(pointer: coarse)').matches;
+        if (!coarse) { a.target = '_blank'; a.rel = 'noopener'; }
+        // スマホは画像ごと共有シートへ。PCは画像を保存してから投稿画面を開く
+        a.addEventListener('click', e => {
+          const text = t('share')(fmt(L));
+          if (coarse && navigator.share) {
+            e.preventDefault();
+            const file = shareFile();
+            const data = file && navigator.canShare?.({ files: [file] }) ? { files: [file], text: `${text}\n${SHARE_URL}` } : { text: `${text}\n${SHARE_URL}` };
+            navigator.share(data).catch(() => {});
+            return;
+          }
+          const img = resultImage();
+          if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'potato-omikuji.png'; d.click(); }
+        });
+        controls.append(a);
+      }
+    }
+    function showResult() {
+      resultEl.children[0].textContent = fmt(L);
+      resultEl.children[1].textContent = t('best')(fmt(best));
+      resultEl.children[1].className = isNewBest ? 'new' : '';
+    }
+
+    // 結果画像: 結果の3D画面を正方形に切り抜き、長さを重ねる
+    let snap = null, shareCache = null, shooting = false;
+    function takeSnap() {
+      // 正方形の画面で、上に文字の余白をとって撮り直す
+      const pr = renderer.getPixelRatio();
+      renderer.setPixelRatio(1); renderer.setSize(1080, 1080, false);
+      camera.aspect = 1; camera.updateProjectionMatrix();
+      shooting = true;
+      const f = frameFor(...view());
+      camera.position.set(f.x, f.y + f.d * 0.12, f.d); camera.lookAt(f.x, f.y, 0);
+      renderer.render(scene, camera);
+      shooting = false;
+      snap = document.createElement('canvas'); snap.width = snap.height = 1080;
+      snap.getContext('2d').drawImage(renderer.domElement, 0, 0, 1080, 1080);
+      renderer.setPixelRatio(pr); resize();
+      draw();
+      shareCache = null;
+    }
+    function resultImage() {
+      if (!snap) return null;
+      const c = document.createElement('canvas'); c.width = c.height = 1080;
+      const g = c.getContext('2d');
+      g.drawImage(snap, 0, 0);
+      g.textAlign = 'center'; g.fillStyle = '#fff'; g.lineJoin = 'round';
+      const font = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+      const text = (str, x, y, px, max, align = 'center') => {
+        g.textAlign = align; g.font = font(px);
+        const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = font(px); }
+        g.lineWidth = px * .16; g.strokeStyle = '#b3261e'; g.strokeText(str, x, y); g.fillText(str, x, y);
+      };
+      text(fmt(L), 540, 200, 180, 960);
+      text(t('title'), 540, 1040, 52, 900);
+      return c;
+    }
+    // 共有用ファイルは言語ごとに作っておく（クリック時に待つと Safari で共有が止まるため）
+    function prepareShare() {
+      if (!snap) return;
+      const key = lang;
+      if (shareCache?.key === key) return;
+      shareCache = { key, file: null };
+      resultImage().toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'potato-omikuji.png', { type: 'image/png' }); }, 'image/png');
+    }
+    const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+
+    reset();
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+    // 最初のフレームで固まらないよう、先に1回描いておく
+    { const f = frameFor(0, 17, 14); cam.y = f.y; cam.d = f.d; cam.x = f.x; }
+    draw();
+    requestAnimationFrame(t0 => { last = t0; requestAnimationFrame(loop); });
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

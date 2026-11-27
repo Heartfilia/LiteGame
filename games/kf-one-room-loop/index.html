@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1DK 循环 · LiteGame</title>
+  <meta name="description" content="每天做任务回到床上，别撞上昨天的自己。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="1DK 循环 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/one-room-loop/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/one-room-loop/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #23262e; color: #eee; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #ffd27a; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill {
+      font: inherit; font-size: 15px; font-weight: bold; background: #343844; color: #eee;
+      border: 2px solid #4a4f5e; border-radius: 999px; min-width: 44px; height: 36px; padding: 0 10px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .pill[hidden] { display: none; }
+    main {
+      flex: 1; min-height: 0; width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
+      display: flex; flex-direction: column;
+      padding: 0 0 calc(80px + env(safe-area-inset-bottom));
+    }
+    #hud { display: flex; justify-content: center; align-items: flex-end; padding: 0 16px; height: 64px; font-weight: bold; }
+    #day { font-size: 30px; }
+    #stage { position: relative; flex: 1; min-height: 0; touch-action: none; }
+    #stage canvas { display: block; width: 100%; height: 100%; }
+    .ov {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+      background: rgba(20, 22, 28, .78); text-align: center; padding: 16px; box-sizing: border-box;
+    }
+    .ov[hidden] { display: none; }
+    #dayCard { background: transparent; pointer-events: none; font-size: 44px; font-weight: bold; text-shadow: 0 3px 0 #000; }
+    h1 { margin: 0; font-size: 40px; color: #ffd27a; }
+    #rDays { font-size: 34px; font-weight: bold; }
+    #rMsg { font-size: 18px; }
+    .big {
+      font: inherit; font-size: 22px; font-weight: bold; padding: 14px 0; width: 220px; border-radius: 16px; border: none;
+      cursor: pointer; color: #23262e; background: #ffd27a; box-shadow: 0 4px 0 #b58a35;
+      text-decoration: none; display: block; touch-action: manipulation;
+    }
+    .big:active { transform: translateY(3px); box-shadow: 0 1px 0 #b58a35; }
+    .big.x { background: #000; color: #fff; box-shadow: 0 4px 0 #555; }
+    #err { color: #ff8b8b; }
+
+    /* エディタ（URLの最後に #edit を付けると出る） */
+    #tools { display: flex; flex-direction: column; gap: 6px; padding: 6px 12px 0; }
+    #tools[hidden] { display: none; }
+    .row { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tool {
+      font: inherit; font-size: 13px; font-weight: bold; color: #eee; background: #343844;
+      border: 2px solid #4a4f5e; border-radius: 8px; padding: 4px 6px; cursor: pointer;
+      display: flex; align-items: center; gap: 4px; touch-action: manipulation;
+    }
+    .tool i { width: 12px; height: 12px; border-radius: 3px; display: block; }
+    .tool.on { border-color: #ffd27a; background: #4a4536; }
+    .tool.act { background: #ffd27a; color: #23262e; border-color: #ffd27a; }
+    #exportOv textarea {
+      width: 100%; max-width: 360px; height: 200px; font: 14px/1.3 ui-monospace, Menlo, Consolas, monospace;
+      background: #15171c; color: #eee; border: 2px solid #4a4f5e; border-radius: 8px; padding: 8px; box-sizing: border-box;
+      -webkit-user-select: text; user-select: text;
+    }
+  </style>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+</head>
+<body>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="editBtn" class="pill" hidden>編集</button>
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill" aria-label="sound"></button>
+    </div>
+  </header>
+  <main>
+    <div id="hud"><span id="day"></span></div>
+    <div id="stage">
+      <div id="dayCard" class="ov" hidden></div>
+      <div id="titleOv" class="ov">
+        <h1 id="tTitle">1DK 循环</h1>
+        <button id="startBtn" class="big">スタート</button>
+        <p id="err" hidden></p>
+      </div>
+      <div id="resultOv" class="ov" hidden>
+        <div id="rDays"></div>
+        <div id="rMsg"></div>
+        <button id="retryBtn" class="big">もう一度</button>
+        <a id="shareBtn" class="big x" href="#">Xに投稿</a>
+      </div>
+      <div id="exportOv" class="ov" hidden>
+        <textarea id="exportText" spellcheck="false"></textarea>
+        <div class="row">
+          <button id="copyBtn" class="tool act">コピー</button>
+          <button id="importBtn" class="tool">読み込む</button>
+          <button id="closeExport" class="tool">閉じる</button>
+        </div>
+      </div>
+    </div>
+    <div id="tools" hidden>
+      <div id="palette" class="row"></div>
+      <div class="row">
+        <button class="tool" data-size="w-">幅 −</button>
+        <button class="tool" data-size="w+">幅 ＋</button>
+        <button class="tool" data-size="h-">奥 −</button>
+        <button class="tool" data-size="h+">奥 ＋</button>
+        <button id="resetBtn" class="tool">初期に戻す</button>
+        <button id="exportBtn" class="tool">書き出し</button>
+        <button id="playBtn" class="tool act">遊ぶ</button>
+      </div>
+    </div>
+  </main>
+
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 1DK 循环 · 中文文案
+window.__KF_ZH__ = {
+  title: '1DK 循环',
+  back: '← 大厅',
+  start: '开始',
+  retry: '再来一次',
+  share: '分享到 X',
+  day: (n) => `第 ${n} 天`,
+  ghostDay: (n) => `第 ${n} 天`,
+  days: (n) => `活了 ${n} 天`,
+  msgHit: (d) => d <= 1 ? '昨天的自己不好惹' : '再试一次',
+  shareText: (n) => `在 1DK 循环里活了 ${n} 天 #LiteGame`
+};
+</script>
+<script type="module">
+    const errEl = document.getElementById('err');
+    let THREE;
+    try { THREE = await import('three'); }
+    catch {
+      errEl.hidden = false;
+      errEl.textContent = '3Dライブラリを読み込めませんでした / Failed to load 3D library';
+      document.getElementById('startBtn').disabled = true;
+      throw new Error('three load failed');
+    }
+
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('one-room-loop:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('one-room-loop:' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    // ---- 音 ----
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const SPK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
+    const updateSoundBtn = () => {
+      soundBtn.innerHTML = SPK + (soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>' : '<path d="M16 9l6 6M22 9l-6 6"/>') + '</svg>';
+    };
+    soundBtn.onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+    updateSoundBtn();
+    let actx;
+    function beep(freq, dur, type = 'sine', vol = 0.12, slide = 0, delay = 0) {
+      if (!soundOn) return;
+      try {
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + delay;
+        o.type = type; o.frequency.setValueAtTime(freq, t);
+        if (slide) o.frequency.linearRampToValueAtTime(freq + slide, t + dur);
+        g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur);
+      } catch {}
+    }
+    const sndStep = () => beep(180, 0.05, 'triangle', 0.08);
+    const sndTask = () => { beep(660, 0.1, 'square', 0.06); beep(990, 0.15, 'square', 0.06, 0, 0.08); };
+    const sndClear = () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.15, 'square', 0.06, 0, i * 0.09));
+    const sndDie = () => beep(300, 0.6, 'sawtooth', 0.1, -240);
+
+    // ---- 文言 ----
+    const L = {
+      ja: {
+        title: '1DK 循环', back: '← トップへ戻る', lang: 'EN', start: 'スタート', retry: 'もう一度', share: 'Xに投稿',
+        day: n => `${n}日目`, ghostDay: n => `${n}日目`,
+        days: n => `${n}日 生存`,
+        msgHit: d => d <= 1 ? '昨日の自分は手強い' : d <= 4 ? '過去の自分に轢かれた' : d <= 8 ? '部屋が自分で渋滞している' : 'もはや自分の群れ',
+        shareText: n => `1DK 循环で${n}日生き延びた\n#1DK 循环`,
+      },
+      en: {
+        title: '1DK Loop', back: '← Top', lang: '日本語', start: 'Start', retry: 'Retry', share: 'Post on X',
+        day: n => `Day ${n}`, ghostDay: n => `D${n}`,
+        days: n => `Survived ${n} day${n === 1 ? '' : 's'}`,
+        msgHit: d => d <= 1 ? 'Yesterday\'s you is tough' : d <= 4 ? 'Run over by your past self' : d <= 8 ? 'Traffic jam of yourselves' : 'A herd of yous',
+        shareText: n => `I survived ${n} day${n === 1 ? '' : 's'} in 1DK Loop\n#1DKLoop`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const langBtn = document.getElementById('lang');
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('back').textContent = t('back');
+      document.getElementById('tTitle').textContent = t('title');
+      document.getElementById('startBtn').textContent = t('start');
+      document.getElementById('retryBtn').textContent = t('retry');
+      document.getElementById('shareBtn').textContent = t('share');
+      langBtn.textContent = t('lang');
+      updateHud();
+      ghosts.forEach(g => setLabel(g));
+      if (result) showResult();
+    }
+    langBtn.onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+    // ---- 部屋の間取り ----
+    // 1文字が1マス。上の行が奥、左の列が左。エディタ（#edit）の「書き出し」でこの形の文字列が出る。
+    const DEFAULT_LAYOUT = [
+      '####..v*s',
+      'kkf#..*Pb',
+      'E**..tt.b',
+      '##.#.*...',
+      'w*.######',
+      '....u####',
+      '###*u####',
+    ];
+    // マスの種類。h: 高さ（0 なら通れる床）
+    const TILES = {
+      '.': { name: '床', color: 0xc79a6b, h: 0 },
+      ',': { name: 'ラグ', color: 0x8c9cb3, h: 0 },
+      '#': { name: '壁', color: 0xe8e2d6, h: 1.0 },
+      'k': { name: 'キッチン', color: 0xd9d9d9, h: 0.85 },
+      'f': { name: '冷蔵庫', color: 0xf0f0f0, h: 1.5 },
+      'w': { name: '洗濯機', color: 0xf5f5f5, h: 0.85 },
+      'u': { name: '風呂', color: 0xcfe8f0, h: 0.55 },
+      'b': { name: 'ベッド', color: 0x90a4ae, h: 0.4 },
+      'd': { name: '机', color: 0x8d6e63, h: 0.7 },
+      't': { name: 'テーブル', color: 0xa1887f, h: 0.7 },
+      'v': { name: 'テレビ', color: 0x37474f, h: 0.9 },
+      's': { name: '棚', color: 0x795548, h: 1.3 },
+      '*': { name: 'タスク', color: 0xffd54f, h: 0 },
+      'P': { name: 'スタート/ゴール', color: 0xffffff, h: 0 },
+      'E': { name: '玄関', color: 0x8a5a3a, h: 0 },
+    };
+    const TASK_COLORS = [0x6ec6ff, 0xff8a50, 0xb39ddb, 0x80deea, 0xffd54f, 0xf48fb1, 0x81c784, 0xa1887f, 0x4fc3f7];
+
+    function cleanLayout(rows) {
+      if (!Array.isArray(rows) || !rows.length) return null;
+      const w = Math.max(...rows.map(r => String(r).length));
+      if (w < 2 || w > 20 || rows.length < 2 || rows.length > 20) return null;
+      return rows.map(r => [...String(r).padEnd(w, '.')].map(c => TILES[c] ? c : '.').join(''));
+    }
+    const editMode = location.hash === '#edit';
+    // エディタでは前回の編集を続きから使う。ふつうに遊ぶときは決まった間取り。
+    let layout = (editMode && cleanLayout(store.get('layout', null))) || [...DEFAULT_LAYOUT];
+
+    // layout から読み取るゲーム用の情報
+    let W, H, START, DOOR, TASKS, blocked;
+    function readLayout() {
+      H = layout.length; W = layout[0].length;
+      START = null; DOOR = null; TASKS = []; blocked = new Set();
+      layout.forEach((row, z) => [...row].forEach((c, x) => {
+        if (TILES[c].h > 0) blocked.add(x + ',' + z);
+        if (c === 'P') START = [x, z];
+        if (c === 'E') DOOR = [x, z];
+        if (c === '*') TASKS.push({ pos: [x, z], color: TASK_COLORS[TASKS.length % TASK_COLORS.length] });
+      }));
+    }
+    const walkable = (x, z) => x >= 0 && x < W && z >= 0 && z < H && !blocked.has(x + ',' + z);
+    const same = (a, b) => a[0] === b[0] && a[1] === b[1];
+
+    // ---- three.js ----
+    const stage = document.getElementById('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    stage.prepend(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x23262e);
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+    scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 1.6));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.position.set(4, 10, 6); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9 });
+    scene.add(sun);
+
+    const room = new THREE.Group();
+    scene.add(room);
+    const mat = c => new THREE.MeshLambertMaterial({ color: c });
+    function box(w, h, d, c, x, y, z, parent = room) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
+      m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m;
+    }
+    function ring(color) {
+      const m = new THREE.Mesh(new THREE.RingGeometry(0.28, 0.42, 32), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 }));
+      m.rotation.x = -Math.PI / 2; return m;
+    }
+
+    let markers = [], doorRing, statics;
+    // 家具の細かい部分。通れるマスのある側を「正面」にして、そちら向きに飾りを付ける
+    function furnish(c, x, z, tile, j) {
+      const at = (xx, zz) => layout[zz]?.[xx];
+      const open = (xx, zz) => at(xx, zz) && TILES[at(xx, zz)].h === 0;
+      // 正面は、カメラ側（右・手前）のタスクのマス → カメラ側の通れるマス → それ以外の通れるマス の順で選ぶ
+      const dirs = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+      const front = dirs.slice(0, 2).find(([dx, dz]) => at(x + dx, z + dz) === '*') || dirs.find(([dx, dz]) => open(x + dx, z + dz)) || [1, 0];
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.atan2(front[0], front[1]); statics.add(g);
+      const b = (w, h, d, col, lx, ly, lz) => box(w, h, d, col, lx, ly, lz, g);
+      const cyl = (r, h, col, lx, ly, lz, rx = 0) => {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 20), mat(col));
+        m.position.set(lx, ly, lz); m.rotation.x = rx; m.castShadow = true; g.add(m); return m;
+      };
+      const h = tile.h, F = 0.455; // F: 正面の面の位置
+      const same = (dx, dz) => at(x + dx, z + dz) === c;
+      // 天板＋脚（つながっている側には脚を付けない）
+      const tableTop = (top, col, legCol) => {
+        box(j.ex + j.wx, 0.06, j.ez + j.nz, col, x + (j.ex - j.wx) / 2, top - 0.03, z + (j.ez - j.nz) / 2, statics);
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+          if (same(sx, 0) || same(0, sz)) continue;
+          box(0.06, top - 0.06, 0.06, legCol, x + sx * 0.38, (top - 0.06) / 2, z + sz * 0.38, statics);
+        }
+      };
+      switch (c) {
+        case 'k': // キッチン：天板・扉・取っ手、流しかコンロを交互に
+          b(1, 0.05, 0.94, 0x9ea4a8, 0, h + 0.02, 0);
+          b(0.38, 0.6, 0.02, 0xc4c4c4, -0.2, 0.4, F); b(0.38, 0.6, 0.02, 0xc4c4c4, 0.2, 0.4, F);
+          b(0.03, 0.12, 0.03, 0x555555, -0.05, 0.55, F + 0.02); b(0.03, 0.12, 0.03, 0x555555, 0.05, 0.55, F + 0.02);
+          if ((x + z) % 2) {
+            b(0.5, 0.03, 0.4, 0x6d7f8f, 0, h + 0.05, 0.05);
+            cyl(0.025, 0.2, 0xb0b0b0, 0, h + 0.15, -0.22); b(0.03, 0.03, 0.14, 0xb0b0b0, 0, h + 0.24, -0.16);
+          } else {
+            cyl(0.1, 0.02, 0x222222, -0.18, h + 0.055, 0.05); cyl(0.1, 0.02, 0x222222, 0.18, h + 0.055, 0.05);
+            cyl(0.13, 0.12, 0x9a6b4f, 0.18, h + 0.12, 0.05);
+          }
+          break;
+        case 'f': // 冷蔵庫：上下の扉と取っ手
+          b(0.86, 0.015, 0.02, 0x9a9a9a, 0, h * 0.62, F);
+          b(0.04, 0.3, 0.04, 0x888888, 0.33, h * 0.78, F + 0.02); b(0.04, 0.4, 0.04, 0x888888, 0.33, h * 0.35, F + 0.02);
+          break;
+        case 'w': // 洗濯機：丸い窓と操作パネル
+          cyl(0.24, 0.03, 0x9fb4c4, 0, h * 0.45, F, Math.PI / 2); cyl(0.17, 0.035, 0x5b6f80, 0, h * 0.45, F + 0.005, Math.PI / 2);
+          b(0.8, 0.12, 0.02, 0xdadada, 0, h - 0.1, F); cyl(0.04, 0.03, 0x444444, 0.25, h - 0.1, F + 0.01, Math.PI / 2);
+          break;
+        case 'u': { // 湯船：つながったマスは1つの浴槽にする。ふちはつながっていない側だけ
+          const cx = x + (j.ex - j.wx) / 2, cz = z + (j.ez - j.nz) / 2, w = j.ex + j.wx, d = j.ez + j.nz, t = 0.08;
+          box(w, 0.1, d, tile.color, cx, 0.05, cz, statics);
+          box(w, 0.02, d, 0x7fc8e8, cx, h - 0.12, cz, statics);
+          box(w, h - 0.12, d, 0xb9dbe6, cx, (h - 0.12) / 2, cz, statics);
+          if (!same(1, 0)) box(t, h, d, tile.color, x + j.ex - t / 2, h / 2, cz, statics);
+          if (!same(-1, 0)) box(t, h, d, tile.color, x - j.wx + t / 2, h / 2, cz, statics);
+          if (!same(0, 1)) box(w, h, t, tile.color, cx, h / 2, z + j.ez - t / 2, statics);
+          if (!same(0, -1)) box(w, h, t, tile.color, cx, h / 2, z - j.nz + t / 2, statics);
+          break;
+        }
+        case 'b': { // ベッド：枠・マットレス・掛け布団、頭の側に枕
+          box(j.ex + j.wx, 0.2, j.ez + j.nz, 0x6d4c41, x + (j.ex - j.wx) / 2, 0.1, z + (j.ez - j.nz) / 2, statics);
+          box(j.ex + j.wx - 0.04, 0.16, j.ez + j.nz - 0.04, 0xf0f0f0, x + (j.ex - j.wx) / 2, 0.28, z + (j.ez - j.nz) / 2, statics);
+          const head = !same(-1, 0) && !same(0, -1);
+          if (head) box(0.55, 0.1, 0.32, 0xffffff, x, 0.41, z - 0.18 * (same(0, 1) ? 1 : 0), statics);
+          else box(j.ex + j.wx - 0.02, 0.08, j.ez + j.nz - 0.02, 0x6f8fbf, x + (j.ex - j.wx) / 2, 0.39, z + (j.ez - j.nz) / 2, statics);
+          break;
+        }
+        case 'd': // 机：天板と脚、モニターとキーボード
+          tableTop(h, tile.color, 0x5d4037);
+          b(0.42, 0.28, 0.04, 0x263238, 0, h + 0.22, -0.18); b(0.06, 0.08, 0.06, 0x263238, 0, h + 0.04, -0.18);
+          b(0.32, 0.02, 0.12, 0xdddddd, 0, h + 0.01, 0.12);
+          break;
+        case 't': // テーブル：天板と脚、マグカップ
+          tableTop(h, tile.color, 0x6d4c41);
+          if ((x + z) % 2) cyl(0.05, 0.1, 0xffffff, 0.1, h + 0.05, 0.05);
+          break;
+        case 'v': // テレビ：台と画面
+          b(0.9, 0.4, 0.45, tile.color, 0, 0.2, -0.1);
+          b(0.8, 0.48, 0.05, 0x111111, 0, 0.68, -0.15); b(0.72, 0.4, 0.01, 0x2a3b4c, 0, 0.68, -0.12);
+          break;
+        case 's': // 棚：枠と段、本
+          b(0.9, h, 0.05, tile.color, 0, h / 2, -0.2);
+          b(0.05, h, 0.45, tile.color, -0.43, h / 2, 0); b(0.05, h, 0.45, tile.color, 0.43, h / 2, 0);
+          [0.03, 0.45, 0.87, 1.27].forEach(y => b(0.86, 0.04, 0.45, tile.color, 0, y, 0));
+          [[0.07, 0xc0392b], [0.49, 0x2e86c1], [0.91, 0x27ae60]].forEach(([y, col], i) =>
+            [-0.28, -0.16, -0.04, 0.12].forEach((bx, k) => b(0.09, 0.3 - (k % 2) * 0.06, 0.3, k % 3 ? col : 0xf1c40f, bx + i * 0.04, y + 0.15 - (k % 2) * 0.03, 0)));
+          break;
+      }
+    }
+
+    // 壁のマスのうち、まわり8マスがすべて壁か外のものは無駄なので描かない
+    function shown(x, z) {
+      if (layout[z][x] !== '#') return true;
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+        const c = layout[z + dz]?.[x + dx];
+        if (c && c !== '#') return true;
+      }
+      return false;
+    }
+    // 間取りから部屋を組み立て直す
+    function buildRoom() {
+      readLayout();
+      if (statics) { room.remove(statics); statics.traverse(o => { o.geometry?.dispose(); o.material?.dispose?.(); }); }
+      statics = new THREE.Group(); room.add(statics);
+      room.position.set(-(W - 1) / 2, 0, -(H - 1) / 2);
+      const at = (x, z) => layout[z]?.[x];
+      layout.forEach((row, z) => [...row].forEach((c, x) => {
+        const tile = TILES[c];
+        if (!shown(x, z)) return; // まわりが全部壁の壁は描かない
+        // 床（ラグ以外は市松のフローリング）
+        box(1, 0.1, 1, c === ',' ? 0x8c9cb3 : (x + z) % 2 ? 0xc79a6b : 0xbf9163, x, -0.05, z, statics);
+        if (tile.h > 0) {
+          // 同じ家具が隣にあれば隙間なくつなげる
+          const ex = at(x + 1, z) === c ? 0.5 : 0.45, wx = at(x - 1, z) === c ? 0.5 : 0.45;
+          const ez = at(x, z + 1) === c ? 0.5 : 0.45, nz = at(x, z - 1) === c ? 0.5 : 0.45;
+          if (!'dtvsbu'.includes(c))
+            box(ex + wx, tile.h, ez + nz, tile.color, x + (ex - wx) / 2, tile.h / 2, z + (ez - nz) / 2, statics);
+          furnish(c, x, z, tile, { ex, wx, ez, nz });
+        }
+        if (c === 'E') {
+          box(0.95, 0.04, 0.95, tile.color, x, 0.02, z, statics);
+          // 外周にあればそちらの壁にドアを付ける
+          if (x === 0) box(0.08, 1.3, 0.8, 0x6d4c41, -0.5, 0.65, z, statics);
+          else if (z === 0) box(0.8, 1.3, 0.08, 0x6d4c41, x, 0.65, -0.5, statics);
+        }
+      }));
+      // 外壁（奥と左）
+      box(W + 0.2, 1.4, 0.1, 0xe8e2d6, (W - 1) / 2, 0.7, -0.55, statics);
+      box(0.1, 1.4, H + 0.2, 0xddd6c8, -0.55, 0.7, (H - 1) / 2, statics);
+      // タスクのマーカー
+      markers = TASKS.map(tk => {
+        const g = new THREE.Group();
+        const r = ring(tk.color); r.position.y = 0.02; g.add(r);
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.16), new THREE.MeshLambertMaterial({ color: tk.color, emissive: tk.color, emissiveIntensity: 0.5 }));
+        gem.position.y = 0.6; g.add(gem); g.userData.gem = gem;
+        g.position.set(tk.pos[0], 0, tk.pos[1]); g.visible = editMode && !playingFromEditor; statics.add(g);
+        return g;
+      });
+      doorRing = ring(0xffffff); doorRing.visible = false;
+      if (START) { doorRing.position.set(START[0], 0.05, START[1]); statics.add(doorRing); }
+      if (editMode && START) { const s = ring(0xffffff); s.position.set(START[0], 0.05, START[1]); s.material.opacity = 0.4; statics.add(s); }
+      resize();
+    }
+
+    // 人
+    // 人：頭・胴体・腕・脚の箱でできたブロック人形。歩くと手足を振る
+    function makePerson(color, ghost) {
+      const g = new THREE.Group();
+      const mats = [];
+      const m = c => { const x = ghost ? new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.6 }) : mat(c); mats.push(x); return x; };
+      const part = (w, h, d, material, x, y, z, parent = g) => {
+        const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+        o.position.set(x, y, z); o.castShadow = !ghost; parent.add(o); return o;
+      };
+      // 腕と脚は付け根で回るように、付け根の位置にグループを置く
+      const limb = (x, y, w, h, material) => {
+        const pivot = new THREE.Group(); pivot.position.set(x, y, 0); g.add(pivot);
+        part(w, h, w, material, 0, -h / 2, 0, pivot); return pivot;
+      };
+      const skin = m(0xf2c9a0), shirt = m(color), pants = m(0x3d4452);
+      const legL = limb(-0.08, 0.3, 0.13, 0.3, pants), legR = limb(0.08, 0.3, 0.13, 0.3, pants);
+      part(0.34, 0.34, 0.2, shirt, 0, 0.47, 0);
+      const armL = limb(-0.23, 0.62, 0.1, 0.32, shirt), armR = limb(0.23, 0.62, 0.1, 0.32, shirt);
+      part(0.3, 0.28, 0.28, skin, 0, 0.8, 0);
+      const eyes = ghost ? new THREE.MeshBasicMaterial({ color: 0x113355, transparent: true, opacity: 0.6 }) : mat(0x222222);
+      part(0.05, 0.06, 0.02, eyes, -0.07, 0.82, 0.145); part(0.05, 0.06, 0.02, eyes, 0.07, 0.82, 0.145);
+      g.userData.limbs = [armL, armR, legL, legR]; g.userData.mats = mats;
+      room.add(g);
+      return g;
+    }
+    // 歩きの手足振り（k: 0→1 で1歩）
+    function swing(p, k) {
+      const a = Math.sin(k * Math.PI * 2) * 0.7;
+      const [armL, armR, legL, legR] = p.userData.limbs;
+      armL.rotation.x = a; armR.rotation.x = -a; legL.rotation.x = -a; legR.rotation.x = a;
+    }
+    const player = makePerson(0xffffff, false);
+
+    function setLabel(gh) {
+      if (gh.label) { gh.mesh.remove(gh.label); gh.label.material.map.dispose(); }
+      const c = document.createElement('canvas'); c.width = 128; c.height = 64;
+      const x = c.getContext('2d');
+      x.font = 'bold 40px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillStyle = '#9fd3ff'; x.strokeStyle = '#102030'; x.lineWidth = 6;
+      x.strokeText(t('ghostDay')(gh.day), 64, 34); x.fillText(t('ghostDay')(gh.day), 64, 34);
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+      s.scale.set(0.9, 0.45, 1); s.position.y = 1.3; gh.mesh.add(s); gh.label = s;
+    }
+
+    // ---- ゲーム状態 ----
+    let state = 'title';      // title | intro | play | dead | edit
+    let day = 1, turn = 0, pos = [0, 0], path = [], tasks = [], ghosts = [], result = null;
+    let playingFromEditor = false;
+    const paths = [];         // 過去の日の道順
+    let anim = { t: 1 };      // 1歩分の移動アニメ
+
+    // 過去の自分は、昔の日ほど遅れて起きる（1日前は1歩、2日前は2歩遅れ）。起きる前はベッドの中で、ぶつからない
+    function ghostPos(g, tt) { const i = tt - g.delay; return i >= 0 && i < g.path.length ? g.path[i] : null; }
+
+    function pickTasks() {
+      const n = 1; // タスクは1日1個
+      const idx = TASKS.map((_, i) => i).sort(() => Math.random() - 0.5);
+      return idx.slice(0, n);
+    }
+
+    function clearGhosts() { ghosts.forEach(g => room.remove(g.mesh)); ghosts = []; }
+
+    // 待っている間、過去の自分は次に進むマスへ半歩踏み出しては戻る（次の1歩のチラ見せ）。
+    // まだベッドの中の自分は、起きてくるマスで点滅する
+    function previewGhosts(now) {
+      const ph = (now % 900) / 900, lean = (1 - Math.cos(ph * Math.PI * 2)) / 2 * 0.38;
+      for (const g of ghosts) {
+        const b = ghostPos(g, turn), n = ghostPos(g, turn + 1), mats = g.mesh.userData.mats;
+        if (!b && n) {
+          g.mesh.visible = true; g.mesh.position.set(n[0], 0, n[1]); swing(g.mesh, 1);
+          mats.forEach(m => m.opacity = 0.15 + 0.35 * (1 - Math.cos(ph * Math.PI * 2)) / 2);
+          continue;
+        }
+        mats.forEach(m => m.opacity = 0.6);
+        if (!b || !n || same(b, n)) continue;
+        const dx = n[0] - b[0], dz = n[1] - b[1];
+        g.mesh.position.set(b[0] + dx * lean, 0, b[1] + dz * lean);
+        g.mesh.rotation.y = Math.atan2(dx, dz);
+        swing(g.mesh, ph * 0.5);
+      }
+    }
+
+    function startDay() {
+      turn = 0; pos = [...START]; path = [[...START]];
+      tasks = pickTasks();
+      markers.forEach((m, i) => m.visible = tasks.includes(i));
+      doorRing.visible = !tasks.length;
+      clearGhosts();
+      ghosts = paths.map((p, i) => {
+        const gh = { day: i + 1, delay: day - (i + 1), path: p, mesh: makePerson(0x5fa8ff, true) };
+        setLabel(gh); return gh;
+      });
+      player.visible = true;
+      anim = { t: 1 };
+      placeAll(1);
+      updateHud();
+      state = 'intro';
+      const dc = document.getElementById('dayCard');
+      dc.textContent = t('day')(day); dc.hidden = false;
+      setTimeout(() => { dc.hidden = true; if (state === 'intro') state = 'play'; }, 900);
+    }
+
+    function updateHud() {
+      const playing = state !== 'title' && state !== 'edit';
+      document.getElementById('day').textContent = playing ? t('day')(day) : '';
+    }
+
+    function step(dx, dz) {
+      if (state !== 'play' || anim.t < 1) return;
+      const np = [pos[0] + dx, pos[1] + dz];
+      if (!walkable(...np)) return;
+      const prev = pos; pos = np; turn++; path.push([...np]);
+      player.rotation.y = Math.atan2(dx, dz);
+      anim = { t: 0, prev, turn };
+      sndStep();
+      // 過去の自分とぶつかったか（同じマス or すれ違い）
+      for (const g of ghosts) {
+        const a = ghostPos(g, turn - 1), b = ghostPos(g, turn);
+        if (b && (same(b, pos) || (a && same(a, pos) && same(b, prev)))) return die();
+      }
+      const ti = tasks.findIndex(i => same(TASKS[i].pos, pos));
+      if (ti >= 0) { markers[tasks[ti]].visible = false; tasks.splice(ti, 1); sndTask(); if (!tasks.length) doorRing.visible = true; }
+      if (!tasks.length && same(pos, START)) { // タスクを終えてベッドに戻ったらクリア
+        state = 'intro'; sndClear();
+        paths.push(path); day++;
+        setTimeout(startDay, 450);
+        return updateHud();
+      }
+      updateHud();
+    }
+
+    function die() {
+      state = 'dead'; sndDie(); updateHud();
+      result = { days: day - 1 };
+      player.userData.dieAt = performance.now();
+      setTimeout(showResult, 900);
+    }
+
+    function showResult() {
+      document.getElementById('rDays').textContent = t('days')(result.days);
+      document.getElementById('rMsg').textContent = t('msgHit')(result.days);
+      const url = 'https://keifurukawafunnych.com/games/one-room-loop/';
+      const a = document.getElementById('shareBtn');
+      a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('shareText')(result.days))}&url=${encodeURIComponent(url)}`;
+      if (matchMedia('(pointer: coarse)').matches) { a.removeAttribute('target'); a.removeAttribute('rel'); }
+      else { a.target = '_blank'; a.rel = 'noopener'; }
+      document.getElementById('resultOv').hidden = false;
+    }
+
+    function newGame() {
+      paths.length = 0; day = 1; result = null;
+      player.rotation.set(0, 0, 0); player.userData.dieAt = 0;
+      document.getElementById('titleOv').hidden = true;
+      document.getElementById('resultOv').hidden = true;
+      state = 'intro';
+      startDay();
+    }
+    document.getElementById('startBtn').onclick = newGame;
+    document.getElementById('retryBtn').onclick = newGame;
+
+    // ---- 描画 ----
+    const lerp = (a, b, k) => a + (b - a) * k;
+    function placeAll(k) {
+      const hop = Math.sin(k * Math.PI) * 0.05;
+      const pp = anim.prev || pos;
+      player.position.set(lerp(pp[0], pos[0], k), hop, lerp(pp[1], pos[1], k));
+      swing(player, anim.prev ? k : 1);
+      const tt = anim.prev ? anim.turn : turn;
+      for (const g of ghosts) {
+        const b = ghostPos(g, tt);
+        const a = ghostPos(g, anim.prev ? tt - 1 : tt) || b;
+        if (!b) { g.mesh.visible = false; continue; }
+        g.mesh.visible = true;
+        g.mesh.position.set(lerp(a[0], b[0], k), hop, lerp(a[1], b[1], k));
+        swing(g.mesh, a[0] !== b[0] || a[1] !== b[1] ? k : 1);
+        const n = k >= 1 && ghostPos(g, tt + 1);
+        if (n && (n[0] !== b[0] || n[1] !== b[1])) g.mesh.rotation.y = Math.atan2(n[0] - b[0], n[1] - b[1]); // 止まったら次に進む方を向く
+        else if (a[0] !== b[0] || a[1] !== b[1]) g.mesh.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]);
+      }
+    }
+    // 斜め上から見下ろす固定カメラ
+    const CAM_YAW = Math.PI / 4;
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      if (!w || !h || !W) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      // 部屋の角（床と壁の上端）が画面いっぱいに収まるよう、距離と注視点を画面比率に合わせて詰める
+      const ox = room.position.x, oz = room.position.z, corners = [];
+      // 描いているマスの角だけで画面に合わせる
+      layout.forEach((row, z) => [...row].forEach((_, x) => {
+        if (!shown(x, z)) return;
+        for (const cx of [x - 0.5, x + 0.5]) for (const cz of [z - 0.5, z + 0.5]) for (const y of [0, 1.4])
+          corners.push(new THREE.Vector3(cx + ox, y, cz + oz));
+      }));
+      const dirv = new THREE.Vector3(Math.sin(CAM_YAW) * 0.62, 0.82, Math.cos(CAM_YAW) * 0.62).normalize();
+      const target = new THREE.Vector3(0, 0, 0);
+      const halfTan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      let dist = W + H;
+      for (let i = 0; i < 6; i++) {
+        camera.position.copy(target).addScaledVector(dirv, dist);
+        camera.lookAt(target); camera.updateMatrixWorld();
+        let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+        for (const c of corners) {
+          const p = c.clone().project(camera);
+          x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+        }
+        // はみ出し／余白の分だけ注視点をずらし、距離を伸び縮みさせる
+        const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+        const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+        target.addScaledVector(right, (x0 + x1) / 2 * dist * halfTan * camera.aspect);
+        target.addScaledVector(up, (y0 + y1) / 2 * dist * halfTan);
+        dist *= Math.max((x1 - x0) / 2, (y1 - y0) / 2) / 0.95;
+      }
+      camera.position.copy(target).addScaledVector(dirv, dist);
+      camera.lookAt(target);
+    }
+    new ResizeObserver(resize).observe(stage);
+    let last = performance.now();
+    renderer.setAnimationLoop(now => {
+      const dt = now - last; last = now;
+      if (anim.t < 1) { anim.t = Math.min(1, anim.t + dt / 130); placeAll(anim.t); }
+      markers.forEach(m => { m.userData.gem.rotation.y += dt / 600; m.userData.gem.position.y = 0.6 + Math.sin(now / 300) * 0.06; });
+      if (doorRing) doorRing.material.opacity = 0.5 + Math.sin(now / 200) * 0.4;
+      if (player.userData.dieAt) {
+        const k = Math.min(1, (now - player.userData.dieAt) / 400);
+        player.rotation.x = -k * Math.PI / 2;
+      }
+      if (anim.t >= 1 && (state === 'play' || state === 'intro')) previewGhosts(now);
+      holdTick(now);
+      renderer.render(scene, camera);
+    });
+
+    // ---- 操作（スワイプ＋キー） ----
+    // 押したところからの指の向きで進む。指を置いたままなら同じ向きに歩き続ける
+    let sp = null, sc = [0, 0], dir = null, nextRepeat = 0;
+    function setDir(d, now) {
+      if (d && (!dir || d[0] !== dir[0] || d[1] !== dir[1])) { dir = d; step(...d); nextRepeat = now + 220; }
+      else if (!d) dir = null;
+    }
+    function holdTick(now) {
+      if (dir && now >= nextRepeat && anim.t >= 1) { step(...dir); nextRepeat = now + 170; }
+    }
+    // 画面上の向きを、斜めに見ている部屋のマスの向きに直す
+    function screenToGrid(sx, sy) {
+      const c = Math.cos(CAM_YAW), s = Math.sin(CAM_YAW);
+      const wx = sx * c + sy * s, wz = -sx * s + sy * c;
+      return Math.abs(wx) > Math.abs(wz) ? [Math.sign(wx), 0] : [0, Math.sign(wz)];
+    }
+    const zone = document.querySelector('main');
+    zone.addEventListener('pointerdown', e => {
+      if (sp !== null || e.target.closest('button, a, textarea, #tools')) return;
+      e.preventDefault(); zone.setPointerCapture(e.pointerId);
+      sp = e.pointerId; sc = [e.clientX, e.clientY];
+      if (state === 'edit') paint(e);
+    });
+    zone.addEventListener('pointermove', e => {
+      if (e.pointerId !== sp) return;
+      if (state === 'edit') return paint(e);
+      const dx = e.clientX - sc[0], dy = e.clientY - sc[1];
+      if (Math.hypot(dx, dy) < 24) return setDir(null);
+      setDir(screenToGrid(dx, dy), performance.now());
+    });
+    const swipeEnd = e => { if (e.pointerId === sp) { sp = null; setDir(null); lastPaint = null; } };
+    zone.addEventListener('pointerup', swipeEnd);
+    zone.addEventListener('pointercancel', swipeEnd);
+
+    const KEYS = { ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0] };
+    addEventListener('keydown', e => {
+      const d = KEYS[e.code]; if (!d || e.target.closest?.('textarea')) return;
+      e.preventDefault(); if (e.repeat || state === 'title' || state === 'edit') return;
+      setDir(d, performance.now()); // キーは部屋の壁に沿った向き
+    });
+    addEventListener('keyup', e => { if (KEYS[e.code]) setDir(null); });
+
+    // ---- エディタ ----
+    let tool = '#', lastPaint = null;
+    const ray = new THREE.Raycaster(), floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
+    function paint(e) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1), camera);
+      if (!ray.ray.intersectPlane(floor, hit)) return;
+      const x = Math.round(hit.x - room.position.x), z = Math.round(hit.z - room.position.z);
+      if (x < 0 || x >= W || z < 0 || z >= H) return;
+      const key = x + ',' + z;
+      if (key === lastPaint) return;
+      lastPaint = key;
+      // スタートと玄関は1つだけ。置き直したら前のものは床に戻す
+      if (tool === 'P' || tool === 'E') layout = layout.map(row => row.replaceAll(tool, '.'));
+      const row = [...layout[z]]; row[x] = tool; layout[z] = row.join('');
+      saveLayout();
+    }
+    function saveLayout() { store.set('layout', layout); buildRoom(); }
+    function resizeLayout(k) {
+      if (k === 'w+' && W < 20) layout = layout.map(r => r + '.');
+      if (k === 'w-' && W > 3) layout = layout.map(r => r.slice(0, -1));
+      if (k === 'h+' && H < 20) layout = [...layout, '.'.repeat(W)];
+      if (k === 'h-' && H > 3) layout = layout.slice(0, -1);
+      saveLayout();
+    }
+    function enterEdit() {
+      state = 'edit'; playingFromEditor = false; result = null;
+      clearGhosts(); player.visible = false; dir = null;
+      ['titleOv', 'resultOv', 'dayCard'].forEach(id => document.getElementById(id).hidden = true);
+      document.getElementById('tools').hidden = false;
+      document.getElementById('editBtn').hidden = true;
+      buildRoom(); updateHud();
+    }
+    function problems() {
+      readLayout();
+      const p = [];
+      if (!START) p.push('スタートを置いてください');
+      if (!TASKS.length) p.push('タスクを1つ以上置いてください');
+      return p;
+    }
+    if (editMode) {
+      const pal = document.getElementById('palette');
+      for (const [c, tl] of Object.entries(TILES)) {
+        const b = document.createElement('button');
+        b.className = 'tool' + (c === tool ? ' on' : '');
+        b.innerHTML = `<i style="background:#${tl.color.toString(16).padStart(6, '0')}"></i>${tl.name}`;
+        b.onclick = () => { tool = c; pal.querySelectorAll('.tool').forEach(x => x.classList.toggle('on', x === b)); };
+        pal.append(b);
+      }
+      document.querySelectorAll('[data-size]').forEach(b => b.onclick = () => resizeLayout(b.dataset.size));
+      document.getElementById('resetBtn').onclick = () => { layout = [...DEFAULT_LAYOUT]; saveLayout(); };
+      document.getElementById('playBtn').onclick = () => {
+        const p = problems();
+        if (p.length) { document.getElementById('day').textContent = p[0]; return; }
+        playingFromEditor = true;
+        document.getElementById('tools').hidden = true;
+        document.getElementById('editBtn').hidden = false;
+        buildRoom();
+        newGame();
+      };
+      document.getElementById('editBtn').onclick = enterEdit;
+      const exOv = document.getElementById('exportOv'), exText = document.getElementById('exportText');
+      document.getElementById('exportBtn').onclick = () => { exText.value = layout.join('\n'); exOv.hidden = false; };
+      document.getElementById('closeExport').onclick = () => { exOv.hidden = true; };
+      document.getElementById('copyBtn').onclick = async e => {
+        try { await navigator.clipboard.writeText(exText.value); e.target.textContent = 'コピーしました'; }
+        catch { exText.select(); }
+        setTimeout(() => e.target.textContent = 'コピー', 1500);
+      };
+      document.getElementById('importBtn').onclick = () => {
+        const rows = cleanLayout(exText.value.split('\n').map(r => r.trimEnd()).filter(Boolean));
+        if (!rows) return;
+        layout = rows; saveLayout(); exOv.hidden = true;
+      };
+      enterEdit();
+    } else {
+      buildRoom();
+    }
+
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

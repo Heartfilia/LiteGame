@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>火箭制造机 · LiteGame</title>
+  <meta name="description" content="拼零件、点火、看你的火箭能飞多高。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="火箭制造机 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/rocket-maker/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/rocket-maker/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; background: #fbf6e9; color: #2d2a32; overflow: hidden;
+      font-family: "Yomogi", "Hiragino Maru Gothic ProN", "Noto Sans Thai", system-ui, sans-serif; }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; pointer-events: none; }
+    header > * { pointer-events: auto; }
+    .sk { border: 2px solid #2d2a32; border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; background: #fffdf6; color: #2d2a32; font-family: inherit; }
+    header a { text-decoration: none; font-size: 15px; padding: 5px 11px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill { height: 36px; min-width: 36px; font-size: 15px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    select.pill { appearance: none; -webkit-appearance: none; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+    .btn { position: fixed; z-index: 2; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 3px 4px 0 rgba(45,42,50,.25); }
+    .btn:active { transform: translate(2px, 2px); box-shadow: 1px 2px 0 rgba(45,42,50,.25); }
+    .btn[hidden] { display: none; }
+    #launch { background: #ffb4a2; font-size: clamp(20px, 3.2vmin, 30px); padding: 10px 22px; }
+    #launch.pulse { animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 50% { scale: 1.08; } }
+    #clear { width: 46px; height: 46px; padding: 0; transition: scale .12s, background .12s; }
+    #clear.armed { animation: wiggle .6s ease-in-out infinite; }
+    #clear.hot { background: #ff8a7a; scale: 1.25; animation: none; }
+    @keyframes wiggle { 25% { rotate: -8deg; } 75% { rotate: 8deg; } }
+    #abort { left: 12px; top: 56px; font-size: 16px; padding: 6px 12px; background: #fffdf6; }
+    #result { position: fixed; left: 0; right: 0; top: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: calc(58px + 2vh) 16px 0; pointer-events: none; }
+    #result[hidden] { display: none; }
+    #result > * { pointer-events: auto; }
+    .big { font-size: clamp(48px, 9vmin, 104px); margin: 0; line-height: 1; text-shadow: 3px 3px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff; }
+    .sub { margin: 0; font-size: clamp(16px, 2.4vmin, 24px); padding: 3px 12px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .rb { position: static; font-size: clamp(18px, 2.8vmin, 28px); padding: 9px 22px; text-decoration: none; }
+    #again { background: #ffb4a2; } #edit { background: #b8e0d2; }
+    #share { background: #2d2a32; color: #fff; border-color: #2d2a32; font-size: clamp(16px, 2.3vmin, 24px); padding: 8px 20px; }
+    @media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+      #result { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; padding-top: 50px; gap: 8px 12px; }
+      .big { font-size: 42px; }
+      .rb { font-size: 17px; padding: 6px 16px; }
+    }
+    #msg { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 4; padding: 8px 14px; display: none; }
+  </style>
+</head>
+<body>
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">火箭制造机</h1>
+  <header>
+    <a id="back" class="sk" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="sound" class="pill sk" aria-label="sound">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2d2a32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.2h4l5-4.1v13.8l-5-4.1H4z" fill="#2d2a32"/><path id="wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" style="display:none"/></svg>
+      </button>
+      <select id="lang" class="pill sk" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+    </div>
+  </header>
+  <main style="display:contents">
+    <canvas id="cv"></canvas>
+    <button id="launch" class="btn sk" hidden>
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#2d2a32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3c4 3 6 8 6 14l-2 5h-8l-2-5c0-6 2-11 6-14z" fill="#fffdf6"/><circle cx="16" cy="13" r="2.6" fill="#9cc9ef"/><path d="M10 17l-4 5 5-1M22 17l4 5-5-1" fill="#e8574a"/><path d="M13 24c0 3 1.5 5 3 6 1.5-1 3-3 3-6" fill="#f4b23e"/></svg>
+      <span id="launchT"></span>
+    </button>
+    <button id="clear" class="btn sk" hidden aria-label="clear">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2d2a32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16M9 6V4h6v2M6 7l1 13h10l1-13M10 10.5v6.5M14 10.5v6.5"/></svg>
+    </button>
+    <button id="abort" class="btn sk" hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2d2a32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a4 4 0 0 0-5 5L4 16v4h4l5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z" fill="#b8e0d2"/></svg>
+      <span id="abortT"></span>
+    </button>
+    <div id="result" hidden>
+      <p class="big" id="rAlt"></p>
+      <p class="sub sk" id="rBest"></p>
+      <div class="row">
+        <button id="again" class="btn sk rb"></button>
+        <button id="edit" class="btn sk rb"></button>
+      </div>
+      <a id="share" class="btn sk rb"></a>
+    </div>
+    <div id="msg" class="sk"></div>
+  </main>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 火箭制造机 · 中文文案
+window.__KF_ZH__ = {
+  title: '火箭制造机',
+  back: '← 大厅',
+  launch: '发射',
+  again: '再来一次',
+  edit: '重新组装',
+  share: '分享到 X',
+  best: '最佳纪录',
+  km: (v) => `${v}km`,
+  moon: '抵达月球',
+  post: (v) => `火箭飞到了 ${v}km 高 #LiteGame`,
+  postMoon: '火箭抵达了月球 #LiteGame',
+  noFont: ''
+};
+</script>
+<script>
+'use strict';
+// ================= storage / language =================
+const KEY = 'rocket-maker:';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(KEY + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch {} },
+};
+const URL_ = new URL('./', location.href).href;
+const TAG = '#火箭制造机ゲーム';
+const L = {
+  ja: { title: '火箭制造机', back: '← トップへ戻る', launch: '発射', again: 'もう一回', edit: '作り直す', share: 'Xでポスト', best: '自己ベスト',
+        km: v => `${v}km`, moon: '月に到着', post: v => `火箭制造机で高度${v}kmまで飛んだ\n${TAG}`, postMoon: `火箭制造机で月に到着した\n${TAG}`,
+        noFont: '' },
+  ko: { title: '로켓 메이커', back: '← 처음으로', launch: '발사', again: '한 번 더', edit: '다시 만들기', share: 'X에 게시', best: '최고 기록',
+        km: v => `${v}km`, moon: '달 도착', post: v => `로켓 메이커에서 고도 ${v}km까지 날았다\n${TAG}`, postMoon: `로켓 메이커에서 달에 도착했다\n${TAG}` },
+  en: { title: 'Rocket Maker', back: '← Top', launch: 'Launch', again: 'Fly again', edit: 'Rebuild', share: 'Post on X', best: 'Best',
+        km: v => `${v} km`, moon: 'Moon landing', post: v => `My rocket reached ${v} km in Rocket Maker\n${TAG}`, postMoon: `My rocket landed on the Moon in Rocket Maker\n${TAG}` },
+  th: { title: 'โรงงานจรวด', back: '← กลับหน้าแรก', launch: 'ปล่อย', again: 'บินอีกครั้ง', edit: 'สร้างใหม่', share: 'โพสต์บน X', best: 'สถิติสูงสุด',
+        km: v => `${v} กม.`, moon: 'ถึงดวงจันทร์', post: v => `จรวดของฉันบินได้สูง ${v} กม. ในเกมโรงงานจรวด\n${TAG}`, postMoon: `จรวดของฉันลงจอดบนดวงจันทร์ในเกมโรงงานจรวด\n${TAG}` },
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const NAMES = {
+  cone: ['三角コーン', '삼각 콘', 'Cone Nose', 'หัวกรวย'],
+  dome: ['丸ドーム', '둥근 돔', 'Dome Nose', 'หัวโดม'],
+  needle: ['針ノーズ', '바늘 노즈', 'Needle Nose', 'หัวเข็ม'],
+  catpod: ['猫カプセル', '고양이 캡슐', 'Cat Capsule', 'แคปซูลแมว'],
+  chute: ['パラシュート', '낙하산', 'Parachute', 'ร่มชูชีพ'],
+  tankS: ['燃料タンク小', '연료 탱크 (소)', 'Small Tank', 'ถังเชื้อเพลิงเล็ก'],
+  tankL: ['燃料タンク大', '연료 탱크 (대)', 'Big Tank', 'ถังเชื้อเพลิงใหญ่'],
+  thin: ['細長タンク', '가느다란 탱크', 'Slim Tank', 'ถังผอมยาว'],
+  drum: ['ドラム缶', '드럼통', 'Oil Drum', 'ถังน้ำมัน'],
+  weight: ['重り', '무게추', 'Ballast', 'ตุ้มถ่วง'],
+  gyro: ['ジャイロ', '자이로', 'Gyro', 'ไจโร'],
+  decoup: ['切り離しリング', '분리 링', 'Decoupler', 'วงแยกท่อน'],
+  cabin: ['客室', '객실', 'Cabin', 'ห้องผู้โดยสาร'],
+  engS: ['小エンジン', '소형 엔진', 'Small Engine', 'เครื่องยนต์เล็ก'],
+  engL: ['大エンジン', '대형 엔진', 'Big Engine', 'เครื่องยนต์ใหญ่'],
+  vector: ['首振りエンジン', '짐벌 엔진', 'Gimbal Engine', 'เครื่องยนต์ส่ายหัว'],
+  jet: ['ジェットエンジン', '제트 엔진', 'Jet Engine', 'เครื่องยนต์เจ็ท'],
+  ion: ['イオンエンジン', '이온 엔진', 'Ion Engine', 'เครื่องยนต์ไอออน'],
+  firework: ['花火エンジン', '불꽃 엔진', 'Firework', 'เครื่องยนต์พลุ'],
+  bottle: ['ペットボトル', '페트병', 'Water Bottle', 'ขวดน้ำ'],
+  fin: ['小さい羽根', '작은 날개', 'Small Fins', 'ครีบเล็ก'],
+  wing: ['大きい翼', '큰 날개', 'Big Wings', 'ปีกใหญ่'],
+  booster: ['横ブースター', '사이드 부스터', 'Side Boosters', 'บูสเตอร์ข้าง'],
+  rcs: ['姿勢制御スラスター', '자세 제어 추력기', 'RCS Thrusters', 'ไอพ่นปรับท่าทาง'],
+  balloon: ['風船', '풍선', 'Balloons', 'ลูกโป่ง'],
+  solar: ['ソーラーパネル', '태양광 패널', 'Solar Panels', 'แผงโซลาร์'],
+  sidetank: ['補助タンク', '보조 탱크', 'Side Tanks', 'ถังเสริมข้าง'],
+};
+const LANGS=['ja', 'ko', 'en', 'th','zh'];
+const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (L[c]) return c; } return 'en'; };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'en';
+const t = k => L[lang][k];
+const pname = id => NAMES[id][LANGS.indexOf(lang)];
+const $ = id => document.getElementById(id);
+const FONT = '"Yomogi", "Hiragino Maru Gothic ProN", "Noto Sans Thai", system-ui, sans-serif';
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('lang').value = lang;
+  $('back').textContent = t('back');
+  $('launchT').textContent = t('launch');
+  $('again').textContent = t('again'); $('edit').textContent = t('edit'); $('abortT').textContent = t('edit'); $('share').textContent = t('share');
+  if (!$('result').hidden) showResult();
+}
+$('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+
+// ================= utils =================
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const wrapA = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+function mulberry(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mixC = (a, b, k) => { const x = hex(a), y = hex(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * clamp(k, 0, 1)).toString(16).padStart(2, '0')).join(''); };
+const shade = (c, k) => mixC(c, k > 0 ? '#ffffff' : '#000000', Math.abs(k));
+const coarse = matchMedia('(pointer: coarse)').matches;
+
+// ================= sound =================
+let soundOn = store.get('sound', true), ac = null, noiseBuf = null, master = null;
+function updSound() { $('wave').style.display = soundOn ? '' : 'none'; $('mute').style.display = soundOn ? 'none' : ''; if (master) master.gain.value = soundOn ? 1 : 0; }
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+updSound();
+function unmuteIOS() {
+  try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch {}
+  try {
+    const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    const a = document.createElement('audio');
+    a.src = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.loop = true; a.setAttribute('playsinline', '');
+    a.play().catch(() => {});
+  } catch {}
+}
+function initAudio() {
+  if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+  unmuteIOS();
+  try {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(ac.destination);
+    const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+    o.connect(g).connect(master); o.start(); o.stop(ac.currentTime + 0.05);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  } catch { ac = null; }
+}
+addEventListener('pointerdown', initAudio, true);
+addEventListener('keydown', initAudio, true);
+const live = () => ac && soundOn;
+function noise(dur, { type = 'bandpass', f0 = 1000, f1 = f0, q = 1, vol = .3, attack = .005, delay = 0 } = {}) {
+  if (!live()) return;
+  try {
+    const n = ac.currentTime + delay, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noiseBuf; s.playbackRate.value = 0.8 + Math.random() * 0.4;
+    f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, n); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), n + dur);
+    g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(vol, n + attack); g.gain.exponentialRampToValueAtTime(0.0001, n + dur);
+    s.connect(f).connect(g).connect(master); s.start(n, Math.random()); s.stop(n + dur + 0.05);
+  } catch {}
+}
+function tone(f0, f1, dur, { type = 'sine', vol = .2, delay = 0, attack = .005 } = {}) {
+  if (!live()) return;
+  try {
+    const n = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, n); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), n + dur);
+    g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(vol, n + attack); g.gain.exponentialRampToValueAtTime(0.0001, n + dur);
+    o.connect(g).connect(master); o.start(n); o.stop(n + dur + 0.05);
+  } catch {}
+}
+// part snapping on: a short click through two resonances plus a small low thump
+const sfx = {
+  snap() { noise(.05, { f0: 2600, q: 6, vol: .35 }); noise(.07, { f0: 900, q: 4, vol: .25, delay: .012 }); tone(180, 90, .08, { vol: .25 }); },
+  pop() { noise(.08, { type: 'highpass', f0: 1500, vol: .25 }); tone(500, 160, .09, { vol: .15 }); },
+  pick() { noise(.03, { f0: 3200, q: 8, vol: .15 }); },
+  tab() { noise(.04, { f0: 1800, q: 5, vol: .15 }); },
+  ignite() { noise(.6, { type: 'lowpass', f0: 3000, f1: 300, vol: .5, attack: .01 }); tone(90, 40, .5, { vol: .4 }); },
+  decouple() { noise(.35, { type: 'highpass', f0: 3000, f1: 600, vol: .4 }); tone(160, 60, .2, { type: 'triangle', vol: .35 }); noise(.08, { f0: 700, q: 3, vol: .3, delay: .05 }); },
+  boom(big = 1) { noise(1.4 * big, { type: 'lowpass', f0: 2500, f1: 60, vol: .7, attack: .005 }); tone(110, 28, 1.1 * big, { vol: .6 }); noise(.25, { type: 'highpass', f0: 2000, f1: 500, vol: .4 }); },
+  chute() { noise(.5, { type: 'lowpass', f0: 300, f1: 900, vol: .4, attack: .15 }); noise(.15, { f0: 1500, q: 2, vol: .2, delay: .2 }); },
+  balloon() { noise(.06, { type: 'highpass', f0: 2500, vol: .6 }); tone(300, 80, .06, { vol: .2 }); },
+  zap() { noise(.4, { type: 'highpass', f0: 4000, f1: 800, vol: .5 }); tone(1200, 200, .3, { type: 'sawtooth', vol: .15 }); },
+  land() { noise(.3, { type: 'lowpass', f0: 600, f1: 100, vol: .4 }); tone(120, 60, .25, { vol: .3 }); },
+  fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, f, .3, { type: 'triangle', vol: .18, delay: i * .12 })); },
+  thud() { tone(120, 50, .2, { type: 'triangle', vol: .3 }); noise(.12, { type: 'lowpass', f0: 500, vol: .25 }); },
+};
+// cat voice: glottal sawtooth + breath noise through three vowel formants, pitch up then down with vibrato
+const FORM = { n: [300, 1100, 2500], i: [320, 2400, 3100], a: [850, 1300, 2700], o: [520, 900, 2600], u: [380, 1300, 2500], e: [500, 2000, 2700] };
+function meow(happy = true) {
+  if (!live()) return;
+  try {
+    const n = ac.currentTime, dur = (happy ? .45 : .7) + Math.random() * .2;
+    const vs = happy ? ['n', 'i', 'a', Math.random() < .5 ? 'a' : 'o'] : ['n', 'a', 'o', 'u'];
+    const p0 = (happy ? 680 : 560) + Math.random() * 120;
+    const src = ac.createOscillator(); src.type = 'sawtooth';
+    src.frequency.setValueAtTime(p0 * .85, n);
+    src.frequency.linearRampToValueAtTime(p0 * (happy ? 1.3 : 1.1), n + dur * .3);
+    src.frequency.linearRampToValueAtTime(p0 * (happy ? .9 : .6), n + dur);
+    const vib = ac.createOscillator(), vg = ac.createGain(); vib.frequency.value = 6; vg.gain.value = p0 * .03; vib.connect(vg).connect(src.frequency);
+    const br = ac.createBufferSource(); br.buffer = noiseBuf; const bg = ac.createGain(); bg.gain.value = .25; br.connect(bg);
+    const out = ac.createGain();
+    out.gain.setValueAtTime(0.0001, n); out.gain.exponentialRampToValueAtTime(.35, n + .04); out.gain.setValueAtTime(.35, n + dur * .7); out.gain.exponentialRampToValueAtTime(0.0001, n + dur);
+    for (let k = 0; k < 3; k++) {
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = k ? 9 : 6;
+      vs.forEach((v, i) => f.frequency.linearRampToValueAtTime(FORM[v][k] * 1.35, n + dur * i / (vs.length - 1)));
+      const g = ac.createGain(); g.gain.value = [1, .6, .3][k];
+      src.connect(f); bg.connect(f); f.connect(g).connect(out);
+    }
+    out.connect(master);
+    src.start(n); vib.start(n); br.start(n, Math.random()); src.stop(n + dur); vib.stop(n + dur); br.stop(n + dur);
+  } catch {}
+}
+// engine sound: rumble (low-passed noise), jet whine, ion hum, firework crackle, water hiss, and wind
+let eng = null;
+function engineStart() {
+  if (!ac || eng) return;
+  try {
+    const mk = (type, f, q) => { const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const g = ac.createGain(); g.gain.value = 0; s.connect(fl).connect(g).connect(master); s.start(); return { s, fl, g }; };
+    const rumble = mk('lowpass', 380, .7), hiss = mk('highpass', 3500, .5), wind = mk('bandpass', 600, .6), crack = mk('bandpass', 2500, 2);
+    const whine = ac.createOscillator(), wg = ac.createGain(); whine.type = 'sawtooth'; whine.frequency.value = 900; wg.gain.value = 0;
+    const wf = ac.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 1800; wf.Q.value = 3; whine.connect(wf).connect(wg).connect(master); whine.start();
+    const hum = ac.createOscillator(), hg = ac.createGain(); hum.type = 'sine'; hum.frequency.value = 220; hg.gain.value = 0; hum.connect(hg).connect(master); hum.start();
+    eng = { rumble, hiss, wind, crack, whine, wg, hum, hg };
+  } catch { eng = null; }
+}
+function engineSet(m) {
+  if (!eng) return;
+  const n = ac.currentTime, set = (p, v) => p.setTargetAtTime(v, n, .06);
+  set(eng.rumble.g.gain, m.fire * .55); set(eng.rumble.fl.frequency, 250 + m.fire * 300 + Math.random() * 60);
+  set(eng.hiss.g.gain, m.water * .4);
+  set(eng.wg.gain, m.jet * .06); set(eng.whine.frequency, 700 + m.jet * 500);
+  set(eng.hg.gain, m.ion * .07); set(eng.hum.frequency, 200 + Math.sin(n * 3) * 20);
+  set(eng.crack.g.gain, m.spark * (Math.random() < .5 ? .9 : .05));
+  set(eng.wind.g.gain, m.wind * .35); set(eng.wind.fl.frequency, 400 + m.wind * 900);
+}
+function engineStop() {
+  if (!eng) return;
+  const e = eng; eng = null;
+  try {
+    const n = ac.currentTime;
+    for (const g of [e.rumble.g, e.hiss.g, e.wind.g, e.crack.g, { gain: e.wg.gain }, { gain: e.hg.gain }]) g.gain.setTargetAtTime(0, n, .08);
+    setTimeout(() => { try { for (const x of [e.rumble.s, e.hiss.s, e.wind.s, e.crack.s, e.whine, e.hum]) x.stop(); } catch {} }, 600);
+  } catch {}
+}
+
+// ================= parts =================
+// size in blocks (w, h), mass m; fuel = tank capacity; T = thrust; burn = fuel per second; own = seconds of own fuel
+const PARTS = {
+  cone: { cat: 'nose', w: 1, h: 1, m: .3, cd: .3 },
+  dome: { cat: 'nose', w: 1, h: 0.5, m: .15, cd: .6 },
+  needle: { cat: 'nose', w: 1, h: 1.5, m: .55, cd: .15 },
+  catpod: { cat: 'nose', w: 1, h: 1, m: .7, cd: .45, cats: 1 },
+  chute: { cat: 'nose', w: 1, h: 1, m: .35, cd: .45, chute: 1 },
+  tankS: { cat: 'body', w: 1, h: 1, m: .15, fuel: 1 },
+  tankL: { cat: 'body', w: 1, h: 2, m: .3, fuel: 2.2 },
+  thin: { cat: 'body', w: 0.5, h: 2.5, m: .2, fuel: 1.6, wobble: 1 },
+  drum: { cat: 'body', w: 2, h: 1, m: .4, fuel: 3.4, cdAdd: .5 },
+  weight: { cat: 'body', w: 1, h: 0.5, m: 1.3 },
+  gyro: { cat: 'body', w: 1, h: 0.5, m: .3, gyro: 1 },
+  decoup: { cat: 'body', w: 1, h: 0.5, m: .1, decoup: 1 },
+  cabin: { cat: 'body', w: 1, h: 1, m: .7, cats: 2 },
+  engS: { cat: 'engine', w: 1, h: 1, m: .3, T: 18, burn: .12, fx: 'fire' },
+  engL: { cat: 'engine', w: 1, h: 1.5, m: .8, T: 55, burn: .45, fx: 'fire' },
+  vector: { cat: 'engine', w: 1, h: 1, m: .5, T: 24, burn: .18, gimbal: 1, fx: 'fire' },
+  jet: { cat: 'engine', w: 1, h: 1.5, m: .7, T: 24, burn: .06, air: 1, fx: 'jet' },
+  ion: { cat: 'engine', w: 1, h: 1, m: .35, T: 8, burn: .025, fx: 'ion' },
+  firework: { cat: 'engine', w: 0.5, h: 1.5, m: .45, T: 46, own: 1.5, fx: 'spark' },
+  bottle: { cat: 'engine', w: 1, h: 1.5, m: .2, T: 34, own: 1.1, fx: 'water' },
+  fin: { cat: 'side', w: 0.5, h: 1, m: .08, fin: 1 },
+  wing: { cat: 'side', w: 1, h: 1.5, m: .35, fin: 2.4 },
+  booster: { cat: 'side', w: 0.5, h: 2, m: .45, T: 30, own: 4.5, sep: 1, fx: 'fire' },
+  rcs: { cat: 'side', w: 0.5, h: 0.5, m: .1, rcs: 1 },
+  balloon: { cat: 'side', w: 1, h: 1.5, m: .02, lift: 3.2 },
+  solar: { cat: 'side', w: 1, h: 0.5, m: .1, solar: .02 },
+  sidetank: { cat: 'side', w: 0.5, h: 1.5, m: .1, fuel: .8 },
+};
+const CATS = ['nose', 'body', 'engine', 'side'];
+const BYCAT = Object.fromEntries(CATS.map(c => [c, Object.keys(PARTS).filter(k => PARTS[k].cat === c)]));
+
+// ================= hand-drawn drawing =================
+const INK = '#2d2a32';
+const COL = { red: '#e8574a', orange: '#f39a3c', yellow: '#f4d35e', blue: '#4f8fd6', sky: '#9cc9ef', green: '#6dbb6a', gray: '#a7acb3', dark: '#5a5f68', cream: '#fff6df', purple: '#9b72cf', pink: '#f49ac1', white: '#fdfbf4', brown: '#b07a4a' };
+const catImg = new Image(); catImg.src = 'cat.png';
+catImg.onload = () => spriteCache.clear();
+
+// a sketchy pen: paths get wobble and overshoot, fills get a coloured-pencil hatch
+function Pen(g, s, seed) {
+  const r = mulberry(seed);
+  const amp = clamp(s * .022, .5, 2.4), lw = clamp(s * .034, 1.1, 3.4);
+  function path(pts, closed, a = amp) {
+    g.beginPath();
+    const P = closed ? [...pts, pts[0]] : pts;
+    let first = true;
+    for (let i = 0; i < P.length - 1; i++) {
+      const [x0, y0] = P[i], [x1, y1] = P[i + 1];
+      const len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.ceil(len / 14));
+      const nx = -(y1 - y0) / (len || 1), ny = (x1 - x0) / (len || 1);
+      for (let k = 0; k <= n; k++) {
+        if (k === 0 && !first) continue;
+        const u = k / n, o = (r() - .5) * 2 * a;
+        const x = x0 + (x1 - x0) * u + nx * o, y = y0 + (y1 - y0) * u + ny * o;
+        if (first) { g.moveTo(x, y); first = false; } else g.lineTo(x, y);
+      }
+    }
+  }
+  const api = {
+    r, amp, lw,
+    fill(pts, color, hatch = true) {
+      g.save();
+      path(pts, true, amp * .6); g.fillStyle = color; g.globalAlpha = .92; g.fill();
+      if (hatch) {
+        g.clip(); g.globalAlpha = .22; g.strokeStyle = shade(color, -.45); g.lineWidth = Math.max(.7, lw * .45);
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const [x, y] of pts) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+        const sp = Math.max(2.5, lw * 1.6), hgt = maxY - minY;
+        g.beginPath();
+        for (let x = minX - hgt; x < maxX; x += sp) { const j = (r() - .5) * sp * .5; g.moveTo(x + j, maxY + 2); g.lineTo(x + hgt + j + (r() - .5) * 2, minY - 2); }
+        g.stroke();
+        // a few lighter strokes for the paper showing through
+        g.globalAlpha = .25; g.strokeStyle = '#fff'; g.beginPath();
+        for (let i = 0; i < 3; i++) { const y = minY + r() * hgt; g.moveTo(minX + r() * 4, y); g.lineTo(maxX - r() * 4, y + (r() - .5) * 4); }
+        g.stroke();
+      }
+      g.restore();
+    },
+    line(pts, closed = false, w = lw, color = INK) {
+      g.save(); g.strokeStyle = color; g.lineCap = 'round'; g.lineJoin = 'round';
+      g.lineWidth = w; path(pts, closed); g.stroke();
+      g.globalAlpha = .45; g.lineWidth = w * .55; path(pts, closed); g.stroke();
+      g.restore();
+    },
+    shape(pts, color, w = lw) { api.fill(pts, color); api.line(pts, true, w); },
+    ell(cx, cy, rx, ry, n = 18) { const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; p.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } return p; },
+    rect(x, y, w, h) { return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]; },
+    rrect(x, y, w, h, rr) {
+      const p = [], q = (cx, cy, a0) => { for (let i = 0; i <= 3; i++) { const a = a0 + i / 3 * Math.PI / 2; p.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } };
+      q(x + w - rr, y + rr, -Math.PI / 2); q(x + w - rr, y + h - rr, 0); q(x + rr, y + h - rr, Math.PI / 2); q(x + rr, y + rr, Math.PI); return p;
+    },
+    dot(x, y, rr, color = INK) { g.fillStyle = color; g.beginPath(); g.arc(x + (r() - .5) * amp, y + (r() - .5) * amp, rr, 0, 7); g.fill(); },
+    cat(cx, cy, rr) {
+      const win = api.ell(cx, cy, rr, rr, 16);
+      api.fill(win, '#cfe8fb', false);
+      if (catImg.complete && catImg.naturalWidth) { g.save(); g.beginPath(); g.arc(cx, cy, rr * .95, 0, 7); g.clip(); g.drawImage(catImg, cx - rr * 1.05, cy - rr * 1.0, rr * 2.1, rr * 2.1); g.restore(); }
+      api.line(win, true, lw * 1.2); api.line(api.ell(cx, cy, rr * 1.18, rr * 1.18, 16), true, lw * .8, '#7a7f88');
+    },
+  };
+  return api;
+}
+
+// each part draws itself centred at 0,0 with W x H pixels (side parts drawn for the right side)
+const DRAW = {
+  cone(p, W, H) { const pts = [[0, -H / 2], [W * .18, -H * .25], [W / 2, H / 2], [-W / 2, H / 2], [-W * .18, -H * .25]]; p.shape(pts, COL.red); p.fill([[-W * .42, H * .3], [W * .42, H * .3], [W * .5, H * .5], [-W * .5, H * .5]], COL.white, false); p.line([[-W * .42, H * .3], [W * .42, H * .3]]); },
+  dome(p, W, H) { const pts = []; for (let i = 0; i <= 10; i++) { const a = Math.PI + i / 10 * Math.PI; pts.push([Math.cos(a) * W / 2, H / 2 + Math.sin(a) * H]); } p.shape(pts, COL.sky); p.line(p.ell(0, H * .05, W * .14, H * .14, 10), true); },
+  needle(p, W, H) { const pts = [[0, -H / 2], [W * .12, H * .05], [W / 2, H * .38], [W / 2, H / 2], [-W / 2, H / 2], [-W / 2, H * .38], [-W * .12, H * .05]]; p.shape(pts, COL.gray); p.shape(p.rect(-W / 2, H * .3, W, H * .2), COL.dark); p.line([[0, -H / 2], [0, H * .2]], false, p.lw * .6, '#fff'); },
+  catpod(p, W, H) {
+    const pts = [[-W * .2, -H / 2], [W * .2, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]];
+    p.shape(pts, COL.cream); p.cat(0, H * .1, Math.min(W, H) * .28);
+    p.shape(p.rect(-W * .12, -H / 2 - H * .06, W * .24, H * .08), COL.red);
+  },
+  chute(p, W, H) {
+    const pts = [[-W * .3, -H / 2], [W * .3, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]];
+    p.shape(pts, COL.orange);
+    for (let i = -1; i <= 1; i++) p.line([[i * W * .12, -H / 2], [i * W * .3, H / 2]], false, p.lw * .7);
+    p.shape(p.rrect(-W * .22, -H / 2 - H * .12, W * .44, H * .2, H * .06), COL.white);
+  },
+  tank(p, W, H, c1, c2, bands) {
+    p.shape(p.rrect(-W / 2, -H / 2, W, H, Math.min(W, H) * .12), c1);
+    for (const b of bands) p.fill(p.rect(-W / 2 + 1, H * b - H * .06, W - 2, H * .12), c2, false);
+    for (const b of bands) { p.line([[-W / 2, H * b - H * .06], [W / 2, H * b - H * .06]], false, p.lw * .6); p.line([[-W / 2, H * b + H * .06], [W / 2, H * b + H * .06]], false, p.lw * .6); }
+    for (let i = 0; i < 3; i++) { p.dot(-W * .38, -H * .4 + i * 4, p.lw * .5); p.dot(W * .38, -H * .4 + i * 4, p.lw * .5); }
+  },
+  tankS(p, W, H) { DRAW.tank(p, W, H, COL.white, COL.orange, [0]); },
+  tankL(p, W, H) { DRAW.tank(p, W, H, COL.white, COL.orange, [-.25, .25]); },
+  thin(p, W, H) { DRAW.tank(p, W, H, COL.sky, COL.blue, [-.3, 0, .3]); },
+  drum(p, W, H) {
+    p.shape(p.rrect(-W / 2, -H / 2, W, H, W * .08), COL.green);
+    for (const b of [-.22, .22]) p.line([[-W / 2, H * b], [W / 2, H * b]], false, p.lw * 1.1);
+    p.line(p.ell(-W * .2, -H * .38, W * .07, H * .035, 8), true, p.lw * .7);
+  },
+  weight(p, W, H) { p.shape([[-W * .38, -H / 2], [W * .38, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]], COL.dark); p.dot(-W * .25, 0, p.lw * .8, '#ddd'); p.dot(W * .25, 0, p.lw * .8, '#ddd'); p.line([[-W * .12, H * .05], [W * .12, H * .05]], false, p.lw, '#ddd'); },
+  gyro(p, W, H) {
+    p.shape(p.rrect(-W / 2, -H / 2, W, H, H * .15), COL.purple);
+    const R = Math.min(W, H) * .32; p.fill(p.ell(0, 0, R, R, 14), COL.yellow); p.line(p.ell(0, 0, R, R, 14), true);
+    const a = []; for (let i = 0; i <= 8; i++) { const t2 = -.6 + i / 8 * 4.6; a.push([Math.cos(t2) * R * .62, Math.sin(t2) * R * .62]); }
+    p.line(a, false, p.lw * .8); p.dot(0, 0, p.lw);
+  },
+  decoup(p, W, H) {
+    p.shape(p.rect(-W / 2, -H / 2, W, H), COL.yellow);
+    for (let i = -2; i <= 2; i++) p.fill([[i * W * .2 - W * .05, -H / 2 + 1], [i * W * .2 + W * .05, -H / 2 + 1], [i * W * .2 + W * .12, H / 2 - 1], [i * W * .2 + W * .02, H / 2 - 1]], INK, false);
+    p.line(p.rect(-W / 2, -H / 2, W, H), true);
+  },
+  cabin(p, W, H) {
+    p.shape(p.rrect(-W / 2, -H / 2, W, H, W * .1), COL.pink);
+    const R = Math.min(W * .22, H * .2); p.cat(-W * .22, 0, R); p.cat(W * .22, 0, R);
+  },
+  bell(p, W, H, c, top = .38) {
+    p.shape(p.rect(-W * .3, -H / 2, W * .6, H * top), COL.dark);
+    p.shape([[-W * .28, -H / 2 + H * top], [W * .28, -H / 2 + H * top], [W / 2, H / 2], [-W / 2, H / 2]], c);
+    p.line([[-W * .38, H * .25], [W * .38, H * .25]], false, p.lw * .6);
+  },
+  engS(p, W, H) { DRAW.bell(p, W, H, COL.gray); },
+  engL(p, W, H) { DRAW.bell(p, W, H, '#7d838c', .3); p.line([[-W * .3, H * .05], [W * .3, H * .05]], false, p.lw * .6); },
+  vector(p, W, H) {
+    p.shape(p.rect(-W * .3, -H / 2, W * .6, H * .3), COL.dark);
+    p.fill(p.ell(0, -H * .14, W * .16, W * .16, 10), COL.yellow); p.line(p.ell(0, -H * .14, W * .16, W * .16, 10), true);
+    p.shape([[-W * .22, -H * .02], [W * .26, -H * .02], [W * .5, H / 2], [-W * .42, H / 2]], COL.orange);
+  },
+  jet(p, W, H) {
+    p.shape(p.rrect(-W * .45, -H / 2, W * .9, H * .7, W * .2), COL.gray);
+    p.fill(p.ell(0, -H * .2, W * .3, W * .3, 14), '#666');
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; p.line([[0, -H * .2], [Math.cos(a) * W * .28, -H * .2 + Math.sin(a) * W * .28]], false, p.lw * .6, '#eee'); }
+    p.line(p.ell(0, -H * .2, W * .3, W * .3, 14), true);
+    p.shape([[-W * .36, H * .2], [W * .36, H * .2], [W * .26, H / 2], [-W * .26, H / 2]], COL.dark);
+  },
+  ion(p, W, H) {
+    p.shape(p.rrect(-W / 2, -H / 2, W, H * .55, W * .1), COL.white);
+    p.shape([[-W * .36, H * .05], [W * .36, H * .05], [W * .44, H / 2], [-W * .44, H / 2]], COL.blue);
+    for (let i = -1; i <= 1; i++) p.line([[i * W * .2, H * .12], [i * W * .24, H * .45]], false, p.lw * .5, '#cfe8ff');
+    p.dot(0, -H * .22, p.lw * 1.4, COL.blue);
+  },
+  firework(p, W, H) {
+    p.shape(p.rect(-W / 2, -H * .4, W, H * .9), COL.red);
+    for (let i = 0; i < 4; i++) p.line([[-W / 2, -H * .3 + i * H * .2], [W / 2, -H * .2 + i * H * .2]], false, p.lw * .8, COL.yellow);
+    p.line([[0, -H * .4], [W * .1, -H * .48], [-W * .05, -H / 2]], false, p.lw * .8, COL.brown);
+  },
+  bottle(p, W, H) {
+    // upside-down plastic bottle, cap at the bottom
+    const pts = [[-W / 2, -H / 2], [W / 2, -H / 2], [W / 2, H * .15], [W * .2, H * .35], [W * .2, H / 2], [-W * .2, H / 2], [-W * .2, H * .35], [-W / 2, H * .15]];
+    p.fill(pts, '#d8eefc', false); p.fill([[-W / 2, -H * .05], [W / 2, -H * .1], [W / 2, H * .15], [W * .2, H * .35], [W * .2, H * .44], [-W * .2, H * .44], [-W * .2, H * .35], [-W / 2, H * .15]], COL.sky);
+    p.line(pts, true); p.shape(p.rect(-W * .22, H * .38, W * .44, H * .12), COL.blue);
+    p.line([[-W * .3, -H * .4], [-W * .3, -H * .15]], false, p.lw * .7, '#fff');
+  },
+  // side parts: x from -W/2 (touching the rocket) to +W/2 (outside)
+  fin(p, W, H) { p.shape([[-W / 2, -H / 2], [W * .1, -H * .05], [W / 2, H / 2], [-W / 2, H / 2]], COL.red); },
+  wing(p, W, H) { p.shape([[-W / 2, -H / 2], [-W * .1, -H * .3], [W / 2, H * .25], [W / 2, H / 2], [-W / 2, H / 2]], COL.blue); p.line([[-W * .35, -H * .2], [W * .35, H * .38]], false, p.lw * .6, '#fff'); },
+  booster(p, W, H) {
+    p.shape([[0, -H / 2], [W / 2, -H * .32], [W / 2, H * .36], [-W / 2, H * .36], [-W / 2, -H * .32]], COL.white);
+    p.fill(p.rect(-W / 2 + 1, -H * .05, W - 2, H * .1), COL.orange, false);
+    p.shape([[-W * .38, H * .36], [W * .38, H * .36], [W / 2, H / 2], [-W / 2, H / 2]], COL.gray);
+  },
+  rcs(p, W, H) { p.shape(p.rrect(-W / 2, -H * .3, W * .8, H * .6, W * .1), COL.white); p.shape(p.rect(W * .2, -H / 2, W * .25, H * .25), COL.dark); p.shape(p.rect(W * .2, H * .25, W * .25, H * .25), COL.dark); },
+  balloon(p, W, H) {
+    p.line([[-W / 2, H * .45], [-W * .3, H * .3], [-W * .05, H * .2], [0, H * .12]], false, p.lw * .6);
+    p.shape(p.ell(W * .02, -H * .12, W * .4, H * .34, 18), COL.yellow);
+    p.line([[-W * .12, -H * .3], [-W * .18, -H * .15]], false, p.lw * .9, '#fff');
+    p.shape([[W * .02, H * .2], [W * .08, H * .27], [-W * .04, H * .27]], COL.yellow, p.lw * .6);
+  },
+  solar(p, W, H) {
+    p.line([[-W / 2, 0], [-W * .3, 0]], false, p.lw * 1.2);
+    p.shape(p.rect(-W * .3, -H / 2, W * .8, H), COL.blue);
+    for (let i = 1; i < 4; i++) p.line([[-W * .3 + i * W * .2, -H / 2], [-W * .3 + i * W * .2, H / 2]], false, p.lw * .5, '#cfe8ff');
+    p.line([[-W * .3, 0], [W / 2, 0]], false, p.lw * .5, '#cfe8ff');
+  },
+  sidetank(p, W, H) { p.shape(p.rrect(-W / 2, -H / 2, W, H, W * .45), COL.orange); p.fill(p.rect(-W / 2 + 1, -H * .06, W - 2, H * .12), COL.white, false); },
+};
+
+// sprites are drawn once per zoom level and pen "frame" (3 frames give the lines a gentle boil)
+const spriteCache = new Map();
+const PAD = .35;
+function sprite(id, s, frame) {
+  const b = Math.round(Math.log2(Math.max(4, s)) * 3) / 3, sc = Math.min(2 ** b, 260);
+  const key = id + '|' + sc + '|' + frame;
+  let c = spriteCache.get(key);
+  if (c) return c;
+  const d = PARTS[id], dpr = Math.min(2, devicePixelRatio || 1);
+  c = document.createElement('canvas');
+  c.width = Math.ceil((d.w + PAD * 2) * sc * dpr); c.height = Math.ceil((d.h + PAD * 2) * sc * dpr);
+  const g = c.getContext('2d'); g.scale(dpr, dpr); g.translate((d.w / 2 + PAD) * sc, (d.h / 2 + PAD) * sc);
+  DRAW[id](Pen(g, sc, id.length * 977 + frame * 131 + 7), d.w * sc, d.h * sc);
+  c.sc = sc;
+  if (spriteCache.size > 600) spriteCache.clear();
+  spriteCache.set(key, c);
+  return c;
+}
+function drawPart(g, id, x, y, s, frame, mirror = false, alpha = 1) {
+  const sp = sprite(id, s, frame), d = PARTS[id], k = s / sp.sc;
+  const w = (d.w + PAD * 2) * s, h = (d.h + PAD * 2) * s;
+  g.save(); g.globalAlpha *= alpha; g.translate(x, y); if (mirror) g.scale(-1, 1);
+  g.drawImage(sp, -w / 2, -h / 2, w, h);
+  g.restore();
+  return k;
+}
+
+// ================= the rocket being built =================
+// parts sit on a grid of half-block cells inside the frame on the launch pad.
+// rk[i] = { id, x, y }: the cell of the part's bottom-left corner (x from the frame's left edge, y from the pad)
+const CELL = .5;
+const FRAME = { w: 6, h: 7 };
+const GW = FRAME.w / CELL, GH = FRAME.h / CELL;
+const cw = id => Math.round(PARTS[id].w / CELL), ch = id => Math.round(PARTS[id].h / CELL);
+const DEFAULT = [{ id: 'engS', x: 5, y: 0 }, { id: 'tankS', x: 5, y: 2 }, { id: 'catpod', x: 5, y: 4 }, { id: 'fin', x: 4, y: 0 }, { id: 'fin', x: 7, y: 0 }];
+const inFrame = (id, x, y) => x >= 0 && y >= 0 && x + cw(id) <= GW && y + ch(id) <= GH;
+const cellsOverlap = (a, b) => a.x < b.x + cw(b.id) && b.x < a.x + cw(a.id) && a.y < b.y + ch(b.id) && b.y < a.y + ch(a.id);
+function validRocket(a) {
+  if (!Array.isArray(a) || a.length > 60) return false;
+  if (!a.every(e => e && PARTS[e.id] && Number.isInteger(e.x) && Number.isInteger(e.y) && inFrame(e.id, e.x, e.y) && (e.o === undefined || Number.isInteger(e.o)))) return false;
+  for (let i = 0; i < a.length; i++) for (let j = i + 1; j < a.length; j++) if (cellsOverlap(a[i], a[j])) return false;
+  return true;
+}
+let rk = (() => { const s = store.get('rocket3', null); return validRocket(s) ? s : DEFAULT.map(e => ({ ...e })); })();
+const saveRocket = () => store.set('rocket3', rk);
+const freeAt = (id, x, y, skip = -1) => inFrame(id, x, y) && rk.every((o, i) => i === skip || !cellsOverlap({ id, x, y }, o));
+
+// two parts are joined when they share a piece of an edge
+function touching(a, b) {
+  const ax1 = a.x + cw(a.id), ay1 = a.y + ch(a.id), bx1 = b.x + cw(b.id), by1 = b.y + ch(b.id);
+  const xo = Math.min(ax1, bx1) - Math.max(a.x, b.x), yo = Math.min(ay1, by1) - Math.max(a.y, b.y);
+  return (xo > 0 && (ay1 === b.y || by1 === a.y)) || (yo > 0 && (ax1 === b.x || bx1 === a.x));
+}
+// the joined groups; the main body is the biggest one (the cat's, on a tie)
+function groups(a) {
+  const adj = a.map(() => []);
+  for (let i = 0; i < a.length; i++) for (let j = i + 1; j < a.length; j++) if (touching(a[i], a[j])) { adj[i].push(j); adj[j].push(i); }
+  const comp = a.map(() => -1), list = [];
+  a.forEach((_, i) => {
+    if (comp[i] >= 0) return;
+    const g = [], st = [i]; comp[i] = list.length;
+    while (st.length) { const k = st.pop(); g.push(k); for (const j of adj[k]) if (comp[j] < 0) { comp[j] = list.length; st.push(j); } }
+    list.push(g);
+  });
+  const score = g => g.length + (g.some(i => PARTS[a[i].id].cats) ? .5 : 0);
+  const main = list.length ? list.reduce((b, g) => score(g) > score(b) ? g : b) : [];
+  return { adj, main: new Set(main) };
+}
+// part positions in blocks (x from the frame's centre, y from the pad), plus stages for the main body
+function layout(a, onlyMain = false) {
+  const { adj, main } = groups(a);
+  const parts = [];
+  a.forEach((e, i) => {
+    if (onlyMain && !main.has(i)) return;
+    const d = PARTS[e.id], w = cw(e.id) * CELL, h = ch(e.id) * CELL;
+    parts.push({ id: e.id, idx: i, x: (e.x + cw(e.id) / 2) * CELL - FRAME.w / 2, y: (e.y + ch(e.id) / 2) * CELL, w, h, side: 0, attached: main.has(i) });
+  });
+  if (!parts.length) return { parts, H: 0, minX: -.5, maxX: .5, maxStage: 0 };
+  const byIdx = []; parts.forEach(p => byIdx[p.idx] = p);
+  // side parts face away from what they hang on
+  for (const p of parts) {
+    if (PARTS[p.id].cat !== 'side') continue;
+    const e = a[p.idx], nb = adj[p.idx].map(j => a[j]).find(o => o.x + cw(o.id) === e.x || o.x === e.x + cw(e.id));
+    p.side = nb ? (nb.x + cw(nb.id) === e.x ? 1 : -1) : (p.x >= 0 ? 1 : -1);
+  }
+  // stages: each decoupler has an order number (o). at step k every decoupler numbered k or less lets go,
+  // and whatever is no longer joined to the top part falls away with it. stage 0 burns and drops first.
+  const mainParts = parts.filter(p => p.attached);
+  const drop = [];
+  let maxStage = 0;
+  if (mainParts.length) {
+    const top = mainParts.reduce((b, p) => p.y + p.h / 2 > b.y + b.h / 2 ? p : b);
+    const decs = mainParts.filter(p => PARTS[p.id].decoup && p.idx !== top.idx).map(p => p.idx);
+    const orders = [...new Set(decs.map(i => a[i].o || 1))].sort((x, y) => x - y);
+    const cut = new Set();
+    for (const k of orders) {
+      decs.forEach(i => { if ((a[i].o || 1) <= k) cut.add(i); });
+      const seen = new Set([top.idx]), st = [top.idx];
+      while (st.length) { const i = st.pop(); for (const j of adj[i]) if (!seen.has(j) && !cut.has(j) && main.has(j)) { seen.add(j); st.push(j); } }
+      for (const q of mainParts) if (!seen.has(q.idx) && drop[q.idx] === undefined) drop[q.idx] = k;
+    }
+    const steps = [...new Set(mainParts.map(q => drop[q.idx]).filter(v => v !== undefined))].sort((x, y) => x - y);
+    maxStage = steps.length;
+    mainParts.forEach(q => q.stage = drop[q.idx] === undefined ? maxStage : steps.indexOf(drop[q.idx]));
+  }
+  parts.forEach(p => { if (!p.attached) p.stage = 0; });
+  const maxL = maxStage, minL = 0;
+  // in flight only the main body counts: it stands on its lowest part
+  if (onlyMain) { const minB = Math.min(...parts.map(p => p.y - p.h / 2)); parts.forEach(p => p.y -= minB); }
+  return { parts, H: Math.max(...parts.map(p => p.y + p.h / 2)), minX: Math.min(...parts.map(p => p.x - p.w / 2)), maxX: Math.max(...parts.map(p => p.x + p.w / 2)), maxStage: maxL - minL };
+}
+
+// rough numbers for the build gauges (main body only)
+function buildStats() {
+  const { parts } = layout(rk, true);
+  let m = 0, T = 0, fuel = 0, fuel0 = 0, lift = 0;
+  for (const p of parts) { const d = PARTS[p.id]; m += d.m + (d.fuel || 0); fuel += (d.fuel || 0) + (d.own ? d.own * .35 : 0) + (p.id === 'ion' ? 2 : 0); if (p.stage === 0) fuel0 += d.fuel || 0; lift += d.lift || 0; }
+  for (const p of parts) { const d = PARTS[p.id]; if (!d.T) continue; if (p.side) T += d.T; else if (p.stage === 0 && (d.own || fuel0 > 0)) T += d.T * (d.space ? .25 : 1); }
+  const a = aero(parts, 0);
+  return { twr: m ? (T + lift) / (m * G0) : 0, fuel, margin: parts.length ? a.margin : 0, n: parts.length };
+}
+
+// ================= physics =================
+const G0 = 4, KD = .008, KS = .006, KDA = .004;
+const DT = 1 / 120;
+// the sky goes on for ever: the air thins out but never runs out, so how high you get depends on the rocket
+const airK = y => Math.exp(-Math.max(0, y) / 250);
+const rho = y => .3 + .7 * airK(y);
+
+// centre of mass, centre of pressure and inertia for a set of parts (fuel levels by stage)
+function aero(parts, _t, fuelK) {
+  let m = 0, my = 0, mx = 0, A = 0, Ay = 0, front = 0, minX = Infinity, maxX = -Infinity;
+  for (const p of parts) {
+    const d = PARTS[p.id]; const fm = (d.fuel || 0) * (fuelK ? fuelK(p) : 1);
+    const pm = d.m + fm; m += pm; my += pm * p.y; mx += pm * p.x;
+    const a = p.w * p.h * (d.fin ? 3 * d.fin / (d.fin > 1 ? 2 : 1) : d.lift ? .2 : 1);
+    A += a; Ay += a * p.y;
+    front += 0; minX = Math.min(minX, p.x - p.w / 2); maxX = Math.max(maxX, p.x + p.w / 2); front = maxX - minX;
+  }
+  const comY = m ? my / m : 0, comX = m ? mx / m : 0, cpY = A ? Ay / A : 0;
+  let I = .3;
+  for (const p of parts) { const d = PARTS[p.id], pm = d.m + (d.fuel || 0) * (fuelK ? fuelK(p) : 1); I += pm * ((p.y - comY) ** 2 + (p.x - comX) ** 2 + (p.h * p.h + p.w * p.w) / 12); }
+  return { m, comX, comY, cpY, margin: comY - cpY, Aside: A, front: Math.max(1, front), I };
+}
+
+let R = null; // the flying rocket
+function makeFlight() {
+  const lay = layout(rk, true);
+  const parts = lay.parts.map(p => ({ ...p, own: PARTS[p.id].own || 0, burning: false }));
+  const fuel = [], fuelMax = [];
+  for (let s = 0; s <= lay.maxStage; s++) { fuel[s] = 0; fuelMax[s] = 0; }
+  for (const p of parts) { const f = PARTS[p.id].fuel || 0; fuel[p.stage] += f; fuelMax[p.stage] += f; }
+  R = { parts, fuel, fuelMax, active: 0, maxStage: lay.maxStage, x: 0, y: 0, vx: 0, vy: 0, th: 0, w: 0,
+        onPad: true, padT: 0, t: 0, maxY: 0, chuteOpen: false, fallT: 0, sepT: 0, alive: true, landed: false, onMoon: false,
+        thrust: 0, mix: { fire: 0, jet: 0, ion: 0, spark: 0, water: 0 }, everLift: false, padShake: 0 };
+  recalc();
+  R.y = R.comY; R.x = R.comX;
+  R.y0 = R.comY; R.top0 = R.top - R.bot;
+}
+function fuelK(p) { return R.fuelMax[p.stage] ? R.fuel[p.stage] / R.fuelMax[p.stage] : 0; }
+function recalc() {
+  const a = aero(R.parts, 0, fuelK);
+  // keep the world position of the parts when the centre of mass moves
+  if (R.comY !== undefined && R.parts.length) { const dx = a.comX - R.comX, dy = a.comY - R.comY, c = Math.cos(R.th), sn = Math.sin(R.th); R.x += dx * c + dy * sn; R.y += -dx * sn + dy * c; }
+  if (!R.parts.length) return;
+  Object.assign(R, a);
+  const top = R.parts.filter(p => !p.side).sort((p, q) => (q.y + q.h / 2) - (p.y + p.h / 2))[0];
+  const nd = top ? PARTS[top.id] : null;
+  R.cd = (nd && nd.cd ? nd.cd : 1) + R.parts.reduce((s, p) => s + (PARTS[p.id].cdAdd || 0) * .5, 0);
+  R.gyro = R.parts.filter(p => PARTS[p.id].gyro).length;
+  R.rcs = R.parts.filter(p => PARTS[p.id].rcs).length / 2;
+  R.fins = R.parts.reduce((s, p) => s + (PARTS[p.id].fin || 0), 0) / 2;
+  R.wobble = R.parts.filter(p => PARTS[p.id].wobble).length;
+  R.hasChute = R.parts.some(p => PARTS[p.id].chute);
+  R.balloons = R.parts.filter(p => PARTS[p.id].lift);
+  R.ys = R.parts.map(p => p.y - p.h / 2); R.top = Math.max(...R.parts.map(p => p.y + p.h / 2)) - R.comY; R.bot = Math.min(...R.ys) - R.comY;
+  R.corners = [];
+  for (const p of R.parts) for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) R.corners.push([p.x + sx * p.w / 2, p.y + sy * p.h / 2]);
+}
+// world position of a point given in rocket block coordinates
+function toWorld(lx, ly, st = R) { const dx = lx - st.comX, dy = ly - st.comY, c = Math.cos(st.th), s = Math.sin(st.th); return [st.x + dx * c + dy * s, st.y - dx * s + dy * c]; }
+
+let windT = Math.random() * 100;
+const windAt = (tt, y) => (Math.sin(tt * .35 + windT) * 1.6 + Math.sin(tt * 1.1 + windT * 2) * .9) * clamp(1 - y / 600, 0, 1);
+
+function detach(list, kind) {
+  for (const p of list) {
+    const [wx, wy] = toWorld(p.x, p.y);
+    const out = p.side || Math.sign(p.x - R.comX) || (Math.random() - .5);
+    debris.push({ id: p.id, x: wx, y: wy, vx: R.vx + out * (kind === 'stage' ? 1 : 3), vy: R.vy - 1, th: R.th, w: out * 1.5, mirror: p.side < 0, life: 6 });
+  }
+  R.parts = R.parts.filter(p => !list.includes(p));
+  recalc();
+}
+
+function physStep(dt, u) {
+  const r = R; r.t += dt;
+  const alt = r.y - r.y0, rh = rho(alt), thick = airK(alt);
+  const g = G0;
+  // --- engines ---
+  let T = 0, gim = 0, usedFuel = 0, tauT = 0;
+  const mix = { fire: 0, jet: 0, ion: 0, spark: 0, water: 0 };
+  let stageCan = false, stageEngines = 0;
+  const stunned = r.stun > 0; if (stunned) r.stun -= dt;
+  // solar panels power the ion engines of their own stage: +1.5 thrust each, up to two panels per ion engine
+  const ions = r.parts.filter(p => p.id === 'ion' && p.stage === r.active).length;
+  const panels = r.parts.filter(p => PARTS[p.id].solar && p.stage === r.active).length;
+  const ionBoost = ions ? 1.5 * Math.min(panels, ions * 2) / ions : 0;
+  for (const p of r.parts) {
+    const d = PARTS[p.id]; p.burning = false;
+    if (!d.T) continue;
+    if (stunned) { stageCan = true; continue; }       // struck by lightning: engines cough for a moment
+    if (p.side) {
+      // side boosters fire from lift-off until empty, then fall away
+      if (p.own > 0) { p.own -= dt; p.burning = true; const f = d.T; T += f; tauT -= (p.x - r.comX) * f; mix.fire += d.T / 60; }
+      continue;
+    }
+    if (p.stage !== r.active) continue;
+    stageEngines++;
+    let f = 1;
+    if (d.own) { if (p.own <= 0) continue; p.own -= dt; }
+    else { if (r.fuel[r.active] <= 0) continue; usedFuel += d.burn * dt; }
+    if (d.air) f = clamp(.15 + thick * 1.1, .15, 1);   // jets love thick low air
+    if (p.id === 'ion') f *= (d.T + ionBoost) / d.T;
+    stageCan = true;
+    if (f <= 0) continue;
+    p.burning = true;
+    T += d.T * f; tauT -= (p.x - r.comX) * d.T * f; if (d.gimbal) gim += f;
+    mix[d.fx] += f * d.T / (d.fx === 'ion' ? 4 : 50);
+  }
+  if (usedFuel) { r.fuel[r.active] = Math.max(0, r.fuel[r.active] - usedFuel); }
+  r.thrust = T; r.mix = mix;
+  // spent boosters fall away
+  const spent = r.parts.filter(p => p.side && PARTS[p.id].sep && p.own <= 0);
+  if (spent.length) { detach(spent, 'booster'); sfx.decouple(); }
+  // stage separation when the bottom stage can no longer push
+  // drop the stage when it is spent, or when it sits on the pad for 2 s without being able to lift the rocket
+  const stuck = r.onPad && r.padT > 2 && T < r.m * g;
+  if ((!stageCan || stuck) && r.active < r.maxStage) {
+    r.sepT += dt;
+    if (r.sepT > .25) {
+      r.sepT = 0;
+      const drop = r.parts.filter(p => p.stage === r.active);
+      r.active++;
+      detach(drop, 'stage'); sfx.decouple(); spawnPuff(r.x, r.y + r.bot, 8, '#ffffff');
+      // still on the pad: what is left settles down onto it and gets a fresh try
+      if (r.onPad && r.parts.length) { let low = Infinity; for (const [lx, ly] of r.corners) low = Math.min(low, toWorld(lx, ly)[1]); r.y -= low; r.padT = 0; }
+    }
+  } else r.sepT = 0;
+  // balloons pop high up
+  let lift = 0;
+  for (const p of r.balloons) { const L2 = PARTS[p.id].lift * (.45 + .55 * rh); lift += L2; tauT -= ((p.x - r.comX) * Math.cos(r.th) + (p.y - r.comY) * Math.sin(r.th)) * L2; }
+  if (r.balloons.length && alt > 300) { const bl = r.balloons; for (const p of bl) { const [wx, wy] = toWorld(p.x, p.y); spawnPuff(wx, wy, 6, COL.yellow); } r.parts = r.parts.filter(p => !bl.includes(p)); recalc(); sfx.balloon(); setTimeout(sfx.balloon, 90); }
+  // --- forces ---
+  const s = Math.sin(r.th), c = Math.cos(r.th);
+  let Fx = T * s, Fy = T * c - r.m * g + lift;
+  const wx = windAt(r.t, alt);
+  const rvx = r.vx - wx, rvy = r.vy, spd = Math.hypot(rvx, rvy);
+  let alpha = 0;
+  if (spd > .5) alpha = wrapA(r.th - Math.atan2(rvx, rvy));
+  const q = .5 * rh * spd * spd;
+  let area = r.front * r.cd * Math.abs(Math.cos(alpha)) + r.Aside * .4 * Math.abs(Math.sin(alpha)) + r.balloons.length * 1.4;
+  if (r.chuteOpen) area += 60;
+  if (spd > 0) { const Fd = q * area * KD * 2; Fx -= Fd * rvx / spd; Fy -= Fd * rvy / spd; }
+  // --- torque ---
+  // thrust or balloons off to one side twist the rocket
+  let tau = tauT * .3 - KS * q * r.Aside * r.margin * Math.sin(alpha);
+  tau -= KDA * q * r.Aside * r.w * (1 + Math.abs(r.margin)) + .25 * r.w * r.I;
+  const thrFrac = T > 0 ? 1 : 0;
+  const ctrl = 1 + r.gyro * 3 + r.rcs * 5 + r.fins * Math.min(q, 500) / 500 * 6 + gim * 7 * thrFrac;
+  tau += u * ctrl;
+  if (Math.abs(u) < .05 && r.gyro) tau -= r.gyro * 2.5 * r.w;          // gyros hold the heading
+  // gusty air nudges every rocket; fins pull it back, an unstable one runs away with it
+  tau += Math.min(q, 400) * .004 * (Math.sin(r.t * 3.1 + windT) + Math.sin(r.t * 5.7) * .6);
+  if (r.wobble) tau += r.wobble * Math.min(q, 400) * .012 * Math.sin(r.t * 7.3) * Math.sin(r.t * 2.1);
+  if (r.chuteOpen) tau -= (wrapA(r.th)) * 3 + r.w * 2;
+  // --- launch pad ---
+  if (r.onPad) {
+    r.padT += dt;
+    if (!r.parts.length) return;
+    if (Fy <= 0 || r.padT < .05) { r.vx = r.vy = 0; r.w = 0; r.th = 0; r.padShake = T > 0 ? Math.min(1, T / (r.m * g)) : 0; return; }
+    r.onPad = false; r.everLift = true;
+  }
+  r.vx += Fx / r.m * dt; r.vy += Fy / r.m * dt;
+  // RCS thrusters also slide the rocket sideways: room to dodge
+  if (r.rcs) r.vx += u * r.rcs * 4 * dt;
+  r.x += r.vx * dt; r.y += r.vy * dt;
+  r.w += tau / r.I * dt; r.w = clamp(r.w, -12, 12); r.th = wrapA(r.th + r.w * dt);
+  r.q = q; r.alpha = alpha;
+  r.maxY = Math.max(r.maxY, r.y - r.y0);
+  // chute opens on the way down
+  if (r.hasChute && !r.chuteOpen && T === 0 && r.vy < -3) { r.chuteOpen = true; sfx.chute(); }
+  // tumbling sideways through thick air rips it apart
+  if (q > 140 && Math.abs(alpha) > 1.25 && Math.abs(alpha) < Math.PI - .5) return 'breakup';
+  // ground
+  let low = Infinity; for (const [lx, ly] of r.corners) low = Math.min(low, toWorld(lx, ly)[1]);
+  if (low <= 0 && r.vy < 0) return (spd > 7 && !r.chuteOpen) ? 'crash' : 'land';
+  return null;
+}
+
+// ================= world objects =================
+let debris = [], particles = [], obstacles = [], ejectCat = null;
+function spawnPuff(x, y, n, color, sp = 3) {
+  for (let i = 0; i < n; i++) { const a = Math.random() * 7, v = Math.random() * sp; particles.push({ kind: 'puff', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: .3 + Math.random() * .5, grow: 1.2 + Math.random(), life: .6 + Math.random() * .6, max: 1.2, color }); }
+}
+function explode(x, y) {
+  for (let i = 0; i < 26; i++) { const a = Math.random() * 7, v = 2 + Math.random() * 9; particles.push({ kind: 'puff', front: 1, x, y, vx: Math.cos(a) * v + R.vx * .3, vy: Math.sin(a) * v + R.vy * .3, r: .4 + Math.random() * .7, grow: 1.6, life: .8 + Math.random() * .8, max: 1.6, color: [COL.orange, COL.yellow, COL.red, '#888'][i % 4] }); }
+  particles.push({ kind: 'boom', front: 1, x, y, vx: 0, vy: 0, r: 1, life: .5, max: .5 });
+  // the cat bails out with a little parachute
+  if (R.parts.some(p => PARTS[p.id].cats)) ejectCat = { x, y: Math.max(y, 1.5), vx: R.vx * .3 + (Math.random() - .5) * 4, vy: Math.max(R.vy * .3, 0) + 7, t: 0 };
+  for (const p of R.parts) { const [wx, wy] = toWorld(p.x, p.y); debris.push({ id: p.id, x: wx, y: wy, vx: R.vx * .3 + (Math.random() - .5) * 10, vy: R.vy * .3 + Math.random() * 8, th: R.th, w: (Math.random() - .5) * 10, mirror: p.side < 0, life: 5, burnt: true }); }
+  R.parts = [];
+}
+
+// obstacle bands (altitude in blocks)
+// the scenery changes with height: birds low, then planes and thunderclouds, migrating geese,
+// weather balloons, fast jets, and far up the odd UFO
+const BANDS = [
+  { kind: 'bird', y0: 25, y1: 400, gap: 45 },
+  { kind: 'plane', y0: 140, y1: 1500, gap: 170 },
+  { kind: 'storm', y0: 280, y1: 2500, gap: 240 },
+  { kind: 'geese', y0: 350, y1: 2200, gap: 260 },
+  { kind: 'wballoon', y0: 700, y1: 1e9, gap: 420 },
+  { kind: 'jet', y0: 1300, y1: 1e9, gap: 360 },
+  { kind: 'ufo', y0: 3000, y1: 1e9, gap: 2000 },
+];
+let nextSpawn;
+function resetObstacles() {
+  obstacles = []; nextSpawn = BANDS.map(b => b.y0 + Math.random() * b.gap);
+}
+function spawnObstacles(viewH) {
+  const alt = R.y - R.y0;
+  BANDS.forEach((b, i) => {
+    while (nextSpawn[i] < alt + viewH * 1.2 && nextSpawn[i] < b.y1) {
+      const y = nextSpawn[i] + R.y0;
+      const lead = R.vy > 1 ? (y - R.y) / R.vy : 2;
+      const cx = R.x + R.vx * lead;
+      const spread = Math.max(12, viewH * .5);
+      const dir = Math.random() < .5 ? -1 : 1;
+      if (b.kind === 'bird') { const n = 2 + (Math.random() * 3 | 0), bx = cx + (Math.random() - .5) * spread * 1.4; for (let k = 0; k < n; k++) obstacles.push({ kind: 'bird', x: bx + k * 1.6 * dir, y: y + (k % 2) * 1.2, vx: -dir * (2.5 + Math.random()), vy: 0, r: .6, ph: Math.random() * 7 }); }
+      if (b.kind === 'plane') obstacles.push({ kind: 'plane', x: cx - dir * (spread * .9 + 10), y, vx: dir * (16 + Math.random() * 6), vy: 0, r: 1.6, len: 7, ph: 0 });
+      if (b.kind === 'storm') obstacles.push({ kind: 'storm', x: cx + (Math.random() - .5) * spread, y, vx: (Math.random() - .5) * 2, vy: 0, r: 3.6, ph: Math.random() * 7, seed: Math.random() * 1e9 | 0 });
+      // geese fly in a V across the sky
+      if (b.kind === 'geese') { const bx = cx - dir * spread * .8; for (let k = 0; k < 7; k++) { const row = Math.ceil(k / 2), side = k % 2 ? 1 : -1; obstacles.push({ kind: 'bird', x: bx - dir * row * 1.4, y: y + side * row * 1.1, vx: dir * 6, vy: 0, r: .6, ph: Math.random() * 7 }); } }
+      // weather balloons drift up slowly; a bump, nothing breaks
+      if (b.kind === 'wballoon') obstacles.push({ kind: 'wballoon', x: cx + (Math.random() - .5) * spread, y, vx: (Math.random() - .5) * 2, vy: 2, r: 1.8, ph: Math.random() * 7 });
+      // jets: like planes but much faster, so watch the warning marks
+      if (b.kind === 'jet') obstacles.push({ kind: 'plane', jet: 1, x: cx - dir * (spread * 1.1 + 12), y, vx: dir * (34 + Math.random() * 10), vy: 0, r: 1.6, len: 7, ph: 0 });
+      if (b.kind === 'ufo') obstacles.push({ kind: 'ufo', x: cx + (Math.random() - .5) * spread, y, vx: 0, vy: 0, r: 2.6, ph: Math.random() * 7, bx: cx });
+      nextSpawn[i] += b.gap * (.6 + Math.random() * .8);
+    }
+  });
+}
+function stepObstacles(dt) {
+  for (const o of obstacles) {
+    o.ph += dt;
+    if (o.kind === 'ufo') { o.x = o.bx + Math.sin(o.ph * .8) * 14; o.y += Math.sin(o.ph * 1.7) * dt * 2; }
+    else { if (o.hit && o.kind === 'bird') o.vy -= 6 * dt; o.x += o.vx * dt; o.y += o.vy * dt; }
+  }
+  const alt = R.y;
+  obstacles = obstacles.filter(o => o.y > alt - 400 && Math.abs(o.x - R.x) < 600);
+}
+function hitObstacle() {
+  if (!R.parts.length || R.inv > 0) return null;
+  const segs = R.parts.map(p => { const rr = Math.min(p.w, p.h) * .45, half = Math.max(0, Math.max(p.w, p.h) / 2 - rr), vert = p.h >= p.w; return [toWorld(p.x - (vert ? 0 : half), p.y - (vert ? half : 0)), toWorld(p.x + (vert ? 0 : half), p.y + (vert ? half : 0)), rr, p]; });
+  for (const o of obstacles) {
+    if (o.hit) continue;
+    // only what can be seen on screen can hit you
+    { const [sx, sy] = worldToScreen(o.x, o.y), m = (o.kind === 'plane' ? o.len : o.r) * cam.scale; if (sx < -m || sx > W + m || sy < -m || sy > H + m) continue; }
+    let px = o.x, py = o.y, rr = o.r;
+    if (o.kind === 'plane') { // the plane is long: test the nearest point on its body
+      const k = clamp((R.x - (o.x - o.len / 2)) / o.len, 0, 1); px = o.x - o.len / 2 + k * o.len; rr = 1;
+    }
+    if (o.kind === 'storm' && Math.sin(o.ph * 2.2) < .55) rr *= .0; // the cloud only bites when it flashes
+    if (rr <= 0) continue;
+    for (const [[ax, ay], [bx, by], rad, part] of segs) {
+      const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1;
+      const k = clamp(((px - ax) * dx + (py - ay) * dy) / l2, 0, 1);
+      if (Math.hypot(ax + dx * k - px, ay + dy * k - py) < rad + rr * (o.kind === 'bird' ? .8 : 1)) return { o, part, px, py };
+    }
+  }
+  return null;
+}
+// what a collision does: birds bonk, lightning stuns the engines, anything big knocks off the part it hit
+function handleHit({ o, part, px, py }) {
+  o.hit = true; R.inv = .6;
+  const [wx, wy] = toWorld(part.x, part.y);
+  const side = Math.sign(wx - px) || (Math.random() < .5 ? -1 : 1);   // pushed away from the obstacle
+  if (o.kind === 'bird' || o.kind === 'wballoon') {
+    if (o.kind === 'wballoon') { sfx.balloon(); o.vy = -4; }
+    R.w -= side * 1.2 / R.I; R.vx += side * 6 / R.m; R.vy *= .96;   // heavier rockets barely notice
+    o.vy = 3; o.vx = -side * 4;
+    for (let i = 0; i < 7; i++) particles.push({ kind: 'puff', x: px, y: py, vx: (Math.random() - .5) * 6, vy: Math.random() * 4, r: .18, grow: .1, life: .9, max: .9, color: '#ffffff' });
+    sfx.thud(); tone(1800, 900, .12, { type: 'triangle', vol: .12, delay: .03 });
+    return;
+  }
+  if (o.kind === 'storm') {
+    R.stun = 1; R.w += (Math.random() - .5) * 2 / R.I;
+    for (let i = 0; i < 10; i++) particles.push({ kind: 'puff', front: 1, x: wx, y: wy, vx: (Math.random() - .5) * 8, vy: (Math.random() - .5) * 8, r: .15, grow: .2, life: .5, max: .5, color: COL.yellow });
+    sfx.zap();
+    return;
+  }
+  // plane, satellite, UFO, meteor: the part that was hit breaks off
+  const k = o.kind === 'meteor' ? 1.4 : 1;
+  R.w -= side * 4 * k / R.I; R.vx += side * 12 * k / R.m; R.vy *= .9;
+  debris.push({ id: part.id, x: wx, y: wy, vx: R.vx + side * 9, vy: R.vy + 4, th: R.th, w: side * 6, mirror: part.side < 0, life: 6, burnt: true });
+  // a tank that breaks off takes its share of the fuel with it
+  const pf = PARTS[part.id].fuel || 0, st = part.stage;
+  if (pf && R.fuelMax[st] > 0) { R.fuel[st] *= Math.max(0, 1 - pf / R.fuelMax[st]); R.fuelMax[st] = Math.max(0, R.fuelMax[st] - pf); }
+  R.parts = R.parts.filter(q => q !== part);
+  R.balloons = R.balloons.filter(q => q !== part);
+  if (R.parts.length) recalc();
+  for (let i = 0; i < 12; i++) particles.push({ kind: 'puff', front: 1, x: wx, y: wy, vx: (Math.random() - .5) * 9, vy: (Math.random() - .5) * 9, r: .3, grow: 1.2, life: .6, max: .6, color: [COL.orange, COL.yellow, '#999'][i % 3] });
+  particles.push({ kind: 'boom', front: 1, x: wx, y: wy, vx: 0, vy: 0, r: 1, life: .3, max: .5 });
+  sfx.boom(.45);
+  if (o.kind === 'meteor') o.r = 0;                 // the rock shatters too
+  else { o.vx *= .6; o.vy = -6; }
+  if (PARTS[part.id].cats) setTimeout(() => meow(false), 150);
+}
+
+// ================= game state =================
+let state = 'build';     // build | flight | over | result
+let overT = 0, overKind = '', result = null, best = store.get('best', 0), bestMoon = store.get('bestMoon', false);
+let keysL = false, keysR = false, steerDrag = null, prevR = null, warp = 1, steered = store.get('steered', false);
+let touched = store.get('touched', false);
+
+function launch() {
+  if (state !== 'build') return;
+  steerDrag = null;
+  if (!layout(rk, true).parts.length) return;
+  saveRocket();
+  makeFlight();
+  debris = []; particles = []; ejectCat = null; resetObstacles();
+  // parts that touch nothing stay behind on the pad
+  for (const p of layout(rk).parts) if (!p.attached) debris.push({ id: p.id, x: p.x, y: p.y, vx: 0, vy: 0, th: 0, w: 0, mirror: p.side < 0, life: 1e9 });
+  windT = Math.random() * 100;
+  state = 'flight'; overT = 0; overKind = ''; warp = 1;
+  prevR = { x: R.x, y: R.y, th: R.th };
+  cam.scale = buildCam.scale; cam.x = 0; cam.y = R.y; cam.rot = 0;
+  sfx.ignite(); engineStart();
+  setUI();
+}
+function endFlight(kind) {
+  if (state !== 'flight') return;
+  state = 'over'; overKind = kind; overT = 0;
+  if (kind === 'crash' || kind === 'breakup' || kind === 'hit') { const [wx, wy] = [R.x, R.y]; explode(wx, wy); sfx.boom(); setTimeout(() => meow(false), 350); }
+  if (kind === 'land') { sfx.land(); R.vx = R.vy = 0; setTimeout(() => meow(true), 300); }
+  if (kind === 'fall' || kind === 'pad') setTimeout(() => meow(false), 100);
+  engineStop();
+  setUI();
+}
+function finish() {
+  state = 'result';
+  const moon = false;
+  const km = Math.round(R.maxY) / 10;
+  result = { km, moon };
+  if (km > best) { best = km; store.set('best', best); }
+  if (moon) { bestMoon = true; store.set('bestMoon', true); }
+  takeSnap();
+  showResult(); setUI();
+}
+function toBuild() { state = 'build'; result = null; engineStop(); setUI(); layoutBuild(); }
+
+const fmtKm = v => (Math.round(v * 10) / 10).toFixed(1);
+function showResult() {
+  if (!result) return;
+  $('rAlt').textContent = L[lang].km(fmtKm(result.km));
+  $('rBest').textContent = result.moon ? t('moon') : `${t('best')} ${L[lang].km(fmtKm(best))}`;
+  const a = $('share'), text = result.moon ? t('postMoon') : L[lang].post(fmtKm(result.km));
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(URL_)}`;
+  if (coarse) { a.removeAttribute('target'); a.removeAttribute('rel'); } else { a.target = '_blank'; a.rel = 'noopener'; }
+  prepareShare();
+}
+$('again').onclick = () => { $('result').hidden = true; state = 'build'; launch(); };
+$('edit').onclick = () => toBuild();
+// stop the flight at any moment and go back to building (the height so far still counts for the best)
+function abortFlight() {
+  if (state !== 'flight' && state !== 'over') return;
+  if (R) { const km = Math.round(R.maxY) / 10; if (km > best) { best = km; store.set('best', best); } }
+  steerDrag = null; particles = []; debris = []; ejectCat = null; obstacles = [];
+  sfx.tab(); toBuild();
+}
+$('abort').onclick = abortFlight;
+$('launch').onclick = () => launch();
+$('clear').onclick = () => { if (!rk.length) return; for (const p of layout(rk).parts) { const [sx, sy] = buildToScreen(p.x, p.y); poofs.push({ x: sx, y: sy, t: 0 }); } rk = []; saveRocket(); sfx.pop(); layoutBuild(); };
+
+function setUI() {
+  $('launch').hidden = state !== 'build';
+  $('clear').hidden = state !== 'build';
+  $('abort').hidden = state !== 'flight' && state !== 'over';
+  $('result').hidden = state !== 'result';
+  $('launch').classList.toggle('pulse', !touched);
+}
+
+// ---- share ----
+$('share').addEventListener('click', e => {
+  if (!result) return;
+  const text = `${result.moon ? t('postMoon') : L[lang].post(fmtKm(result.km))}\n${URL_}`;
+  if (coarse && navigator.share) {
+    e.preventDefault();
+    const file = shareFile();
+    navigator.share(file && navigator.canShare?.({ files: [file] }) ? { files: [file], text } : { text }).catch(() => {});
+    return;
+  }
+  const img = resultImage();
+  if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'rocket-maker.png'; d.click(); }
+});
+let snap = null, shareCache = null;
+function takeSnap() {
+  // the scene square around the rocket (or what is left of it)
+  const dpr = cv.width / cv.clientWidth;
+  const [sx0, sy0] = worldToScreen(snapFocus.x, snapFocus.y);
+  const side = Math.min(cv.width, cv.height) * .9;
+  const sx = clamp(sx0 * dpr - side / 2, 0, cv.width - side), sy = clamp(sy0 * dpr - side * .58, 0, cv.height - side);
+  snap = document.createElement('canvas'); snap.width = snap.height = 1080;
+  snap.getContext('2d').drawImage(cv, sx, sy, side, side, 0, 0, 1080, 1080);
+  shareCache = null;
+}
+function resultImage() {
+  if (!snap || !result) return null;
+  const c = document.createElement('canvas'); c.width = c.height = 1080;
+  const g = c.getContext('2d');
+  g.drawImage(snap, 0, 0);
+  g.textAlign = 'center'; g.lineJoin = 'round';
+  const text = (str, y, px, max, fill, line) => {
+    g.font = `${px}px ${FONT}`;
+    const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = `${px}px ${FONT}`; }
+    g.lineWidth = px * .18; g.strokeStyle = line; g.strokeText(str, 540, y); g.fillStyle = fill; g.fillText(str, 540, y);
+  };
+  text(L[lang].km(fmtKm(result.km)), 210, 190, 960, INK, '#fffdf6');
+  if (result.moon) text(t('moon'), 320, 80, 900, INK, '#fffdf6');
+  text(t('title'), 1035, 60, 900, '#fffdf6', INK);
+  return c;
+}
+function prepareShare() {
+  if (!snap || !result) return;
+  const key = lang;
+  if (shareCache?.key === key) return;
+  shareCache = { key, file: null };
+  const doIt = () => resultImage().toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'rocket-maker.png', { type: 'image/png' }); }, 'image/png');
+  if (document.fonts?.load) document.fonts.load(`40px Yomogi`).then(doIt, doIt); else doIt();
+}
+const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+
+// ================= canvas / layout =================
+const cv = $('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+const BOTTOM = 80;
+const buildCam = { x: 0, y: 0, scale: 40 };
+const cam = { x: 0, y: 0, scale: 40, sy: .5 };
+let tray = { vertical: false, x: 0, y: 0, w: 0, h: 0, cell: 64, tabs: [], cells: [], scroll: 0, maxScroll: 0, cat: 'body' };
+let gaugeBox = { x: 0, y: 0, w: 0, h: 0 };
+let buildArea = { x: 0, y: 0, w: 0, h: 0 };
+const safeB = () => { const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0; return v; };
+
+function resize() {
+  DPR = Math.min(2, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  buildView = null;
+  layoutBuild();
+}
+addEventListener('resize', resize);
+
+function layoutBuild() {
+  const vertical = H < 560 && W / H > 1.25;
+  const cell = clamp(Math.min(W / 5.4, H / 8), 54, 112);
+  const tabH = clamp(cell * .6, 36, 48);
+  tray.vertical = vertical; tray.cell = cell;
+  if (!vertical) {
+    tray.x = 0; tray.w = W; tray.h = cell + tabH + 12; tray.y = H - BOTTOM - tray.h;
+    const tw = Math.min(W / 4 - 6, 110);
+    tray.tabs = CATS.map((c, i) => ({ cat: c, x: W / 2 + (i - 2) * (tw + 6) + 3, y: tray.y, w: tw, h: tabH }));
+    const ids = BYCAT[tray.cat];
+    tray.cells = ids.map((id, i) => ({ id, x: 10 + i * (cell + 6), y: tray.y + tabH + 8, w: cell, h: cell }));
+    const total = ids.length * (cell + 6) + 14;
+    tray.maxScroll = Math.max(0, total - W);
+    if (total < W) { const off = (W - total) / 2; tray.cells.forEach(c => c.x += off); }
+    buildArea = { x: 0, y: 56, w: W, h: tray.y - 56 - 8 };
+  } else {
+    const tabW = clamp(cell * .7, 40, 52);
+    tray.w = tabW + cell * 2 + 24; tray.x = W - tray.w; tray.y = 52; tray.h = H - BOTTOM - 52 + 30;
+    const th = Math.min((tray.h - 12) / 4 - 6, 70);
+    tray.tabs = CATS.map((c, i) => ({ cat: c, x: tray.x + 4, y: tray.y + 4 + i * (th + 6), w: tabW, h: th }));
+    const ids = BYCAT[tray.cat];
+    tray.cells = ids.map((id, i) => ({ id, x: tray.x + tabW + 12 + (i % 2) * (cell + 6), y: tray.y + 4 + Math.floor(i / 2) * (cell + 6), w: cell, h: cell }));
+    const total = Math.ceil(ids.length / 2) * (cell + 6) + 8;
+    tray.maxScroll = Math.max(0, total - tray.h);
+    buildArea = { x: 0, y: 50, w: tray.x, h: H - BOTTOM - 50 + 20 };
+  }
+  tray.scroll = clamp(tray.scroll, 0, tray.maxScroll);
+  // fit the rocket (plus some room to drop parts above it) in the build area
+  const lay = layout(rk);
+  const rw = lay.maxX - lay.minX;
+  const needH = FRAME.h + 1.4, needW = FRAME.w + .6;
+  const sc = clamp(Math.min((buildArea.h - 20) / needH, (buildArea.w * (vertical ? .62 : .94)) / needW), 14, 120);
+  buildCam.scale = sc;
+  buildCam.groundY = buildArea.y + buildArea.h - Math.max(18, sc * .6);
+  buildCam.cx = buildArea.x + buildArea.w / 2;
+  if (buildView) { buildCam.scale = buildView.scale; buildCam.cx = buildView.cx; buildCam.groundY = buildView.gy; }
+  // DOM buttons beside the rocket
+  const lb = $('launch'), cb = $('clear');
+  if (!vertical) {
+    lb.style.right = '14px'; lb.style.left = 'auto'; lb.style.top = '60px'; lb.style.bottom = 'auto';
+    cb.style.left = 'auto'; cb.style.right = '14px'; cb.style.top = (66 + lb.offsetHeight + 12) + 'px'; cb.style.bottom = 'auto';
+    gaugeBox = { x: 14, y: 60, w: clamp(W * .2, 70, 120), h: 0 };
+  } else {
+    lb.style.left = 'auto'; lb.style.right = (W - tray.x + 12) + 'px'; lb.style.bottom = (BOTTOM + 4) + 'px'; lb.style.top = 'auto';
+    cb.style.left = '14px'; cb.style.right = 'auto'; cb.style.bottom = (BOTTOM + 4) + 'px'; cb.style.top = 'auto';
+    gaugeBox = { x: 14, y: 56, w: clamp(W * .14, 64, 110), h: 0 };
+  }
+}
+// build view: block coordinates -> screen
+const buildToScreen = (x, y) => [buildCam.cx + x * buildCam.scale, buildCam.groundY - y * buildCam.scale];
+const screenToBuild = (sx, sy) => [(sx - buildCam.cx) / buildCam.scale, (buildCam.groundY - sy) / buildCam.scale];
+// flight view: world -> screen
+const worldToScreen = (x, y) => [W / 2 + (x - cam.x) * cam.scale, H * cam.sy - (y - cam.y) * cam.scale];
+
+// ================= build interaction =================
+let pending = null, drag = null, tip = null, poofs = [], snapFx = [], nudge = null;
+function inRect(x, y, r) { return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h; }
+function cellRect(c) { return tray.vertical ? { ...c, y: c.y - tray.scroll } : { ...c, x: c.x - tray.scroll }; }
+function trayHit(x, y) {
+  for (const tb of tray.tabs) if (inRect(x, y, tb)) return { tab: tb.cat };
+  for (const c of tray.cells) { const r = cellRect(c); if (inRect(x, y, r) && (tray.vertical ? y > tray.y : true)) return { id: c.id }; }
+  if (inRect(x, y, tray)) return { tray: true };
+  return null;
+}
+function partHit(x, y) {
+  const [bx, by] = screenToBuild(x, y);
+  let hit = null;
+  for (const p of layout(rk).parts) {
+    if (Math.abs(bx - p.x) <= p.w / 2 + .08 && Math.abs(by - p.y) <= p.h / 2 + .05) { if (!hit || p.side) hit = p; }
+  }
+  return hit;
+}
+// where a dragged part would go: the grid cell under it (null when it is far outside the frame: it comes off)
+function dropTarget(id, sx, sy) {
+  const [bx, by] = screenToBuild(sx, sy);
+  if (bx < -FRAME.w / 2 - 1.2 || bx > FRAME.w / 2 + 1.2 || by < -1.2 || by > FRAME.h + 1.2) return null;
+  const x = clamp(Math.round((bx + FRAME.w / 2) / CELL - cw(id) / 2), 0, GW - cw(id)), y = clamp(Math.round(by / CELL - ch(id) / 2), 0, GH - ch(id));
+  const ok = freeAt(id, x, y);
+  // would it be joined to the main body?
+  let joined = false;
+  if (ok) { const a = [...rk, { id, x, y }]; joined = groups(a).main.has(a.length - 1); }
+  return { x, y, ok, joined };
+}
+function place(id, x, y, o) {
+  // a new decoupler lets go after all the others
+  if (PARTS[id].decoup && o === undefined) o = rk.filter(e => PARTS[e.id].decoup).reduce((m, e) => Math.max(m, e.o || 1), 0) + 1;
+  rk.push(o === undefined ? { id, x, y } : { id, x, y, o });
+  saveRocket(); sfx.snap(); layoutBuild();
+  const q = layout(rk).parts.find(q => q.idx === rk.length - 1);
+  if (q) { const [sx, sy] = buildToScreen(q.x, q.y); snapFx.push({ x: sx, y: sy, t: 0, r: Math.max(q.w, q.h) * buildCam.scale * .5 }); }
+}
+function markTouched() { if (!touched) { touched = true; store.set('touched', true); setUI(); } }
+
+const capture = id => { try { cv.setPointerCapture(id); } catch {} };
+// ---- pinch zoom: in the workshop it zooms and pans the view, in flight it zooms the camera ----
+const touches = new Map();
+let pinch = null, buildView = null, flightZoom = 1, lastTap = 0;
+const curView = () => ({ scale: buildCam.scale, cx: buildCam.cx, gy: buildCam.groundY });
+function pinchInfo() { const [a, b] = [...touches.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; }
+function zoomBuildAt(sx, sy, k) {
+  const v = curView(), ns = clamp(v.scale * k, 8, 220), kk = ns / v.scale;
+  buildView = { scale: ns, cx: sx - (sx - v.cx) * kk, gy: sy - (sy - v.gy) * kk };
+  layoutBuild();
+}
+cv.addEventListener('pointerdown', e => {
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touches.size === 2 && !drag && (state === 'build' || state === 'flight' || state === 'over' || state === 'result')) {
+    pending = null; steerDrag = null; lastTap = 0;
+    pinch = { ...pinchInfo(), view: curView(), fz: flightZoom };
+  }
+});
+cv.addEventListener('pointermove', e => {
+  if (!touches.has(e.pointerId)) return;
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!pinch || touches.size < 2) return;
+  const info = pinchInfo();
+  if (state === 'build') {
+    const v = pinch.view, ns = clamp(v.scale * info.d / pinch.d, 8, 220), kk = ns / v.scale;
+    buildView = { scale: ns, cx: info.mx - (pinch.mx - v.cx) * kk, gy: info.my - (pinch.my - v.gy) * kk };
+    layoutBuild();
+  } else flightZoom = clamp(pinch.fz * info.d / pinch.d, .4, 3);
+});
+const dropTouch = e => { touches.delete(e.pointerId); if (pinch && touches.size < 2) { pinch = null; pending = null; } };
+cv.addEventListener('pointerup', dropTouch);
+cv.addEventListener('pointercancel', dropTouch);
+
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (pinch) return;
+  const x = e.clientX, y = e.clientY;
+  if (state === 'flight') { if (!steerDrag) { steerDrag = { pid: e.pointerId, x0: x, y0: y, x }; capture(e.pointerId); } return; }
+  if (state !== 'build') return;
+  capture(e.pointerId);
+  const th = trayHit(x, y);
+  if (th?.tab) { tray.cat = th.tab; tray.scroll = 0; layoutBuild(); sfx.tab(); return; }
+  if (th?.id) { pending = { type: 'tray', id: th.id, x0: x, y0: y, s0: tray.scroll, pid: e.pointerId }; tip = { id: th.id, t: 0 }; sfx.pick(); return; }
+  if (th?.tray) { pending = { type: 'scroll', x0: x, y0: y, s0: tray.scroll, pid: e.pointerId }; return; }
+  const p = partHit(x, y);
+  if (p) { pending = { type: 'part', p, x0: x, y0: y, pid: e.pointerId }; tip = { id: p.id, t: 0 }; return; }
+  // empty paper: drag to move the view, double-tap to fit the rocket again
+  const now = performance.now();
+  if (now - lastTap < 320 && buildView) { buildView = null; layoutBuild(); lastTap = 0; return; }
+  lastTap = now;
+  pending = { type: 'pan', x0: x, y0: y, view: curView(), pid: e.pointerId };
+});
+cv.addEventListener('pointermove', e => {
+  if (pinch) return;
+  const x = e.clientX, y = e.clientY;
+  if (state === 'flight') {
+    if (steerDrag && steerDrag.pid === e.pointerId) {
+      steerDrag.x = x;
+      // past full lock the centre follows the finger, so turning back answers at once
+      const R2 = STEER_PX();
+      if (x - steerDrag.x0 > R2) steerDrag.x0 = x - R2; else if (steerDrag.x0 - x > R2) steerDrag.x0 = x + R2;
+      if (!steered && Math.abs(x - steerDrag.x0) > 10) { steered = true; store.set('steered', true); }
+    }
+    return;
+  }
+  if (drag && drag.pid === e.pointerId) {
+    drag.x = x; drag.y = y;
+    drag.bin = overBin(x, y); binState(true, drag.bin);
+    const t2 = drag.bin ? null : dropTarget(drag.id, x - drag.offX, y - drag.offY);
+    if (t2 && drag.tgt && (t2.x !== drag.tgt.x || t2.y !== drag.tgt.y)) noise(.025, { f0: 2400, q: 8, vol: .08 }); // a light tick per cell
+    drag.tgt = t2; return;
+  }
+  if (!pending || pending.pid !== e.pointerId) return;
+  const dx = x - pending.x0, dy = y - pending.y0;
+  if (pending.type === 'pan') {
+    if (Math.hypot(dx, dy) > 4 || pending.moved) { pending.moved = true; buildView = { scale: pending.view.scale, cx: pending.view.cx + dx, gy: pending.view.gy + dy }; layoutBuild(); }
+    return;
+  }
+  const along = tray.vertical ? dy : dx, across = tray.vertical ? -dx : -dy;
+  if (pending.type === 'tray' || pending.type === 'scroll') {
+    if (pending.type === 'tray' && across > 12 && across > Math.abs(along)) { startDrag(pending.id, null, x, y, e.pointerId); pending = null; return; }
+    if (Math.abs(along) > 8 || pending.scrolling) { pending.scrolling = true; tray.scroll = clamp(pending.s0 - along, 0, tray.maxScroll); }
+    return;
+  }
+  if (pending.type === 'part' && Math.hypot(dx, dy) > 8) {
+    // pick the part up where it was grabbed, so it does not jump under the finger
+    const q = pending.p, e0 = rk[q.idx], [sx, sy] = buildToScreen(q.x, q.y);
+    takeOff(q.idx);
+    layoutBuild();
+    startDrag(q.id, e0.o === undefined ? { x: e0.x, y: e0.y } : { x: e0.x, y: e0.y, o: e0.o }, x, y, e.pointerId, pending.x0 - sx, pending.y0 - sy); pending = null;
+  }
+});
+// remove one part
+function takeOff(i) { rk.splice(i, 1); }
+// is the finger over the bin? (a little margin so it is easy to hit)
+function overBin(x, y) { const b = $('clear'); if (b.hidden) return false; const r = b.getBoundingClientRect(); return x > r.left - 14 && x < r.right + 14 && y > r.top - 14 && y < r.bottom + 14; }
+function binState(arm, hot) { $('clear').classList.toggle('armed', arm && !hot); $('clear').classList.toggle('hot', hot); }
+// from: where a part already on the rocket came from (it goes back there if dropped on a taken spot)
+function startDrag(id, from, x, y, pid, offX = 0, offY = null) {
+  if (offY === null) offY = coarse ? Math.max(30, PARTS[id].h * buildCam.scale * .5 + 20) : 0; // lift a new part above the finger
+  drag = { id, from, x, y, pid, offX, offY, tgt: null }; drag.tgt = dropTarget(id, x - offX, y - offY);
+  binState(true, false);
+  tip = null; markTouched();
+}
+function endPointer(e) {
+  if (steerDrag && steerDrag.pid === e.pointerId) steerDrag = null;
+  if (state !== 'build') return;
+  if (drag && drag.pid === e.pointerId) {
+    const t2 = drag.tgt;
+    binState(false, false);
+    if (drag.bin || overBin(drag.x, drag.y)) { poofs.push({ x: drag.x, y: drag.y, t: 0 }); sfx.pop(); saveRocket(); }     // into the bin: gone
+    else if (t2 && t2.ok) place(drag.id, t2.x, t2.y, drag.from?.o);
+    else if (drag.from) { rk.push({ id: drag.id, ...drag.from }); saveRocket(); sfx.thud(); if (t2) frameFlash = .6; }     // nowhere to go: back where it was
+    else { poofs.push({ x: drag.x - drag.offX, y: drag.y - drag.offY, t: 0 }); if (t2) frameFlash = .6; sfx.pop(); }
+    drag = null; layoutBuild(); return;
+  }
+  if (!pending || pending.pid !== e.pointerId) return;
+  // a tap only shows what the part is; the part hops toward the rocket to show it wants dragging
+  if (pending.type === 'tray' && !pending.scrolling) { tip = { id: pending.id, t: 0 }; nudge = { id: pending.id, t0: performance.now() }; }
+  if (pending.type === 'part') {
+    const [sx, sy] = buildToScreen(pending.p.x, pending.p.y), e0 = rk[pending.p.idx];
+    if (PARTS[e0.id].decoup) {
+      // a decoupler: tap to change when it lets go (1, 2, ... up to the number of decouplers)
+      const n = Math.max(1, rk.filter(e => PARTS[e.id].decoup).length);
+      e0.o = (e0.o || 1) % n + 1;
+      snapFx.push({ x: sx, y: sy, t: 0, r: buildCam.scale * .4 }); sfx.tab(); saveRocket(); pending = null; return;
+    }
+    // other parts: a tap just tells what it is (drag it to the bin to throw it away)
+    tip = { id: e0.id, t: 0 }; snapFx.push({ x: sx, y: sy, t: 0, r: buildCam.scale * .3 });
+  }
+  pending = null;
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', e => { if (drag && drag.pid === e.pointerId) { drag.tgt = null; drag.bin = false; } endPointer(e); });
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (state === 'build' && trayHit(e.clientX, e.clientY)) { tray.scroll = clamp(tray.scroll + (e.deltaY || e.deltaX), 0, tray.maxScroll); return; }
+  const k = Math.exp(-clamp(e.deltaY, -100, 100) * .0015);
+  if (state === 'build') zoomBuildAt(e.clientX, e.clientY, k);
+  else flightZoom = clamp(flightZoom * k, .4, 3);
+}, { passive: false });
+
+// flight controls
+const keyDir = { ArrowLeft: 'L', a: 'L', A: 'L', ArrowRight: 'R', d: 'R', D: 'R' };
+addEventListener('keydown', e => {
+  if (keyDir[e.key]) { e.preventDefault(); if (keyDir[e.key] === 'L') keysL = true; else keysR = true; }
+  if (e.key === 'Escape') abortFlight();
+  if ((e.key === ' ' || e.key === 'Enter') && state === 'build' && document.activeElement?.tagName !== 'SELECT') { e.preventDefault(); launch(); }
+});
+addEventListener('keyup', e => { if (keyDir[e.key] === 'L') keysL = false; if (keyDir[e.key] === 'R') keysR = false; });
+addEventListener('blur', () => { keysL = keysR = false; steerDrag = null; });
+// dragging sideways steers: how far the finger moves from where it went down sets how hard
+const STEER_PX = () => clamp(Math.min(W, H) * .12, 45, 90);
+function steer() {
+  let u = (keysR ? 1 : 0) - (keysL ? 1 : 0);
+  if (steerDrag) u += (steerDrag.x - steerDrag.x0) / STEER_PX();
+  return clamp(u, -1, 1);
+}
+// the steering knob under the finger, and a hint before the first steer
+function drawSteer(g) {
+  const p = Pen(g, 40, 61 + frame), R2 = STEER_PX();
+  if (steerDrag) {
+    const { x0, y0 } = steerDrag, kx = x0 + clamp(steerDrag.x - x0, -R2, R2);
+    g.save(); g.globalAlpha = .8;
+    p.line([[x0 - R2, y0], [x0 + R2, y0]], false, 3);
+    for (const sgn of [-1, 1]) p.line([[x0 + sgn * (R2 - 10), y0 - 8], [x0 + sgn * R2, y0], [x0 + sgn * (R2 - 10), y0 + 8]], false, 3);
+    p.shape(p.ell(kx, y0, 18, 18, 14), '#ffe08a', 2.5);
+    g.restore();
+  } else if (!steered && state === 'flight') {
+    const t2 = performance.now() / 1000, cx = W / 2, cy = H - BOTTOM - 60, off = Math.sin(t2 * 3) * 34;
+    g.save(); g.globalAlpha = .75;
+    p.line([[cx - 70, cy], [cx + 70, cy]], false, 3, COL.red);
+    for (const sgn of [-1, 1]) p.line([[cx + sgn * 58, cy - 10], [cx + sgn * 72, cy], [cx + sgn * 58, cy + 10]], false, 3, COL.red);
+    p.shape(p.ell(cx + off, cy, 16, 16, 14), '#fffdf6', 2.5);
+    g.restore();
+  }
+}
+// no long-press magnifier / menus
+document.addEventListener('touchstart', e => { if (!e.target.closest('a, button, select, input')) e.preventDefault(); }, { passive: false });
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('selectstart', e => e.preventDefault());
+
+// ================= drawing: background =================
+const STARS = Array.from({ length: 120 }, (_, i) => { const r = mulberry(i * 31 + 5); return [r(), r(), .6 + r() * 1.6, r()]; });
+const skyStops = [[0, '#eaf5fd'], [400, '#d4ebfd'], [1500, '#b0d8f8'], [4000, '#8cc2f1'], [10000, '#6ba8e6']];
+function skyAt(y) {
+  for (let i = 0; i < skyStops.length - 1; i++) { const [y0, c0] = skyStops[i], [y1, c1] = skyStops[i + 1]; if (y < y1) return mixC(c0, c1, (y - y0) / (y1 - y0)); }
+  return skyStops[skyStops.length - 1][1];
+}
+let lastBodyBg = '';
+function drawPaper(topY, botY, ox, oy, scale) {
+  const g = ctx;
+  const ct = skyAt(Math.max(0, topY)), cb = skyAt(Math.max(0, botY));
+  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, ct); gr.addColorStop(1, cb);
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  if (ct !== lastBodyBg) { document.body.style.background = ct; lastBodyBg = ct; }
+  // paper grain: graph paper lines that scroll with the camera
+  const dark = 0;
+  const sp = 26;
+  g.strokeStyle = dark > .5 ? `rgba(255,255,255,${.05 + .03 * dark})` : 'rgba(70,110,170,.13)'; g.lineWidth = 1;
+  g.beginPath();
+  const offY = ((oy % sp) + sp) % sp, offX = ((ox % sp) + sp) % sp;
+  for (let y = offY; y < H; y += sp) { g.moveTo(0, y); g.lineTo(W, y); }
+  for (let x = -offX; x < W; x += sp) { g.moveTo(x, 0); g.lineTo(x, H); }
+  g.stroke();
+  // stars like white crayon dots
+  if (dark > 0) {
+    const tile = Math.max(W, H);
+    for (const [sx, sy, r, tw] of STARS) {
+      const x = ((sx * tile - ox * .25) % tile + tile) % tile, y = ((sy * tile + oy * .25) % tile + tile) % tile;
+      if (x > W || y > H) continue;
+      g.fillStyle = `rgba(255,250,220,${dark * (.55 + .45 * Math.sin(performance.now() / 500 + tw * 40))})`;
+      g.beginPath(); g.moveTo(x - r * 1.6, y); g.lineTo(x, y - r * .4); g.lineTo(x + r * 1.6, y); g.lineTo(x, y + r * .4); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(x, y - r * 1.6); g.lineTo(x + r * .4, y); g.lineTo(x, y + r * 1.6); g.lineTo(x - r * .4, y); g.closePath(); g.fill();
+    }
+  }
+}
+// clouds, hills, the launch tower, drawn with the same pen
+const cloudCache = new Map();
+function cloudSprite(v, px, dark = false) {
+  const b = Math.round(Math.log2(Math.max(8, px)) * 2) / 2, sc = Math.min(2 ** b, 600);
+  const key = v + '|' + sc + '|' + dark;
+  let c = cloudCache.get(key); if (c) return c;
+  c = document.createElement('canvas'); c.width = Math.ceil(sc * 1.25 * DPR); c.height = Math.ceil(sc * .75 * DPR);
+  const g = c.getContext('2d'); g.scale(DPR, DPR); const p = Pen(g, sc / 6, v * 17 + (dark ? 3 : 0));
+  const r = mulberry(v * 99 + 1), pts = [];
+  const n = 9;
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI + i / (n - 1) * Math.PI, bump = .75 + r() * .3;
+    pts.push([sc * .62 + Math.cos(a) * sc * .55, sc * .55 + Math.sin(a) * sc * .32 * bump * (1 + Math.sin(i * 1.7) * .25)]);
+  }
+  pts.push([sc * 1.15, sc * .6], [sc * .1, sc * .6]);
+  p.fill(pts, dark ? '#7d7f95' : '#ffffff', !dark ? false : true); p.line(pts, true, p.lw * .8, dark ? '#3a3b4a' : '#8aa4c4');
+  c.sc = sc; if (cloudCache.size > 120) cloudCache.clear(); cloudCache.set(key, c); return c;
+}
+function drawClouds(view) {
+  // decorative clouds in tiles of the world, gone in space
+  const tile = 48;
+  const y0 = Math.floor(view.y0 / tile), y1 = Math.ceil(view.y1 / tile), x0 = Math.floor(view.x0 / tile), x1 = Math.ceil(view.x1 / tile);
+  if (y1 - y0 > 40 || x1 - x0 > 40) return;
+  for (let ty = Math.max(1, y0); ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+    const r = mulberry(tx * 7919 + ty * 104729);
+    // clouds come in layers: thick bands and clear gaps, all the way up
+    const layer = Math.floor(ty / 6) % 4;
+    if (r() < [.35, .8, .5, .9][layer]) continue;
+    const wx = (tx + r()) * tile, wy = (ty + r()) * tile, sz = 10 + r() * 14;
+    const [sx, sy] = worldToScreen(wx, wy), px = sz * cam.scale;
+    if (px < 6) continue;
+    const c = cloudSprite((r() * 3) | 0, px);
+    ctx.globalAlpha = .85; ctx.drawImage(c, sx - px * .62, sy - px * .5, px * 1.25, px * .75); ctx.globalAlpha = 1;
+  }
+}
+const GROUND = (() => { const r = mulberry(12345); return Array.from({ length: 40 }, () => r()); })();
+function drawGround(toS, s, frame) {
+  const g = ctx, p = Pen(g, s, 400 + frame);
+  const [, gy] = toS(0, 0);
+  if (gy > H + 40) return;
+  // far hills
+  const hills = [];
+  for (let i = 0; i <= 24; i++) { const x = i / 24 * (W + 80) - 40; hills.push([x, gy - (s * 1.6 + 20) * (.5 + .5 * Math.sin(i * .9 + 1) * Math.sin(i * .37))]); }
+  hills.push([W + 40, gy], [-40, gy]);
+  p.fill(hills, '#bfe3b0'); p.line(hills.slice(0, 25), false, p.lw * .8, '#5f8f55');
+  // ground
+  p.fill([[-20, gy], [W + 20, gy], [W + 20, H + 20], [-20, H + 20]], '#9fd38a');
+  p.line([[-20, gy], [W + 20, gy]], false, p.lw, '#4f7d45');
+  // grass tufts
+  g.strokeStyle = '#4f7d45'; g.lineWidth = Math.max(1, p.lw * .6); g.beginPath();
+  for (let i = 0; i < 40; i++) { const x = GROUND[i] * W, y = gy + 6 + GROUND[(i + 7) % 40] * Math.max(10, H - gy - 10); if (y > H) continue; g.moveTo(x - 4, y); g.lineTo(x - 2, y - 7); g.moveTo(x, y); g.lineTo(x + 1, y - 9); g.moveTo(x + 4, y); g.lineTo(x + 3, y - 6); }
+  g.stroke();
+  // a small tree and house far to the side
+  const [hx] = toS(-9, 0), [tx] = toS(8, 0);
+  const u = Math.max(8, s * .9);
+  p.shape([[hx - u, gy], [hx + u, gy], [hx + u, gy - u * 1.2], [hx - u, gy - u * 1.2]], COL.cream);
+  p.shape([[hx - u * 1.25, gy - u * 1.15], [hx, gy - u * 2.1], [hx + u * 1.25, gy - u * 1.15]], COL.red);
+  p.shape(p.rect(hx - u * .3, gy - u * .8, u * .6, u * .8), COL.brown);
+  p.shape(p.rect(tx - u * .15, gy - u * 1.1, u * .3, u * 1.1), COL.brown);
+  p.shape(p.ell(tx, gy - u * 1.8, u * .8, u * .85, 14), COL.green);
+}
+// the build frame: a pencilled dashed box with block ticks, red for a moment when a part won't fit
+let frameFlash = 0;
+function drawFrame(fdt, frame) {
+  frameFlash = Math.max(0, frameFlash - fdt);
+  const s = buildCam.scale, [x0, y0] = buildToScreen(-FRAME.w / 2, 0), [x1, y1] = buildToScreen(FRAME.w / 2, FRAME.h);
+  const red = frameFlash > 0 && Math.sin(frameFlash * 30) > -.3;
+  const c = red ? COL.red : 'rgba(45,42,50,.55)';
+  const p = Pen(ctx, 30, 990 + frame);
+  ctx.save(); ctx.setLineDash([9, 7]);
+  p.line([[x0, y0], [x0, y1], [x1, y1], [x1, y0]], false, red ? 3 : 2, c);
+  ctx.setLineDash([]);
+  // the cells inside: faint lines every half block, a little darker while dragging
+  if (s * CELL > 7) {
+    ctx.beginPath();
+    for (let i = 1; i < GW; i++) { const [x] = buildToScreen(-FRAME.w / 2 + i * CELL, 0); ctx.moveTo(x, y0); ctx.lineTo(x, y1); }
+    for (let i = 1; i < GH; i++) { const [, y] = buildToScreen(0, i * CELL); ctx.moveTo(x0, y); ctx.lineTo(x1, y); }
+    ctx.strokeStyle = drag ? 'rgba(45,42,50,.16)' : 'rgba(45,42,50,.07)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  // block ticks up the sides, like a ruler
+  ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.beginPath();
+  for (let i = 1; i < FRAME.h; i++) { const [, y] = buildToScreen(0, i); ctx.moveTo(x0, y); ctx.lineTo(x0 + Math.min(8, s * .15), y); ctx.moveTo(x1, y); ctx.lineTo(x1 - Math.min(8, s * .15), y); }
+  for (let i = 1; i < FRAME.w; i++) { const [x] = buildToScreen(-FRAME.w / 2 + i, 0); ctx.moveTo(x, y1); ctx.lineTo(x, y1 + Math.min(8, s * .15)); }
+  ctx.stroke();
+  ctx.restore();
+}
+function drawPad(toS, s, frame) {
+  const p = Pen(ctx, s, 900 + frame);
+  const [x0, y0] = toS(-FRAME.w / 2 - .4, 0), [x1] = toS(FRAME.w / 2 + .4, 0);
+  p.shape(p.rect(x0, y0 - s * .3, x1 - x0, s * .3), COL.gray);
+  // launch tower
+  const [tx] = toS(-FRAME.w / 2 - 1.1, 0), [, ty] = toS(0, Math.max(4, layoutH * .85));
+  p.line([[tx, y0 - s * .3], [tx, ty]], false, p.lw * 1.2); p.line([[tx + s * .5, y0 - s * .3], [tx + s * .5, ty]], false, p.lw * 1.2);
+  for (let y = y0 - s * .3; y > ty; y -= s * .55) p.line([[tx, y], [tx + s * .5, y - s * .5]], false, p.lw * .6);
+}
+let layoutH = 4;
+
+// ================= drawing: rocket and effects =================
+function drawRocketParts(g, parts, toS, scale, frame, opt = {}) {
+  // side parts behind the stack, stack, then the side parts that should be in front (fins look nicer behind)
+  const order = [...parts].sort((a, b) => (a.side ? 0 : 1) - (b.side ? 0 : 1));
+  for (const p of order) {
+    const [sx, sy] = toS(p.x, p.y);
+    drawPart(g, p.id, sx, sy, scale, frame, p.side < 0, opt.alpha ?? 1);
+  }
+}
+function drawFlame(g, kind, sx, sy, s, power, th, t) {
+  // sx, sy: nozzle exit in screen space; th: rocket angle
+  g.save(); g.translate(sx, sy); g.rotate(th);
+  const L = s * (1.3 + power * 1.5) * (.85 + Math.random() * .3);
+  const w = s * .38;
+  const flick = (n, amp) => { const pts = []; for (let i = 0; i <= n; i++) { const u = i / n; pts.push(u); } return pts; };
+  if (kind === 'fire') {
+    for (const [c, k] of [['#f39a3c', 1], ['#f4d35e', .62], ['#fffbe8', .3]]) {
+      g.fillStyle = c; g.strokeStyle = INK; g.lineWidth = k === 1 ? Math.max(1, s * .03) : 0;
+      g.beginPath(); g.moveTo(-w * k, 0);
+      for (let i = 1; i <= 6; i++) { const u = i / 6; g.lineTo((-w * k) * (1 - u) + (Math.random() - .5) * w * .5 * k, L * k * u); }
+      for (let i = 5; i >= 1; i--) { const u = i / 6; g.lineTo((w * k) * (1 - u) + (Math.random() - .5) * w * .5 * k, L * k * u * (.85 + Math.random() * .2)); }
+      g.lineTo(w * k, 0); g.closePath(); g.fill(); if (k === 1) g.stroke();
+    }
+  } else if (kind === 'jet') {
+    g.strokeStyle = 'rgba(120,160,220,.7)'; g.lineWidth = Math.max(1, s * .05);
+    for (let i = 0; i < 5; i++) { const x = (i - 2) * w * .3; g.beginPath(); g.moveTo(x, 0); for (let j = 1; j <= 5; j++) g.lineTo(x + Math.sin(t * 30 + j + i) * w * .25, L * .9 * j / 5); g.stroke(); }
+    g.fillStyle = 'rgba(255,190,120,.8)'; g.beginPath(); g.moveTo(-w * .5, 0); g.lineTo(0, L * .35); g.lineTo(w * .5, 0); g.fill();
+  } else if (kind === 'ion') {
+    const gr = g.createLinearGradient(0, 0, 0, L * 1.4); gr.addColorStop(0, 'rgba(120,200,255,.95)'); gr.addColorStop(1, 'rgba(120,200,255,0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(-w * .6, 0); g.lineTo(-w * .2, L * 1.4); g.lineTo(w * .2, L * 1.4); g.lineTo(w * .6, 0); g.fill();
+  } else if (kind === 'spark') {
+    for (let i = 0; i < 14; i++) { const a = (Math.random() - .5) * .9, d = Math.random() * L * 1.2; g.fillStyle = ['#f4d35e', '#f49ac1', '#9cc9ef', '#ffffff', '#f39a3c'][i % 5]; g.beginPath(); g.arc(Math.sin(a) * d, Math.cos(a) * d, Math.max(1.2, s * .07), 0, 7); g.fill(); }
+    g.fillStyle = '#fffbe8'; g.beginPath(); g.moveTo(-w * .4, 0); g.lineTo(0, L * .5); g.lineTo(w * .4, 0); g.fill();
+  } else if (kind === 'water') {
+    g.fillStyle = 'rgba(156,201,239,.85)'; g.strokeStyle = '#4f8fd6'; g.lineWidth = Math.max(1, s * .025);
+    g.beginPath(); g.moveTo(-w * .2, 0); g.lineTo(-w * .7, L); g.lineTo(w * .7, L); g.lineTo(w * .2, 0); g.fill(); g.stroke();
+    for (let i = 0; i < 8; i++) { g.beginPath(); g.arc((Math.random() - .5) * w * 2, L * (.8 + Math.random() * .6), Math.max(1, s * .06), 0, 7); g.fill(); g.stroke(); }
+  }
+  g.restore();
+}
+function stepParticles(fdt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life -= fdt; if (p.life <= 0) { particles.splice(i, 1); continue; }
+    p.x += p.vx * fdt; p.y += p.vy * fdt; p.vx *= .97; p.vy *= .97; p.r += p.grow * fdt;
+  }
+}
+function drawParticles(g, front) {
+  for (const p of particles) {
+    if (!!p.front !== front) continue;
+    const [sx, sy] = worldToScreen(p.x, p.y), rr = p.r * cam.scale, k = p.life / p.max;
+    if (sx < -rr || sx > W + rr || sy < -rr || sy > H + rr) continue;
+    if (p.kind === 'boom') {
+      g.save(); g.translate(sx, sy); g.fillStyle = '#f4d35e'; g.strokeStyle = INK; g.lineWidth = 2;
+      const R2 = (1 - k) * cam.scale * 4 + cam.scale; g.beginPath();
+      for (let j = 0; j < 22; j++) { const a = j / 22 * Math.PI * 2, rad = R2 * (j % 2 ? .5 : 1); g.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); }
+      g.closePath(); g.globalAlpha = Math.min(1, k * 2); g.fill(); g.stroke(); g.restore(); continue;
+    }
+    g.globalAlpha = clamp(k, 0, 1) * (p.soft ? .5 : .85);
+    g.fillStyle = p.color; g.strokeStyle = 'rgba(45,42,50,.45)'; g.lineWidth = 1.2;
+    g.beginPath(); g.arc(sx, sy, Math.max(1, rr), 0, 7); g.fill(); g.stroke();
+    g.globalAlpha = 1;
+  }
+}
+function drawObstacle(g, o, frame) {
+  const [sx, sy] = worldToScreen(o.x, o.y), s = cam.scale;
+  if (sx < -s * 10 || sx > W + s * 10 || sy < -s * 10 || sy > H + s * 10) return;
+  const p = Pen(g, s, 77 + frame + (o.seed || 0) % 50);
+  if (o.kind === 'bird') {
+    if (o.hit) { g.save(); g.translate(sx, sy); g.rotate(o.ph * 9); g.translate(-sx, -sy); }
+    const f = o.hit ? .3 : Math.sin(o.ph * 12) * .5, d = Math.sign(o.vx) || 1;
+    p.line([[sx - s * .7, sy - s * f * .6], [sx - s * .25, sy - s * .1], [sx, sy + s * .1], [sx + s * .25, sy - s * .1], [sx + s * .7, sy - s * f * .6]], false, Math.max(1.5, s * .1));
+    p.dot(sx + d * s * .05, sy + s * .08, Math.max(1.5, s * .12), INK);
+    if (o.hit) g.restore();
+  } else if (o.kind === 'plane') {
+    const d = Math.sign(o.vx) || 1, Lh = o.len * s / 2;
+    g.save(); g.translate(sx, sy); g.scale(d, 1);
+    p.shape(p.rrect(-Lh, -s * .55, Lh * 2, s * 1.1, s * .5), o.jet ? '#d9dde3' : COL.white);
+    p.shape([[-s * .6, 0], [s * .8, 0], [-s * .4, s * 1.6], [-s * 1.2, s * 1.6]], COL.sky);
+    p.shape([[-Lh + s * .1, -s * .3], [-Lh - s * .2, -s * 1.6], [-Lh + s * 1.2, -s * .4]], COL.red);
+    for (let i = 0; i < 4; i++) p.dot(-s * .6 + i * s * .9, -s * .1, Math.max(1.5, s * .16), COL.blue);
+    g.restore();
+  } else if (o.kind === 'storm') {
+    const flash = Math.sin(o.ph * 2.2) >= .55;
+    const c = cloudSprite(o.seed % 3, o.r * 2.6 * s, true);
+    const pw = o.r * 2.6 * s; g.drawImage(c, sx - pw * .62, sy - pw * .45, pw * 1.25, pw * .75);
+    if (flash) { const pts = [[sx, sy + s], [sx - s * .8, sy + s * 2.5], [sx + s * .2, sy + s * 2.6], [sx - s * .6, sy + s * 4.2]]; p.line(pts, false, Math.max(2, s * .25), '#f4d35e'); p.line(pts, false, Math.max(1, s * .08), INK); }
+  } else if (o.kind === 'sat') {
+    g.save(); g.translate(sx, sy); g.rotate(o.ph * .4);
+    p.shape(p.rect(-s * .6, -s * .6, s * 1.2, s * 1.2), COL.yellow);
+    p.shape(p.rect(-s * 2.4, -s * .4, s * 1.6, s * .8), COL.blue); p.shape(p.rect(s * .8, -s * .4, s * 1.6, s * .8), COL.blue);
+    p.line([[0, -s * .6], [0, -s * 1.3]], false); p.dot(0, -s * 1.35, Math.max(1.5, s * .15));
+    g.restore();
+  } else if (o.kind === 'meteor') {
+    const a = Math.atan2(o.vy, o.vx);
+    g.save(); g.translate(sx, sy);
+    g.strokeStyle = 'rgba(243,154,60,.55)'; g.lineWidth = o.r * s; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(-Math.cos(a) * o.r * s * 4, Math.sin(a) * o.r * s * 4); g.stroke();
+    g.rotate(o.ph);
+    const rr = mulberry(o.seed), pts = []; for (let i = 0; i < 9; i++) { const aa = i / 9 * 7; const k = .75 + rr() * .35; pts.push([Math.cos(aa) * o.r * s * k, Math.sin(aa) * o.r * s * k]); }
+    p.shape(pts, '#9b8a7a'); p.line(p.ell(o.r * s * .2, -o.r * s * .1, o.r * s * .22, o.r * s * .18, 8), true, p.lw * .7);
+    g.restore();
+  } else if (o.kind === 'wballoon') {
+    // a big white weather balloon with its little instrument box
+    const sw = Math.sin(o.ph * 1.3) * s * .15;
+    p.line([[sx + sw, sy + s * 1.6], [sx, sy + s * 3]], false, 1.2);
+    p.shape(p.ell(sx + sw, sy, s * 1.5, s * 1.7, 18), COL.white);
+    p.line([[sx + sw - s * .7, sy - s * .9], [sx + sw - s * .9, sy - s * .3]], false, 1.5, '#cfe3f3');
+    p.shape(p.rect(sx - s * .35, sy + s * 3, s * .7, s * .6), COL.orange);
+  } else if (o.kind === 'ufo') {
+    g.save(); g.translate(sx, sy);
+    p.shape(p.ell(0, -s * .4, s * 1.1, s * .9, 14).filter((_, i) => i >= 7 || i === 0), '#cfe8fb');
+    p.shape(p.ell(0, 0, s * 2.6, s * .7, 18), COL.gray);
+    for (let i = -2; i <= 2; i++) p.dot(i * s * .9, s * .05, Math.max(1.5, s * .16), Math.sin(o.ph * 6 + i) > 0 ? COL.yellow : COL.red);
+    g.restore();
+  }
+}
+function drawEjectCat(g, frame) {
+  const c = ejectCat, s = cam.scale, [sx, sy] = worldToScreen(c.x, c.y);
+  const p = Pen(g, s, 800 + frame), rr = s * .85;
+  const sway = Math.sin(c.t * 2.2) * .12;
+  g.save(); g.translate(sx, sy); g.rotate(sway);
+  if (c.t > .35) {
+    const open = Math.min(1, (c.t - .35) * 3), cw = s * 3.2 * open, ch = s * 1.8 * open, ty = -s * 3.4;
+    for (const sgn of [-1, 1]) p.line([[sgn * rr * .5, -rr * .6], [sgn * cw * .5, ty]], false, 1.3);
+    const pts = []; for (let i = 0; i <= 10; i++) { const a = Math.PI + i / 10 * Math.PI; pts.push([Math.cos(a) * cw * .5, ty + Math.sin(a) * ch * .6]); }
+    if (cw > 4) { p.shape(pts, COL.pink); for (let i = 1; i < 4; i++) p.line([[-cw * .5 + i * cw / 4, ty], [0, ty - ch * .6]], false, 1.2); }
+  }
+  if (catImg.complete && catImg.naturalWidth) g.drawImage(catImg, -rr * 1.25, -rr * 1.3, rr * 2.5, rr * 2.5);
+  // soot smudges and a curl of smoke
+  g.fillStyle = 'rgba(40,36,44,.55)';
+  for (const [x, y, r2] of [[-.35, .2, .22], [.4, -.1, .18], [.05, .45, .15], [-.1, -.45, .12]]) { g.beginPath(); g.ellipse(x * rr, y * rr, r2 * rr * 1.3, r2 * rr, .4, 0, 7); g.fill(); }
+  p.line([[rr * .6, -rr * .9], [rr * .9, -rr * 1.3], [rr * .7, -rr * 1.6], [rr, -rr * 2]], false, 1.5, '#888');
+  g.restore();
+}
+// obstacles still above the screen: a red triangle at the top edge where they will come in
+function drawWarnings(g) {
+  const p = Pen(g, 30, 77);
+  for (const o of obstacles) {
+    if (o.hit || o.kind === 'bird') continue;
+    const [sx, sy] = worldToScreen(o.x, o.y);
+    if (sy > 0 || sy < -H * 1.5) continue;
+    const x = clamp(sx, 30, W - 50), y = 62, k = 1 - Math.min(1, -sy / (H * 1.5));
+    g.save(); g.globalAlpha = .4 + .6 * k;
+    p.shape([[x, y - 12], [x + 11, y + 8], [x - 11, y + 8]], COL.red, 2);
+    g.fillStyle = '#fff'; g.fillRect(x - 1.5, y - 5, 3, 7); g.fillRect(x - 1.5, y + 4, 3, 2.5);
+    g.restore();
+  }
+}
+// altimeter: a pencil line on the right; its top stretches past your best, with ticks at 10, 100, 1000 km
+function drawAltimeter(g, alt) {
+  const x = W - 22, y0 = H - BOTTOM - 24, y1 = 70;
+  const top = Math.max(500, best * 10 * 1.4, alt * 1.25);
+  const pos = a => y0 - (Math.log10(1 + Math.max(0, a) / 10) / Math.log10(1 + top / 10)) * (y0 - y1);
+  const p = Pen(g, 30, 5);
+  p.line([[x, y0], [x, y1]], false, 2.2);
+  g.strokeStyle = INK; g.lineWidth = 1.5;
+  for (const km of [1, 10, 100, 1000, 10000]) { if (km * 10 > top) break; const y = pos(km * 10); g.beginPath(); g.moveTo(x - 6, y); g.lineTo(x + 6, y); g.stroke(); }
+  if (best > 0) { const y = pos(best * 10); g.strokeStyle = COL.red; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 9, y); g.lineTo(x + 9, y); g.stroke(); g.fillStyle = COL.red; g.beginPath(); g.moveTo(x + 2, y); g.lineTo(x + 2, y - 10); g.lineTo(x + 11, y - 7); g.closePath(); g.fill(); }
+  const y = pos(alt);
+  g.save(); g.translate(x, y); g.fillStyle = COL.orange; g.strokeStyle = INK; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(0, -11); g.lineTo(6, 4); g.lineTo(-6, 4); g.closePath(); g.fill(); g.stroke(); g.restore();
+}
+// the height right now, written by hand at the top (red once it beats your best)
+function drawAltNumber(g, alt, frame) {
+  const km = Math.max(0, alt) / 10, txt = L[lang].km(fmtKm(km));
+  const px = clamp(W * .1, 30, 58), x = W / 2, y = 96 + px * .5;
+  const beat = best > 0 && km > best;
+  g.save(); g.translate(x, y); g.rotate([-.02, .015, -.005][frame]);
+  g.font = `${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
+  g.lineWidth = px * .2; g.strokeStyle = 'rgba(255,253,246,.92)'; g.strokeText(txt, 0, 0);
+  g.fillStyle = beat ? COL.red : INK; g.fillText(txt, 0, 0);
+  const w = g.measureText(txt).width;
+  Pen(g, 30, 50 + frame).line([[-w / 2, px * .18], [w / 2, px * .12]], false, 2.2, beat ? COL.red : INK);
+  g.restore();
+}
+function drawFuelGauge(g) {
+  // fuel left in the stage that is burning now
+  const f = R.fuelMax[R.active] ? R.fuel[R.active] / R.fuelMax[R.active] : 0;
+  const own = R.parts.filter(p => PARTS[p.id].own && (p.stage === R.active || p.side)).map(p => p.own / PARTS[p.id].own);
+  const k = R.fuelMax[R.active] ? f : own.length ? Math.max(...own) : 0;
+  const x = 18, y0 = H - BOTTOM - 24, h = Math.min(170, (H - BOTTOM - 140) * .5), w = 16;
+  const p = Pen(g, 30, 9);
+  drop(g, x + w / 2, y0 - h - 18, 8);
+  p.fill(p.rect(x, y0 - h * k, w, h * k), k > .25 ? COL.orange : COL.red);
+  p.line(p.rrect(x, y0 - h, w, h, 4), true, 2);
+  // the stages still waiting below show as little ticks
+  for (let i = R.active + 1; i <= R.maxStage; i++) { g.fillStyle = INK; g.fillRect(x + w + 4, y0 - (i - R.active) * 8, 6, 3); }
+}
+// a flame with three tongues (power), drawn differently from the fuel drop
+function flame(g, x, y, k) {
+  g.save(); g.translate(x, y); g.scale(k, k); g.strokeStyle = INK; g.lineWidth = 1.8 / k;
+  g.fillStyle = COL.red; g.beginPath(); g.moveTo(-7, 8); g.quadraticCurveTo(-10, 0, -6, -4); g.lineTo(-4, 0); g.quadraticCurveTo(-3, -8, 1, -11); g.quadraticCurveTo(1, -4, 4, -3); g.lineTo(6, -7); g.quadraticCurveTo(11, 1, 7, 8); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = COL.yellow; g.beginPath(); g.moveTo(-3, 8); g.quadraticCurveTo(-4, 2, 0, -2); g.quadraticCurveTo(4, 2, 3, 8); g.closePath(); g.fill();
+  g.restore();
+}
+function drop(g, x, y, r) { g.fillStyle = COL.orange; g.strokeStyle = INK; g.lineWidth = 1.8; g.beginPath(); g.moveTo(x, y - r * 1.4); g.quadraticCurveTo(x + r, y - r * .2, x + r * .8, y + r * .3); g.arc(x, y + r * .3, r * .8, 0, Math.PI); g.quadraticCurveTo(x - r, y - r * .2, x, y - r * 1.4); g.fill(); g.stroke(); }
+
+// ================= drawing: build screen =================
+function catIcon(g, cat, x, y, s, on) {
+  const p = Pen(g, s, 17);
+  const ic = { nose: 'cone', body: 'tankS', engine: 'engS', side: 'fin' }[cat];
+  drawPart(g, ic, x, y, s * .55, 0, false, on ? 1 : .65);
+}
+function drawTray(g, frame) {
+  if (nudge) { nudge.t = (performance.now() - nudge.t0) / 1000; if (nudge.t > .5) nudge = null; }
+  const p = Pen(g, 40, 3);
+  // paper strip behind the tray
+  const bx = tray.vertical ? tray.x : 0, by = tray.vertical ? tray.y - 6 : tray.y - 6;
+  const bw = tray.vertical ? tray.w : W, bh = tray.vertical ? tray.h + 6 : tray.h + 12;
+  g.fillStyle = 'rgba(255,253,246,.88)'; g.fillRect(bx, by, bw, bh);
+  p.line(tray.vertical ? [[bx, by], [bx, by + bh]] : [[0, by], [W, by]], false, 2);
+  // tabs
+  for (const tb of tray.tabs) {
+    const on = tb.cat === tray.cat;
+    const r = p.rrect(tb.x, tb.y, tb.w, tb.h, 8);
+    p.fill(r, on ? '#ffe08a' : '#f1ece0', false); p.line(r, true, on ? 2.4 : 1.4);
+    catIcon(g, tb.cat, tb.x + tb.w / 2, tb.y + tb.h / 2, Math.min(tb.w, tb.h) * .9, on);
+  }
+  // cells
+  g.save();
+  if (tray.vertical) { g.beginPath(); g.rect(tray.x, tray.y, tray.w, tray.h); g.clip(); }
+  for (const c of tray.cells) {
+    const r = cellRect(c);
+    if (r.x > W || r.x + r.w < 0 || r.y > H || r.y + r.h < tray.y - 2) continue;
+    const box = p.rrect(r.x, r.y, r.w, r.h, 10);
+    p.fill(box, tip?.id === c.id ? '#fff3c4' : '#fffdf6', false); p.line(box, true, 1.6, '#7a7480');
+    const d = PARTS[c.id], k = Math.min(r.w * .78 / d.w, r.h * .78 / d.h);
+    let hop = 0;
+    if (nudge && nudge.id === c.id) hop = Math.sin(Math.min(1, nudge.t / .5) * Math.PI * 2) * Math.max(0, 1 - nudge.t / .5) * r.h * .25;
+    const hx = tray.vertical ? -Math.abs(hop) : 0, hy = tray.vertical ? 0 : -Math.abs(hop);
+    drawPart(g, c.id, r.x + r.w / 2 + hx, r.y + r.h / 2 + hy, Math.min(k, r.w * .7), frame);
+  }
+  g.restore();
+  // scroll hint: a fade at the edge
+  if (!tray.vertical && tray.maxScroll > 0) {
+    for (const [edge, show] of [[0, tray.scroll > 2], [W, tray.scroll < tray.maxScroll - 2]]) {
+      if (!show) continue;
+      const gr = g.createLinearGradient(edge, 0, edge + (edge ? -30 : 30), 0); gr.addColorStop(0, 'rgba(255,253,246,1)'); gr.addColorStop(1, 'rgba(255,253,246,0)');
+      g.fillStyle = gr; g.fillRect(edge ? W - 30 : 0, tray.cells[0].y - 2, 30, tray.cell + 4);
+    }
+  }
+}
+// gauges for power (thrust against weight), fuel and steadiness
+// colours of the stages in firing order (the first one burns first and drops first)
+const STAGE_COL = ['#ffb36b', '#7cc4ff', '#9be08b', '#d7a6ff', '#ff9ec7'];
+function drawStageOrder(g, n) {
+  if (n <= 0) return;
+  const z = clamp(Math.min(W, H) / 520, 1, 1.9);
+  g.save(); g.translate(gaugeBox.x, gaugeBox.y + 3 * 34 * z + 4); g.scale(z, z);
+  const p = Pen(g, 30, 1300), r = 9, gap = 30;
+  for (let k = 0; k <= Math.min(n, STAGE_COL.length - 1); k++) {
+    const x = 12 + k * gap, y = 10;
+    p.shape(p.ell(x, y, r, r, 12), STAGE_COL[k], 1.6);
+    if (k === 0) flame(g, x, y + 1, .6);
+    if (k < n) p.line([[x + r + 3, y], [x + gap - r - 4, y], [x + gap - r - 8, y - 4], [x + gap - r - 4, y], [x + gap - r - 8, y + 4]], false, 1.6);
+  }
+  g.restore();
+}
+function drawGauges(g, st) {
+  const z = clamp(Math.min(W, H) / 520, 1, 1.9);
+  g.save(); g.translate(gaugeBox.x, gaugeBox.y); g.scale(z, z);
+  const x = 0, y = 0, w = gaugeBox.w;
+  const rows = [
+    ['flame', clamp(st.twr / 3, 0, 1), st.twr < 1 ? COL.red : st.twr < 1.3 ? COL.yellow : COL.green, 1 / 3],
+    ['drop', clamp(st.fuel / 10, 0, 1), st.fuel <= 0 ? COL.red : COL.orange, null],
+    ['fin', clamp((st.margin + .5) / 2.5, 0, 1), st.margin < 0 ? COL.red : st.margin < .4 ? COL.yellow : COL.green, .2],
+  ];
+  const p = Pen(g, 30, 11);
+  const rh = 26;
+  rows.forEach(([icon, k, c, mark], i) => {
+    const yy = y + i * (rh + 8);
+    const ix = x + 10, iy = yy + rh / 2;
+    if (icon === 'flame') flame(g, ix, iy, 1);
+    if (icon === 'drop') drop(g, ix, iy, 7);
+    if (icon === 'fin') { const pts = [[ix - 6, iy - 9], [ix + 2, iy - 1], [ix + 8, iy + 9], [ix - 6, iy + 9]]; p.shape(pts, COL.red, 1.6); }
+    const bx = x + 24, bw = w - 24;
+    p.fill(p.rect(bx, yy + 6, bw * k, rh - 12), c);
+    p.line(p.rrect(bx, yy + 6, bw, rh - 12, 5), true, 1.8);
+    if (mark !== null) { g.strokeStyle = INK; g.lineWidth = 2; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(bx + bw * mark, yy + 2); g.lineTo(bx + bw * mark, yy + rh - 2); g.stroke(); g.setLineDash([]); }
+  });
+  g.restore();
+}
+// tooltip: the part's name and what it is good at, in pips
+function partStats(id) {
+  const d = PARTS[id];
+  return [
+    ['w', clamp(Math.ceil((d.m + (d.fuel || 0)) / .5), 1, 5)],
+    ['p', d.T ? clamp(Math.ceil(d.T / 16), 1, 5) : d.lift ? 2 : d.solar ? 1 : 0],
+    ['f', d.fuel ? clamp(Math.ceil(d.fuel / .7), 1, 5) : d.own ? clamp(Math.ceil(d.own / .8), 1, 4) : 0],
+    ['c', d.gyro ? 4 : d.rcs ? 4 : d.gimbal ? 4 : d.fin ? Math.ceil(d.fin * 1.5) : 0],
+  ];
+}
+function drawTip(g) {
+  if (!tip || drag) return;
+  const id = tip.id, name = pname(id);
+  const d = PARTS[id];
+  g.font = `${clamp(W * .045, 17, 24)}px ${FONT}`;
+  const tw = g.measureText(name).width;
+  const stats = partStats(id).filter(s => s[1] > 0);
+  const flags = [d.air && 'air', d.chute && 'chute', (d.decoup || d.sep) && 'sep', d.wobble && 'wobble', d.lift && 'air'].filter(Boolean);
+  const bw = Math.max(tw + 24, stats.length * 64 + 20), bh = 66;
+  let bx = clamp((tray.vertical ? buildArea.w / 2 : W / 2) - bw / 2, 8, W - bw - 8);
+  let by = tray.vertical ? 56 : tray.y - bh - 14;
+  if (!tray.vertical && drag) by = 124;
+  const p = Pen(g, 40, 21);
+  const box = p.rrect(bx, by, bw, bh, 12);
+  p.fill(box, '#fffdf6', false); p.line(box, true, 2);
+  g.fillStyle = INK; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.fillText(name, bx + bw / 2, by + 26);
+  // pips: weight (iron block), power (flame), fuel (drop), steering (curved arrow)
+  const sx = bx + bw / 2 - stats.length * 32 + 6;
+  stats.forEach(([k, n], i) => {
+    const x = sx + i * 64, y = by + 48;
+    g.save(); g.strokeStyle = INK; g.lineWidth = 1.6;
+    if (k === 'w') { g.fillStyle = COL.dark; g.beginPath(); g.moveTo(x - 7, y + 6); g.lineTo(x - 4, y - 5); g.lineTo(x + 4, y - 5); g.lineTo(x + 7, y + 6); g.closePath(); g.fill(); g.stroke(); }
+    if (k === 'p') flame(g, x, y, .85);
+    if (k === 'f') drop(g, x, y, 6);
+    if (k === 'c') { g.beginPath(); g.arc(x, y + 3, 7, Math.PI * 1.1, Math.PI * 1.95); g.stroke(); g.beginPath(); g.moveTo(x + 7, y + 1); g.lineTo(x + 8, y - 5); g.lineTo(x + 2, y - 2); g.stroke(); }
+    g.restore();
+    for (let j = 0; j < n; j++) { g.fillStyle = INK; g.beginPath(); g.arc(x + 13 + j * 8, y, 2.6, 0, 7); g.fill(); }
+  });
+  // special traits as little badges at the corner
+  flags.slice(0, 2).forEach((f, i) => {
+    const x = bx + bw - 14 - i * 26, y = by + 14;
+    g.save(); g.strokeStyle = INK; g.lineWidth = 1.5;
+    if (f === 'air') { g.fillStyle = '#fff'; g.beginPath(); g.arc(x - 4, y, 5, 0, 7); g.arc(x + 3, y - 2, 6, 0, 7); g.arc(x + 7, y + 2, 4, 0, 7); g.fill(); g.stroke(); }
+    if (f === 'space') { g.fillStyle = COL.yellow; g.beginPath(); for (let j = 0; j < 10; j++) { const a = j / 10 * Math.PI * 2 - Math.PI / 2, r2 = j % 2 ? 3.5 : 8; g.lineTo(x + Math.cos(a) * r2, y + Math.sin(a) * r2); } g.closePath(); g.fill(); g.stroke(); }
+    if (f === 'chute') { g.fillStyle = COL.orange; g.beginPath(); g.arc(x, y + 2, 8, Math.PI, 0); g.closePath(); g.fill(); g.stroke(); g.beginPath(); g.moveTo(x - 8, y + 2); g.lineTo(x, y + 10); g.lineTo(x + 8, y + 2); g.stroke(); }
+    if (f === 'sep') { g.beginPath(); g.moveTo(x - 8, y - 2); g.lineTo(x + 8, y - 2); g.moveTo(x - 8, y + 4); g.lineTo(x + 8, y + 4); g.stroke(); g.beginPath(); g.moveTo(x, y + 6); g.lineTo(x, y + 11); g.stroke(); }
+    if (f === 'wobble') { g.beginPath(); for (let j = 0; j <= 8; j++) g.lineTo(x - 8 + j * 2, y + Math.sin(j * 1.6) * 4); g.stroke(); }
+    g.restore();
+  });
+}
+
+let hintT = 0;
+function drawBuild(fdt, frame) {
+  const s = buildCam.scale;
+  drawPaper(0, 0, 0, 0, s);
+  const toS = buildToScreen;
+  layoutH = layout(rk).H;
+  drawGround((x, y) => toS(x, y), s, frame);
+  drawPad(toS, s, frame);
+  drawFrame(fdt, frame);
+  // rocket
+  const lay = layout(rk);
+  // stages: a highlighter wash behind each part, one colour per stage (only when there are decouplers)
+  if (lay.maxStage > 0) {
+    const hp = Pen(ctx, s, 1200 + frame);
+    for (const q of lay.parts) {
+      if (!q.attached) continue;
+      const [cx, cy] = toS(q.x, q.y), pad = s * .06;
+      ctx.save(); ctx.globalAlpha = .55;
+      hp.fill(hp.rect(cx - q.w * s / 2 - pad, cy - q.h * s / 2 - pad, q.w * s + pad * 2, q.h * s + pad * 2), STAGE_COL[q.stage % STAGE_COL.length]);
+      ctx.restore();
+    }
+  }
+  // loose parts (touching nothing) are drawn faint: they will be left behind
+  drawRocketParts(ctx, lay.parts.filter(p => p.attached), (x, y) => toS(x, y), s, frame);
+  drawRocketParts(ctx, lay.parts.filter(p => !p.attached), (x, y) => toS(x, y), s, frame, { alpha: .4 });
+  // each decoupler wears its order number on a little tag in its stage colour
+  for (const q of lay.parts) {
+    if (!PARTS[q.id].decoup) continue;
+    const [cx, cy] = toS(q.x, q.y), r = clamp(s * .2, 9, 16);
+    ctx.save(); ctx.globalAlpha = q.attached ? 1 : .5;
+    ctx.fillStyle = q.attached ? STAGE_COL[q.stage % STAGE_COL.length] : '#fff'; ctx.strokeStyle = INK; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = INK; ctx.font = `bold ${r * 1.3}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(rk[q.idx].o || 1), cx, cy + r * .08);
+    ctx.restore();
+  }
+  // drop preview: the part sits in the cell it will go to. red dashes = joins the rocket,
+  // grey dashes = will be loose, a red cross = that spot is taken
+  if (drag) {
+    const t2 = drag.tgt, d = PARTS[drag.id];
+    if (t2) {
+      const w = cw(drag.id) * CELL, h = ch(drag.id) * CELL, cx0 = (t2.x + cw(drag.id) / 2) * CELL - FRAME.w / 2, cy0 = (t2.y + ch(drag.id) / 2) * CELL;
+      const [cx, cy] = toS(cx0, cy0), facing = d.cat === 'side' ? (cx0 < 0 ? -1 : 1) : 0;
+      drawPart(ctx, drag.id, cx, cy, s, frame, facing < 0, t2.ok ? (t2.joined ? .95 : .5) : .35);
+      ctx.save(); ctx.lineWidth = 2.5;
+      if (t2.ok) { ctx.setLineDash([6, 5]); ctx.strokeStyle = t2.joined ? COL.red : 'rgba(45,42,50,.5)'; ctx.strokeRect(cx - w * s / 2, cy - h * s / 2, w * s, h * s); }
+      else { ctx.strokeStyle = COL.red; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx - 12, cy - 12); ctx.lineTo(cx + 12, cy + 12); ctx.moveTo(cx + 12, cy - 12); ctx.lineTo(cx - 12, cy + 12); ctx.stroke(); }
+      ctx.restore();
+    } else drawPart(ctx, drag.id, drag.x - drag.offX, drag.y - drag.offY, s, frame, false, .5);
+  }
+  // effects
+  for (let i = snapFx.length - 1; i >= 0; i--) { const f = snapFx[i]; f.t += fdt; if (f.t > .35) { snapFx.splice(i, 1); continue; } ctx.strokeStyle = `rgba(45,42,50,${1 - f.t / .35})`; ctx.lineWidth = 2; for (let j = 0; j < 8; j++) { const a = j / 8 * Math.PI * 2, r0 = f.r * .6 + f.t * 80, r1 = r0 + 8; ctx.beginPath(); ctx.moveTo(f.x + Math.cos(a) * r0, f.y + Math.sin(a) * r0); ctx.lineTo(f.x + Math.cos(a) * r1, f.y + Math.sin(a) * r1); ctx.stroke(); } }
+  for (let i = poofs.length - 1; i >= 0; i--) { const f = poofs[i]; f.t += fdt; if (f.t > .45) { poofs.splice(i, 1); continue; } const k = f.t / .45; ctx.fillStyle = `rgba(255,255,255,${1 - k})`; ctx.strokeStyle = `rgba(45,42,50,${(1 - k) * .7})`; ctx.lineWidth = 1.5; for (let j = 0; j < 6; j++) { const a = j / 6 * Math.PI * 2; ctx.beginPath(); ctx.arc(f.x + Math.cos(a) * (8 + k * 30), f.y + Math.sin(a) * (8 + k * 30), 6 + k * 6, 0, 7); ctx.fill(); ctx.stroke(); } }
+  drawGauges(ctx, buildStats());
+  drawStageOrder(ctx, lay.maxStage);
+  drawTray(ctx, frame);
+  // first visit: a dashed arrow from the tray to the rocket
+  if (!touched && !drag) {
+    hintT += fdt;
+    const c = tray.cells[0] && cellRect(tray.cells[0]);
+    if (c) {
+      const [rx, ry] = toS(1.2, lay.H * .5);
+      const k = (hintT % 1.6) / 1.6;
+      const fx = c.x + c.w / 2, fy = c.y + c.h / 2;
+      ctx.save(); ctx.strokeStyle = `rgba(232,87,74,${.9 - k * .5})`; ctx.lineWidth = 3; ctx.setLineDash([8, 7]); ctx.lineDashOffset = -hintT * 30;
+      ctx.beginPath(); ctx.moveTo(fx, fy - c.h * .5); ctx.quadraticCurveTo(fx + 40, (fy + ry) / 2, rx + 10, ry); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(rx + 10, ry); ctx.lineTo(rx + 24, ry - 6); ctx.moveTo(rx + 10, ry); ctx.lineTo(rx + 22, ry + 9); ctx.stroke();
+      ctx.restore();
+    }
+  }
+  if (tip && !drag && !pending) { tip.t += fdt; if (tip.t > 2.2) tip = null; }
+  drawTip(ctx);
+}
+
+// ================= drawing: flight =================
+let snapFocus = { x: 0, y: 0 };
+function drawFlight(fdt, k, frame) {
+  // interpolated rocket pose
+  let rx = lerp(prevR.x, R.x, k), ry = lerp(prevR.y, R.y, k);
+  if (ejectCat && state !== 'flight') { rx = ejectCat.x; ry = ejectCat.y + 1; }
+  const rth = prevR.th + wrapA(R.th - prevR.th) * k;
+  const pose = { x: rx, y: ry, th: rth, comX: R.comX, comY: R.comY };
+  // camera: zoom out with speed, keep the rocket a little below the middle
+  const spd = Math.hypot(R.vx, R.vy);
+  const rocketLen = Math.max(4, R.top - R.bot);
+  let viewU = clamp(rocketLen * 2.3 + spd * .2, 9, 90);
+  if (state === 'over' || state === 'result') viewU = clamp(rocketLen * 3 + 6, 10, 60);
+  if (overKind === 'moon') viewU = rocketLen * 2.6 + 8;
+  // tall phones use some of their height too, so the rocket and what comes at it stay big enough to see
+  const avail = Math.min(Math.max(W, (H - BOTTOM - 60) * .75), H - BOTTOM - 60);
+  const tScale = avail / viewU * flightZoom;
+  cam.scale = lerp(cam.scale, tScale, Math.min(1, fdt * 2.5));
+  const sy = state === 'result' ? .64 : .55;
+  cam.sy = lerp(cam.sy, sy, Math.min(1, fdt * 3));
+  // keep the ground in view at lift-off, follow the rocket after
+  // keep the ground near the bottom of the screen at lift-off, then follow the rocket
+  const floorY = overKind === 'moon' ? -Infinity : (H - BOTTOM * .5 - H * cam.sy) / cam.scale;
+  if (state === 'flight') { cam.x = rx; cam.y = Math.max(ry, floorY); }
+  else { cam.x = lerp(cam.x, rx, Math.min(1, fdt * 4)); cam.y = lerp(cam.y, Math.max(ry, floorY), Math.min(1, fdt * 4)); }
+  snapFocus = { x: rx, y: ry };
+  const s = cam.scale;
+  const topY = cam.y + H * cam.sy / s - R.y0, botY = cam.y - (H - H * cam.sy) / s - R.y0;
+  drawPaper(topY, botY, cam.x * s, cam.y * s, s);
+  ctx.save();
+  const view = { x0: cam.x - W / 2 / s, x1: cam.x + W / 2 / s, y0: cam.y - (H - H * cam.sy) / s, y1: cam.y + H * cam.sy / s };
+  drawClouds(view);
+  drawGround(worldToScreen, s, frame);
+  drawPad(worldToScreen, s, frame);
+  // debris
+  for (const d of debris) {
+    const [sx, sy2] = worldToScreen(d.x, d.y);
+    ctx.save(); ctx.translate(sx, sy2); ctx.rotate(d.th);
+    if (d.burnt) ctx.filter = 'brightness(.55)';
+    drawPart(ctx, d.id, 0, 0, s, frame, d.mirror, clamp(d.life, 0, 1));
+    ctx.restore();
+  }
+  for (const o of obstacles) drawObstacle(ctx, o, frame);
+  stepParticles(fdt);
+  drawParticles(ctx, false);
+  // rocket
+  if (R.parts.length) {
+    const shake = R.onPad && R.thrust > 0 ? (Math.random() - .5) * 2 * (1 + R.padShake) : 0;
+    const toS = (lx, ly) => { const [wx, wy] = toWorld(lx, ly, pose); const [a, b] = worldToScreen(wx, wy); return [a + shake, b]; };
+    // chute canopy above the nose
+    if (R.chuteOpen) {
+      const [nx, ny] = toS(R.comX, R.top + R.comY);
+      const p = Pen(ctx, s, 600 + frame), cw = s * 3.4, ch = s * 2;
+      const tx2 = nx - Math.sin(rth) * s * 3.2, ty2 = ny - Math.cos(rth) * s * 3.2;
+      for (const sgn of [-1, 1]) p.line([[nx, ny], [tx2 + sgn * cw * .5, ty2]], false, 1.2);
+      const pts = []; for (let i = 0; i <= 10; i++) { const a = Math.PI + i / 10 * Math.PI; pts.push([tx2 + Math.cos(a) * cw * .5, ty2 + Math.sin(a) * ch * .55]); }
+      p.shape(pts, COL.orange); for (let i = 1; i < 4; i++) p.line([[tx2 - cw * .5 + i * cw / 4, ty2], [tx2, ty2 - ch * .55]], false, 1.2);
+    }
+    // flames first (behind)
+    for (const p of R.parts) {
+      if (!p.burning) continue;
+      const d = PARTS[p.id];
+      const [nx, ny] = toS(p.x, p.y - p.h / 2);
+      drawFlame(ctx, d.fx, nx, ny, s * Math.min(1.3, p.w), d.T / 40, rth, R.t);
+    }
+    ctx.save();
+    const sorted = [...R.parts].sort((a, b) => (a.side ? 0 : 1) - (b.side ? 0 : 1));
+    for (const p of sorted) {
+      const [sx, sy2] = toS(p.x, p.y);
+      ctx.save(); ctx.translate(sx, sy2); ctx.rotate(rth);
+      drawPart(ctx, p.id, 0, 0, s, frame, p.side < 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  drawParticles(ctx, true);
+  if (ejectCat) drawEjectCat(ctx, frame);
+  ctx.restore();
+  // HUD
+  if (state === 'flight') {
+    drawWarnings(ctx);
+    drawSteer(ctx);
+    drawAltimeter(ctx, R.y - R.y0);
+    drawAltNumber(ctx, R.y - R.y0, frame);
+    drawFuelGauge(ctx);
+  }
+}
+
+// ================= main loop =================
+let last = performance.now(), acc = 0, frameT = 0, frame = 0;
+function update(dt) {
+  if (state === 'flight') {
+    // time runs faster on the long coast through space
+    const alt = R.y - R.y0;
+    warp = 1;
+    const u = steer();
+    acc += dt * warp;
+    let steps = 0;
+    while (acc >= DT && steps < 120) {
+      acc -= DT; steps++;
+      prevR = { x: R.x, y: R.y, th: R.th };
+      const res = physStep(DT, u);
+      stepObstacles(DT);
+      for (const d of debris) { d.vy -= G0 * DT; d.x += d.vx * DT; d.y += d.vy * DT; d.th += d.w * DT; if (d.y < 0) { d.y = 0; d.vy = 0; d.vx *= .9; d.w *= .9; } }
+      if (res) { endFlight(res); break; }
+      if (R.inv > 0) R.inv -= DT;
+      const hit = hitObstacle();
+      if (hit) {
+        handleHit(hit);
+        if (!R.parts.length) { R.parts = []; endFlight('hit'); break; }
+      }
+      // out of push and heading down: the flight is over
+      const altNow = R.y - R.y0;
+      // heading down for a while: the flight is over. engines still burning get longer to win it back,
+      // and a very long flight ends anyway
+      if (!R.onPad && R.vy < (R.thrust > 0 ? -1.5 : 0)) {
+        R.fallT += DT;
+        if (R.maxY > 250 && R.fallT > (R.chuteOpen ? 2.5 : R.thrust > 0 ? 4 : 1.6)) { endFlight(R.chuteOpen ? 'chuteEnd' : 'fall'); break; }
+      } else R.fallT = 0;
+      if (R.t > 240 && R.vy < 0) { endFlight('fall'); break; }
+      // never left the pad
+      if (R.onPad && R.padT > 1.2 && R.thrust === 0 && R.active >= R.maxStage) { endFlight('pad'); break; }
+      if (R.onPad && R.padT > 6 && R.active >= R.maxStage) { endFlight('pad'); break; }
+    }
+    if (steps >= 120 || state !== 'flight') acc = 0;
+    if (state === 'flight') {
+      spawnObstacles(H / cam.scale);
+      // exhaust smoke
+      for (const p of R.parts) {
+        if (!p.burning || Math.random() > dt * 30) continue;
+        const d = PARTS[p.id]; if (d.fx === 'ion') continue;
+        const [wx, wy] = toWorld(p.x, p.y - p.h / 2 - .6);
+        const air = rho(R.y - R.y0);
+        particles.push({ kind: 'puff', soft: 1, x: wx + (Math.random() - .5) * .4, y: wy, vx: R.vx * .2 + (Math.random() - .5) * 2, vy: R.vy * .2 - 2, r: .3, grow: .9 * (.3 + air), life: .3 + air * .9, max: 1.2, color: d.fx === 'water' ? '#d8eefc' : air > .3 ? '#f2f0ea' : '#8e93b8' });
+      }
+      if (particles.length > 260) particles.splice(0, particles.length - 260);
+      const air = rho(R.y - R.y0), spd = Math.hypot(R.vx, R.vy);
+      engineSet({ ...R.mix, fire: Math.min(1, R.mix.fire), jet: Math.min(1, R.mix.jet), ion: Math.min(1, R.mix.ion), spark: Math.min(1, R.mix.spark), water: Math.min(1, R.mix.water), wind: Math.min(1, air * spd / 50) });
+    }
+  }
+  if (ejectCat && state !== 'flight') {
+    const c = ejectCat; c.t += dt;
+    if (c.y > .8) {
+      c.vy += (c.t > .5 ? (-1.6 - c.vy) * 3 : -G0) * dt; c.vx *= 1 - dt * 1.5;
+      c.x += c.vx * dt; c.y += c.vy * dt;
+      if (c.y <= .8) { c.y = .8; c.vy = 0; c.vx = 0; }
+    }
+  }
+  if (state === 'flight') {} else if (state === 'over') {
+    overT += dt; acc = 0;
+    for (const d of debris) { d.vy -= G0 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.th += d.w * dt; if (d.y < 0) { d.y = 0; d.vy = 0; d.vx *= .9; d.w *= .9; } }
+    stepObstacles(dt);
+    if (overKind === 'fall' || overKind === 'chuteEnd') { R.vy -= G0 * dt * .5; R.y += R.vy * dt * .3; R.x += R.vx * dt * .3; R.th += (overKind === 'fall' ? 2.5 : 0) * dt; }
+    if (overT > (overKind === 'moon' ? 2.2 : 1.6)) finish();
+  } else if (state === 'result') {
+    for (const d of debris) { if (d.y > 0) { d.vy -= G0 * dt; d.y += d.vy * dt; d.x += d.vx * dt; d.th += d.w * dt; if (d.y < 0) d.y = 0; } }
+  }
+}
+function loop(now) {
+  const fdt = Math.min(.05, (now - last) / 1000); last = now;
+  frameT += fdt; if (frameT > .16) { frameT = 0; frame = (frame + 1) % 3; }
+  update(fdt);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (state === 'build') drawBuild(fdt, frame);
+  else { if (state !== 'flight') prevR = { x: R.x, y: R.y, th: R.th }; drawFlight(fdt, clamp(acc / DT, 0, 1), frame); }
+  requestAnimationFrame(loop);
+}
+resize(); applyLang(); setUI();
+if (document.fonts?.ready) document.fonts.ready.then(() => spriteCache.clear());
+drawBuild(0, 0);
+requestAnimationFrame(loop);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

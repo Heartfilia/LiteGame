@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>痛包工坊 · LiteGame</title>
+  <meta name="description" content="把喜欢的图铺满托特包，徽章、印花、肩带随便配。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="痛包工坊 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/ita-bag/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/ita-bag/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #fbeef3; color: #5b2f45; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 640px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #c2185b; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill {
+      font: inherit; font-size: 15px; background: #fff; border: 2px solid #f1c6d6; border-radius: 999px;
+      min-width: 44px; height: 36px; cursor: pointer; font-weight: bold; color: #b0386a; padding: 0 10px;
+      display: flex; align-items: center; justify-content: center; text-decoration: none; box-sizing: border-box;
+    }
+    main {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    #stage { flex: 1; min-height: 0; position: relative; touch-action: none; }
+    #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #ed { background: #3a2530; }
+    #corner { position: absolute; top: 6px; right: 10px; display: flex; gap: 6px; }
+    #tabs {
+      display: flex; gap: 4px; margin: 4px auto 0; padding: 4px; background: #f6d6e2; border-radius: 999px;
+      width: calc(100% - 24px); max-width: 420px; box-sizing: border-box;
+    }
+    #tabs button {
+      flex: 1; font: inherit; font-weight: bold; font-size: 14px; border: none; border-radius: 999px;
+      height: 38px; background: transparent; color: #a0466e; cursor: pointer; white-space: nowrap; padding: 0 4px;
+    }
+    #tabs button.on { background: #fff; color: #c2185b; box-shadow: 0 2px 0 #e8b4c8; }
+    .bar {
+      display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;
+      padding: 8px 12px; min-height: 50px;
+    }
+    .btn {
+      font: inherit; font-weight: bold; font-size: 16px; border: none; border-radius: 999px;
+      background: #d81b60; color: #fff; height: 44px; padding: 0 18px; cursor: pointer;
+      box-shadow: 0 4px 0 #8e0f3e; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8e0f3e; }
+    .btn.sub { background: #fff; color: #c2185b; box-shadow: 0 4px 0 #ecc0d0; }
+    .btn.on { background: #ffd54f; color: #6a4300; box-shadow: 0 4px 0 #c9a227; }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .btn.sq { width: 44px; padding: 0; }
+    .sw {
+      width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; padding: 0;
+      box-shadow: 0 0 0 2px #ecc0d0;
+    }
+    .sw.on { box-shadow: 0 0 0 3px #c2185b; }
+    .dot { display: inline-block; background: currentColor; border-radius: 50%; }
+    input[type=range] { width: 140px; accent-color: #d81b60; }
+    .stock {
+      display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 2px; touch-action: pan-x;
+      width: 100%; max-width: 640px; margin: 0 auto; box-sizing: border-box; scrollbar-width: none;
+    }
+    .stock::-webkit-scrollbar { display: none; }
+    .thumb {
+      flex: none; width: 52px; height: 52px; padding: 3px; border: 2px solid #f1c6d6; border-radius: 12px;
+      background: #fff; cursor: pointer; -webkit-touch-callout: none;
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block; }
+    .thumb.round { border-radius: 50%; padding: 2px; }
+    .thumb.round img { border-radius: 50%; object-fit: cover; }
+    .hide { display: none !important; }
+    #msg {
+      position: absolute; top: 42%; left: 0; right: 0; text-align: center; font-weight: bold; pointer-events: none;
+      color: #fff; text-shadow: 0 0 6px #000, 0 0 2px #000;
+    }
+    #err { position: fixed; top: 50%; left: 0; right: 0; text-align: center; padding: 0 16px; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">痛包工坊</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="snd" class="pill" aria-label="sound"></button>
+    </div>
+  </header>
+  <main>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <canvas id="ed" class="hide"></canvas>
+      <div id="corner">
+        <button id="front" class="pill" aria-label="front"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/></svg></button>
+        <button id="save" class="pill"></button>
+        <a id="post" class="pill"></a>
+      </div>
+      <div id="msg"></div>
+    </div>
+    <div id="tabs">
+      <button data-m="bag"></button>
+      <button data-m="print" class="on"></button>
+      <button data-m="strap"></button>
+      <button data-m="badge"></button>
+    </div>
+    <!-- バッグ -->
+    <div id="barBag" class="bar hide">
+      <div id="bagColors" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"></div>
+      <button id="pocketBtn" class="btn sub" data-t="pocket"></button>
+    </div>
+    <!-- プリント -->
+    <div id="barPrint" class="bar">
+      <button class="sw on" data-c="#222222" style="background:#222"></button>
+      <button class="sw" data-c="#e91e63" style="background:#e91e63"></button>
+      <button class="sw" data-c="#2979ff" style="background:#2979ff"></button>
+      <button class="sw" data-c="#ffca28" style="background:#ffca28"></button>
+      <button class="sw" data-c="#ffffff" style="background:#fff"></button>
+      <button id="pSize" class="btn sub sq" aria-label="size"><span class="dot" style="width:12px;height:12px"></span></button>
+      <button id="pErase" class="btn sub" data-t="erase"></button>
+      <button id="pUndo" class="btn sub" data-t="undo"></button>
+      <button id="pImg" class="btn" data-t="image"></button>
+    </div>
+    <div id="barPlace" class="bar hide">
+      <input id="pScale" type="range" min="10" max="200" value="80" aria-label="size">
+      <button id="pCancel" class="btn sub" data-t="cancel"></button>
+      <button id="pOk" class="btn" data-t="ok"></button>
+    </div>
+    <!-- ストラップ -->
+    <div id="stockS" class="stock hide"></div>
+    <div id="barStrap" class="bar hide">
+      <button id="sPick" class="btn" data-t="pick"></button>
+      <button id="sRemove" class="btn sub" data-t="remove"></button>
+    </div>
+    <div id="barCut" class="bar hide">
+      <button id="cBrush" class="btn sub sq" aria-label="brush"><span class="dot" style="width:12px;height:12px"></span></button>
+      <button id="cErase" class="btn sub" data-t="erase"></button>
+      <button id="cUndo" class="btn sub" data-t="undo"></button>
+      <button id="cCancel" class="btn sub" data-t="cancel"></button>
+      <button id="cDone" class="btn" data-t="done" disabled></button>
+    </div>
+    <!-- バッジ -->
+    <div id="stockB" class="stock hide"></div>
+    <div id="barBadge" class="bar hide">
+      <span id="bSizeWrap" class="hide" style="display:inline-flex;align-items:center;gap:6px">
+        <span class="dot" style="width:10px;height:10px;color:#c2185b"></span>
+        <input id="bSize" type="range" min="10" max="70" value="19" aria-label="size">
+        <span class="dot" style="width:22px;height:22px;color:#c2185b"></span>
+      </span>
+      <button id="bPick" class="btn" data-t="pick"></button>
+    </div>
+    <div id="barCrop" class="bar hide">
+      <button class="btn sub sq bs" data-s="0" aria-label="S"><span class="dot" style="width:12px;height:12px"></span></button>
+      <button class="btn sub sq bs on" data-s="1" aria-label="M"><span class="dot" style="width:18px;height:18px"></span></button>
+      <button class="btn sub sq bs" data-s="2" aria-label="L"><span class="dot" style="width:24px;height:24px"></span></button>
+      <button id="kCancel" class="btn sub" data-t="cancel"></button>
+      <button id="kDone" class="btn" data-t="done"></button>
+    </div>
+    <input id="file" type="file" accept="image/*" class="hide">
+  </main>
+  <div id="err"></div>
+
+<script>
+setTimeout(() => { if (!window.__ok) { document.getElementById('err').textContent = (navigator.language || '').startsWith('ja') ? '読み込みに失敗しました。通信状況を確認して再読み込みしてください。' : 'Failed to load. Please check your connection and reload.'; } }, 8000);
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "../lib/three/build/three.module.js"
+} }
+</script>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 痛包工坊 · 中文文案
+window.__KF_ZH__ = {
+  title: '痛包工坊',
+  back: '← 大厅',
+  bag: '包身',
+  pocket: '口袋',
+  print: '印花',
+  strap: '肩带',
+  badge: '徽章',
+  erase: '擦除',
+  undo: '撤销',
+  cancel: '取消',
+  pick: '选一张图',
+  remove: '取下',
+  done: '好了',
+  post: '分享到 X',
+  full: '放不下了',
+  err: '这张图读不出来',
+  shareText: '做了一个痛包 #LiteGame',
+  image: '图片',
+  ok: '确定',
+  save: '保存'
+};
+</script>
+<script type="module">
+import * as THREE from 'three';
+window.__ok = true;
+
+const SHARE_URL = 'https://keifurukawafunnych.com/games/ita-bag/';
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('itabag:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('itabag:' + k, JSON.stringify(v)); } catch {} },
+};
+const DICT = {
+  ja: {
+    title: '痛包工坊', back: '← トップへ戻る', bag: 'バッグ', pocket: 'ポケット', print: 'プリント', strap: 'ストラップ', badge: 'バッジ',
+    erase: '消す', undo: '戻す', image: '画像', cancel: 'やめる', ok: '決定', pick: '画像をえらぶ', remove: '外す',
+    done: 'できた', save: '保存', post: 'Xに投稿', full: '置く場所がありません', err: '画像を読み込めませんでした',
+    shareText: '痛バッグを作りました\n#痛包工坊',
+  },
+  en: {
+    title: 'Ita-Bag Maker', back: '← Back to top', bag: 'Bag', pocket: 'Pocket', print: 'Print', strap: 'Charm', badge: 'Badge',
+    erase: 'Erase', undo: 'Undo', image: 'Image', cancel: 'Cancel', ok: 'OK', pick: 'Choose image', remove: 'Remove',
+    done: 'Done', save: 'Save', post: 'Post', full: 'No room left', err: 'Could not load the image',
+    shareText: 'I made my ita-bag\n#ItaBagMaker',
+  },
+}
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+const t = k => DICT[lang][k];
+const coarse = matchMedia('(pointer: coarse)').matches;
+
+// ---------- sound ----------
+let soundOn = store.get('sound', true), actx = null;
+const SPK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
+function drawSnd() {
+  $('snd').innerHTML = SPK + (soundOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>';
+}
+function beep(f0, f1, dur, type = 'sine', vol = 0.25) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(), now = actx.currentTime;
+    o.type = type;
+    o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f1, now + dur);
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(vol, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(g).connect(actx.destination); o.start(now); o.stop(now + dur + 0.01);
+  } catch {}
+}
+const clickSnd = () => { beep(2400, 1800, 0.05, 'square', 0.08); beep(900, 500, 0.08); };
+const ngSnd = () => beep(180, 140, 0.18, 'square', 0.08);
+const chainSnd = () => { beep(3200, 2600, 0.06, 'triangle', 0.1); setTimeout(() => beep(2800, 2200, 0.06, 'triangle', 0.08), 70); };
+
+function flash(text) {
+  $('msg').textContent = text;
+  clearTimeout(flash.t); flash.t = setTimeout(() => { $('msg').textContent = ''; }, 1600);
+}
+
+// ---------- image loading ----------
+let fileCb = null;
+function pickImage(cb) { fileCb = cb; $('file').value = ''; $('file').click(); }
+$('file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f || !f.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    URL.revokeObjectURL(url);
+    const k = Math.min(1, 1600 / Math.max(im.width, im.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    if (fileCb) fileCb(c);
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); flash(t('err')); };
+  im.src = url;
+});
+
+// ---------- three.js scene ----------
+const cv = $('cv');
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xfbeef3);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd9c4cc, 1.7));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(-3, 5, 8); scene.add(sun);
+const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(4, 2, -6); scene.add(rim);
+
+const BW = 4.0, BH = 3.6, BD = 0.55, BULGE = 0.14, HANDLE = 1.35;
+const CW = 1280, CH = 1152;            // front print canvas (same ratio as BW:BH)
+const bz = (x, y) => BULGE * Math.cos(Math.PI * x / BW) * Math.cos(Math.PI * y / BH);
+
+// fabric pattern
+function weave(c, base) {
+  const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, c.width, c.height);
+  for (let y = 0; y < c.height; y += 3) { g.fillStyle = `rgba(120,95,60,${0.04 + Math.random() * 0.04})`; g.fillRect(0, y, c.width, 1); }
+  for (let x = 0; x < c.width; x += 3) { g.fillStyle = `rgba(255,255,255,${0.05 + Math.random() * 0.05})`; g.fillRect(x, 0, 1, c.height); }
+  for (let i = 0; i < c.width * c.height / 400; i++) {
+    g.fillStyle = `rgba(110,80,50,${Math.random() * 0.08})`; g.fillRect(Math.random() * c.width, Math.random() * c.height, 2, 1);
+  }
+  return c;
+}
+const BAG_COLORS = ['#2c2b30', '#efe5d0', '#f7f6f2', '#f5b7cb', '#b5d8f2', '#cdbbe8', '#bfe6cf', '#f6dd8c'];
+let bagColor = store.get('bagColor', BAG_COLORS[0]);
+if (!BAG_COLORS.includes(bagColor)) bagColor = BAG_COLORS[0];
+let pocketOn = store.get('pocket', true);
+const baseFront = Object.assign(document.createElement('canvas'), { width: CW, height: CH });
+function paintBase() {
+  weave(baseFront, bagColor);
+  // stitch line near the top
+  const g = baseFront.getContext('2d');
+  g.strokeStyle = bagColor === '#2c2b30' ? 'rgba(255,255,255,.3)' : 'rgba(120,95,60,.45)'; g.lineWidth = 3; g.setLineDash([14, 10]);
+  g.beginPath(); g.moveTo(0, 46); g.lineTo(CW, 46); g.stroke(); g.setLineDash([]);
+}
+paintBase();
+const printC = Object.assign(document.createElement('canvas'), { width: CW, height: CH });
+const pctx = printC.getContext('2d');
+const frontC = Object.assign(document.createElement('canvas'), { width: CW, height: CH });
+const fctx = frontC.getContext('2d');
+const frontTex = new THREE.CanvasTexture(frontC);
+frontTex.colorSpace = THREE.SRGBColorSpace; frontTex.anisotropy = 4;
+const sideC = Object.assign(document.createElement('canvas'), { width: 256, height: 256 });
+const sideTex = new THREE.CanvasTexture(weave(sideC, bagColor));
+sideTex.colorSpace = THREE.SRGBColorSpace; sideTex.wrapS = sideTex.wrapT = THREE.RepeatWrapping; sideTex.repeat.set(3, 3);
+
+const bag = new THREE.Group();
+scene.add(bag);
+const boxG = new THREE.BoxGeometry(BW, BH, BD, 24, 24, 2);
+{
+  const p = boxG.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    p.setZ(i, z + Math.sign(z) * bz(x, y) * Math.abs(z) / (BD / 2));
+    // 下に向かって少しすぼまる
+    p.setX(i, x * (1 - 0.03 * (0.5 - y / BH)));
+  }
+  boxG.computeVertexNormals();
+}
+const fabricMat = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 1 });
+const frontMat = new THREE.MeshStandardMaterial({ map: frontTex, roughness: 1 });
+const bagMesh = new THREE.Mesh(boxG, [fabricMat, fabricMat, fabricMat, fabricMat, frontMat, fabricMat]);
+bag.add(bagMesh);
+// handles
+const handleCurve = z => new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-1.05, BH / 2 - 0.35, z), new THREE.Vector3(-1.05, BH / 2 + 0.3, z),
+  new THREE.Vector3(-0.7, BH / 2 + HANDLE, z), new THREE.Vector3(0.7, BH / 2 + HANDLE, z),
+  new THREE.Vector3(1.05, BH / 2 + 0.3, z), new THREE.Vector3(1.05, BH / 2 - 0.35, z),
+]);
+const frontHandle = handleCurve(BD / 2 + 0.02);
+for (const c of [frontHandle, handleCurve(-BD / 2 - 0.02)]) {
+  const m = new THREE.Mesh(new THREE.TubeGeometry(c, 64, 0.07, 10), fabricMat);
+  m.scale.set(1, 1, 0.45); m.position.z = c.points[0].z * 0.55;
+  bag.add(m);
+}
+
+// クリアポケット: 正面の大部分を覆う透明なビニール。中に貼ったバッジが透けて見える
+const PK = { x0: -1.68, x1: 1.68, y0: -1.6, y1: 0.95, z: 0.17 };
+const inPocket = (x, y) => pocketOn && x > PK.x0 && x < PK.x1 && y > PK.y0 && y < PK.y1;
+const pocket = new THREE.Group();
+const trimMat = new THREE.MeshStandardMaterial({ roughness: 0.9, side: THREE.DoubleSide });
+{
+  const pw = PK.x1 - PK.x0, ph = PK.y1 - PK.y0, cx = (PK.x0 + PK.x1) / 2, cy = (PK.y0 + PK.y1) / 2;
+  const g = new THREE.PlaneGeometry(pw, ph, 24, 24), p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i) + cx, y = p.getY(i) + cy;
+    p.setXYZ(i, x, y, BD / 2 + bz(x, y) + PK.z);
+  }
+  g.computeVertexNormals();
+  const film = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, transparent: true, opacity: 0.16, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.03, depthWrite: false,
+  }));
+  film.renderOrder = 2;
+  pocket.add(film);
+  // ふちのテープと、袋の側面（マチ）
+  const TW = 0.08, pos = [], idx = [];
+  const ribbon = pts => {
+    // pts: [x, y, nx, ny] ポケットの内側を向く法線つき
+    const base = pos.length / 3;
+    for (const [x, y, nx, ny] of pts) {
+      const sz = BD / 2 + bz(x, y);
+      pos.push(x - nx * 0.01, y - ny * 0.01, sz + PK.z + 0.012, x + nx * TW, y + ny * TW, sz + bz(x + nx * TW, y + ny * TW) - bz(x, y) + PK.z + 0.012,
+        x - nx * 0.01, y - ny * 0.01, sz + 0.005);
+    }
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = base + i * 3, b = a + 3;
+      idx.push(a, b, b + 1, a, b + 1, a + 1, a + 2, b + 2, b, a + 2, b, a);
+    }
+  };
+  const edge = (x0, y0, x1, y1, nx, ny) => {
+    const n = 40, pts = [];
+    for (let i = 0; i <= n; i++) pts.push([x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, nx, ny]);
+    ribbon(pts);
+  };
+  edge(PK.x0, PK.y1, PK.x1, PK.y1, 0, -1);
+  edge(PK.x0, PK.y0, PK.x1, PK.y0, 0, 1);
+  edge(PK.x0, PK.y0, PK.x0, PK.y1, 1, 0);
+  edge(PK.x1, PK.y0, PK.x1, PK.y1, -1, 0);
+  const tg = new THREE.BufferGeometry();
+  tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setIndex(idx); tg.computeVertexNormals();
+  pocket.add(new THREE.Mesh(tg, trimMat));
+}
+bag.add(pocket);
+function applyBag() {
+  paintBase(); weave(sideC, bagColor); sideTex.needsUpdate = true;
+  const c = new THREE.Color(bagColor); const hsl = {}; c.getHSL(hsl);
+  trimMat.color.setHSL(hsl.h, hsl.s, hsl.l > 0.5 ? hsl.l - 0.18 : hsl.l + 0.15);
+  pocket.visible = pocketOn;
+  document.querySelectorAll('.bc').forEach(b => b.classList.toggle('on', b.dataset.c === bagColor));
+  $('pocketBtn').classList.toggle('on', pocketOn);
+  compose();
+}
+
+function compose() {
+  fctx.drawImage(baseFront, 0, 0);
+  fctx.drawImage(printC, 0, 0);
+  if (placing) {
+    const { img, x, y } = placing, w = placingW(), h = w * img.height / img.width;
+    fctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+    fctx.save(); fctx.strokeStyle = '#d81b60'; fctx.lineWidth = 4; fctx.setLineDash([16, 10]);
+    fctx.strokeRect(x - w / 2, y - h / 2, w, h); fctx.restore();
+  }
+  frontTex.needsUpdate = true;
+}
+
+// ---------- layout ----------
+let W = 1, H = 1;
+const CAM_Y = 0.55;
+let zoom = 1, baseDist = 10;
+function resize() {
+  const r = $('stage').getBoundingClientRect();
+  W = Math.max(1, r.width); H = Math.max(1, r.height);
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H;
+  const th = Math.tan(THREE.MathUtils.degToRad(20));
+  baseDist = Math.max(5.6 / (2 * th), 5.1 / (2 * th * camera.aspect)) + BD;
+  camera.position.set(0, CAM_Y, baseDist / zoom); camera.lookAt(0, CAM_Y, 0);
+  camera.updateProjectionMatrix();
+  if (ed) edLayout();
+}
+
+// ---------- modes ----------
+let mode = 'print';   // print | strap | badge
+let sub = null;       // null | place | cut | crop
+function setMode(m) {
+  if (sub) return;
+  mode = m;
+  if (typeof selectBadge === 'function') selectBadge(null);
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  showBars();
+}
+function showBars() {
+  $('barBag').classList.toggle('hide', !(mode === 'bag' && !sub));
+  $('barPrint').classList.toggle('hide', !(mode === 'print' && !sub));
+  $('barPlace').classList.toggle('hide', sub !== 'place');
+  $('barStrap').classList.toggle('hide', !(mode === 'strap' && !sub));
+  $('stockS').classList.toggle('hide', !(mode === 'strap' && !sub && stock.straps.length));
+  $('stockB').classList.toggle('hide', !(mode === 'badge' && !sub && stock.badges.length));
+  $('barCut').classList.toggle('hide', sub !== 'cut');
+  $('barBadge').classList.toggle('hide', !(mode === 'badge' && !sub));
+  $('barCrop').classList.toggle('hide', sub !== 'crop');
+  $('tabs').style.visibility = sub ? 'hidden' : '';
+  $('ed').classList.toggle('hide', !(sub === 'cut' || sub === 'crop'));
+  $('corner').classList.toggle('hide', !!sub);
+  $('sRemove').disabled = !straps.length;
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+
+// ---------- print ----------
+let penColor = '#222222', penSize = 1, penErase = false, pUndo = [];
+const PEN = [8, 20, 48];
+document.querySelectorAll('#barPrint .sw').forEach(b => b.onclick = () => {
+  penColor = b.dataset.c; penErase = false; markPen();
+});
+function markPen() {
+  document.querySelectorAll('#barPrint .sw').forEach(b => b.classList.toggle('on', !penErase && b.dataset.c === penColor));
+  $('pErase').classList.toggle('on', penErase);
+  const d = $('pSize').firstChild, s = [8, 14, 22][penSize]; d.style.width = d.style.height = s + 'px';
+}
+$('pSize').onclick = () => { penSize = (penSize + 1) % 3; markPen(); };
+$('pErase').onclick = () => { penErase = !penErase; markPen(); };
+function pushUndo() { pUndo.push(pctx.getImageData(0, 0, CW, CH)); if (pUndo.length > 12) pUndo.shift(); }
+$('pUndo').onclick = () => { const d = pUndo.pop(); if (d) { pctx.putImageData(d, 0, 0); compose(); } };
+function penStroke(a, b) {
+  pctx.save();
+  pctx.globalCompositeOperation = penErase ? 'destination-out' : 'source-over';
+  pctx.strokeStyle = pctx.fillStyle = penColor; pctx.lineCap = pctx.lineJoin = 'round'; pctx.lineWidth = PEN[penSize];
+  pctx.beginPath(); pctx.moveTo(a.x, a.y); pctx.lineTo(b.x, b.y); pctx.stroke();
+  pctx.beginPath(); pctx.arc(b.x, b.y, PEN[penSize] / 2, 0, Math.PI * 2); pctx.fill();
+  pctx.restore();
+}
+let placing = null;
+const placingW = () => CW * $('pScale').value / 100;
+$('pImg').onclick = () => pickImage(img => {
+  const fit = Math.min(0.8, 0.8 * (CH / CW) * img.width / img.height);
+  $('pScale').value = Math.round(fit * 100);
+  placing = { img, x: CW / 2, y: CH / 2 };
+  sub = 'place'; showBars(); compose();
+});
+$('pScale').oninput = compose;
+$('pCancel').onclick = () => { placing = null; sub = null; showBars(); compose(); };
+$('pOk').onclick = () => {
+  pushUndo();
+  const { img, x, y } = placing, w = placingW(), h = w * img.height / img.width;
+  pctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+  placing = null; sub = null; showBars(); compose(); clickSnd();
+};
+
+// ---------- badges ----------
+const BADGE_R = [0.14, 0.19, 0.25], BADGE_T = 0.08;
+const badges = [];
+const rimMat = new THREE.MeshStandardMaterial({ color: 0xeeeef2, metalness: 0.35, roughness: 0.3 });
+function capGeometry(r) {
+  const RS = 14, SS = 56, pos = [], uv = [], idx = [];
+  pos.push(0, 0, BADGE_T + 0.05); uv.push(0.5, 0.5);
+  for (let i = 1; i <= RS; i++) {
+    const rho = r * i / RS, q = rho / r;
+    const z = BADGE_T + 0.05 * Math.sqrt(Math.max(0, 1 - q * q * q * q));
+    for (let s = 0; s < SS; s++) {
+      const a = s / SS * Math.PI * 2;
+      pos.push(Math.cos(a) * rho, Math.sin(a) * rho, z); uv.push(0.5 + Math.cos(a) * q / 2, 0.5 + Math.sin(a) * q / 2);
+    }
+  }
+  for (let s = 0; s < SS; s++) idx.push(0, 1 + s, 1 + (s + 1) % SS);
+  for (let i = 0; i < RS - 1; i++) for (let s = 0; s < SS; s++) {
+    const a = 1 + i * SS + s, b = 1 + i * SS + (s + 1) % SS, c = a + SS, d = b + SS;
+    idx.push(a, c, d, a, d, b);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+function makeBadge(canvas, size) {
+  const r = BADGE_R[size];
+  const tex = new THREE.CanvasTexture(canvas); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const capMat = new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.08 });
+  const grp = new THREE.Group();
+  const cap = new THREE.Mesh(capGeometry(r), capMat);
+  const side = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.02, BADGE_T, 56, 1, true), rimMat);
+  side.rotation.x = Math.PI / 2; side.position.z = BADGE_T / 2;
+  grp.add(cap, side);
+  const b = { grp, r, r0: r, capMat, x: 0, y: 0 };
+  cap.userData.badge = side.userData.badge = b;
+  return b;
+}
+function setBadgePos(b, x, y) {
+  b.x = x; b.y = y;
+  const e = 0.01;
+  const dzx = (bz(x + e, y) - bz(x - e, y)) / (2 * e), dzy = (bz(x, y + e) - bz(x, y - e)) / (2 * e);
+  b.grp.position.set(x, y, BD / 2 + bz(x, y) - 0.01);
+  b.grp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(-dzx, -dzy, 1).normalize());
+}
+const inFace = (x, y, r) => Math.abs(x) <= BW / 2 - r - 0.05 && y <= BH / 2 - r - 0.12 && y >= -BH / 2 + r + 0.05;
+const clampFace = (x, y, r) => ({
+  x: Math.max(-BW / 2 + r + 0.05, Math.min(BW / 2 - r - 0.05, x)),
+  y: Math.max(-BH / 2 + r + 0.05, Math.min(BH / 2 - r - 0.12, y)),
+});
+const freeAt = (x, y, r, self) => badges.every(o => o === self || Math.hypot(o.x - x, o.y - y) >= o.r + r - 1e-6);
+function findSpot(r) {
+  let best = null;
+  for (let y = BH / 2 - r - 0.12; y >= -BH / 2 + r + 0.05; y -= 0.04) {
+    for (let x = -BW / 2 + r + 0.05; x <= BW / 2 - r - 0.05; x += 0.04) {
+      if (freeAt(x, y, r)) { const d = Math.hypot(x, y - 0.2); if (!best || d < best.d) best = { x, y, d }; }
+    }
+  }
+  return best;
+}
+// 置いたバッジをタップで選び、スライダーで大きさを変える（重なる・はみ出す大きさにはならない）
+let selBadge = null;
+function selectBadge(b) {
+  if (selBadge) selBadge.capMat.emissive.set(0x000000);
+  selBadge = b;
+  $('bSizeWrap').classList.toggle('hide', !b);
+  if (b) { b.capMat.emissive.set(0x332200); $('bSize').value = Math.round(b.r * 100); }
+}
+$('bSize').oninput = () => { if (selBadge) resizeBadge(selBadge, $('bSize').value / 100); };
+function resizeBadge(b, want) {
+  want = Math.max(0.1, Math.min(0.7, want));
+  const ok = (x, y, r) => inFace(x, y, r) && freeAt(x, y, r, b);
+  // その場で入らなければ、近くの空いている位置にずらして入れる
+  const fits = r => {
+    const q = clampFace(b.x, b.y, r);
+    if (ok(q.x, q.y, r)) return q;
+    for (let d = 0.03; d <= 0.9; d += 0.03) {
+      const n = Math.max(8, Math.round(d * 40));
+      for (let k = 0; k < n; k++) {
+        const a = k / n * Math.PI * 2, c = clampFace(q.x + Math.cos(a) * d, q.y + Math.sin(a) * d, r);
+        if (ok(c.x, c.y, r)) return c;
+      }
+    }
+    return null;
+  };
+  // 指定の大きさが入らなければ、入る範囲でいちばん近い大きさにする
+  let r = want;
+  if (!fits(r)) {
+    let lo = Math.min(b.r, want), hi = want;
+    for (let i = 0; i < 20; i++) { const m = (lo + hi) / 2; if (fits(m)) lo = m; else hi = m; }
+    r = lo;
+  }
+  const q = fits(r); if (!q) return;
+  b.r = r; b.grp.scale.setScalar(r / b.r0); setBadgePos(b, q.x, q.y);
+  if (b === selBadge) $('bSize').value = Math.round(r * 100);
+}
+$('bPick').onclick = () => pickImage(img => openEditor('crop', img));
+
+// ---------- straps (image-balloon style puffy charm) ----------
+const straps = [];
+const chainMat = new THREE.MeshStandardMaterial({ color: 0xf0d070, metalness: 0.5, roughness: 0.3 });
+const linkGeo = new THREE.TorusGeometry(0.055, 0.014, 8, 20);
+function buildCharm(canvas) {
+  const W = canvas.width, H = canvas.height, N = 72;
+  const alpha = canvas.getContext('2d').getImageData(0, 0, W, H).data;
+  const S2 = Math.SQRT2;
+  const dist = (on, edgeIsOff) => {
+    const D = new Float32Array(W * H);
+    for (let i = 0; i < W * H; i++) D[i] = on(i) ? 1e9 : 0;
+    const m = edgeIsOff ? 1 : 1e9;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x; if (!D[i]) continue;
+      let v = D[i];
+      v = Math.min(v, x > 0 ? D[i - 1] + 1 : m);
+      if (y > 0) { v = Math.min(v, D[i - W] + 1); if (x > 0) v = Math.min(v, D[i - W - 1] + S2); if (x < W - 1) v = Math.min(v, D[i - W + 1] + S2); } else v = Math.min(v, m);
+      D[i] = v;
+    }
+    for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) {
+      const i = y * W + x; if (!D[i]) continue;
+      let v = D[i];
+      v = Math.min(v, x < W - 1 ? D[i + 1] + 1 : m);
+      if (y < H - 1) { v = Math.min(v, D[i + W] + 1); if (x < W - 1) v = Math.min(v, D[i + W + 1] + S2); if (x > 0) v = Math.min(v, D[i + W - 1] + S2); } else v = Math.min(v, m);
+      D[i] = v;
+    }
+    return D;
+  };
+  const Din = dist(i => alpha[i * 4 + 3] > 127, true), Dout = dist(i => alpha[i * 4 + 3] <= 127, false);
+  const sdist = (x, y) => { const i = Math.min(H - 1, Math.round(y)) * W + Math.min(W - 1, Math.round(x)); return Din[i] ? Din[i] - 0.5 : -(Math.min(Dout[i], 1e4) - 0.5); };
+  const size = 0.55, w = W >= H ? size : size * W / H, h = W >= H ? size * H / W : size;
+  const k = w / W;
+  const ds = [];
+  let dmax = 0;
+  for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
+    const d = sdist(i / N * W, (1 - j / N) * H); ds.push(d); dmax = Math.max(dmax, d);
+  }
+  const R = Math.min(dmax * k, 0.16);
+  const cellPx = W / N, t1 = Math.min(1, cellPx / dmax), zEdge = R * Math.sqrt(1 - (1 - t1) * (1 - t1));
+  const pos = [], uv = [], idx = [], V = (N + 1) * (N + 1);
+  let top = null;
+  for (const side of [1, -1]) for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
+    const d = ds[j * (N + 1) + i], tt = Math.max(0, Math.min(1, d / dmax));
+    const z = d > 0 ? side * R * Math.sqrt(1 - (1 - tt) * (1 - tt)) : side * Math.max(-2 * zEdge, zEdge * d / cellPx);
+    const x = (i / N - 0.5) * w, y = (j / N - 0.5) * h;
+    pos.push(x, y, z); uv.push(i / N, j / N);
+    if (side === 1 && d > 2 && (!top || y > top.y + 1e-6 || (Math.abs(y - top.y) < 1e-6 && Math.abs(x) < Math.abs(top.x)))) top = { x, y };
+  }
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const a = j * (N + 1) + i, b = a + 1, c = a + N + 1, e = c + 1;
+    idx.push(a, b, e, a, e, c);
+    idx.push(V + a, V + e, V + b, V + a, V + c, V + e);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  // 透明部分に色をにじませる（ふちの黒ずみ対策）。canvas を通さず上下反転してテクスチャにする
+  const px = new Uint8ClampedArray(alpha), has = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) has[i] = px[i * 4 + 3] >= 128 ? 1 : 0;
+  for (let pass = 0; pass < 6; pass++) {
+    const add = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x; if (has[i]) continue;
+      let r = 0, gg = 0, bb = 0, n = 0;
+      for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) {
+        if (j >= 0 && has[j]) { r += px[j * 4]; gg += px[j * 4 + 1]; bb += px[j * 4 + 2]; n++; }
+      }
+      if (n) add.push(i, r / n, gg / n, bb / n);
+    }
+    for (let q = 0; q < add.length; q += 4) { const i = add[q]; px[i * 4] = add[q + 1]; px[i * 4 + 1] = add[q + 2]; px[i * 4 + 2] = add[q + 3]; has[i] = 1; }
+  }
+  const flipped = new Uint8Array(W * H * 4);
+  for (let y = 0; y < H; y++) flipped.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);
+  const tex = new THREE.DataTexture(flipped, W, H); tex.needsUpdate = true;
+  tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return { g, tex, top: top || { x: 0, y: h / 2 }, w, h };
+}
+// 鎖は質点をつないだ紐（Verlet 法）で、ワールド座標で動かす。バッグが回ったり揺れたりすると引っぱられて揺れる
+const GRAV = 48, LL = 0.085;   // 重力を強め・空気抵抗を大きくして、重くておとなしい揺れにする
+const tmpV = new THREE.Vector3(), tmpL = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
+const UP = new THREE.Vector3(0, 1, 0), invBag = new THREE.Matrix4();
+// 取り付け位置: 正面の持ち手の根本（左右交互）。同じ側に付けるときは少しずつずらす
+function strapAnchor(n) {
+  const side = n % 2 ? 1 : -1, k = Math.floor(n / 2);
+  return new THREE.Vector3(side * (1.05 + ((k % 3) - 1) * 0.05), BH / 2 - 0.02, BD / 2 + 0.07);
+}
+function anchorWorld(s, out) { return out.copy(s.anchor).applyMatrix4(bag.matrixWorld); }
+function addStrap(sprite) {
+  const shape = buildCharm(sprite);
+  const n = straps.length, anchor = strapAnchor(n);
+  const LINKS = 2 + (Math.floor(n / 2) % 4) * 2;
+  const links = [];
+  for (let i = 0; i < LINKS; i++) { const l = new THREE.Mesh(linkGeo, chainMat); l.scale.set(0.8, 1, 1); scene.add(l); links.push(l); }
+  const mat = new THREE.MeshPhysicalMaterial({ map: shape.tex, alphaTest: 0.5, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1, side: THREE.DoubleSide });
+  const charm = new THREE.Group();
+  const mesh = new THREE.Mesh(shape.g, mat);
+  mesh.position.set(-shape.top.x, -0.03 - shape.top.y, 0);
+  charm.add(mesh); scene.add(charm);
+  bag.updateMatrixWorld();
+  const s = { anchor, links, charm, mesh, cd: shape.top.y + 0.03, rad: Math.max(shape.w, shape.h) * 0.42, sprite, p: [], q: [] };
+  anchorWorld(s, tmpV);
+  // 質点: 0 = 取り付け位置（固定）, 1..LINKS = 鎖, LINKS+1 = チャームの中心
+  for (let i = 0; i <= LINKS + 1; i++) {
+    const y = i <= LINKS ? i * LL : LINKS * LL + s.cd;
+    const v = new THREE.Vector3(tmpV.x + (Math.random() - 0.5) * 0.05, tmpV.y - y, tmpV.z + 0.05 * i / LINKS);
+    s.p.push(v); s.q.push(v.clone());
+  }
+  straps.push(s); showBars(); chainSnd();
+}
+// ストラップどうしの衝突: チャームは円、鎖は小さな玉として押し合う
+function collideStraps() {
+  for (let a = 0; a < straps.length; a++) for (let b = a + 1; b < straps.length; b++) {
+    const A = straps[a], B = straps[b];
+    const ca = A.p.at(-1), cb = B.p.at(-1);
+    push(ca, cb, A.rad + B.rad);
+    for (let i = 1; i < A.p.length - 1; i++) push(A.p[i], cb, B.rad + 0.03);
+    for (let i = 1; i < B.p.length - 1; i++) push(B.p[i], ca, A.rad + 0.03);
+  }
+}
+function push(pa, pb, R) {
+  const d = tmpV.subVectors(pa, pb), L = d.length();
+  if (L >= R) return;
+  if (L < 1e-5) { pa.x += 0.01; return; }
+  d.multiplyScalar((R - L) / L * 0.5); pa.add(d); pb.sub(d);
+}
+function stepStraps(dt) {
+  bag.updateMatrixWorld(); invBag.copy(bag.matrixWorld).invert();
+  const SUB = 4, h = dt / SUB;
+  for (let k = 0; k < SUB; k++) {
+    for (const s of straps) {
+      const P = s.p, Q = s.q, N = P.length;
+      anchorWorld(s, P[0]); Q[0].copy(P[0]);
+      for (let i = 1; i < N; i++) {
+        const p = P[i], q = Q[i];
+        const damp = i === N - 1 ? 0.965 : 0.975;
+        const vx = (p.x - q.x) * damp, vy = (p.y - q.y) * damp, vz = (p.z - q.z) * damp;
+        q.copy(p); p.x += vx; p.y += vy - GRAV * h * h; p.z += vz;
+      }
+    }
+    for (let it = 0; it < 6; it++) {
+      collideStraps();
+      for (const s of straps) {
+        const P = s.p, N = P.length;
+        for (let i = 0; i < N - 1; i++) {
+          const a = P[i], b = P[i + 1], rest = i === N - 2 ? s.cd : LL;
+          const d = tmpV.subVectors(b, a), L = d.length() || 1e-6, diff = (L - rest) / L;
+          if (i === 0) b.addScaledVector(d, -diff);
+          else if (i === N - 2) { a.addScaledVector(d, diff * 0.85); b.addScaledVector(d, -diff * 0.15); }  // チャームは鎖より重い
+          else { a.addScaledVector(d, diff * 0.5); b.addScaledVector(d, -diff * 0.5); }
+        }
+        // バッグの本体にめり込まないよう前に押し出す
+        for (let i = 1; i < N; i++) {
+          const m = i === N - 1 ? 0.12 : 0.04;
+          tmpL.copy(P[i]).applyMatrix4(invBag);
+          if (Math.abs(tmpL.x) < BW / 2 + m && tmpL.y < BH / 2 + 0.02 && tmpL.y > -BH / 2 - m && tmpL.z > -BD / 2) {
+            const zf = BD / 2 + bz(tmpL.x, Math.min(tmpL.y, BH / 2)) + m + (i === N - 1 ? 0.06 : 0) + (inPocket(tmpL.x, tmpL.y) ? PK.z : 0);
+            if (tmpL.z < zf) { tmpL.z = zf; P[i].copy(tmpL.applyMatrix4(bag.matrixWorld)); }
+          }
+        }
+      }
+    }
+  }
+  // 見た目を質点に合わせる
+  const fwd = new THREE.Vector3(0, 0, 1).transformDirection(bag.matrixWorld);
+  for (const s of straps) {
+    const P = s.p, N = P.length;
+    s.links.forEach((l, i) => {
+      const a = P[i], b = P[i + 1];
+      l.position.addVectors(a, b).multiplyScalar(0.5);
+      tmpV.subVectors(a, b).normalize();
+      l.quaternion.setFromUnitVectors(UP, tmpV);
+      if (i % 2) l.quaternion.multiply(tmpQ.setFromAxisAngle(UP, Math.PI / 2));
+    });
+    const ring = P[N - 2], c = P[N - 1];
+    const y = tmpV.subVectors(ring, c).normalize();
+    const x = new THREE.Vector3().crossVectors(y, fwd).normalize(), z = new THREE.Vector3().crossVectors(x, y);
+    s.charm.position.copy(ring);
+    s.charm.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+  }
+}
+function removeStrap(s) {
+  for (const l of s.links) scene.remove(l);
+  scene.remove(s.charm); s.mesh.geometry.dispose(); s.mesh.material.map.dispose(); s.mesh.material.dispose();
+  straps.splice(straps.indexOf(s), 1); showBars(); chainSnd();
+}
+$('sPick').onclick = () => pickImage(img => openEditor('cut', img));
+$('sRemove').onclick = () => { if (straps.length) removeStrap(straps.at(-1)); };
+
+// ---------- stock (作ったストラップ・バッジを端末に保存して使い回す) ----------
+let stock = store.get('stock', { straps: [], badges: [] });
+function saveStock() {
+  // 容量オーバーのときは古いものから捨てる
+  for (;;) {
+    try { localStorage.setItem('itabag:stock', JSON.stringify(stock)); return; } catch {
+      const l = stock.straps.length >= stock.badges.length ? stock.straps : stock.badges;
+      if (!l.length) return; l.shift();
+    }
+  }
+}
+const loadCanvas = (src, cb) => {
+  const im = new Image();
+  im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); cb(c); };
+  im.src = src;
+};
+function placeBadge(c, size) {
+  const spot = findSpot(BADGE_R[size]);
+  if (!spot) { flash(t('full')); ngSnd(); return; }
+  const b = makeBadge(c, size);
+  bag.add(b.grp); setBadgePos(b, spot.x, spot.y); badges.push(b); selectBadge(b); clickSnd();
+}
+function renderStock() {
+  for (const [id, list, round] of [['stockS', stock.straps, false], ['stockB', stock.badges, true]]) {
+    const el = $(id); el.innerHTML = '';
+    list.forEach((it, i) => {
+      const b = document.createElement('button'); b.className = 'thumb' + (round ? ' round' : '');
+      const im = new Image(); im.src = round ? it.img : it; im.alt = ''; im.draggable = false; b.appendChild(im);
+      let timer = null, long = false;
+      b.onpointerdown = () => { long = false; timer = setTimeout(() => { long = true; list.splice(i, 1); saveStock(); renderStock(); ngSnd(); }, 650); };
+      b.onpointerup = b.onpointerleave = b.onpointercancel = () => clearTimeout(timer);
+      b.onclick = () => {
+        if (long) return;
+        if (round) loadCanvas(it.img, c => placeBadge(c, it.size));
+        else loadCanvas(it, c => addStrap(c));
+      };
+      el.appendChild(b);
+    });
+  }
+  showBars();
+}
+
+// ---------- 2D editor (strap cut-out / badge crop) ----------
+const edc = $('ed'), ectx = edc.getContext('2d');
+let ed = null, EW = 1, EH = 1, EDPR = 1;
+const BRUSH = [8, 22, 50];
+let brushIdx = 1, cutErase = false;
+function openEditor(kind, img) {
+  ed = { kind, img, undo: [], size: 1 };
+  if (kind === 'cut') {
+    ed.mask = document.createElement('canvas'); ed.mask.width = img.width; ed.mask.height = img.height;
+    ed.mctx = ed.mask.getContext('2d');
+    cutErase = false; markCut(); $('cDone').disabled = true;
+  } else markSize();
+  sub = kind; showBars();
+  edLayout();
+}
+function closeEditor() { ed = null; sub = null; edTouches.clear(); edPinch = null; edLast = null; showBars(); }
+const cropR = () => Math.min(EW, EH) * 0.4;
+function edLayout() {
+  const r = $('stage').getBoundingClientRect();
+  EDPR = Math.min(devicePixelRatio || 1, 2); EW = Math.max(1, r.width); EH = Math.max(1, r.height);
+  edc.width = Math.round(EW * EDPR); edc.height = Math.round(EH * EDPR);
+  const { img } = ed;
+  if (ed.kind === 'cut') {
+    const k = Math.min((EW - 24) / img.width, (EH - 24) / img.height);
+    ed.view = { k, fit: k, x: (EW - img.width * k) / 2, y: (EH - img.height * k) / 2 };
+  } else {
+    const k = 2 * cropR() / Math.min(img.width, img.height);
+    ed.view = { k, fit: k, x: (EW - img.width * k) / 2, y: (EH - img.height * k) / 2 };
+  }
+  edRender();
+}
+function clampCrop() {
+  const v = ed.view, R = cropR(), cx = EW / 2, cy = EH / 2, iw = ed.img.width * v.k, ih = ed.img.height * v.k;
+  v.x = Math.min(cx - R, Math.max(cx + R - iw, v.x)); v.y = Math.min(cy - R, Math.max(cy + R - ih, v.y));
+}
+function snapFit() { const v = ed.view; if (ed.kind === 'cut' && v.k <= v.fit * 1.001) { v.x = (EW - ed.img.width * v.k) / 2; v.y = (EH - ed.img.height * v.k) / 2; } }
+let tmpC = null;
+function edRender() {
+  if (!ed) return;
+  const g = ectx, { img, view: v } = ed;
+  g.setTransform(EDPR, 0, 0, EDPR, 0, 0);
+  g.clearRect(0, 0, EW, EH);
+  if (ed.kind === 'cut') {
+    g.fillStyle = '#1e1218'; g.fillRect(v.x, v.y, img.width * v.k, img.height * v.k);
+    g.globalAlpha = 0.35; g.drawImage(img, v.x, v.y, img.width * v.k, img.height * v.k); g.globalAlpha = 1;
+    if (!tmpC || tmpC.width !== img.width || tmpC.height !== img.height) {
+      tmpC = document.createElement('canvas'); tmpC.width = img.width; tmpC.height = img.height;
+    }
+    const tg = tmpC.getContext('2d');
+    tg.globalCompositeOperation = 'source-over'; tg.clearRect(0, 0, tmpC.width, tmpC.height);
+    tg.drawImage(ed.mask, 0, 0);
+    tg.globalCompositeOperation = 'source-in'; tg.drawImage(img, 0, 0);
+    tg.globalCompositeOperation = 'source-atop'; tg.fillStyle = 'rgba(60, 220, 110, 0.45)'; tg.fillRect(0, 0, tmpC.width, tmpC.height);
+    g.drawImage(tmpC, v.x, v.y, img.width * v.k, img.height * v.k);
+  } else {
+    g.drawImage(img, v.x, v.y, img.width * v.k, img.height * v.k);
+    const R = cropR() * [0.62, 0.8, 1][ed.size];
+    g.fillStyle = 'rgba(30,18,24,.72)';
+    g.beginPath(); g.rect(0, 0, EW, EH); g.arc(EW / 2, EH / 2, R, 0, Math.PI * 2, true); g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(EW / 2, EH / 2, R, 0, Math.PI * 2); g.stroke();
+  }
+}
+function markCut() {
+  $('cErase').classList.toggle('on', cutErase);
+  const d = $('cBrush').firstChild, s = [8, 14, 22][brushIdx]; d.style.width = d.style.height = s + 'px';
+}
+$('cBrush').onclick = () => { brushIdx = (brushIdx + 1) % 3; markCut(); };
+$('cErase').onclick = () => { cutErase = !cutErase; markCut(); };
+$('cUndo').onclick = () => { const d = ed && ed.undo.pop(); if (d) { ed.mctx.putImageData(d, 0, 0); edRender(); updateCutDone(); } };
+$('cCancel').onclick = closeEditor;
+$('kCancel').onclick = closeEditor;
+function markSize() { document.querySelectorAll('.bs').forEach(b => b.classList.toggle('on', +b.dataset.s === ed.size)); }
+document.querySelectorAll('.bs').forEach(b => b.onclick = () => { ed.size = +b.dataset.s; markSize(); edRender(); });
+function maskBox() {
+  const { mask, mctx } = ed, d = mctx.getImageData(0, 0, mask.width, mask.height).data;
+  let x0 = mask.width, y0 = mask.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) {
+    if (d[(y * mask.width + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
+function updateCutDone() { $('cDone').disabled = !maskBox(); }
+$('cDone').onclick = () => {
+  const b = maskBox(); if (!b) return;
+  const k = Math.min(1, 256 / Math.max(b.w, b.h)), pad = 4;
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(b.w * k)) + pad * 2; c.height = Math.max(1, Math.round(b.h * k)) + pad * 2;
+  const g = c.getContext('2d');
+  g.drawImage(ed.img, b.x, b.y, b.w, b.h, pad, pad, c.width - pad * 2, c.height - pad * 2);
+  g.globalCompositeOperation = 'destination-in';
+  g.drawImage(ed.mask, b.x, b.y, b.w, b.h, pad, pad, c.width - pad * 2, c.height - pad * 2);
+  closeEditor();
+  stock.straps.unshift(c.toDataURL('image/png')); if (stock.straps.length > 40) stock.straps.pop();
+  saveStock(); renderStock();
+  setTimeout(() => addStrap(c), 30);
+};
+$('kDone').onclick = () => {
+  const v = ed.view, R = cropR() * [0.62, 0.8, 1][ed.size] / v.k;
+  const ix = (EW / 2 - v.x) / v.k, iy = (EH / 2 - v.y) / v.k;
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 512, 512);
+  g.drawImage(ed.img, ix - R, iy - R, R * 2, R * 2, 0, 0, 512, 512);
+  const size = ed.size;
+  closeEditor();
+  const th = document.createElement('canvas'); th.width = th.height = 256; th.getContext('2d').drawImage(c, 0, 0, 256, 256);
+  stock.badges.unshift({ img: th.toDataURL('image/jpeg', 0.85), size }); if (stock.badges.length > 60) stock.badges.pop();
+  saveStock(); renderStock();
+  placeBadge(c, size);
+};
+
+let edLast = null, edPinch = null;
+const edTouches = new Map();
+const edPt = e => { const r = edc.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+function cutStroke(a, b) {
+  const { mctx } = ed, w = BRUSH[brushIdx] / ed.view.k;
+  mctx.save();
+  mctx.globalCompositeOperation = cutErase ? 'destination-out' : 'source-over';
+  mctx.strokeStyle = mctx.fillStyle = '#000'; mctx.lineCap = mctx.lineJoin = 'round'; mctx.lineWidth = w;
+  mctx.beginPath(); mctx.moveTo(a.x, a.y); mctx.lineTo(b.x, b.y); mctx.stroke();
+  mctx.beginPath(); mctx.arc(b.x, b.y, w / 2, 0, Math.PI * 2); mctx.fill();
+  mctx.restore();
+}
+const toImg = p => ({ x: (p.x - ed.view.x) / ed.view.k, y: (p.y - ed.view.y) / ed.view.k });
+function zoomAt(m, k) {
+  const v = ed.view;
+  k = Math.max(v.fit, Math.min(v.fit * 10, k));
+  v.x = m.x - (m.x - v.x) / v.k * k; v.y = m.y - (m.y - v.y) / v.k * k; v.k = k;
+  if (ed.kind === 'crop') clampCrop(); else snapFit();
+}
+edc.addEventListener('pointerdown', e => {
+  if (!ed) return;
+  e.preventDefault(); edc.setPointerCapture(e.pointerId);
+  edTouches.set(e.pointerId, edPt(e));
+  if (edTouches.size === 1 && !edPinch) {
+    if (ed.kind === 'cut') {
+      ed.undo.push(ed.mctx.getImageData(0, 0, ed.mask.width, ed.mask.height)); if (ed.undo.length > 20) ed.undo.shift();
+      edLast = toImg(edPt(e)); cutStroke(edLast, edLast);
+    } else edLast = edPt(e);
+  } else if (edTouches.size === 2) {
+    if (ed.kind === 'cut' && edLast) { const d = ed.undo.pop(); if (d) ed.mctx.putImageData(d, 0, 0); }
+    edLast = null;
+    const [a, b] = [...edTouches.values()];
+    edPinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, k0: ed.view.k, x0: ed.view.x, y0: ed.view.y };
+  }
+  edRender();
+});
+edc.addEventListener('pointermove', e => {
+  if (!ed || !edTouches.has(e.pointerId)) return;
+  const p = edPt(e); edTouches.set(e.pointerId, p);
+  if (edPinch && edTouches.size >= 2) {
+    const [a, b] = [...edTouches.values()], m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, v = ed.view;
+    const k = Math.max(v.fit, Math.min(v.fit * 10, edPinch.k0 * Math.hypot(a.x - b.x, a.y - b.y) / edPinch.d0));
+    v.x = m.x - (edPinch.m0.x - edPinch.x0) / edPinch.k0 * k; v.y = m.y - (edPinch.m0.y - edPinch.y0) / edPinch.k0 * k; v.k = k;
+    if (ed.kind === 'crop') clampCrop(); else snapFit();
+  } else if (edLast) {
+    if (ed.kind === 'cut') { const q = toImg(p); cutStroke(edLast, q); edLast = q; }
+    else { ed.view.x += p.x - edLast.x; ed.view.y += p.y - edLast.y; clampCrop(); edLast = p; }
+  }
+  edRender();
+});
+const edUp = e => {
+  if (!ed) return;
+  edTouches.delete(e.pointerId);
+  if (edTouches.size === 0) edPinch = null;
+  if (edLast) { edLast = null; if (ed.kind === 'cut') updateCutDone(); }
+};
+edc.addEventListener('pointerup', edUp);
+edc.addEventListener('pointercancel', edUp);
+edc.addEventListener('wheel', e => {
+  if (!ed) return;
+  e.preventDefault(); zoomAt(edPt(e), ed.view.k * Math.exp(-e.deltaY * 0.0015)); edRender();
+}, { passive: false });
+
+// ---------- 3D input ----------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function setRay(e) {
+  const r = cv.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+}
+function hitFront(e) {
+  setRay(e);
+  const h = ray.intersectObject(bagMesh)[0];
+  if (!h || h.face.materialIndex !== 4) return null;
+  return { x: h.uv.x * CW, y: (1 - h.uv.y) * CH };
+}
+const localRay = new THREE.Ray(), inv = new THREE.Matrix4(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -BD / 2 - 0.05);
+function facePoint(e) {
+  setRay(e);
+  bag.updateMatrixWorld(); inv.copy(bag.matrixWorld).invert();
+  localRay.copy(ray.ray).applyMatrix4(inv);
+  const p = new THREE.Vector3();
+  return localRay.intersectPlane(plane, p) ? p : null;
+}
+let yaw = 0, pitch = 0, vyaw = 0, vpitch = 0;
+let drag = null;
+cv.addEventListener('pointerdown', e => {
+  if (sub === 'cut' || sub === 'crop') return;
+  e.preventDefault(); cv.setPointerCapture(e.pointerId);
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 2) {
+    // 2本指: ピンチで拡大縮小（描きかけの線は取り消す）
+    if (drag && drag.kind === 'pen') { const d = pUndo.pop(); if (d) { pctx.putImageData(d, 0, 0); compose(); } }
+    const [a, b] = [...pts.values()], d0 = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    if (drag && drag.kind === 'badge') {
+      // バッジをつかんだまま2本指: そのバッジの大きさを変える
+      const bd = drag.b; clearTimeout(drag.timer); setBadgePos(bd, drag.home.x, drag.home.y); bd.capMat.color.set(0xffffff);
+      selectBadge(bd); drag = { kind: 'pinchB', b: bd, d0, r0: bd.r };
+      return;
+    }
+    drag = { kind: 'pinch', d0, z0: zoom };
+    return;
+  }
+  if (drag) return;
+  resetting = false;
+  if (sub === 'place') {
+    const p = hitFront(e);
+    if (p) { drag = { kind: 'move', last: p }; return; }
+  } else if (mode === 'print') {
+    const p = hitFront(e);
+    if (p) { pushUndo(); drag = { kind: 'pen', last: p }; penStroke(p, p); compose(); return; }
+  } else if (mode === 'badge') {
+    setRay(e);
+    const h = ray.intersectObjects(badges.map(b => b.grp), true)[0];
+    if (h) {
+      const b = h.object.userData.badge, p = facePoint(e);
+      drag = { kind: 'badge', b, ox: b.x - p.x, oy: b.y - p.y, home: { x: b.x, y: b.y }, x0: e.clientX, y0: e.clientY, moved: false };
+      drag.timer = setTimeout(() => {
+        if (drag && drag.b === b && !drag.moved) {
+          bag.remove(b.grp); badges.splice(badges.indexOf(b), 1); if (selBadge === b) selectBadge(null); ngSnd(); drag = null;
+        }
+      }, 600);
+      b.grp.position.z += 0.06;
+      return;
+    }
+  }
+  drag = { kind: 'rot', x: e.clientX, y: e.clientY, t: performance.now() };
+});
+const pts = new Map();
+function setZoom(z) { zoom = Math.max(0.6, Math.min(2.2, z)); camera.position.setZ(baseDist / zoom); }
+cv.addEventListener('pointermove', e => {
+  if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!drag) return;
+  if (drag.kind === 'pinchB') {
+    if (pts.size >= 2) { const [a, b] = [...pts.values()]; resizeBadge(drag.b, drag.r0 * Math.hypot(a.x - b.x, a.y - b.y) / drag.d0); }
+    return;
+  }
+  if (drag.kind === 'pinch') {
+    if (pts.size >= 2) { const [a, b] = [...pts.values()]; setZoom(drag.z0 * Math.hypot(a.x - b.x, a.y - b.y) / drag.d0); }
+    return;
+  }
+  if (drag.kind === 'pen') {
+    const p = hitFront(e); if (p) { penStroke(drag.last, p); drag.last = p; compose(); }
+  } else if (drag.kind === 'move') {
+    const p = hitFront(e); if (p) { placing.x += p.x - drag.last.x; placing.y += p.y - drag.last.y; drag.last = p; compose(); }
+  } else if (drag.kind === 'badge') {
+    if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6) drag.moved = true;
+    if (!drag.moved) return;
+    const p = facePoint(e); if (!p) return;
+    const b = drag.b, q = clampFace(p.x + drag.ox, p.y + drag.oy, b.r);
+    setBadgePos(b, q.x, q.y); b.grp.position.z += 0.06;
+    const ok = freeAt(q.x, q.y, b.r, b);
+    b.capMat.color.set(ok ? 0xffffff : 0xff6070);
+  } else if (drag.kind === 'rot') {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y, now = performance.now(), dt = Math.max(1, now - drag.t) / 1000;
+    const nyaw = yaw + dx * 0.012, npitch = Math.max(-1.2, Math.min(1.2, pitch + dy * 0.009));
+    vyaw = vyaw * 0.5 + (nyaw - yaw) / dt * 0.5; vpitch = vpitch * 0.5 + (npitch - pitch) / dt * 0.5;
+    yaw = nyaw; pitch = npitch; drag.x = e.clientX; drag.y = e.clientY; drag.t = now;
+  }
+});
+const up = e => {
+  pts.delete(e.pointerId);
+  if (!drag) return;
+  if (drag.kind === 'pinch' || drag.kind === 'pinchB') { if (pts.size === 0) drag = null; return; }
+  if (drag.kind === 'badge') {
+    clearTimeout(drag.timer);
+    const b = drag.b;
+    if (!freeAt(b.x, b.y, b.r, b) || !inFace(b.x, b.y, b.r)) { setBadgePos(b, drag.home.x, drag.home.y); ngSnd(); }
+    else { setBadgePos(b, b.x, b.y); if (drag.moved) clickSnd(); }
+    selectBadge(b);
+    b.capMat.color.set(0xffffff);
+  }
+  if (drag.kind === 'rot' && performance.now() - drag.t > 80) vyaw = vpitch = 0;
+  drag = null;
+};
+cv.addEventListener('pointerup', up);
+cv.addEventListener('pointercancel', up);
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (mode === 'badge' && !sub) {
+    // PC: バッジの上でホイールを回すと、そのバッジの大きさが変わる
+    setRay(e);
+    const h = ray.intersectObjects(badges.map(b => b.grp), true)[0];
+    if (h) { const b = h.object.userData.badge; selectBadge(b); resizeBadge(b, b.r * Math.exp(-e.deltaY * 0.0012)); return; }
+  }
+  if (sub !== 'place') { setZoom(zoom * Math.exp(-e.deltaY * 0.0012)); return; }
+  const s = $('pScale'); s.value = Math.max(+s.min, Math.min(+s.max, +s.value * Math.exp(-e.deltaY * 0.0015))); compose();
+}, { passive: false });
+
+// ---------- loop ----------
+let last = performance.now(), time = 0, resetting = false;
+$('front').onclick = () => { resetting = true; };
+function loop(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now; time += dt;
+  if (resetting && !drag) {
+    // 正面に戻す
+    const k = 1 - Math.pow(0.0005, dt), ty = Math.round(yaw / (Math.PI * 2)) * Math.PI * 2;
+    yaw += (ty - yaw) * k; pitch += -pitch * k; setZoom(zoom + (1 - zoom) * k); vyaw = vpitch = 0;
+    if (Math.abs(ty - yaw) + Math.abs(pitch) + Math.abs(1 - zoom) < 0.002) resetting = false;
+  } else if (!drag || drag.kind !== 'rot') {
+    // 手を離しても慣性で少し回り続ける
+    const f = Math.pow(0.08, dt);
+    vyaw *= f; vpitch *= f;
+    yaw += vyaw * dt; pitch = Math.max(-1.2, Math.min(1.2, pitch + vpitch * dt));
+  }
+  bag.rotation.set(pitch, yaw, 0, 'XYZ');
+  stepStraps(dt);
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+// ---------- save / post ----------
+$('save').onclick = async () => {
+  renderer.render(scene, camera);
+  cv.toBlob(async blob => {
+    if (!blob) return;
+    const file = new File([blob], 'itabag.png', { type: 'image/png' });
+    if (coarse && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; } catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'itabag.png';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png');
+};
+function updatePost() {
+  const a = $('post');
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('shareText'))}&url=${encodeURIComponent(SHARE_URL)}`;
+  if (!coarse) { a.target = '_blank'; a.rel = 'noopener'; }
+}
+
+// ---------- language ----------
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('back').textContent = t('back');
+  $('lang').textContent = lang === 'ja' ? 'EN' : '日本語';
+  document.querySelectorAll('#tabs button').forEach(b => b.textContent = t(b.dataset.m));
+  document.querySelectorAll('[data-t]').forEach(b => b.textContent = t(b.dataset.t));
+  $('save').textContent = t('save'); $('post').textContent = t('post');
+  updatePost();
+}
+$('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+$('snd').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); drawSnd(); };
+
+for (const c of BAG_COLORS) {
+  const b = document.createElement('button'); b.className = 'sw bc'; b.dataset.c = c; b.style.background = c;
+  b.onclick = () => { bagColor = c; store.set('bagColor', c); applyBag(); };
+  $('bagColors').appendChild(b);
+}
+$('pocketBtn').onclick = () => { pocketOn = !pocketOn; store.set('pocket', pocketOn); applyBag(); clickSnd(); };
+drawSnd(); applyLang(); markPen(); applyBag(); renderStock(); showBars();
+new ResizeObserver(resize).observe($('stage'));
+resize();
+requestAnimationFrame(loop);
+</script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

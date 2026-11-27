@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e0d0b" />
+  <meta name="description" content="成语接龙：看尾字、抢开头，75 秒内和好友比拼成语量。" />
+  <title>成语接龙 · LiteGame</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../../assets/css/room-client.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-game="idiom-chain">
+  <div class="stage">
+    <header class="top">
+      <a class="back" href="../../index.html#/category/premium">← 大厅</a>
+      <div class="name">成语接龙</div>
+      <div class="tools">
+        <span class="netbadge" id="netBadge" hidden><i></i>联机中</span>
+        <button id="btnRoom" type="button">双人</button>
+        <button id="btnSound" type="button" class="is-on" aria-pressed="true" aria-label="音效开关">音</button>
+      </div>
+    </header>
+
+    <main class="ch-gamemain">
+      <section class="screen start" id="screen-start">
+        <div class="seal" aria-hidden="true">接</div>
+        <h1 class="title">成语接龙</h1>
+        <p class="subtitle">看尾字，抢开头</p>
+        <div class="modes">
+          <button id="startSingle" type="button">单人挑战</button>
+          <button id="startNet" type="button" class="ghost">和好友联机（2 人）</button>
+        </div>
+        <p class="rules">
+          牌桌上有 12 张成语，<b>只有首字接得上当前尾字</b>的牌能抢。<br />
+          75 秒内抢得越多越好，抢到的那张立刻成为新的尾字。<br />
+          联机时双方同时抢，先到先得。
+        </p>
+      </section>
+
+      <section class="screen" id="screen-game" hidden>
+        <div class="hud">
+          <div class="side me">
+            <span class="who" id="youName">你</span>
+            <span class="pts" id="youScore">0</span>
+          </div>
+          <div class="clock" id="clock">75s</div>
+          <div class="side right">
+            <span class="who" id="rivalName">电脑</span>
+            <span class="pts" id="rivalScore">0</span>
+          </div>
+        </div>
+        <div class="timer" id="timer"><i id="timerFill"></i></div>
+
+        <div class="now">
+          <div>
+            <div class="word" id="nowWord">一心一意</div>
+            <div class="py" id="nowPy">yī xīn yī yì</div>
+          </div>
+          <div class="hint">接这个字<b id="needChar">意</b></div>
+        </div>
+
+        <div class="board" id="board" role="group" aria-label="成语牌桌"></div>
+        <div class="hintline">
+          <span>点「接」得住的牌，抢到手就加分</span>
+          <span class="flash hide" id="flash"></span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="overlay" id="overlay" hidden>
+    <div class="result" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <h2 id="resultTitle">对局结束</h2>
+      <p class="why" id="resultWhy"></p>
+      <div class="final"><span id="resultYou">0</span><span>比</span><span id="resultRival">0</span></div>
+      <p class="best" id="resultBest"></p>
+      <div class="acts">
+        <button id="againBtn" type="button">再来一局</button>
+        <button id="exitBtn" type="button" class="ghost">返回大厅</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="../../assets/js/mobile-ui.js"></script>
+  <script src="../../assets/js/server-sync.js"></script>
+  <script src="../../assets/js/room-client.js"></script>
+  <script src="idioms.js"></script>
+  <script src="engine.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

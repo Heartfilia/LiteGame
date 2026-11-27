@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>多米诺 · LiteGame</title>
+  <meta name="description" content="点一下当支点，扶住摇摇欲坠的多米诺。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="多米诺 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/domino-stand/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/domino-stand/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #f6f3ec; font-family: system-ui, sans-serif; color: #222; }
+    body { display: flex; flex-direction: column; overflow: hidden; }
+    header { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; }
+    header a { color: #222; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill { height: 34px; min-width: 34px; border: none; border-radius: 17px; background: #fff; color: #222; font-size: 14px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    #wrap { position: relative; flex: 1; min-height: 0; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+    #count { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font-size: 44px; font-weight: 800; pointer-events: none; }
+    .panel { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: rgba(246,243,236,.8); padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    .panel[hidden] { display: none; }
+    .panel h1 { margin: 0; font-size: 34px; }
+    .big { font-size: 60px; font-weight: 800; margin: 0; }
+    .sub { margin: 0; font-size: 16px; }
+    .btn { border: none; border-radius: 28px; background: #222; color: #fff; font-size: 20px; font-weight: 700; padding: 14px 36px; cursor: pointer; text-decoration: none; }
+    .btn.x { background: #fff; color: #222; font-size: 16px; padding: 10px 24px; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+    #err { position: absolute; left: 0; right: 0; top: 40%; text-align: center; color: #c00; }
+  </style>
+</head>
+<body>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill" aria-label="sound">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#222"/><path id="wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" style="display:none"/></svg>
+      </button>
+    </div>
+  </header>
+  <main style="display:contents">
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div id="count" hidden></div>
+    <div id="title" class="panel">
+      <h1 id="tTitle">多米诺</h1>
+      <button id="start" class="btn"></button>
+    </div>
+    <div id="result" class="panel" hidden>
+      <p class="big" id="rNum"></p>
+      <p class="sub" id="rBest"></p>
+      <button id="again" class="btn"></button>
+      <a id="share" class="btn x"></a>
+    </div>
+    <div id="err" hidden></div>
+  </div>
+  </main>
+<script src="../lib/vendor/matter-js@0.19.0/build/matter.min.js"></script>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 多米诺 · 中文文案
+window.__KF_ZH__ = {
+  title: '多米诺',
+  back: '← 大厅',
+  start: '开始',
+  again: '再来一次',
+  share: '分享到 X',
+  best: '最佳',
+  unit: '枚',
+  post: (n) => `立起了 ${n} 枚多米诺 #LiteGame`
+};
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+if (!window.Matter) { $('err').hidden = false; $('err').textContent = 'ライブラリを読み込めませんでした / Failed to load library'; throw new Error('no matter'); }
+const { Engine, Bodies, Body, Composite, Constraint, Events } = Matter;
+// grip the floor hard, but let dominoes slide on each other so chains keep falling
+const pairUpdate = Matter.Pair.update;
+Matter.Pair.update = function (pair, collision, timestamp) {
+  pairUpdate(pair, collision, timestamp);
+  if (collision.parentA.isDomino && collision.parentB.isDomino) { pair.friction = .05; pair.frictionStatic = .2; }
+};
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('domino-stand:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('domino-stand:' + k, JSON.stringify(v)); } catch {} },
+};
+const L = {
+  ja: { title: '多米诺', back: '← トップへ戻る', lang: 'EN', start: 'スタート', again: 'もう一度', share: 'Xでポスト', best: '自己ベスト', unit: '枚',
+        post: n => `多米诺で ${n}枚 立てた` },
+  en: { title: 'Domino Stand', back: '← Top', lang: '日本語', start: 'Start', again: 'Retry', share: 'Post on X', best: 'Best', unit: '',
+        post: n => `I stood ${n} dominoes in Domino Stand` },
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'ja';
+const t = k => L[lang][k];
+const fmt = n => lang === 'ja' ? n + '枚' : n + (n === 1 ? ' domino' : ' dominoes');
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('back').textContent = t('back'); $('lang').textContent = t('lang');
+  $('tTitle').textContent = t('title'); $('start').textContent = t('start');
+  $('again').textContent = t('again'); $('share').textContent = t('share');
+  if (!$('result').hidden) showResult();
+}
+$('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+// ---- sound ----
+let soundOn = store.get('sound', true), ac = null;
+function updSound() { $('wave').style.display = soundOn ? '' : 'none'; $('mute').style.display = soundOn ? 'none' : ''; }
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+updSound();
+function clack(vol = .3, freq = 1400) {
+  if (!soundOn) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const n = ac.currentTime, len = Math.floor(ac.sampleRate * .05);
+    const buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4);
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 3;
+    g.gain.value = Math.min(1, vol);
+    s.buffer = buf; s.connect(f).connect(g).connect(ac.destination); s.start(n);
+  } catch {}
+}
+function tone(freq, dur) {
+  if (!soundOn) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
+    o.type = 'triangle'; o.frequency.value = freq;
+    g.gain.setValueAtTime(.2, n); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+    o.connect(g).connect(ac.destination); o.start(n); o.stop(n + dur);
+  } catch {}
+}
+
+// ---- world (px units, height 600) ----
+const WH = 600, FLOOR = 540, DW = 26, DH = 110;
+let engine, dominoes, cur, pin, state = 'title', count = 0, camX = 0, settleT = 0, overT = 0, best = store.get('best', 0);
+
+function spawnPos() { return { x: camX + viewW() * 0.18, y: 150 }; }
+function spawn() {
+  const p = spawnPos();
+  cur = Bodies.rectangle(p.x, p.y, DW, DH, { isStatic: true, friction: 1.5, frictionStatic: 3, frictionAir: .002, restitution: .05, density: .004 });
+  cur.isDomino = true; cur.waiting = true; cur.released = false;
+  Composite.add(engine.world, cur); dominoes.push(cur); settleT = 0;
+}
+function reset() {
+  engine = Engine.create({ positionIterations: 10, velocityIterations: 8 });
+  engine.gravity.y = 2.2;
+  Composite.add(engine.world, Bodies.rectangle(50000, FLOOR + 50, 120000, 100, { isStatic: true, friction: 1.5, frictionStatic: 3 }));
+  Events.on(engine, 'collisionStart', ev => {
+    for (const pr of ev.pairs) {
+      const v = Math.hypot(pr.bodyA.velocity.x - pr.bodyB.velocity.x, pr.bodyA.velocity.y - pr.bodyB.velocity.y);
+      if (v > 1) clack(v / 12, 1000 + Math.random() * 800);
+    }
+  });
+  dominoes = []; pin = null; count = 0; camX = 0; overT = 0;
+  spawn();
+}
+
+const tilt = b => { let a = b.angle % Math.PI; if (a > Math.PI / 2) a -= Math.PI; if (a < -Math.PI / 2) a += Math.PI; return Math.abs(a); };
+
+function step() {
+  if (pin) pin.c.pointA = { x: pin.x, y: pin.y };
+  Engine.update(engine, 1000 / 60);
+  if (state !== 'play') { if (state === 'over') { overT += 1 / 60; } return; }
+  // fallen check
+  for (const b of dominoes) {
+    if (b.waiting || (b === cur && !b.released)) continue;
+    if (tilt(b) > 0.7 || b.position.y > WH + 200) { gameOver(); return; }
+  }
+  if (cur.released) {
+    const still = cur.speed < .08 && Math.abs(cur.angularVelocity) < .004 && tilt(cur) < .3;
+    settleT = still ? settleT + 1 / 60 : 0;
+    if (settleT > 1.2) { count++; $('count').textContent = count; tone(660 + count * 20, .15); spawn(); }
+  }
+}
+function gameOver() {
+  state = 'over'; pin && dropPin();
+  if (count > best) { best = count; store.set('best', best); }
+  tone(220, .4);
+  setTimeout(() => { if (state !== 'over') return; showResult(); $('result').hidden = false; }, 1600);
+}
+
+// ---- input ----
+let scale = 1, viewH = 0;
+const GROUND = .58; // floor line at 58% of the screen height
+const offY = () => viewH * GROUND / scale - FLOOR;
+const viewW = () => cv.clientWidth / scale;
+function toWorld(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale + camX, y: (e.clientY - r.top) / scale - offY() }; }
+function hit(b, p) {
+  const dx = p.x - b.position.x, dy = p.y - b.position.y, c = Math.cos(-b.angle), s = Math.sin(-b.angle);
+  const lx = dx * c - dy * s, ly = dx * s + dy * c, m = 14 / scale > 10 ? 14 : 10;
+  return Math.abs(lx) < DW / 2 + m && Math.abs(ly) < DH / 2 + m / 2 ? { x: Math.max(-DW / 2, Math.min(DW / 2, lx)), y: Math.max(-DH / 2, Math.min(DH / 2, ly)) } : null;
+}
+function dropPin() { Composite.remove(engine.world, pin.c); pin = null; }
+cv.addEventListener('pointerdown', e => {
+  if (state !== 'play' || pin) return;
+  e.preventDefault();
+  const p = toWorld(e), l = hit(cur, p);
+  if (!l) return;
+  cv.setPointerCapture(e.pointerId);
+  if (cur.waiting) { Body.setStatic(cur, false); cur.waiting = false; }
+  cur.released = false; settleT = 0;
+  // local point rotated back to world offset
+  const c = Math.cos(cur.angle), s = Math.sin(cur.angle);
+  const off = { x: l.x * c - l.y * s, y: l.x * s + l.y * c };
+  const wp = { x: cur.position.x + off.x, y: cur.position.y + off.y };
+  const con = Constraint.create({ pointA: wp, bodyB: cur, pointB: off, length: 0, stiffness: .9, damping: .1 });
+  Composite.add(engine.world, con);
+  pin = { c: con, x: wp.x, y: wp.y };
+  clack(.3, 2200);
+});
+cv.addEventListener('pointermove', e => { if (pin) { const p = toWorld(e); pin.x = p.x; pin.y = Math.min(p.y, FLOOR - 4); } });
+const up = () => { if (!pin) return; dropPin(); if (state === 'play') cur.released = true; };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+
+function begin() { reset(); state = 'play'; $('count').textContent = 0; $('count').hidden = false; tone(600, .1); }
+$('start').onclick = () => { $('title').hidden = true; begin(); };
+$('again').onclick = () => { $('result').hidden = true; begin(); };
+
+function showResult() {
+  $('rNum').textContent = fmt(count);
+  $('rBest').textContent = `${t('best')} ${fmt(best)}`;
+  const a = $('share');
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(L[lang].post(count))}&url=${encodeURIComponent('https://keifurukawafunnych.com/games/domino-stand/')}`;
+  if (matchMedia('(pointer: coarse)').matches) { a.removeAttribute('target'); a.removeAttribute('rel'); }
+  else { a.target = '_blank'; a.rel = 'noopener'; }
+}
+
+// ---- render ----
+
+function resize() {
+  const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  viewH = r.height;
+  // world height WH plus bottom gap (80px + floor margin) must fit
+  scale = Math.min(r.height * GROUND / (FLOOR - 70), r.width / 380);
+}
+addEventListener('resize', resize);
+
+function drawDomino(b, alpha) {
+  ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle); ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#1d1d1d'; ctx.beginPath(); ctx.roundRect(-DW / 2, -DH / 2, DW, DH, 4); ctx.fill();
+  ctx.strokeStyle = '#f6f3ec'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-DW / 2 + 4, 0); ctx.lineTo(DW / 2 - 4, 0); ctx.stroke();
+  ctx.fillStyle = '#f6f3ec';
+  const pips = (b.id % 6) + 1, spots = [[[0, 0]], [[-1, -1], [1, 1]], [[-1, -1], [0, 0], [1, 1]], [[-1, -1], [1, -1], [-1, 1], [1, 1]], [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]]];
+  for (const half of [-1, 1]) for (const [sx, sy] of spots[(half < 0 ? pips : (pips + 2) % 6 + 1) - 1]) {
+    ctx.beginPath(); ctx.arc(sx * 6.5, half * DH / 4 + sy * 13, 2.6, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+
+let acc = 0, last = performance.now();
+function frame(now) {
+  acc += Math.min(.1, (now - last) / 1000); last = now;
+  if (engine && state !== 'title') while (acc >= 1 / 60) { step(); acc -= 1 / 60; } else acc = 0;
+  // camera: keep rightmost settled domino around 60%
+  if (engine && state === 'play') {
+    let maxX = 0; for (const b of dominoes) if (b !== cur) maxX = Math.max(maxX, b.position.x);
+    const target = Math.max(0, maxX - viewW() * 0.55);
+    const prev = camX; camX += (target - camX) * .05;
+    if (cur.waiting) Body.setPosition(cur, spawnPos());
+  }
+  const w = cv.clientWidth, h = cv.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+  ctx.save(); ctx.scale(scale, scale); ctx.translate(-camX, offY());
+  const vw = viewW();
+  // floor
+  ctx.fillStyle = '#d9cfbd'; ctx.fillRect(camX - 10, FLOOR, vw + 20, viewH / scale);
+  ctx.fillStyle = '#c5b89f';
+  for (let x = Math.floor(camX / 60) * 60; x < camX + vw + 60; x += 60) ctx.fillRect(x, FLOOR, 2, 14);
+  if (engine) {
+    for (const b of dominoes) drawDomino(b, b.waiting ? .9 + .1 * Math.sin(now / 200) : 1);
+    if (pin) {
+      ctx.fillStyle = '#e03131'; ctx.beginPath(); ctx.arc(pin.x, pin.y, 7, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(pin.x, pin.y, 2.5, 0, 7); ctx.fill();
+    } else if (state === 'play' && cur.waiting) {
+      // hint: pulsing ring on the waiting domino's top
+      const r = 12 + 4 * Math.sin(now / 250);
+      ctx.strokeStyle = 'rgba(224,49,49,.7)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cur.position.x, cur.position.y - DH / 2 + 10, r, 0, 7); ctx.stroke();
+    }
+  } else {
+    // title decoration: a row of dominoes
+    for (let i = 0; i < 6; i++) drawDomino({ position: { x: 60 + i * 55, y: FLOOR - DH / 2 }, angle: 0, id: i }, 1);
+  }
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+if (window.__KF_ZH__) lang = 'zh';
+applyLang(); resize(); requestAnimationFrame(frame);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <defs>
+    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#171512"/>
+      <stop offset="1" stop-color="#0b0a09"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8f0dd"/>
+      <stop offset="1" stop-color="#e3d3b2"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#ink)"/>
+  <circle cx="520" cy="96" r="120" fill="#b0402f" opacity="0.10"/>
+  <circle cx="120" cy="330" r="140" fill="#d9b06a" opacity="0.08"/>
+
+  <g transform="rotate(-7 210 205)">
+    <rect x="120" y="96" width="180" height="220" rx="16" fill="url(#paper)" stroke="#c9b184" stroke-width="4"/>
+    <text x="210" y="176" font-family="Songti SC, Noto Serif SC, serif" font-size="52" fill="#2a2016" text-anchor="middle">一</text>
+    <text x="210" y="238" font-family="Songti SC, Noto Serif SC, serif" font-size="52" fill="#2a2016" text-anchor="middle">心</text>
+    <text x="210" y="296" font-family="Songti SC, Noto Serif SC, serif" font-size="26" fill="#8a7758" text-anchor="middle">yī xīn</text>
+  </g>
+
+  <g transform="rotate(6 380 240)">
+    <rect x="300" y="140" width="180" height="220" rx="16" fill="#efe2c6" stroke="#b99f6f" stroke-width="4"/>
+    <text x="390" y="220" font-family="Songti SC, Noto Serif SC, serif" font-size="52" fill="#2a2016" text-anchor="middle">一</text>
+    <text x="390" y="282" font-family="Songti SC, Noto Serif SC, serif" font-size="52" fill="#b0402f" text-anchor="middle">意</text>
+    <text x="390" y="340" font-family="Songti SC, Noto Serif SC, serif" font-size="26" fill="#8a7758" text-anchor="middle">yì</text>
+  </g>
+
+  <g transform="translate(486 118) rotate(9)">
+    <rect width="66" height="66" rx="8" fill="#b0402f"/>
+    <text x="33" y="47" font-family="Songti SC, Noto Serif SC, serif" font-size="38" fill="#f9eeda" text-anchor="middle">接</text>
+  </g>
+
+  <text x="40" y="374" font-family="Songti SC, Noto Serif SC, serif" font-size="30" fill="#f4e8d2" letter-spacing="6">成语接龙</text>
+</svg>

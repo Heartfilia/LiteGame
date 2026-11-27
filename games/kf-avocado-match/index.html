@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>牛油果挑选 · LiteGame</title>
+  <meta name="description" content="十秒内，光看外表挑出正好的那颗。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="牛油果挑选 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/avocado-match/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/avocado-match/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #efe0c8; overscroll-behavior: none; }
+    body {
+      color: #3a2e1e;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif;
+      -webkit-user-select: none; user-select: none; touch-action: none;
+    }
+    #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; z-index: 5; pointer-events: none; }
+    header > * { pointer-events: auto; }
+    header a { color: #3a2e1e; font-size: 14px; text-decoration: none; margin-right: auto; background: rgba(255,255,255,.7); padding: 7px 10px; border-radius: 8px; }
+    header button, header select {
+      background: #fff; border: 1px solid #d6c3a3; border-radius: 8px;
+      height: 34px; min-width: 40px; padding: 0 10px; font-size: 13px; color: #3a2e1e; cursor: pointer;
+    }
+    header svg { width: 18px; height: 18px; display: block; }
+    #bar { position: fixed; top: 58px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 10px; pointer-events: none; z-index: 4; }
+    #me { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(60,40,10,.25); object-fit: cover; background: #fff; }
+    #gauge { width: min(56vw, 240px); height: 12px; border-radius: 6px; background: rgba(255,255,255,.75); box-shadow: inset 0 0 0 1.5px rgba(90,70,40,.2); overflow: hidden; }
+    #gauge i { display: block; width: 100%; height: 100%; background: #6a9a2e; border-radius: 6px; transform-origin: left; }
+    .stamp { position: fixed; left: 0; top: 0; width: 80px; height: 80px; opacity: 0; pointer-events: none; z-index: 3;
+      border-radius: 20px; border: 5px solid; background: rgba(255,255,255,.88); display: flex; align-items: center; justify-content: center; }
+    .stamp svg { width: 64%; height: 64%; }
+    .nope { color: #e5484d; border-color: #e5484d; }
+    .like { color: #2fa85a; border-color: #2fa85a; }
+    #controls { position: fixed; left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom)); display: flex; justify-content: center; align-items: center;
+      gap: clamp(28px, 12vw, 72px); z-index: 5; padding: 0 16px; pointer-events: none; }
+    #controls > * { pointer-events: auto; }
+    .round { width: clamp(64px, 17vw, 84px); height: clamp(64px, 17vw, 84px); border-radius: 50%; border: none; background: #fff;
+      box-shadow: 0 6px 18px rgba(60,40,10,.28); display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; padding: 0; }
+    .round svg { width: 46%; height: 46%; }
+    .round:active { transform: scale(.9); }
+    .round.nope { color: #e5484d; }
+    .round.like { color: #2fa85a; }
+    .wide { flex: 1; max-width: 260px; height: clamp(56px, 8vh, 66px); border-radius: 16px; border: none; font-size: clamp(17px, 4.6vw, 21px); font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; touch-action: manipulation; font-family: inherit; }
+    .wide:active { transform: translateY(3px); box-shadow: none !important; }
+    .again { background: #5a9a2e; color: #fff; box-shadow: 0 4px 0 #3c6a1c; }
+    .post { background: #111; color: #fff; box-shadow: 0 4px 0 #000; }
+    #msg { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; text-align: center; z-index: 9; }
+    /* 背の低い横長: ボタンはカードの左右に置く */
+    @media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+      #bar { top: 12px; }
+      #controls { bottom: auto; top: 50%; transform: translateY(-50%); justify-content: space-between; padding: 0 max(16px, 4vw); }
+      .wide { flex: 0 1 200px; }
+      .round { width: 72px; height: 72px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">牛油果挑选</h1>
+  <main style="display:contents">
+  <canvas id="cv"></canvas>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="sound" aria-label="sound"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <div id="bar"><img id="me" src="cat.png" alt=""><div id="gauge"><i></i></div></div>
+  <div id="stampN" class="stamp nope"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+  <div id="stampL" class="stamp like"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+  <div id="controls"></div>
+  <div id="msg"></div>
+
+  </main>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js", "three/addons/": "../lib/three/examples/jsm/" } }</script>
+  <script>
+    // CDN が読めないときの一言
+    setTimeout(() => { if (!window.AVO_READY) { const m = document.getElementById('msg'); m.style.display = 'flex'; m.textContent = 'Failed to load. Please reload. / 読み込めませんでした。再読み込みしてください。'; } }, 8000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 牛油果挑选 · 中文文案
+window.__KF_ZH__ = {
+  title: '牛油果挑选',
+  back: '← 大厅',
+  again: '再来一次',
+  post: '分享到 X',
+  nope: '生的',
+  like: '正好',
+  match: '配对成功',
+  score: (n) => `${n} 分`,
+  stats: (c, a) => `对 ${c} 个，错 ${a} 个`
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    window.AVO_READY = true;
+
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/avocado-match/';
+    const PLAY_TIME = 10;
+    const HEART = 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+    const SVG_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    const SVG_HEART = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${HEART}"/></svg>`;
+
+    // ---------- 言語 ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('avocado-match:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('avocado-match:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (['ja', 'ko', 'en', 'th'].includes(c)) return c; } return 'en'; };
+    const DICT = {
+      ja: { title: '牛油果挑选', back: '← トップへ戻る', again: 'もう一度', post: 'Xに投稿', nope: 'ナシ', like: '食べ頃', match: 'マッチ成立',
+        score: n => `${n}点`, stats: (c, a) => `${c}個判定・正答率${a}%`, share: (s, c, a) => `10秒でアボカドを${c}個判定、正答率${a}%で${s}点 #牛油果挑选ゲーム` },
+      ko: { title: '아보카도 매칭', back: '← 처음으로', again: '다시 하기', post: 'X에 게시', nope: '아직', like: '먹기 좋음', match: '매치 성사',
+        score: n => `${n}점`, stats: (c, a) => `${c}개 판정 · 정답률 ${a}%`, share: (s, c, a) => `10초 동안 아보카도 ${c}개 판정, 정답률 ${a}%로 ${s}점 #牛油果挑选ゲーム` },
+      en: { title: 'Avocado Matching', back: '← Back to top', again: 'Play again', post: 'Post on X', nope: 'Nope', like: 'Ripe', match: "It's a Match",
+        score: n => `${n} pts`, stats: (c, a) => `${c} judged · ${a}% correct`, share: (s, c, a) => `I judged ${c} avocados in 10 seconds, ${a}% correct: ${s} pts #牛油果挑选ゲーム` },
+      th: { title: 'อะโวคาโดแมตชิ่ง', back: '← กลับหน้าแรก', again: 'เล่นอีกครั้ง', post: 'โพสต์ลง X', nope: 'ไม่เอา', like: 'สุกพอดี', match: 'แมตช์แล้ว',
+        score: n => `${n} คะแนน`, stats: (c, a) => `ตัดสิน ${c} ลูก · ถูก ${a}%`, share: (s, c, a) => `10 วินาที ตัดสินอะโวคาโด ${c} ลูก ถูก ${a}% ได้ ${s} คะแนน #牛油果挑选ゲーム` },
+    }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    const t = k => DICT[lang][k];
+    const langSel = document.getElementById('lang');
+    langSel.value = lang;
+    langSel.addEventListener('change', () => { lang = langSel.value; store.set('lang', lang); applyLang(); });
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('back').textContent = t('back');
+      renderControls();
+      if (state === 'result' || resultReady) { drawResultCard(); if (state === 'result') needSnap = true; }
+    }
+
+    // ---------- 音 ----------
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const drawSoundBtn = () => {
+      soundBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+    };
+    drawSoundBtn();
+    soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('sound', soundOn); drawSoundBtn(); });
+    let ac = null;
+    function unmuteIOS() {
+      try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch {}
+      try {
+        const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+        const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+        const a = document.createElement('audio');
+        a.src = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.loop = true; a.setAttribute('playsinline', '');
+        a.play().catch(() => {});
+      } catch {}
+    }
+    function initAudio() {
+      if (ac) return;
+      unmuteIOS();
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+        o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
+      } catch { ac = null; }
+    }
+    addEventListener('pointerdown', initAudio, { capture: true });
+    addEventListener('keydown', initAudio, { capture: true });
+    const on = () => soundOn && ac;
+    function osc(type, f0, f1, dur, vol, delay = 0, lp = 0) {
+      if (!on()) return;
+      const now = ac.currentTime + delay;
+      const o = ac.createOscillator(); o.type = type;
+      o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(vol, now + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      let node = o;
+      if (lp) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; node = o.connect(f); }
+      node.connect(g).connect(ac.destination); o.start(now); o.stop(now + dur + 0.02);
+    }
+    function nz(dur, vol, type, f0, q, delay = 0, f1 = 0) {
+      if (!on()) return;
+      const now = ac.currentTime + delay;
+      const buf = ac.createBuffer(1, Math.max(1, Math.floor(ac.sampleRate * dur)), ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 2;
+      const s = ac.createBufferSource(); s.buffer = buf;
+      const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f0, now); fl.Q.value = q;
+      if (f1) fl.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      const g = ac.createGain(); g.gain.value = vol;
+      s.connect(fl).connect(g).connect(ac.destination); s.start(now);
+    }
+    // シュッ（カードが飛ぶ）
+    const sWhoosh = () => { nz(0.3, 0.35, 'bandpass', 500, 0.9, 0, 2600); };
+    // パカッ（包丁が入って割れる）: 若いほど硬い音、熟すほど湿った音
+    function sCrack(r) {
+      nz(0.03, 0.6, 'bandpass', r < 0.5 ? 3400 : 2200, 2.5);
+      nz(0.025, 0.35, 'bandpass', r < 0.5 ? 5200 : 3000, 4, 0.012);
+      osc('sine', r < 0.5 ? 210 : 150, 70, 0.16, 0.35, 0.01);
+      nz(0.26, r > 0.55 ? 0.32 : 0.1, 'lowpass', r > 0.8 ? 700 : 1100, 0.8, 0.03, 260);
+    }
+    // 終了の笛
+    function sEnd() { osc('square', 1760, 1700, 0.5, 0.06, 0, 3000); osc('sine', 1760, 1740, 0.5, 0.12); nz(0.5, 0.08, 'bandpass', 3500, 6); }
+    const sPop = () => osc('sine', 420, 880, 0.07, 0.12);
+    function sResult(perfect) {
+      const notes = perfect ? [523, 659, 784, 1046, 1318, 1568] : [523, 659, 784];
+      notes.forEach((f, i) => { osc('triangle', f, f, 0.35, 0.16, i * 0.09); osc('sine', f * 2, f * 2, 0.2, 0.04, i * 0.09); });
+    }
+
+    // ---------- 3D ----------
+    const cv = document.getElementById('cv');
+    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const scene = new THREE.Scene();
+    const WALL = 0xefe0c8;
+    scene.fog = new THREE.Fog(WALL, 12, 28);
+    {
+      const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+      const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
+      gr.addColorStop(0, '#f8efe0'); gr.addColorStop(1, '#e6d0ae');
+      g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+      const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+      scene.background = tx;
+    }
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 60);
+    scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x9a7a5a, 0.7));
+    const sun = new THREE.DirectionalLight(0xffe2c0, 2.3);
+    sun.position.set(-3, 5, 6);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -4.5, right: 4.5, top: 4.5, bottom: -4.5, near: 1, far: 22 });
+    sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02; sun.shadow.radius = 4;
+    scene.add(sun);
+
+    const clamp01 = v => Math.max(0, Math.min(1, v));
+    const smooth = (a, b, x) => { const k = clamp01((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+    const lerp = (a, b, k) => a + (b - a) * k;
+    const mix3 = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const easeOut = k => 1 - (1 - k) ** 3;
+    const easeIn = k => k * k * k;
+    const easeBack = k => { const c = 1.6; return 1 + (c + 1) * (k - 1) ** 3 + c * (k - 1) ** 2; };
+    const canvasTex = (c, srgb = true) => { const tx = new THREE.CanvasTexture(c); if (srgb) tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; return tx; };
+
+    // 横方向につながる値ノイズ（皮の模様用）
+    function noise2(gw, gh) {
+      const g = new Float32Array(gw * (gh + 2));
+      for (let i = 0; i < g.length; i++) g[i] = Math.random();
+      return (u, v) => {
+        const x = u * gw, y = Math.min(Math.max(v, 0) * gh, gh);
+        const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
+        const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+        const a = ((x0 % gw) + gw) % gw, b = (a + 1) % gw, r0 = y0 * gw, r1 = (y0 + 1) * gw;
+        const top = g[r0 + a] + (g[r0 + b] - g[r0 + a]) * sx, bot = g[r1 + a] + (g[r1 + b] - g[r1 + a]) * sx;
+        return top + (bot - top) * sy;
+      };
+    }
+
+    // ---------- 背景（キッチン） ----------
+    function woodCanvas(w, h, base, dark) {
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 90; i++) {
+        g.strokeStyle = `rgba(${dark},${rnd(0.05, 0.18)})`; g.lineWidth = rnd(1, 4);
+        g.beginPath(); let y = Math.random() * h; g.moveTo(0, y);
+        for (let x = 0; x <= w; x += 16) { y += rnd(-1.5, 1.5); g.lineTo(x, y + Math.sin(x * 0.02 + i) * 3); }
+        g.stroke();
+      }
+      return c;
+    }
+    const woodTex = canvasTex(woodCanvas(512, 256, '#b98a5a', '90,55,25'));
+    woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping; woodTex.repeat.set(4, 2);
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(34, 0.4, 14), new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.7, envMapIntensity: 0.4 }));
+    counter.position.set(0, -2.35, -4); counter.receiveShadow = true; scene.add(counter);
+    const tileTex = (() => {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+      const g = c.getContext('2d'); g.fillStyle = '#d8ccb8'; g.fillRect(0, 0, 256, 256);
+      for (let r = 0; r < 4; r++) for (let k = -1; k < 3; k++) {
+        const x = k * 128 + (r % 2) * 64, y = r * 64;
+        const gr = g.createLinearGradient(0, y, 0, y + 64); gr.addColorStop(0, '#fbf6ec'); gr.addColorStop(1, '#efe6d6');
+        g.fillStyle = gr; g.fillRect(x + 3, y + 3, 122, 58);
+      }
+      const tx = canvasTex(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(16, 8); return tx;
+    })();
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(44, 22), new THREE.MeshStandardMaterial({ map: tileTex, roughness: 0.4, envMapIntensity: 0.3 }));
+    wall.position.set(0, 8.8, -11); wall.receiveShadow = true; scene.add(wall);
+    // 小物: レモン・ハーブの鉢・まな板
+    {
+      const lemonMat = new THREE.MeshStandardMaterial({ color: 0xf2cf3a, roughness: 0.45, envMapIntensity: 0.5 });
+      const lg = new THREE.SphereGeometry(0.32, 24, 16);
+      for (const [x, z, ry] of [[2.6, -2.2, 0.3], [3.25, -1.6, 1.4], [3.0, -2.9, 2.2]]) {
+        const m = new THREE.Mesh(lg, lemonMat); m.scale.set(1.25, 0.95, 0.95); m.position.set(x, -1.86, z); m.rotation.y = ry; m.castShadow = m.receiveShadow = true; scene.add(m);
+      }
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.38, 0.8, 24), new THREE.MeshStandardMaterial({ color: 0xc0623a, roughness: 0.85 }));
+      pot.position.set(-3.6, -1.75, -4.2); pot.castShadow = pot.receiveShadow = true; scene.add(pot);
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0x4f8f34, roughness: 0.6 });
+      const leafG = new THREE.SphereGeometry(0.16, 10, 8);
+      for (let i = 0; i < 26; i++) {
+        const l = new THREE.Mesh(leafG, leafMat), a = Math.random() * Math.PI * 2, rr = Math.random() * 0.45;
+        l.position.set(-3.6 + Math.cos(a) * rr, -1.2 + Math.random() * 0.8, -4.2 + Math.sin(a) * rr);
+        l.scale.set(1.4, 0.5, 0.8); l.rotation.set(Math.random() * 3, Math.random() * 3, 0); l.castShadow = true; scene.add(l);
+      }
+      const board = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 1.5), new THREE.MeshStandardMaterial({ map: canvasTex(woodCanvas(256, 128, '#d9b07c', '120,80,40')), roughness: 0.6 }));
+      board.position.set(-2.4, -2.09, -1.9); board.rotation.y = 0.25; board.castShadow = board.receiveShadow = true; scene.add(board);
+    }
+
+    // ---------- アボカド ----------
+    // 熟し具合 r: 〜0.3 若い / 0.38〜0.5 もう少し / 0.6〜0.76 食べ頃 / 0.84〜 熟しすぎ
+    const SEG = 48, PROF = 40;
+    const SKIN_G = [74, 104, 36], SKIN_P = [52, 34, 38], SKIN_B = [26, 22, 24];
+    // 皮のつぶつぶ（凹凸）の元は1枚だけ作って使い回す
+    const pebbleCanvas = (() => {
+      const W = 512, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H;
+      const g = c.getContext('2d'); g.fillStyle = '#808080'; g.fillRect(0, 0, W, H);
+      const s = document.createElement('canvas'); s.width = s.height = 32;
+      const sg = s.getContext('2d'), gr = sg.createRadialGradient(13, 13, 1, 16, 16, 16);
+      gr.addColorStop(0, 'rgba(255,255,255,.75)'); gr.addColorStop(0.6, 'rgba(255,255,255,.25)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      sg.fillStyle = gr; sg.fillRect(0, 0, 32, 32);
+      for (let i = 0; i < 3800; i++) {
+        const x = Math.random() * W, y = Math.random() * H, r = rnd(2, 5.5), a = rnd(0.4, 1);
+        g.globalAlpha = a;
+        for (const dx of [-W, 0, W]) g.drawImage(s, x + dx - r, y - r, r * 2, r * 2);
+      }
+      g.globalAlpha = 1;
+      return c;
+    })();
+    const seedGeo = new THREE.SphereGeometry(1, 32, 20);
+    const stemGeo = new THREE.CylinderGeometry(0.04, 0.06, 0.08, 12);
+
+    function makeAvocado(r) {
+      const cls = r < 0.34 ? 0 : r < 0.55 ? 1 : r < 0.8 ? 2 : 3;
+      const rc = r + rnd(-0.04, 0.04);
+      const R = rnd(0.46, 0.52), elong = rnd(0.96, 1.12), neck = rnd(0.24, 0.36);
+      const H = R * 1.3 * elong;
+      // 輪郭（下 → へた）
+      const pts = [];
+      for (let j = 0; j <= PROF; j++) {
+        const a = j / PROF * Math.PI, y0 = -Math.cos(a), x0 = Math.sin(a), tt = (y0 + 1) / 2;
+        const s = 1 - neck * smooth(0.22, 1, tt) * (1 - 0.35 * smooth(0.85, 1, tt));
+        pts.push(new THREE.Vector2(j === 0 || j === PROF ? 0 : x0 * R * s, y0 * H));
+      }
+      const full = new THREE.LatheGeometry(pts, SEG * 2, 0, Math.PI * 2);
+      // へこみ（熟しすぎほど多い）と、全体のゆるいでこぼこ
+      const dents = [];
+      const nd = cls === 3 ? 2 + Math.floor((r - 0.82) * 32) : (cls === 2 && Math.random() < 0.25 ? 1 : 0);
+      for (let i = 0; i < nd; i++) dents.push({ phi: Math.random() * Math.PI * 2, y: rnd(-0.6, 0.5) * H, s: rnd(0.12, 0.26), d: cls === 3 ? rnd(0.025, 0.06) : 0.012 });
+      const lp = [rnd(0, 6), rnd(0, 6), rnd(0, 6)];
+      const sag = cls === 3 ? rnd(0.02, 0.05) : 0;
+      const pos = full.attributes.position;
+      for (let k = 0; k < pos.count; k++) {
+        let x = pos.getX(k), y = pos.getY(k), z = pos.getZ(k);
+        const rad = Math.hypot(x, z);
+        if (rad < 1e-6) continue;
+        const phi = Math.atan2(x, z);
+        let d = 0.008 * Math.sin(3 * phi + lp[0]) * Math.cos(y * 4 + lp[1]) + 0.006 * Math.sin(5 * phi + lp[2] + y * 3);
+        for (const dt of dents) {
+          let dp = phi - dt.phi; dp = Math.atan2(Math.sin(dp), Math.cos(dp));
+          d -= dt.d * Math.exp(-((dp * rad) ** 2 + (y - dt.y) ** 2) / (dt.s * dt.s));
+        }
+        // 熟しすぎは下がふくらんでたるむ
+        d += sag * smooth(0.2, -0.8, y / H) * rad / R;
+        const kk = Math.max(0.2, (rad + d * smooth(0, 0.08, rad)) / rad);
+        pos.setXYZ(k, x * kk, y, z * kk);
+      }
+      full.computeVertexNormals();
+      const nrm = full.attributes.normal, P = PROF + 1;
+      for (let j = 0; j < P; j++) {
+        const a = j, b = SEG * 2 * P + j;
+        const nx = nrm.getX(a) + nrm.getX(b), ny = nrm.getY(a) + nrm.getY(b), nz2 = nrm.getZ(a) + nrm.getZ(b), l = Math.hypot(nx, ny, nz2) || 1;
+        nrm.setXYZ(a, nx / l, ny / l, nz2 / l); nrm.setXYZ(b, nx / l, ny / l, nz2 / l);
+      }
+      for (let i = 0; i <= SEG * 2; i++) { nrm.setXYZ(i * P, 0, -1, 0); nrm.setXYZ(i * P + PROF, 0, 1, 0); }
+      const halfGeo = off => {
+        const g = new THREE.LatheGeometry(pts, SEG, off ? Math.PI : 0, Math.PI);
+        const gp = g.attributes.position, gn = g.attributes.normal, gu = g.attributes.uv, fu = full.attributes.uv;
+        for (let i = 0; i <= SEG; i++) for (let j = 0; j < P; j++) {
+          const dst = i * P + j, src = (i + off) * P + j;
+          gp.setXYZ(dst, pos.getX(src), pos.getY(src), pos.getZ(src));
+          gn.setXYZ(dst, nrm.getX(src), nrm.getY(src), nrm.getZ(src));
+          gu.setXY(dst, fu.getX(src), fu.getY(src));
+        }
+        g.computeBoundingSphere();
+        return g;
+      };
+
+      // 皮の色: 緑 → 黒紫 → 真っ黒。まだらに色が変わる
+      const W = 512, Ht = 256;
+      const cc = document.createElement('canvas'); cc.width = W; cc.height = Ht;
+      const cg = cc.getContext('2d'), img = cg.createImageData(W, Ht), dd = img.data;
+      const n1 = noise2(9, 6), n2 = noise2(26, 14), n3 = noise2(14, 8);
+      const tint = [rnd(-6, 6), rnd(-6, 8), rnd(-5, 4)];
+      for (let py = 0; py < Ht; py++) {
+        const v = 1 - py / (Ht - 1);
+        for (let px = 0; px < W; px++) {
+          const u = px / W;
+          const a1 = n1(u, v), a2 = n2(u, v), n = a1 * 0.62 + a2 * 0.38;
+          const w = clamp01((rc - 0.36) / 0.24 + (n - 0.5) * 1.3 + (v - 0.5) * 0.25);
+          const b = clamp01((rc - 0.76) / 0.16 + (a2 - 0.5) * 0.9);
+          let col = mix3(SKIN_G, SKIN_P, w);
+          col = mix3(col, SKIN_B, b);
+          if (rc > 0.82) { const br = clamp01((n3(u, v) - 0.66) * 5) * clamp01((rc - 0.82) * 5); col = mix3(col, [70, 50, 34], br * 0.7); }
+          const j2 = (Math.random() - 0.5) * 8;
+          const o = (py * W + px) * 4;
+          dd[o] = col[0] + tint[0] * (1 - w) + j2; dd[o + 1] = col[1] + tint[1] * (1 - w) + j2; dd[o + 2] = col[2] + tint[2] * (1 - w) + j2; dd[o + 3] = 255;
+        }
+      }
+      cg.putImageData(img, 0, 0);
+      // つぶつぶの明るい所（若いほど黄緑の点が目立つ）
+      cg.globalCompositeOperation = 'overlay'; cg.globalAlpha = 0.35; cg.drawImage(pebbleCanvas, 0, 0); cg.globalAlpha = 1; cg.globalCompositeOperation = 'source-over';
+      const nDots = Math.floor(500 * (1 - clamp01(rc / 0.6)));
+      for (let i = 0; i < nDots; i++) { cg.fillStyle = `rgba(190,200,110,${rnd(0.2, 0.5)})`; cg.beginPath(); cg.arc(Math.random() * W, Math.random() * Ht, rnd(0.6, 1.4), 0, 7); cg.fill(); }
+      const colorTex = canvasTex(cc);
+
+      // 凹凸: つぶつぶ + 熟しすぎのしわ
+      const bc = document.createElement('canvas'); bc.width = W; bc.height = Ht;
+      const bg = bc.getContext('2d');
+      const off = Math.random() * W;
+      bg.drawImage(pebbleCanvas, off, 0); bg.drawImage(pebbleCanvas, off - W, 0);
+      const nw = cls === 3 ? Math.floor((r - 0.8) * 90) + 4 : cls === 2 && Math.random() < 0.3 ? 1 : 0;
+      for (let i = 0; i < nw; i++) {
+        bg.strokeStyle = `rgba(20,20,20,${rnd(0.35, 0.7)})`; bg.lineWidth = rnd(1.5, 4); bg.lineCap = 'round';
+        let x = Math.random() * W, y = rnd(30, Ht - 30), a = rnd(0, Math.PI * 2);
+        const path = [[x, y]];
+        for (let s = 0; s < 14; s++) { a += rnd(-0.6, 0.6); x += Math.cos(a) * 7; y += Math.sin(a) * 5; path.push([x, y]); }
+        for (const dx of [-W, 0, W]) { bg.beginPath(); path.forEach(([px, py], k) => k ? bg.lineTo(px + dx, py) : bg.moveTo(px + dx, py)); bg.stroke(); }
+      }
+      const bumpTex = canvasTex(bc, false);
+      const skin = new THREE.MeshStandardMaterial({
+        map: colorTex, bumpMap: bumpTex, bumpScale: cls === 3 ? 3.2 : 2.4,
+        roughness: lerp(0.36, 0.8, smooth(0.15, 0.95, rc)), envMapIntensity: lerp(0.9, 0.35, clamp01(rc)),
+      });
+
+      // 断面
+      const seedR = R * rnd(0.5, 0.56), seedY = -H * rnd(0.12, 0.2);
+      const FW = 256, FH = Math.round(256 * H / R);
+      const toC = (x, y) => [(x + R) / (2 * R) * FW, (1 - (y + H) / (2 * H)) * FH];
+      const outline = [...pts.map(p => [p.x, p.y]), ...pts.slice(1, -1).reverse().map(p => [-p.x, p.y])];
+      // 果肉の色（外側の緑 → 中の黄色）
+      const flesh = [
+        { e: [168, 186, 92], c: [222, 226, 168], s: [150, 170, 70] },   // 若い: 白っぽく固い
+        { e: [140, 178, 60], c: [228, 222, 128], s: [110, 140, 50] },   // もう少し
+        { e: [96, 152, 30], c: [238, 214, 74], s: [70, 110, 30] },      // 食べ頃: 鮮やか
+        { e: [104, 112, 42], c: [196, 168, 72], s: [60, 70, 30] },      // 熟しすぎ: くすむ
+      ][cls];
+      function faceCanvas(hole) {
+        const c = document.createElement('canvas'); c.width = FW; c.height = FH;
+        const g = c.getContext('2d');
+        const poly = (k, cy) => { g.beginPath(); outline.forEach(([x, y], i) => { const [px, py] = toC(x * k, cy + (y - cy) * k); i ? g.lineTo(px, py) : g.moveTo(px, py); }); g.closePath(); };
+        const skinC = mix3(mix3(SKIN_G, SKIN_P, clamp01((r - 0.36) / 0.24)), SKIN_B, clamp01((r - 0.76) / 0.16));
+        g.fillStyle = `rgb(${skinC.map(Math.round)})`; poly(1, 0); g.fill();
+        const cy = seedY;
+        for (let i = 0; i <= 22; i++) {
+          const k = 0.965 - i * 0.022, q = (i / 22) ** 0.55;
+          const col = mix3(flesh.e, flesh.c, q);
+          g.fillStyle = `rgb(${col.map(Math.round)})`; poly(k, cy); g.fill();
+        }
+        const [sx, sy] = toC(0, seedY), sr = seedR / (2 * R) * FW;
+        if (cls === 3) {
+          // 茶色い筋と、黒ずんだ所
+          for (let i = 0; i < 38; i++) {
+            g.strokeStyle = `rgba(${rnd(90, 130)},${rnd(60, 85)},30,${rnd(0.25, 0.55)})`; g.lineWidth = rnd(1, 2.4);
+            const a = rnd(-1.2, 1.2) + (Math.random() < 0.5 ? 0 : Math.PI);
+            const r0 = sr * 1.05, r1 = rnd(sr * 1.6, FW * 0.42);
+            g.beginPath(); g.moveTo(sx + Math.sin(a) * r0, sy + Math.cos(a) * r0 * 1.2);
+            g.quadraticCurveTo(sx + Math.sin(a + 0.2) * r1 * 0.6, sy + Math.cos(a) * r1 * 0.8, sx + Math.sin(a) * r1, sy + Math.cos(a) * r1 * 1.25); g.stroke();
+          }
+          for (let i = 0; i < 6; i++) {
+            const bx = rnd(FW * 0.2, FW * 0.8), by = rnd(FH * 0.25, FH * 0.92), br = rnd(14, 34);
+            const gr = g.createRadialGradient(bx, by, 0, bx, by, br); gr.addColorStop(0, 'rgba(95,65,30,.75)'); gr.addColorStop(1, 'rgba(95,65,30,0)');
+            g.fillStyle = gr; g.fillRect(bx - br, by - br, br * 2, br * 2);
+          }
+          g.globalCompositeOperation = 'multiply'; g.lineWidth = 9; g.strokeStyle = 'rgba(90,80,40,.7)'; poly(0.94, cy); g.stroke(); g.globalCompositeOperation = 'source-over';
+        } else if (cls === 0) {
+          // 固くて白っぽいムラ
+          for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(240,240,210,${rnd(0.08, 0.2)})`; g.beginPath(); g.arc(rnd(FW * 0.15, FW * 0.85), rnd(FH * 0.1, FH * 0.9), rnd(4, 14), 0, 7); g.fill(); }
+        }
+        if (hole) {
+          // 種が抜けたくぼみ（奥ほど暗い）
+          const gr = g.createRadialGradient(sx - sr * 0.25, sy - sr * 0.3, sr * 0.1, sx, sy, sr * 1.08);
+          const cc2 = mix3(flesh.c, [120, 100, 40], 0.45);
+          gr.addColorStop(0, `rgb(${mix3(cc2, [255, 255, 220], 0.2).map(Math.round)})`); gr.addColorStop(0.7, `rgb(${cc2.map(Math.round)})`); gr.addColorStop(1, `rgb(${mix3(flesh.c, [60, 50, 20], 0.35).map(Math.round)})`);
+          g.fillStyle = gr; g.beginPath(); g.ellipse(sx, sy, sr * 1.04, sr * 1.16, 0, 0, 7); g.fill();
+          if (cls >= 2) { g.fillStyle = 'rgba(140,90,50,.35)'; g.beginPath(); g.ellipse(sx + sr * 0.3, sy + sr * 0.3, sr * 0.4, sr * 0.25, 0.6, 0, 7); g.fill(); }
+        } else {
+          g.fillStyle = 'rgba(70,50,20,.45)'; g.beginPath(); g.ellipse(sx, sy, sr * 1.1, sr * 1.22, 0, 0, 7); g.fill();
+        }
+        return c;
+      }
+      const shape = new THREE.Shape(outline.map(([x, y]) => new THREE.Vector2(x, y)));
+      const faceGeo = new THREE.ShapeGeometry(shape, 1);
+      { const p = faceGeo.attributes.position, uv = faceGeo.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + R) / (2 * R), (p.getY(i) + H) / (2 * H)); }
+      const faceGeoR = faceGeo.clone().rotateY(-Math.PI / 2), faceGeoL = faceGeo.clone().rotateY(Math.PI / 2);
+      faceGeo.dispose();
+      const fleshRough = [0.75, 0.55, 0.3, 0.5][cls];
+      const faceMatR = new THREE.MeshStandardMaterial({ map: canvasTex(faceCanvas(false)), roughness: fleshRough, envMapIntensity: 0.5 });
+      const faceMatL = new THREE.MeshStandardMaterial({ map: canvasTex(faceCanvas(true)), roughness: fleshRough, envMapIntensity: 0.5 });
+
+      const geoR = halfGeo(0), geoL = halfGeo(SEG);
+      full.dispose();
+      const right = new THREE.Group(), left = new THREE.Group();
+      const mR = new THREE.Mesh(geoR, skin), mL = new THREE.Mesh(geoL, skin);
+      const fR = new THREE.Mesh(faceGeoR, faceMatR), fL = new THREE.Mesh(faceGeoL, faceMatL);
+      fR.position.x = 0.001; fL.position.x = -0.001;
+      right.add(mR, fR); left.add(mL, fL);
+      const seedMat = new THREE.MeshStandardMaterial({ color: cls === 3 ? 0x5a3a22 : cls === 0 ? 0x9a7a4a : 0x7a4a2a, roughness: cls === 0 ? 0.6 : 0.32, envMapIntensity: 0.8 });
+      const seed = new THREE.Mesh(seedGeo, seedMat);
+      seed.scale.set(seedR * 0.98, seedR * 1.12, seedR * 0.98); seed.position.set(0, seedY, 0);
+      right.add(seed);
+      // へた: 熟しすぎは取れて黒くくぼむ
+      const topY = pts[PROF].y;
+      if (cls === 3 && r > 0.88) {
+        const pit = new THREE.Mesh(seedGeo, new THREE.MeshStandardMaterial({ color: 0x140e0a, roughness: 0.9 }));
+        pit.scale.set(0.07, 0.025, 0.07); pit.position.y = topY - 0.005; right.add(pit);
+      } else {
+        const stem = new THREE.Mesh(stemGeo, new THREE.MeshStandardMaterial({ color: cls === 0 ? 0x8a7a3a : cls === 1 ? 0x7a5a30 : 0x5a3a22, roughness: 0.85 }));
+        stem.position.y = topY + 0.025; stem.rotation.z = rnd(-0.2, 0.2); right.add(stem);
+      }
+      for (const o of [mR, mL, fR, fL, seed]) { o.castShadow = true; o.receiveShadow = true; }
+      const group = new THREE.Group(); group.add(right, left);
+      const mats = [skin, faceMatR, faceMatL, seedMat];
+      return {
+        r, cls, ripe: cls === 2, group, right, left, H,
+        disposeLeft() { geoL.dispose(); faceGeoL.dispose(); faceMatL.map.dispose(); faceMatL.dispose(); left.removeFromParent(); },
+        dispose() {
+          geoR.dispose(); faceGeoR.dispose(); geoL.dispose(); faceGeoL.dispose();
+          for (const m of mats) { m.map?.dispose(); m.bumpMap?.dispose(); m.dispose(); }
+          group.removeFromParent(); right.removeFromParent();
+        },
+      };
+    }
+
+    // 次のアボカドの熟し具合: 食べ頃が半分弱。境目ぎりぎりは出さない
+    function nextR() {
+      if (Math.random() < 0.45) return rnd(0.6, 0.76);
+      const k = Math.random();
+      return k < 0.36 ? rnd(0.06, 0.3) : k < 0.66 ? rnd(0.39, 0.5) : rnd(0.84, 1.0);
+    }
+
+    // ---------- カード ----------
+    const CW = 2.2, CH = 3.0, CR = 0.2;
+    const cardShape = (() => {
+      const s = new THREE.Shape(), w = CW / 2, h = CH / 2;
+      s.moveTo(-w + CR, -h); s.lineTo(w - CR, -h); s.quadraticCurveTo(w, -h, w, -h + CR); s.lineTo(w, h - CR); s.quadraticCurveTo(w, h, w - CR, h);
+      s.lineTo(-w + CR, h); s.quadraticCurveTo(-w, h, -w, h - CR); s.lineTo(-w, -h + CR); s.quadraticCurveTo(-w, -h, -w + CR, -h);
+      return s;
+    })();
+    const cardGeo = new THREE.ShapeGeometry(cardShape, 8);
+    { const p = cardGeo.attributes.position, uv = cardGeo.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / CW + 0.5, p.getY(i) / CH + 0.5); }
+    const frameGeo = new THREE.ExtrudeGeometry(cardShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.022, bevelSegments: 3, curveSegments: 8 });
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0xfbf8f2, roughness: 0.55, envMapIntensity: 0.4 });
+    // 写真スタジオ風の背景
+    const playTex = (() => {
+      const c = document.createElement('canvas'); c.width = 440; c.height = 600;
+      const g = c.getContext('2d');
+      const gr = g.createLinearGradient(0, 0, 0, 600); gr.addColorStop(0, '#fbf3e6'); gr.addColorStop(0.62, '#efdfc6'); gr.addColorStop(1, '#d9c09c');
+      g.fillStyle = gr; g.fillRect(0, 0, 440, 600);
+      for (let i = 0; i < 16; i++) {
+        const x = rnd(0, 440), y = rnd(0, 260), r = rnd(18, 60);
+        const b = g.createRadialGradient(x, y, 0, x, y, r); b.addColorStop(0, `rgba(255,250,236,${rnd(0.25, 0.55)})`); b.addColorStop(0.8, 'rgba(255,250,236,.12)'); b.addColorStop(1, 'rgba(255,250,236,0)');
+        g.fillStyle = b; g.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+      const v = g.createRadialGradient(220, 300, 160, 220, 300, 420); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(80,50,20,.22)');
+      g.fillStyle = v; g.fillRect(0, 0, 440, 600);
+      return canvasTex(c);
+    })();
+    const resCanvas = document.createElement('canvas'); resCanvas.width = 660; resCanvas.height = 900;
+    const resTex = canvasTex(resCanvas);
+    function makeSlot() {
+      const g = new THREE.Group();
+      const frame = new THREE.Mesh(frameGeo, frameMat); frame.position.z = -0.046; frame.castShadow = true; frame.receiveShadow = true;
+      const front = new THREE.Mesh(cardGeo, new THREE.MeshStandardMaterial({ map: playTex, roughness: 0.85, envMapIntensity: 0.3 }));
+      front.receiveShadow = true;
+      g.add(frame, front);
+      scene.add(g);
+      return { g, front, avo: null };
+    }
+    const AVO_POS = new THREE.Vector3(0, 0.08, 0.66);
+    const BACK = { y: -0.2, z: -0.7, s: 0.95 };
+    let front = makeSlot(), back = makeSlot();
+
+    // ---------- 粒（果汁・紙吹雪） ----------
+    const parts = [];
+    const dropGeo = new THREE.SphereGeometry(1, 8, 6);
+    const confGeo = new THREE.PlaneGeometry(1, 0.6);
+    function confetti() {
+      const cols = [0xef5a6f, 0x3fae5a, 0xf2cf3a, 0x5aa0e6, 0xffffff];
+      for (let i = 0; i < 70; i++) {
+        const m = new THREE.Mesh(confGeo, new THREE.MeshStandardMaterial({ color: cols[i % cols.length], side: THREE.DoubleSide, roughness: 0.6 }));
+        const s = rnd(0.06, 0.11); m.scale.setScalar(s);
+        m.position.set(rnd(-2, 2), rnd(1.8, 3.2), rnd(0.3, 1.4)); m.rotation.set(rnd(0, 6), rnd(0, 6), 0);
+        scene.add(m);
+        parts.push({ m, v: new THREE.Vector3(rnd(-0.4, 0.4), rnd(-0.6, 0), 0), life: rnd(2.6, 3.6), age: 0, s, g: 0.5, spin: rnd(2, 6), mat: m.material });
+      }
+    }
+    function updateParts(dt) {
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i]; p.age += dt;
+        p.v.y -= p.g * dt; p.m.position.addScaledVector(p.v, dt);
+        if (p.spin) { p.m.rotation.x += p.spin * dt; p.m.rotation.z += p.spin * 0.6 * dt; p.v.x += Math.sin(p.age * 3 + i) * dt * 0.5; }
+        const k = 1 - smooth(p.life * 0.7, p.life, p.age);
+        p.m.scale.setScalar(p.s * k);
+        if (p.age >= p.life) { scene.remove(p.m); if (p.mat) p.mat.dispose(); parts.splice(i, 1); }
+      }
+    }
+
+    // ---------- 画面サイズ ----------
+    const SIDE_Q = '(max-height: 520px) and (min-aspect-ratio: 4/3)';
+    let W = 1, Hs = 1, T = 0, Hr = 1, vh = 1, wpp = 0.01, cardPx = 100;
+    const controls = document.getElementById('controls');
+    const barEl = document.getElementById('bar');
+    function resize() {
+      W = innerWidth; Hs = innerHeight;
+      renderer.setSize(W, Hs, false);
+      const side = matchMedia(SIDE_Q).matches;
+      T = barEl.getBoundingClientRect().bottom + 10;
+      const cr = controls.getBoundingClientRect();
+      const B = side ? 80 : Math.max(80, Hs - cr.top + 12);
+      Hr = Math.max(120, Hs - T - B);
+      // 横はボタンを避ける
+      let Wr = W - 24;
+      if (side) { let m = 0; for (const el of controls.children) { const r = el.getBoundingClientRect(); m = Math.max(m, Math.min(r.right, W - r.left)); } Wr = W - 2 * (m + 12); }
+      camera.aspect = W / Hr;
+      const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+      vh = Math.max(CH * 1.06, CW * 1.04 * Hr / Math.max(100, Wr), CH * Hr / 680);
+      const d = vh / (2 * tan);
+      camera.position.set(0, 0, d);
+      camera.lookAt(0, 0, 0);
+      camera.setViewOffset(W, Hr, 0, -T, W, Hs);
+      camera.near = 0.5; camera.far = d + 30;
+      camera.updateProjectionMatrix();
+      wpp = vh / Hr;
+      cardPx = CH / vh * Hr;
+      placeOverlays();
+    }
+    addEventListener('resize', resize);
+    const v3 = new THREE.Vector3();
+    const toScreen = (x, y, z) => { v3.set(x, y, z).project(camera); return [(v3.x + 1) / 2 * W, (1 - v3.y) / 2 * Hs]; };
+    const stampN = document.getElementById('stampN'), stampL = document.getElementById('stampL');
+    function placeOverlays() {
+      const s = Math.round(cardPx * 0.2);
+      for (const [el, x, rot] of [[stampL, -0.62, -14], [stampN, 0.62, 14]]) {
+        const [px, py] = toScreen(x, 1.12, 0.1);
+        el.style.width = el.style.height = s + 'px';
+        el.style.borderWidth = Math.max(3, s * 0.06) + 'px';
+        el.style.transform = `translate(${px - s / 2}px, ${py - s / 2}px) rotate(${rot}deg)`;
+      }
+    }
+
+    // ---------- 残り時間 ----------
+    const gaugeBar = document.querySelector('#gauge i');
+    let lastGauge = -1;
+    function drawGauge() {
+      const g = clamp01(tLeft / PLAY_TIME), q = Math.round(g * 300);
+      if (q === lastGauge) return;
+      lastGauge = q;
+      gaugeBar.style.transform = `scaleX(${g})`;
+      gaugeBar.style.background = g < 0.25 ? '#e5484d' : '#6a9a2e';
+    }
+
+    // ---------- ゲームの状態 ----------
+    let answers = [], state = 'play', resultReady = false, tLeft = PLAY_TIME, running = false, timeUp = false;
+    let cardX = 0, spin = 0, splitK = 0, ft = 0, revealFrom = 0, choice = false;
+    let popT = 1, resT = 0, needSnap = false, snapAt = -1, time = 0;
+    let lastStampN = -1, lastStampL = -1;
+    const results = []; // 結果画面に並べる半分
+    const stats = () => {
+      const n = answers.length, c = answers.filter(a => a.ok).length, acc = n ? c / n : 0;
+      return { n, c, acc: Math.round(acc * 100), score: Math.round(c * acc * 10) };
+    };
+
+    function setStamps(n, l) {
+      n = Math.round(n * 50) / 50; l = Math.round(l * 50) / 50;
+      if (n !== lastStampN) { lastStampN = n; stampN.style.opacity = n; }
+      if (l !== lastStampL) { lastStampL = l; stampL.style.opacity = l; }
+    }
+    function placeAvo(slot, avo) {
+      slot.avo = avo;
+      if (avo) { slot.g.add(avo.group); avo.group.position.copy(AVO_POS); }
+    }
+    function setBackContent() {
+      if (back.avo) { back.avo.dispose(); back.avo = null; }
+      back.g.visible = true;
+      back.front.material.map = playTex;
+      back.pending = true;
+      setTimeout(() => ensureBack(), 60);
+      back.g.position.set(0, BACK.y, BACK.z); back.g.rotation.set(0, 0, 0); back.g.scale.setScalar(BACK.s);
+    }
+    function ensureBack() {
+      if (back.pending && !back.avo && state !== 'result') { const a = makeAvocado(nextR()); placeAvo(back, a); a.group.visible = false; }
+    }
+    function reset() {
+      for (const h of results) h.dispose();
+      results.length = 0;
+      if (front.avo) front.avo.dispose(); if (back.avo) back.avo.dispose();
+      front.avo = back.avo = null;
+      answers = []; resultReady = false; tLeft = PLAY_TIME; running = false; timeUp = false; drag = null; btnAnim = null;
+      front.front.material.map = playTex;
+      front.g.position.set(0, 0, 0); front.g.rotation.set(0, 0, 0); front.g.scale.setScalar(1);
+      placeAvo(front, makeAvocado(nextR()));
+      setBackContent();
+      state = 'play'; cardX = 0; splitK = 0; spin = rnd(0, 6); popT = 0;
+      setStamps(0, 0);
+      drawGauge(); renderControls();
+    }
+    // 最初の操作でタイマーが動き出す
+    const startTimer = () => { if (!running && !timeUp && state !== 'result') running = true; };
+
+    function commit(like) {
+      if (state !== 'play' || timeUp || !front.avo || popT < 0.3) return;
+      startTimer();
+      // その場では答えを見せず、すぐ次へ
+      choice = like;
+      answers.push({ ok: like === front.avo.ripe, avo: front.avo });
+      setStamps(like ? 0 : 1, like ? 1 : 0);
+      state = 'fly'; ft = 0; revealFrom = cardX; sWhoosh();
+      ensureBack();
+    }
+    function finishFly() {
+      // 飛んだカードの半分（種つき）は結果用に取っておく
+      const done = front.avo;
+      done.disposeLeft();
+      done.right.removeFromParent();
+      done.group.removeFromParent();
+      results.push(done);
+      front.avo = null;
+      const old = front; front = back; back = old;
+      front.g.position.set(0, 0, 0); front.g.rotation.set(0, 0, 0); front.g.scale.setScalar(1);
+      setStamps(0, 0);
+      cardX = 0; splitK = 0;
+      if (timeUp) { showResult(); return; }
+      if (!front.avo) placeAvo(front, makeAvocado(nextR()));
+      front.avo.group.visible = true;
+      spin = rnd(0, 6); popT = 0; sPop();
+      setBackContent();
+      state = 'play';
+    }
+    function endTime() {
+      timeUp = true; running = false; tLeft = 0; drawGauge();
+      sEnd();
+      if (drag) drag = null;
+      btnAnim = null;
+      if (state === 'play') showResult();
+    }
+
+    // ---------- 結果 ----------
+    // 判定した数に合わせて、断面が全部入る並べ方を選ぶ
+    const GRID = { x0: -1.0, x1: 1.0, y0: 0.24, y1: -1.32 };
+    let layout = [];
+    function makeLayout(n) {
+      const w = GRID.x1 - GRID.x0, h = GRID.y0 - GRID.y1;
+      let best = null;
+      for (let c = 1; c <= 10; c++) {
+        const rows = Math.ceil(n / c), cw = w / c, ch = h / rows;
+        const k = Math.min(cw * 0.86 / 1.0, ch * 0.72 / 1.42, 0.36);
+        if (!best || k > best.k + 1e-6) best = { c, rows, cw, ch, k };
+      }
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const r = Math.floor(i / best.c), inRow = Math.min(best.c, n - r * best.c), col = i % best.c;
+        const x = (col - (inRow - 1) / 2) * best.cw;
+        const top = GRID.y0 - r * best.ch;
+        const y = top - best.ch * 0.4;
+        out.push({ x, y, k: best.k, my: y - 0.71 * best.k - Math.min(0.06, best.ch * 0.1) * 1.3, mr: Math.min(0.055, best.cw * 0.14, best.ch * 0.1) });
+      }
+      return out;
+    }
+    const catImg = new Image(); catImg.src = 'cat.png';
+    catImg.onload = () => { if (resultReady) { drawResultCard(); if (state === 'result') needSnap = true; } };
+    const FONT = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+    function drawResultCard() {
+      resultReady = true;
+      const g = resCanvas.getContext('2d'), Wc = 660, Hc = 900;
+      const st = stats(), perfect = st.n >= 5 && st.c === st.n;
+      const gr = g.createLinearGradient(0, 0, 0, Hc); gr.addColorStop(0, '#fffaf1'); gr.addColorStop(1, '#f1e3cb');
+      g.fillStyle = gr; g.fillRect(0, 0, Wc, Hc);
+      const avatar = (x, y, r) => {
+        g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = '#fff'; g.fill(); g.clip();
+        if (catImg.complete && catImg.naturalWidth) g.drawImage(catImg, x - r, y - r, r * 2, r * 2);
+        g.restore(); g.lineWidth = 7; g.strokeStyle = '#fff'; g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke();
+        g.lineWidth = 2; g.strokeStyle = 'rgba(90,60,30,.25)'; g.beginPath(); g.arc(x, y, r + 4, 0, 7); g.stroke();
+      };
+      const heart = (x, y, s, col) => { g.save(); g.translate(x - s / 2, y - s / 2); g.scale(s / 24, s / 24); g.fillStyle = col; g.fill(new Path2D(HEART)); g.restore(); };
+      const avoIcon = (x, y, r) => {
+        g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = '#fff'; g.fill(); g.clip();
+        g.fillStyle = '#2c3a1c'; g.beginPath(); g.ellipse(x, y + r * 0.12, r * 0.56, r * 0.72, 0, 0, 7); g.fill();
+        g.fillStyle = '#8cc83a'; g.beginPath(); g.ellipse(x, y + r * 0.14, r * 0.5, r * 0.65, 0, 0, 7); g.fill();
+        g.fillStyle = '#e6dc6e'; g.beginPath(); g.ellipse(x, y + r * 0.2, r * 0.38, r * 0.48, 0, 0, 7); g.fill();
+        g.fillStyle = '#7a4a2a'; g.beginPath(); g.arc(x, y + r * 0.28, r * 0.24, 0, 7); g.fill();
+        g.restore(); g.lineWidth = 7; g.strokeStyle = '#fff'; g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke();
+      };
+      g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+      const text = (str, x, y, px, max, col) => { g.font = FONT(px); const w = g.measureText(str).width; if (w > max) g.font = FONT(px * max / w); g.fillStyle = col; g.fillText(str, x, y); };
+      if (perfect) {
+        avatar(236, 92, 58); heart(330, 96, 52, '#ef5a6f'); avoIcon(424, 92, 58);
+        text(t('match'), 330, 196, 40, 560, '#3c8a3a');
+        text(t('score')(st.score), 330, 300, 104, 600, '#3a2e1e');
+        text(t('stats')(st.n, st.acc), 330, 358, 38, 600, '#7a6a4a');
+      } else {
+        avatar(330, 100, 70);
+        text(t('score')(st.score), 330, 278, 116, 600, '#3a2e1e');
+        text(t('stats')(st.n, st.acc), 330, 340, 40, 600, '#7a6a4a');
+      }
+      // 半分の下に丸・バツ
+      const toC = (x, y) => [(x / CW + 0.5) * Wc, (0.5 - y / CH) * Hc];
+      const pxw = Wc / CW;
+      answers.forEach((a, i) => {
+        const L = layout[i]; if (!L) return;
+        const [cx, cy] = toC(L.x, L.my), r = L.mr * pxw;
+        g.lineCap = 'round';
+        if (a.ok) { g.lineWidth = r * 0.42; g.strokeStyle = '#3fae5a'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.stroke(); }
+        else { const q = r * 0.85; g.lineWidth = r * 0.5; g.strokeStyle = '#e5484d'; g.beginPath(); g.moveTo(cx - q, cy - q); g.lineTo(cx + q, cy + q); g.moveTo(cx + q, cy - q); g.lineTo(cx - q, cy + q); g.stroke(); }
+      });
+      text(t('title'), 330, 876, 30, 560, '#9a8460');
+      resTex.needsUpdate = true;
+    }
+    function showResult() {
+      state = 'result'; resT = 0;
+      // まだ判定していないカードはしまう
+      if (front.avo) { front.avo.dispose(); front.avo = null; }
+      if (back.avo) { back.avo.dispose(); back.avo = null; }
+      back.pending = false; back.g.visible = false;
+      front.g.position.set(0, 0, 0); front.g.rotation.set(0, 0, 0); front.g.scale.setScalar(1);
+      front.front.material.map = resTex;
+      setStamps(0, 0);
+      layout = makeLayout(results.length);
+      drawResultCard();
+      results.forEach((a, i) => {
+        const h = a.right, L = layout[i];
+        front.g.add(h);
+        h.position.set(L.x, L.y, 0.24);
+        h.rotation.set(0, Math.PI / 2, 0);
+        h.scale.setScalar(0.0001);
+      });
+      const st = stats();
+      setTimeout(() => sResult(st.n >= 5 && st.c === st.n), 250 + results.length * popGap() * 1000);
+      if (st.n >= 5 && st.c === st.n) confetti();
+      renderControls();
+      snap = null; shareCache = null; snapAt = 0.6 + results.length * popGap();
+    }
+    // 断面が順番に割れていく間隔（多いほど速く）
+    const popGap = () => Math.min(0.1, 1.4 / Math.max(1, results.length));
+
+    // ---------- ボタン ----------
+    function renderControls() {
+      controls.innerHTML = '';
+      if (state !== 'result') {
+        const n = document.createElement('button'); n.className = 'round nope'; n.innerHTML = SVG_X; n.setAttribute('aria-label', t('nope'));
+        const l = document.createElement('button'); l.className = 'round like'; l.innerHTML = SVG_HEART; l.setAttribute('aria-label', t('like'));
+        n.addEventListener('click', () => button(false));
+        l.addEventListener('click', () => button(true));
+        controls.append(n, l);
+      } else {
+        const b = document.createElement('button');
+        b.className = 'wide again'; b.textContent = t('again');
+        b.addEventListener('click', () => { reset(); resize(); });
+        const st = stats(), share = () => t('share')(st.score, st.n, st.acc);
+        const a = document.createElement('a');
+        a.className = 'wide post'; a.textContent = t('post');
+        a.href = `https://x.com/intent/post?text=${encodeURIComponent(share())}&url=${encodeURIComponent(SHARE_URL)}`;
+        const coarse = matchMedia('(pointer: coarse)').matches;
+        if (!coarse) { a.target = '_blank'; a.rel = 'noopener'; }
+        // スマホは画像ごと共有シートへ。PCは画像を保存してから投稿画面を開く
+        a.addEventListener('click', e => {
+          const text = share();
+          if (coarse && navigator.share) {
+            e.preventDefault();
+            const file = shareFile();
+            const data = file && navigator.canShare?.({ files: [file] }) ? { files: [file], text: `${text}\n${SHARE_URL}` } : { text: `${text}\n${SHARE_URL}` };
+            navigator.share(data).catch(() => {});
+            return;
+          }
+          const img = resultImage();
+          if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'avocado-match.png'; d.click(); }
+        });
+        controls.append(b, a);
+      }
+    }
+    // ボタン: カードを少し動かしてから判定
+    let btnAnim = null;
+    function button(like) {
+      if (state !== 'play' || drag || btnAnim || !front.avo || popT < 0.3 || timeUp) return;
+      startTimer();
+      btnAnim = { like, t: 0 };
+    }
+
+    // ---------- 結果画像 ----------
+    let snap = null, shareCache = null;
+    function takeSnap() {
+      const src = renderer.domElement, k = src.width / W;
+      const [cx, cy] = toScreen(0, 0, 0);
+      let side = Math.min(cardPx * 1.08, W, Hs) * k;
+      let sx = cx * k - side / 2, sy = cy * k - side / 2;
+      sx = Math.max(0, Math.min(src.width - side, sx)); sy = Math.max(0, Math.min(src.height - side, sy));
+      snap = document.createElement('canvas'); snap.width = snap.height = 1080;
+      snap.getContext('2d').drawImage(src, sx, sy, side, side, 0, 0, 1080, 1080);
+      shareCache = null;
+    }
+    function resultImage() { return snap; }
+    function prepareShare() {
+      if (!snap) return;
+      const key = lang;
+      if (shareCache?.key === key) return;
+      shareCache = { key, file: null };
+      snap.toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'avocado-match.png', { type: 'image/png' }); }, 'image/png');
+    }
+    const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+
+    // ---------- 入力 ----------
+    let drag = null;
+    cv.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (state !== 'play' || drag || btnAnim || !front.avo || timeUp) return;
+      startTimer();
+      cv.setPointerCapture(e.pointerId);
+      drag = { id: e.pointerId, x0: e.clientX - cardX / wpp, lx: e.clientX, lt: performance.now(), vx: 0 };
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const now = performance.now(), dtm = Math.max(1, now - drag.lt);
+      drag.vx = drag.vx * 0.6 + ((e.clientX - drag.lx) / dtm) * 0.4;
+      drag.lx = e.clientX; drag.lt = now;
+      cardX = (e.clientX - drag.x0) * wpp;
+    });
+    const up = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const px = cardX / wpp, vx = drag.vx;
+      drag = null;
+      const thr = Math.min(W * 0.22, 110);
+      if (Math.abs(px) > thr || (Math.abs(vx) > 0.55 && Math.abs(px) > 24 && Math.sign(vx) === Math.sign(px))) commit(px > 0);
+    };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    addEventListener('keydown', e => {
+      if (e.target === langSel) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); button(false); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); button(true); }
+    });
+
+    // ---------- 更新 ----------
+    function update(dt) {
+      time += dt;
+      if (running) { tLeft -= dt; drawGauge(); if (tLeft <= 0) endTime(); }
+      const flyDist = vh * W / Hr / 2 + 2.4;
+      if (state === 'play') {
+        if (btnAnim) {
+          btnAnim.t += dt;
+          cardX = (btnAnim.like ? 1 : -1) * easeOut(clamp01(btnAnim.t / 0.08)) * 0.4;
+          if (btnAnim.t >= 0.08) { const l = btnAnim.like; btnAnim = null; commit(l); }
+        } else if (!drag) cardX *= Math.exp(-dt * 14);
+        if (state === 'play') { const k = cardX / 0.9; setStamps(clamp01(-k), clamp01(k)); }
+        spin += dt * 0.75;
+      }
+      if (state === 'fly') {
+        ft += dt;
+        const p = clamp01(ft / 0.26);
+        cardX = revealFrom + ((choice ? 1 : -1) * flyDist - revealFrom) * easeIn(p);
+        const q = easeOut(p);
+        back.g.position.set(0, lerp(BACK.y, 0, q), lerp(BACK.z, 0, q)); back.g.scale.setScalar(lerp(BACK.s, 1, q));
+        if (p >= 1) finishFly();
+      }
+      if (state === 'play' || state === 'fly') {
+        front.g.position.set(cardX, -Math.abs(cardX) * 0.05, 0);
+        front.g.rotation.z = -cardX * 0.1;
+        const avo = front.avo;
+        if (avo) {
+          popT = Math.min(1, popT + dt / 0.22);
+          const s = easeBack(popT) * lerp(1, 0.88, splitK);
+          avo.group.scale.setScalar(Math.max(0.0001, s));
+          const intact = 1 - splitK;
+          avo.group.position.set(AVO_POS.x, AVO_POS.y + Math.sin(time * 1.6) * 0.03 * intact - splitK * 0.06, AVO_POS.z + splitK * 0.12);
+          avo.group.rotation.set(Math.sin(time * 0.9) * 0.12 * intact, spin, Math.sin(time * 0.7) * 0.08 * intact);
+          const sep = 0.5 * splitK;
+          avo.right.rotation.y = splitK * Math.PI / 2; avo.right.position.x = sep;
+          avo.left.rotation.y = -splitK * Math.PI / 2; avo.left.position.x = -sep;
+        }
+      }
+      if (state === 'result') {
+        resT += dt;
+        const gap = popGap();
+        results.forEach((a, i) => { const k = clamp01((resT - 0.25 - i * gap) / 0.3); a.right.scale.setScalar(Math.max(0.0001, easeBack(k) * layout[i].k)); });
+        if (snapAt >= 0 && resT >= snapAt) { snapAt = -1; needSnap = true; }
+        for (let i = 0; i < results.length; i++) if (resT - 0.25 - i * gap > 0 && !results[i].popped) { results[i].popped = true; sCrack(results[i].r); }
+      }
+      updateParts(dt);
+    }
+
+    let last = performance.now();
+    function loop(tm) {
+      window.resultAd?.(state === 'result'); // 結果画面の広告（../../ad.js）
+      const dt = Math.min(0.05, Math.max(0, (tm - last) / 1000)); last = tm;
+      update(dt);
+      renderer.render(scene, camera);
+      // 描いた直後なら WebGL の画面を読み取れる
+      if (needSnap) { needSnap = false; takeSnap(); prepareShare(); }
+      requestAnimationFrame(loop);
+    }
+
+    reset();
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+    resize();
+    // 結果カード用の質感も含めて先に準備しておく
+    drawResultCard(); resultReady = false;
+    renderer.compile(scene, camera);
+    update(0);
+    renderer.render(scene, camera);
+    requestAnimationFrame(t0 => { last = t0; requestAnimationFrame(loop); });
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

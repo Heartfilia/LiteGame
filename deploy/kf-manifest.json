@@ -1,0 +1,773 @@
+{
+  "source": "https://keifurukawafunnych.com",
+  "credit": "原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本",
+  "games": [
+    {
+      "slug": "robot-stand",
+      "title": "不倒翁机器人",
+      "description": "点哪扔哪，把球砸向机器人，看它晃来晃去就是不倒。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "手感",
+        "触屏"
+      ],
+      "order": 1,
+      "originalTitle": "起き上がりロボ"
+    },
+    {
+      "slug": "mud-pig-wash",
+      "title": "洗泥猪",
+      "description": "举着水管冲掉一身泥，把脏兮兮的猪洗到发亮，它会跟你说谢谢。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "解压",
+        "触屏"
+      ],
+      "order": 2,
+      "originalTitle": "泥んこ豚洗い"
+    },
+    {
+      "slug": "coin-edge",
+      "title": "贴脸硬币",
+      "description": "弹一枚硬币停在桌沿，多一毫米就掉下去，脸也跟着遭殃。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "精准",
+        "触屏"
+      ],
+      "order": 3,
+      "originalTitle": "顔面スレスレ"
+    },
+    {
+      "slug": "face-curling",
+      "title": "冰上脸壶",
+      "description": "在冰面上把五官滑到一起，看看能有多像。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "顔カーリング",
+      "order": 4
+    },
+    {
+      "slug": "fluid-toy",
+      "title": "3D 水面",
+      "description": "手指搅动一池 3D 水，拍打、摇晃，还能丢张图进去。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "流体",
+        "触屏"
+      ],
+      "originalTitle": "プカプカ界隈",
+      "order": 5
+    },
+    {
+      "slug": "acrylic-stand",
+      "title": "立牌工坊",
+      "description": "涂一涂、剪一剪，把图片做成亚克力立牌摆在桌上。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "图片",
+        "触屏"
+      ],
+      "originalTitle": "アクスタメーカー",
+      "order": 6
+    },
+    {
+      "slug": "swingby",
+      "title": "引力快递",
+      "description": "借行星引力拐弯，把外星人的订单送到指定位置。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "スイングバイ配達",
+      "order": 7
+    },
+    {
+      "slug": "darts-tabi",
+      "title": "飞镖旅行",
+      "description": "往日本地图上扔飞镖，扎中哪儿就去哪儿看看。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "随机",
+        "触屏"
+      ],
+      "originalTitle": "ダーツの旅",
+      "order": 8
+    },
+    {
+      "slug": "rocket-maker",
+      "title": "火箭制造机",
+      "description": "拼零件、点火、看你的火箭能飞多高。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "组装",
+        "触屏"
+      ],
+      "originalTitle": "ロケットメーカー",
+      "order": 9
+    },
+    {
+      "slug": "number-plate-maker",
+      "title": "车牌工坊",
+      "description": "挑颜色、选汉字，做一块只属于你的车牌。",
+      "tags": [
+        "授权移植",
+        "自定义",
+        "分享",
+        "触屏"
+      ],
+      "originalTitle": "ナンバープレートメーカー",
+      "order": 10
+    },
+    {
+      "slug": "election-poster",
+      "title": "竞选海报",
+      "description": "照片加口号，五分钟做一张正经得像真的竞选海报。",
+      "tags": [
+        "授权移植",
+        "图片",
+        "海报",
+        "触屏"
+      ],
+      "originalTitle": "選挙ポスターメーカー",
+      "order": 11
+    },
+    {
+      "slug": "katanuki-maker",
+      "title": "抠糖工坊",
+      "description": "把图片变成模具糖，沿着边一点点抠，别抠断。",
+      "tags": [
+        "授权移植",
+        "图片",
+        "手工",
+        "触屏"
+      ],
+      "originalTitle": "カタヌキメーカー",
+      "order": 12
+    },
+    {
+      "slug": "pizza-dough",
+      "title": "图片披萨",
+      "description": "把一张图擀成饼底，抹酱撒料，再送进烤炉。",
+      "tags": [
+        "授权移植",
+        "图片",
+        "料理",
+        "触屏"
+      ],
+      "originalTitle": "画像ピザ生地",
+      "order": 13
+    },
+    {
+      "slug": "maegami-cut",
+      "title": "剪刘海",
+      "description": "照片上随手剪刘海，剪坏了也没关系。",
+      "tags": [
+        "授权移植",
+        "图片",
+        "解压",
+        "触屏"
+      ],
+      "originalTitle": "前髪カット",
+      "order": 14
+    },
+    {
+      "slug": "modern-art",
+      "title": "现代艺术",
+      "description": "随手涂两笔，挂进美术馆，还会生成作品卡。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "绘画",
+        "触屏"
+      ],
+      "originalTitle": "現代アートメーカー",
+      "order": 15
+    },
+    {
+      "slug": "image-iron",
+      "title": "图片熨斗",
+      "description": "把皱巴巴的图片熨平，像给 T 恤烫一件衣服。",
+      "tags": [
+        "授权移植",
+        "图片",
+        "解压",
+        "触屏"
+      ],
+      "originalTitle": "画像アイロン",
+      "order": 16
+    },
+    {
+      "slug": "image-zoushoku",
+      "title": "图片增殖",
+      "description": "剪下图里的形状，一碰就翻倍地长。",
+      "tags": [
+        "授权移植",
+        "图片",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "画像増殖ゲーム",
+      "order": 17
+    },
+    {
+      "slug": "image-squeeze",
+      "title": "图片捏捏乐",
+      "description": "把一张图变成软趴趴的 3D 捏捏乐，随便揉。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "解压",
+        "触屏"
+      ],
+      "originalTitle": "画像スクイーズ",
+      "order": 18
+    },
+    {
+      "slug": "image-balloon",
+      "title": "图片气球",
+      "description": "把图片吹成气球，飘起来再戳破它。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "画像ふうせん",
+      "order": 19
+    },
+    {
+      "slug": "ita-bag",
+      "title": "痛包工坊",
+      "description": "把喜欢的图铺满托特包，徽章、印花、肩带随便配。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "装扮",
+        "触屏"
+      ],
+      "originalTitle": "痛バッグメーカー",
+      "order": 20
+    },
+    {
+      "slug": "image-jelly",
+      "title": "图片果冻",
+      "description": "把图片切成一片片果冻，晃一晃还会抖。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "画像ゼリー",
+      "order": 21
+    },
+    {
+      "slug": "tapioca-maker",
+      "title": "珍珠奶茶",
+      "description": "图片被拆成一颗颗珍珠，落进杯子里。",
+      "tags": [
+        "授权移植",
+        "图片",
+        "料理",
+        "触屏"
+      ],
+      "originalTitle": "タピオカメーカー",
+      "order": 22
+    },
+    {
+      "slug": "shaka-case",
+      "title": "摇摇手机壳",
+      "description": "往透明手机壳里塞贴纸，摇起来哗啦响。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "解压",
+        "触屏"
+      ],
+      "originalTitle": "シャカケース",
+      "order": 23
+    },
+    {
+      "slug": "rolling-2048",
+      "title": "旋转 2048",
+      "description": "转盘一歪，数字就滑；合出 2048 才算赢。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "数字",
+        "触屏"
+      ],
+      "originalTitle": "回転2048",
+      "order": 24
+    },
+    {
+      "slug": "vodka-brim",
+      "title": "伏特加表面张力",
+      "description": "手一稳，酒面拱成弧；手一抖，全洒了。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "精准",
+        "触屏"
+      ],
+      "originalTitle": "ウォッカ表面張力",
+      "order": 25
+    },
+    {
+      "slug": "mei-trampoline",
+      "title": "蹦床",
+      "description": "画几条线搭成蹦床，一路往上弹，越高越好。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "めいトランポリン",
+      "order": 26
+    },
+    {
+      "slug": "domino-stand",
+      "title": "多米诺",
+      "description": "点一下当支点，扶住摇摇欲坠的多米诺。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "ドミノ立て",
+      "order": 27
+    },
+    {
+      "slug": "pendulum-shoe",
+      "title": "甩鞋",
+      "description": "摆腿、起脚，把鞋甩得越远越好。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "振り子靴飛ばし",
+      "order": 28
+    },
+    {
+      "slug": "pendulum-golf",
+      "title": "钟摆高尔夫",
+      "description": "三重钟摆当球杆，一杆能打多远全看角度。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "三重振り子ゴルフ",
+      "order": 29
+    },
+    {
+      "slug": "ikumou-simulator",
+      "title": "育毛模拟器",
+      "description": "给光头种头发，再用剃刀刮回去，随便折腾。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "解压",
+        "触屏"
+      ],
+      "originalTitle": "育毛シミュレーター",
+      "order": 30
+    },
+    {
+      "slug": "singing-face",
+      "title": "唱歌照片",
+      "description": "涂一张嘴，照片就跟着节奏唱起来。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "图片",
+        "触屏"
+      ],
+      "originalTitle": "歌う顔写真",
+      "order": 31
+    },
+    {
+      "slug": "flipbook",
+      "title": "翻页动画",
+      "description": "一帧一帧画，连起来就是动画，还能导出视频。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "动画",
+        "触屏"
+      ],
+      "originalTitle": "パラパラ漫画メーカー",
+      "order": 32
+    },
+    {
+      "slug": "hinomaru-maker",
+      "title": "日之丸",
+      "description": "把红圆贴到旗帜的正确位置，越准分越高。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "精准",
+        "触屏"
+      ],
+      "originalTitle": "日の丸メーカー",
+      "order": 33
+    },
+    {
+      "slug": "burger-tower",
+      "title": "汉堡塔",
+      "description": "一层层往上叠，别让整座塔塌下来。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "バーガータワー",
+      "order": 34
+    },
+    {
+      "slug": "giant-goat",
+      "title": "巨大山羊",
+      "description": "喂草，把山羊喂成灾难级的体型。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "养成",
+        "触屏"
+      ],
+      "originalTitle": "巨大ヤギ",
+      "order": 35
+    },
+    {
+      "slug": "hula-hoop",
+      "title": "呼啦圈",
+      "description": "扭腰保持节奏，别让圈掉下来。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "节奏",
+        "触屏"
+      ],
+      "originalTitle": "フラフープ",
+      "order": 36
+    },
+    {
+      "slug": "pedal-power",
+      "title": "人力发电",
+      "description": "踩踏板发电，带动各种机器。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "人力発電",
+      "order": 37
+    },
+    {
+      "slug": "ikura-don",
+      "title": "鲑鱼子丼",
+      "description": "一层层堆鲑鱼子，看能堆多高。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "いくら丼はいくら",
+      "order": 38
+    },
+    {
+      "slug": "seiza-maker",
+      "title": "星座工坊",
+      "description": "连星成线，造一个自己的星座。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "自由",
+        "触屏"
+      ],
+      "originalTitle": "星座メーカー",
+      "order": 39
+    },
+    {
+      "slug": "shape-narabe",
+      "title": "圈叉三角方",
+      "description": "和猫对弈，四个连成一线。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "棋类",
+        "触屏"
+      ],
+      "originalTitle": "◯×△◻︎ゲーム",
+      "order": 40
+    },
+    {
+      "slug": "pelican-gulp",
+      "title": "鹈鹕吞物",
+      "description": "张开嘴接住飞来的东西，一口吞下去。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "丸のみペリカン",
+      "order": 41
+    },
+    {
+      "slug": "dont-whack-mole",
+      "title": "别打地鼠",
+      "description": "钻出来的地鼠别打，只打人。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "反应",
+        "触屏"
+      ],
+      "originalTitle": "モグラ叩かないで",
+      "order": 42
+    },
+    {
+      "slug": "clay-sculpt",
+      "title": "黏土雕塑",
+      "description": "堆、削、抹、捏，捏个像出来。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "创作",
+        "触屏"
+      ],
+      "originalTitle": "粘土スカルプト",
+      "order": 43
+    },
+    {
+      "slug": "noodle-dance",
+      "title": "火锅打工模拟器",
+      "description": "一边跳舞一边把火锅面拉长。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "搞怪",
+        "触屏"
+      ],
+      "originalTitle": "火鍋アルバイトシミュレーター",
+      "order": 44
+    },
+    {
+      "slug": "hotpot-dance",
+      "title": "火锅舞蹈培训",
+      "description": "跟前辈跳同一段，最后对齐率打分。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "节奏",
+        "触屏"
+      ],
+      "originalTitle": "火鍋ダンス研修",
+      "order": 45
+    },
+    {
+      "slug": "paper-plane",
+      "title": "纸飞机",
+      "description": "甩出去，再控机头，看能飞多远。",
+      "tags": [
+        "授权移植",
+        "2D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "紙飛行機ゲーム",
+      "order": 46
+    },
+    {
+      "slug": "acupuncture-darts",
+      "title": "针灸飞镖",
+      "description": "一根针，扎中背上的穴位。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "精准",
+        "触屏"
+      ],
+      "originalTitle": "鍼ダーツ",
+      "order": 47
+    },
+    {
+      "slug": "avocado-match",
+      "title": "牛油果挑选",
+      "description": "十秒内，光看外表挑出正好的那颗。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "眼力",
+        "触屏"
+      ],
+      "originalTitle": "アボカドマッチング",
+      "order": 48
+    },
+    {
+      "slug": "donburi-maker",
+      "title": "丼物工坊",
+      "description": "动物往碗里跳，按落进去的顺序拼成名字。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "どんぶりメーカー",
+      "order": 49
+    },
+    {
+      "slug": "group-photo",
+      "title": "集体照",
+      "description": "所有人同时睁眼的那一瞬按下快门。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "时机",
+        "触屏"
+      ],
+      "originalTitle": "集合写真",
+      "order": 50
+    },
+    {
+      "slug": "koubako-sagashi",
+      "title": "千猫寻同款",
+      "description": "一千只猫里找出花色相同的那只。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "眼力",
+        "触屏"
+      ],
+      "originalTitle": "香箱千匹",
+      "order": 51
+    },
+    {
+      "slug": "potato-omikuji",
+      "title": "土豆签",
+      "description": "拉一根薯条，比谁拉得长。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "手感",
+        "触屏"
+      ],
+      "originalTitle": "ポテトおみくじ",
+      "order": 52
+    },
+    {
+      "slug": "triple-pendulum",
+      "title": "三重摆艺术",
+      "description": "三重摆的轨迹，画成一幅画。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "生成艺术",
+        "触屏"
+      ],
+      "originalTitle": "三重振り子アート",
+      "order": 53
+    },
+    {
+      "slug": "one-room-loop",
+      "title": "1DK 循环",
+      "description": "每天做任务回到床上，别撞上昨天的自己。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "解谜",
+        "触屏"
+      ],
+      "originalTitle": "1DKループ",
+      "order": 54
+    },
+    {
+      "slug": "plate-smash",
+      "title": "砸盘子",
+      "description": "扔球砸盘子，砸中的位置不同，裂法也不同。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "手感",
+        "触屏"
+      ],
+      "originalTitle": "お皿割り",
+      "order": 55
+    },
+    {
+      "slug": "yukiri-shugyou",
+      "title": "家系修行",
+      "description": "用竹筛颠面，掉一次老板就发火。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "手感",
+        "触屏"
+      ],
+      "originalTitle": "家系修行",
+      "order": 56
+    },
+    {
+      "slug": "neko-no-te",
+      "title": "猫爪帮手",
+      "description": "借猫爪拦住偷芝士的老鼠。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "反应",
+        "触屏"
+      ],
+      "originalTitle": "猫の手も借りたい",
+      "order": 57
+    },
+    {
+      "slug": "elastic-billiards",
+      "title": "无限反弹台球",
+      "description": "一杆下去，球永远不会停。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "無限反発ビリアード",
+      "order": 58
+    },
+    {
+      "slug": "cola-pendulum",
+      "title": "可乐钟摆",
+      "description": "三重摆甩可乐，看能飞多远。",
+      "tags": [
+        "授权移植",
+        "3D",
+        "物理",
+        "触屏"
+      ],
+      "originalTitle": "コーラ振り子",
+      "order": 59
+    }
+  ]
+}

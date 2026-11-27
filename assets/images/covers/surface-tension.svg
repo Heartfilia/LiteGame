@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <defs>
+    <linearGradient id="stInk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#171512"/><stop offset="1" stop-color="#0b0a09"/></linearGradient>
+    <linearGradient id="stLiquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0cd8c"/><stop offset="1" stop-color="#b0602f"/></linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#stInk)"/>
+  <g transform="translate(150 74)">
+    <path d="M0 0h140l-16 236a24 24 0 0 1-24 22h-60a24 24 0 0 1-24-22Z" fill="none" stroke="#efe6d4" stroke-width="4" opacity="0.5"/>
+    <path d="M8 96h124l-14 140a18 18 0 0 1-18 16H40a18 18 0 0 1-18-16Z" fill="url(#stLiquid)" opacity="0.92"/>
+    <path d="M8 96q62-22 124 0" fill="none" stroke="#ffeccb" stroke-width="5" opacity="0.75"/>
+    <path d="M8 96q62-10 124 0" fill="#ffeccb" opacity="0.18"/>
+  </g>
+  <g font-family="'Songti SC','Noto Serif SC',serif" fill="#f4e8d2">
+    <text x="360" y="150" font-size="40" letter-spacing="6">表面张力</text>
+    <text x="360" y="192" font-size="18" fill="#8f8674" letter-spacing="3">停在将溢未溢那一刻</text>
+    <text x="360" y="330" font-size="64" fill="#b0402f">99%</text>
+    <text x="360" y="358" font-size="14" fill="#8f8674" letter-spacing="3">POUR · DON'T SPILL</text>
+  </g>
+</svg>

@@ -135,7 +135,12 @@ test('catalog has playable entries and local covers in every category', () => {
   const { games, categories } = window.GAME_DATA;
   assert.equal(new Set(games.map(g => g.id)).size, games.length);
   // Every section must retain at least twenty playable entries.
-  for (const c of categories) assert.ok(games.filter(g => g.category === c.id).length >= (c.id === 'shooting' ? 1 : 20), c.id + ' has too few games');
+  // 「精致游戏」是慢慢攒的精选区：单款也要能通过打磨标准，因此下限为 1。
+  const minPerCategory = { shooting: 1, premium: 1 };
+  for (const c of categories) {
+    const min = minPerCategory[c.id] || 20;
+    assert.ok(games.filter(g => g.category === c.id).length >= min, c.id + ' has too few games');
+  }
   for (const g of games) {
     assert.ok(fs.existsSync(path.join(root, g.url.split('?')[0])), g.url);
     assert.ok(fs.existsSync(path.join(root, g.cover)), g.cover);

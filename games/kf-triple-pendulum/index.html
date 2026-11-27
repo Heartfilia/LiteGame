@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>三重摆艺术 · LiteGame</title>
+  <meta name="description" content="三重摆的轨迹，画成一幅画。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="三重摆艺术 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/triple-pendulum/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/triple-pendulum/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #121218; font-family: system-ui, sans-serif; color: #eee; }
+    body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; display: flex; flex-direction: column; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; z-index: 10; position: relative; }
+    #back { color: #eee; text-decoration: none; font-weight: 700; font-size: 14px; background: rgba(255,255,255,.12); padding: 6px 10px; border-radius: 999px; margin-right: auto; }
+    #sound { width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(255,255,255,.12); display: grid; place-items: center; cursor: pointer; padding: 0; color: #eee; }
+    #sound svg { width: 20px; height: 20px; }
+    #lang { height: 36px; border: 0; border-radius: 999px; background: rgba(255,255,255,.12); padding: 0 8px; font-size: 14px; color: #eee; }
+    #lang option { color: #000; }
+    #timer { height: 6px; margin: 0 auto 6px; width: min(260px, 60vw); border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; }
+    #timer i { display: block; height: 100%; width: 100%; background: #fff; border-radius: 99px; transform-origin: left; }
+    #stage { flex: 1; min-height: 0; display: grid; place-items: center; padding: 0 12px; }
+    #view { display: block; border-radius: 6px; background: #0b0b10; box-shadow: 0 0 0 1px rgba(255,255,255,.08); cursor: grab; }
+    #tools { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 12px 0; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .sw { width: 32px; height: 32px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; box-shadow: 0 0 0 2px rgba(255,255,255,.1); }
+    .sw.on, .wd.on { box-shadow: 0 0 0 3px #121218, 0 0 0 5px #fff; }
+    .wd { width: 40px; height: 32px; border-radius: 10px; border: 0; background: rgba(255,255,255,.08); display: grid; place-items: center; cursor: pointer; padding: 0; }
+    .wd i { display: block; border-radius: 50%; background: #fff; }
+    #go { height: 48px; padding: 0 26px; border: 0; border-radius: 999px; background: #fff; color: #111; font-weight: 800; font-size: 16px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    #go svg { width: 22px; height: 22px; }
+    #go.hide { visibility: hidden; }
+    #gallery { position: fixed; inset: 0; z-index: 5; background: #000; display: none; opacity: 0; transition: opacity .8s; }
+    #gallery.show { display: block; }
+    #gallery.vis { opacity: 1; }
+    #gcv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+    .btns { position: absolute; left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom)); display: flex; gap: 10px; justify-content: center; }
+    .btn { height: 48px; min-width: 56px; padding: 0 18px; border: 0; border-radius: 999px; background: #fff; color: #111; font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; text-decoration: none; }
+    .btn svg { width: 22px; height: 22px; }
+    .nav { position: absolute; top: 50%; width: 48px; height: 48px; margin-top: -24px; border: 0; border-radius: 50%; background: rgba(255,255,255,.85); color: #111; display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: 0 2px 10px rgba(0,0,0,.25); transition: opacity .3s; }
+    .nav svg { width: 26px; height: 26px; }
+    .nav.off { opacity: 0; pointer-events: none; }
+    #prev { left: 12px; } #next { right: 12px; }
+    .btn.wait { opacity: .45; }
+    .btn.x { background: #000; color: #fff; box-shadow: 0 0 0 1px #444; }
+    #err { position: fixed; z-index: 6; left: 0; right: 0; top: 60px; text-align: center; color: #f88; display: none; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">三重摆艺术</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="sound" aria-label="sound"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <main style="display:contents">
+  <div id="timer"><i></i></div>
+  <div id="stage"><canvas id="view"></canvas></div>
+  <div id="tools">
+    <button id="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg><span id="goLabel"></span></button>
+    <div class="row" id="colors"></div>
+    <div class="row" id="widths"></div>
+  </div>
+  <div id="gallery">
+    <canvas id="gcv"></canvas>
+    <button class="nav" id="prev" aria-label="previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="nav" id="next" aria-label="next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div class="btns">
+      <button class="btn" id="retry" aria-label="retry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>
+      <button class="btn" id="save" aria-label="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></button>
+      <a class="btn x" id="post" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L1.8 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5z"/></svg><span id="postLabel"></span></a>
+    </div>
+  </div>
+  <div id="err"></div>
+  </main>
+  <script src="../lib/vendor/mp4-muxer@5.1.3/build/mp4-muxer.min.js"></script>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js", "three/addons/": "../lib/three/examples/jsm/" } }</script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 三重摆艺术 · 中文文案
+window.__KF_ZH__ = {
+  doc: '三重摆艺术',
+  back: '← 大厅',
+  post: '分享',
+  go: '开始画',
+  err: '3D 加载失败，请检查网络',
+  medium: '三重摆、画布',
+  artist: '你'
+};
+</script>
+<script>
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('triple-pendulum:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('triple-pendulum:' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    // ---- 4言語の辞書 ----
+    const DICT = {
+      ja: {
+        doc: '三重摆艺术', back: '← トップへ戻る', post: 'ポスト', go: '描く', err: '3Dを読み込めませんでした。通信を確かめてください',
+        adj: ['眠れる', '踊る', '震える', '燃える', '静かな', '迷える', '孤独な', '果てしない', '目覚める', '沈黙の'],
+        noun: ['宇宙', '迷宮', '記憶', '嵐', '夜明け', '渦', '螺旋', '心臓', '銀河', '夢'],
+        title: (a, n) => a + n,
+        medium: '三重振り子、キャンバス', artist: 'あなた',
+        share: (t) => `三重振り子で『${t}』を描きました #三重摆艺术ゲーム`,
+      },
+      ko: {
+        doc: '삼중 진자 아트', back: '← 처음으로', post: '포스트', go: '그리기', err: '3D를 불러오지 못했어요. 연결을 확인해 주세요',
+        adj: ['잠든', '춤추는', '떨리는', '불타는', '고요한', '길 잃은', '고독한', '끝없는', '깨어나는', '침묵의'],
+        noun: ['우주', '미궁', '기억', '폭풍', '새벽', '소용돌이', '나선', '심장', '은하', '꿈'],
+        title: (a, n) => a + ' ' + n,
+        medium: '삼중 진자, 캔버스', artist: '당신',
+        share: (t) => `삼중 진자로 『${t}』을(를) 그렸어요 #三重摆艺术ゲーム`,
+      },
+      en: {
+        doc: 'Triple Pendulum Art', back: '← Back to top', post: 'Post', go: 'Draw', err: 'Could not load 3D. Check your connection.',
+        adj: ['Sleeping', 'Dancing', 'Trembling', 'Burning', 'Quiet', 'Wandering', 'Lonely', 'Endless', 'Awakening', 'Silent'],
+        noun: ['Universe', 'Labyrinth', 'Memory', 'Storm', 'Dawn', 'Vortex', 'Spiral', 'Heart', 'Galaxy', 'Dream'],
+        title: (a, n) => `The ${a} ${n}`,
+        medium: 'Triple pendulum on canvas', artist: 'You',
+        share: (t) => `I painted "${t}" with a triple pendulum #三重摆艺术ゲーム`,
+      },
+      th: {
+        doc: 'ศิลปะลูกตุ้มสามชั้น', back: '← กลับหน้าแรก', post: 'โพสต์', go: 'วาด', err: 'โหลด 3D ไม่ได้ กรุณาตรวจสอบการเชื่อมต่อ',
+        adj: ['ที่หลับใหล', 'ที่ร่ายรำ', 'ที่สั่นไหว', 'ที่ลุกไหม้', 'ที่เงียบสงบ', 'ที่หลงทาง', 'ที่โดดเดี่ยว', 'ที่ไม่สิ้นสุด', 'ที่ตื่นขึ้น', 'แห่งความเงียบ'],
+        noun: ['จักรวาล', 'เขาวงกต', 'ความทรงจำ', 'พายุ', 'รุ่งอรุณ', 'วังวน', 'เกลียว', 'หัวใจ', 'ดาราจักร', 'ความฝัน'],
+        title: (a, n) => n + a, // タイ語は修飾語が後ろ
+        medium: 'ลูกตุ้มสามชั้นบนผืนผ้าใบ', artist: 'คุณ',
+        share: (t) => `วาดภาพ "${t}" ด้วยลูกตุ้มสามชั้น #三重摆艺术ゲーム`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (DICT[c]) return c; } return 'en'; };
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    const t = (k) => DICT[lang][k];
+    const langSel = document.getElementById('lang');
+    langSel.value = lang;
+    langSel.addEventListener('change', () => { lang = langSel.value; store.set('lang', lang); applyLang(); });
+
+    // ---- 音 ----
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const drawSoundBtn = () => {
+      soundBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${soundOn ? '<path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/>' : '<path d="M16 9l5 6M21 9l-5 6"/>'}</svg>`;
+    };
+    drawSoundBtn();
+    soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('sound', soundOn); drawSoundBtn(); if (!soundOn) hum(0, 0); });
+    let ac = null, osc = null, gain = null;
+    const ensureAudio = () => {
+      if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        osc = ac.createOscillator(); gain = ac.createGain();
+        osc.type = 'sine'; gain.gain.value = 0;
+        osc.connect(gain).connect(ac.destination); osc.start();
+      } catch { ac = null; }
+    };
+    const hum = (freq, vol) => {
+      if (!ac) return;
+      const now = ac.currentTime;
+      if (freq) osc.frequency.setTargetAtTime(freq, now, 0.05);
+      gain.gain.setTargetAtTime(soundOn ? vol : 0, now, 0.05);
+    };
+    const chime = () => {
+      if (!ac || !soundOn) return;
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const o = ac.createOscillator(), g = ac.createGain(), s = ac.currentTime + i * 0.12;
+        o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, s); g.gain.linearRampToValueAtTime(0.15, s + 0.02); g.gain.exponentialRampToValueAtTime(0.001, s + 1.2);
+        o.connect(g).connect(ac.destination); o.start(s); o.stop(s + 1.3);
+      });
+    };
+
+    // ---- 色と太さ ----
+    const COLORS = ['#ffffff', '#ff4d6d', '#ffa62b', '#ffe14d', '#4dff9a', '#4dd8ff', '#6a7bff', '#ff6ad5', 'rainbow'];
+    const WIDTHS = [3, 8, 16, 30];
+    let color = 'rainbow', width = 8;
+    const colorsEl = document.getElementById('colors'), widthsEl = document.getElementById('widths');
+    COLORS.forEach((c) => {
+      const b = document.createElement('button');
+      b.className = 'sw'; b.setAttribute('aria-label', c);
+      b.style.background = c === 'rainbow' ? 'conic-gradient(#ff4d6d,#ffe14d,#4dff9a,#4dd8ff,#6a7bff,#ff6ad5,#ff4d6d)' : c;
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); color = c; markTools(); });
+      b.dataset.v = c; colorsEl.appendChild(b);
+    });
+    WIDTHS.forEach((w) => {
+      const b = document.createElement('button');
+      b.className = 'wd'; b.setAttribute('aria-label', w);
+      const s = Math.max(4, Math.min(24, w * 0.8));
+      b.innerHTML = `<i style="width:${s}px;height:${s}px"></i>`;
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); width = w; markTools(); });
+      b.dataset.v = w; widthsEl.appendChild(b);
+    });
+    const markTools = () => {
+      for (const b of colorsEl.children) b.classList.toggle('on', b.dataset.v === color);
+      for (const b of widthsEl.children) {
+        b.classList.toggle('on', +b.dataset.v === width);
+        b.firstChild.style.background = color === 'rainbow' ? 'conic-gradient(#ff4d6d,#ffe14d,#4dff9a,#4dd8ff,#6a7bff,#ff6ad5,#ff4d6d)' : color;
+      }
+    };
+    markTools();
+
+    // ---- 三重振り子の物理（減衰なし・エネルギー補正つき） ----
+    const N = 3, G = 9.81, LEN = 1, SIM_SPEED = 1.7, DRAW_TIME = 7;
+    // キャンバスは画面の縦横比に合わせる（長い辺を 1000px）。振り子は短い辺に収まる長さ
+    let AW = 1000, AH = 1000, PIX = 150;
+    const PIVOT = { x: 500, y: 500 };
+    const START_POSE = [2.1, 2.9, -2.2];
+    let lastPose = store.get('pose', START_POSE); // 前回「描く」を押したときの玉の配置
+    let th = [...lastPose], om = [0, 0, 0], E0 = 0;
+
+    const accel = (q, w) => {
+      // Σ_j μij cos(qi-qj) aj = -Σ_j μij sin(qi-qj) wj² - μii g sin(qi) / L  （質量1・長さ同じ）
+      const M = [], b = [];
+      for (let i = 0; i < N; i++) {
+        M.push([]); let s = 0;
+        for (let j = 0; j < N; j++) {
+          const mu = N - Math.max(i, j);
+          M[i].push(mu * Math.cos(q[i] - q[j]));
+          s -= mu * Math.sin(q[i] - q[j]) * w[j] * w[j];
+        }
+        b.push(s - (N - i) * G / LEN * Math.sin(q[i]));
+      }
+      for (let c = 0; c < N; c++) {
+        let p = c; for (let r = c + 1; r < N; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+        [M[c], M[p]] = [M[p], M[c]]; [b[c], b[p]] = [b[p], b[c]];
+        for (let r = c + 1; r < N; r++) { const f = M[r][c] / M[c][c]; for (let k = c; k < N; k++) M[r][k] -= f * M[c][k]; b[r] -= f * b[c]; }
+      }
+      const a = [0, 0, 0];
+      for (let r = N - 1; r >= 0; r--) { let s = b[r]; for (let k = r + 1; k < N; k++) s -= M[r][k] * a[k]; a[r] = s / M[r][r]; }
+      return a;
+    };
+    const rk4 = (dt) => {
+      const add = (x, d, h) => x.map((v, i) => v + d[i] * h);
+      const k1q = om, k1w = accel(th, om);
+      const q2 = add(th, k1q, dt / 2), w2 = add(om, k1w, dt / 2), k2w = accel(q2, w2);
+      const q3 = add(th, w2, dt / 2), w3 = add(om, k2w, dt / 2), k3w = accel(q3, w3);
+      const q4 = add(th, w3, dt), w4 = add(om, k3w, dt), k4w = accel(q4, w4);
+      th = th.map((v, i) => v + dt / 6 * (k1q[i] + 2 * w2[i] + 2 * w3[i] + w4[i]));
+      om = om.map((v, i) => v + dt / 6 * (k1w[i] + 2 * k2w[i] + 2 * k3w[i] + k4w[i]));
+    };
+    const potential = (q) => { let y = 0, V = 0; for (let i = 0; i < N; i++) { y += LEN * Math.cos(q[i]); V -= G * y; } return V; };
+    const kinetic = (q, w) => { let vx = 0, vy = 0, T = 0; for (let i = 0; i < N; i++) { vx += LEN * Math.cos(q[i]) * w[i]; vy -= LEN * Math.sin(q[i]) * w[i]; T += (vx * vx + vy * vy) / 2; } return T; };
+    const fixEnergy = () => {
+      // 数値誤差でエネルギーがずれないよう、速さを少しだけ補正する
+      const T = kinetic(th, om), want = E0 - potential(th);
+      if (T > 1e-9 && want > 0) { const s = Math.sqrt(want / T); om = om.map((v) => v * s); }
+    };
+    const joints = () => {
+      const p = [{ ...PIVOT }]; let x = PIVOT.x, y = PIVOT.y;
+      for (let i = 0; i < N; i++) { x += PIX * Math.sin(th[i]); y += PIX * Math.cos(th[i]); p.push({ x, y }); }
+      return p;
+    };
+
+    // ---- 描画 ----
+    const view = document.getElementById('view'), vctx = view.getContext('2d');
+    const art = document.createElement('canvas'); art.width = AW; art.height = AH;
+    const actx = art.getContext('2d');
+    const BG = '#0b0b10';
+    const clearArt = () => { actx.fillStyle = BG; actx.fillRect(0, 0, AW, AH); };
+    clearArt();
+    const fit = () => {
+      const st = document.getElementById('stage').getBoundingClientRect();
+      const w = Math.floor(Math.max(120, st.width - 24)), h = Math.floor(Math.max(120, st.height));
+      const dpr = Math.min(2, devicePixelRatio || 1);
+      view.style.width = w + 'px'; view.style.height = h + 'px';
+      view.width = Math.round(w * dpr); view.height = Math.round(h * dpr);
+      if (state === 'ready') {
+        // 描き始める前だけ、キャンバスの形を画面に合わせ直す
+        const k = 1000 / Math.max(w, h);
+        AW = art.width = Math.round(w * k); AH = art.height = Math.round(h * k);
+        PIVOT.x = AW / 2; PIVOT.y = AH / 2; PIX = Math.min(AW, AH) * 0.15;
+        clearArt();
+      }
+    };
+
+    let state = 'ready', grab = -1, runT = 0, hue = 0, done = 0;
+    const timerBar = document.querySelector('#timer i');
+
+    const strokeStyle = () => color === 'rainbow' ? `hsl(${hue % 360},100%,62%)` : color;
+    const drawSegment = (pts) => {
+      if (pts.length < 2) return;
+      actx.lineCap = actx.lineJoin = 'round';
+      actx.strokeStyle = strokeStyle(); actx.lineWidth = width;
+      actx.beginPath(); actx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) actx.lineTo(pts[i].x, pts[i].y);
+      actx.stroke();
+    };
+
+    const render = (now) => {
+      const sx = view.width / AW, sy = view.height / AH; // 絵と同じ倍率で玉も描く
+      vctx.setTransform(1, 0, 0, 1, 0, 0);
+      vctx.drawImage(art, 0, 0, view.width, view.height);
+      if (state === 'gallery' || state === 'done') return;
+      vctx.setTransform(sx, 0, 0, sy, 0, 0);
+      drawPendulum(vctx);
+      if (state === 'ready' && !moved) {
+        // 玉が「つかんで動かせる」と誘うように脈打つ
+        const p = joints(), k = (now / 1000) % 1.2 / 1.2;
+        vctx.strokeStyle = `rgba(255,255,255,${0.7 * (1 - k)})`; vctx.lineWidth = 3;
+        for (let i = 1; i <= N; i++) { vctx.beginPath(); vctx.arc(p[i].x, p[i].y, 16 + 30 * k, 0, 7); vctx.stroke(); }
+      }
+    };
+    const drawPendulum = (vctx) => {
+      const p = joints();
+      vctx.strokeStyle = 'rgba(255,255,255,.55)'; vctx.lineWidth = 4; vctx.lineCap = 'round';
+      vctx.beginPath(); vctx.moveTo(p[0].x, p[0].y); for (let i = 1; i <= N; i++) vctx.lineTo(p[i].x, p[i].y); vctx.stroke();
+      vctx.fillStyle = '#888'; vctx.beginPath(); vctx.arc(p[0].x, p[0].y, 8, 0, 7); vctx.fill();
+      for (let i = 1; i <= N; i++) {
+        vctx.fillStyle = i === N ? strokeStyle() : '#fff';
+        vctx.beginPath(); vctx.arc(p[i].x, p[i].y, i === N ? 16 : 13, 0, 7); vctx.fill();
+      }
+    };
+
+    let last = performance.now();
+    const loop = (now) => {
+      const dtReal = Math.min(0.05, (now - last) / 1000); last = now;
+      if (state === 'run') {
+        runT += dtReal; hue += dtReal * 90;
+        const steps = 24, dt = dtReal * SIM_SPEED / steps, pts = [joints()[N]];
+        for (let s = 0; s < steps; s++) { rk4(dt); pts.push(joints()[N]); }
+        fixEnergy();
+        drawSegment(pts);
+        const v = Math.hypot(pts[steps].x - pts[0].x, pts[steps].y - pts[0].y) / Math.max(dtReal, 1e-3);
+        hum(160 + Math.min(900, v * 0.25), Math.min(0.08, 0.01 + v * 0.00003));
+        timerBar.style.transform = `scaleX(${Math.max(0, 1 - runT / DRAW_TIME)})`;
+        if (runT >= DRAW_TIME) finish();
+      }
+      if (state === 'done' && now - done > 900) showGallery();
+      render(now);
+      if ((state === 'run' || state === 'done') && video) videoFrame((s) => {
+        // 描いている所：絵と振り子をそのまま写す
+        const g = video.ctx, W = video.w, H = video.h;
+        g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(art, 0, 0, W, H);
+        if (state === 'run') { g.setTransform(W / AW, 0, 0, H / AH, 0, 0); drawPendulum(g); }
+      });
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+
+    // ---- 投稿用の動画（描く7秒＋美術館に飾られる所）。WebCodecs(H.264)＋mp4-muxer で MP4 にする ----
+    const VFPS = 30, MUSEUM_SEC = 3.5;
+    let video = null, shareFile = null, videoKey = 0;
+    const startVideo = async () => {
+      video = null; shareFile = null; markPost();
+      const key = ++videoKey;
+      if (!('VideoEncoder' in window) || !window.Mp4Muxer) return;
+      // 画面と同じ縦横比で、長い辺 1280px（偶数にそろえる）
+      const k = 1280 / Math.max(AW, AH), w = Math.round(AW * k / 2) * 2, h = Math.round(AH * k / 2) * 2;
+      let cfg = null;
+      for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42001f']) {
+        const c = { codec, width: w, height: h, bitrate: 6e6, framerate: VFPS };
+        try { if ((await VideoEncoder.isConfigSupported(c)).supported) { cfg = c; break; } } catch {}
+      }
+      if (!cfg || key !== videoKey) return;
+      const out = document.createElement('canvas'); out.width = w; out.height = h;
+      const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: 'avc', width: w, height: h, frameRate: VFPS }, fastStart: 'in-memory' });
+      const job = { key, w, h, out, ctx: out.getContext('2d'), muxer, i: 0, t0: performance.now(), museumAt: 0, failed: false };
+      job.enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: () => { job.failed = true; } });
+      job.enc.configure(cfg);
+      video = job;
+    };
+    // 表示の合間に呼ぶ。実際の時間に合わせて 30fps でコマを足す
+    const videoFrame = (draw) => {
+      const job = video;
+      if (!job || job.key !== videoKey || job.failed) return;
+      const t = (performance.now() - job.t0) / 1000;
+      if (t < job.i / VFPS) return;
+      draw();
+      const frame = new VideoFrame(job.out, { timestamp: Math.round(job.i * 1e6 / VFPS), duration: Math.round(1e6 / VFPS) });
+      job.enc.encode(frame, { keyFrame: job.i % 60 === 0 }); frame.close();
+      job.i++;
+      if (job.museumAt && t - job.museumAt >= MUSEUM_SEC) endVideo(job);
+    };
+    const endVideo = (job) => {
+      video = null;
+      (async () => {
+        await job.enc.flush(); job.enc.close(); job.muxer.finalize();
+        if (job.key !== videoKey || job.failed) return;
+        shareFile = new File([job.muxer.target.buffer], 'triple-pendulum.mp4', { type: 'video/mp4' });
+        markPost();
+      })().catch(() => {});
+    };
+    // 美術館の画面を、動画の大きさに合わせて切り抜いて写す
+    const museumFrame = (src) => {
+      const job = video;
+      if (!job) return;
+      if (!job.museumAt) job.museumAt = (performance.now() - job.t0) / 1000;
+      videoFrame(() => {
+        const g = job.ctx, sw = src.width, sh = src.height, s = Math.max(job.w / sw, job.h / sh);
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.drawImage(src, (job.w - sw * s) / 2, (job.h - sh * s) / 2, sw * s, sh * s);
+      });
+    };
+
+    // ---- つかんで離す ----
+    const toArt = (e) => { const r = view.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * AW, y: (e.clientY - r.top) / r.height * AH }; };
+    view.addEventListener('pointerdown', (e) => {
+      if (state !== 'ready') return;
+      e.preventDefault(); ensureAudio();
+      const m = toArt(e), p = joints();
+      let best = 1, bd = 1e9;
+      for (let i = 1; i <= N; i++) { const d = Math.hypot(p[i].x - m.x, p[i].y - m.y); if (d < bd) { bd = d; best = i; } }
+      grab = best; view.setPointerCapture(e.pointerId); view.style.cursor = 'grabbing';
+      moveGrab(m);
+    });
+    const moveGrab = (m) => {
+      const p = joints(), a = p[grab - 1];
+      th[grab - 1] = Math.atan2(m.x - a.x, m.y - a.y);
+    };
+    view.addEventListener('pointermove', (e) => { if (grab > 0) moveGrab(toArt(e)); });
+    let moved = false;
+    view.addEventListener('pointermove', () => { if (grab > 0) moved = true; });
+    const release = () => { grab = -1; view.style.cursor = 'grab'; };
+    view.addEventListener('pointerup', release);
+    view.addEventListener('pointercancel', release);
+    const goBtn = document.getElementById('go');
+    goBtn.addEventListener('click', () => {
+      if (state !== 'ready') return;
+      ensureAudio(); release();
+      lastPose = [...th]; store.set('pose', lastPose);
+      om = [0, 0, 0]; E0 = potential(th);
+      state = 'run'; runT = 0; goBtn.classList.add('hide');
+      startVideo();
+    });
+
+    // ---- 美術館（3D） ----
+    const gallery = document.getElementById('gallery'), gcv = document.getElementById('gcv');
+    // 描いた作品は縮小して端末に保存し、美術館の壁に並べる（新しい順）
+    const MAX_WORKS = 8;
+    let works = store.get('works', []).filter((w) => w && w.img);
+    const saveWorks = () => {
+      while (works.length) {
+        try { localStorage.setItem('triple-pendulum:works', JSON.stringify(works)); return; } catch { works.pop(); }
+      }
+    };
+    const titleOf = (w) => t('title')(t('adj')[w.a], t('noun')[w.n]);
+    const workTitle = () => titleOf(works[0]);
+    const SERIF = '"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif CJK JP","Noto Serif",serif';
+
+    const wrapText = (ctx, text, maxW) => {
+      // 英語・韓国語は単語ごと、区切りのない日本語・タイ語は1文字ずつ詰める
+      const lines = []; let cur = '';
+      for (const ch of (lang === 'en' || lang === 'ko') ? text.split(/(?<= )/) : [...text]) { if (ctx.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch.trim() ? ch : ''; } else cur += ch; }
+      if (cur) lines.push(cur); return lines;
+    };
+    // 作品の横に貼るキャプションプレート
+    const drawPlacard = (placard, w) => {
+      const g = placard.getContext('2d'), W = placard.width, H = placard.height, P = 70;
+      g.fillStyle = '#fbfaf6'; g.fillRect(0, 0, W, H);
+      g.textAlign = 'left'; g.textBaseline = 'top';
+      g.font = `500 44px system-ui,sans-serif`; g.fillStyle = '#8a8a8a';
+      g.fillText(`No.${w.no}`, P, 50);
+      let size = 124, lines;
+      do { g.font = `700 ${size}px ${SERIF}`; lines = wrapText(g, titleOf(w), W - 2 * P); size -= 4; } while (lines.length > 2 && size > 40);
+      g.fillStyle = '#1a1a1a';
+      lines.forEach((l, i) => g.fillText(l, P, 120 + i * (size + 14)));
+      g.font = `500 40px system-ui,sans-serif`; g.fillStyle = '#555';
+      const sub = wrapText(g, `${t('artist')}, ${w.y} / ${t('medium')}`, W - 2 * P);
+      sub.forEach((l, i) => g.fillText(l, P, H - 50 - (sub.length - i) * 50));
+    };
+
+    const museumP = (async () => {
+      const THREE = await import('three');
+      const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+      const renderer = new THREE.WebGLRenderer({ canvas: gcv, antialias: true });
+      renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+      renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0e0c0a);
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const env = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+      const ENV = 0.25;
+      const aniso = renderer.capabilities.getMaxAnisotropy();
+      const canvasTex = (c, rx = 1, ry = 1, srgb = true) => {
+        const tx = new THREE.CanvasTexture(c);
+        if (srgb) tx.colorSpace = THREE.SRGBColorSpace;
+        tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(rx, ry); tx.anisotropy = aniso; return tx;
+      };
+      const mk = (n, f) => { const c = document.createElement('canvas'); c.width = c.height = n; f(c.getContext('2d'), n); return c; };
+
+      // 漆喰の壁
+      const plaster = mk(512, (g, n) => {
+        g.fillStyle = '#e4ddcf'; g.fillRect(0, 0, n, n);
+        for (let i = 0; i < 9000; i++) { const v = Math.random() < 0.5 ? 255 : 0; g.fillStyle = `rgba(${v},${v},${v},${Math.random() * 0.025})`; g.fillRect(Math.random() * n, Math.random() * n, 2 + Math.random() * 3, 2 + Math.random() * 3); }
+      });
+      // 木の床（板と木目）
+      const woodPlanks = (g, n, bump) => {
+        const rows = 8, h = n / rows;
+        for (let r = 0; r < rows; r++) {
+          const off = (r % 2) * n / 2 + Math.random() * 80;
+          for (let k = -1; k < 2; k++) {
+            const x0 = off + k * n, l = 38 + Math.random() * 12, s = 42 + Math.random() * 10;
+            g.fillStyle = bump ? '#888' : `hsl(28,${s}%,${l * 0.62}%)`; g.fillRect(x0, r * h, n, h);
+            for (let i = 0; i < 40; i++) {
+              const y = r * h + Math.random() * h, a = Math.random() * 0.18;
+              g.strokeStyle = bump ? `rgba(0,0,0,${a})` : (Math.random() < 0.5 ? `rgba(40,20,8,${a})` : `rgba(255,220,170,${a * 0.6})`);
+              g.lineWidth = 1 + Math.random() * 2.5; g.beginPath(); g.moveTo(x0, y);
+              for (let x = 0; x <= n; x += 32) g.lineTo(x0 + x, y + Math.sin(x / 90 + i) * 3);
+              g.stroke();
+            }
+            g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(x0, r * h, 3, h);
+          }
+          g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, r * h, n, 3);
+        }
+      };
+      const wood = mk(1024, (g, n) => woodPlanks(g, n, false));
+      const std = (p) => new THREE.MeshStandardMaterial({ envMap: env, envMapIntensity: ENV, ...p });
+      const phys = (p) => new THREE.MeshPhysicalMaterial({ envMap: env, envMapIntensity: ENV, ...p });
+
+      const add = (geo, mat, x, y, z, o = {}) => {
+        const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+        if (o.rx) m.rotation.x = o.rx; if (o.ry) m.rotation.y = o.ry;
+        m.castShadow = o.cast !== false; m.receiveShadow = true; scene.add(m); return m;
+      };
+      // 部屋
+      add(new THREE.PlaneGeometry(40, 14), phys({ map: canvasTex(wood, 12, 5), roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.25 }), -8, 0, 7, { rx: -Math.PI / 2, cast: false });
+      add(new THREE.PlaneGeometry(40, 4.4), std({ map: canvasTex(plaster, 15, 1.6), roughness: 0.95 }), -8, 2.2, 0, { cast: false });
+      add(new THREE.PlaneGeometry(40, 14), std({ color: 0x2a2724, roughness: 1 }), -8, 4.4, 7, { rx: Math.PI / 2, cast: false });
+      add(new THREE.BoxGeometry(40, 0.14, 0.03), std({ color: 0xf2eee6, roughness: 0.6 }), -8, 0.07, 0.015);
+
+      // 額縁（作品ごとに1つ。左へ行くほど古い作品。作品の縦横比に合わせて作る）
+      const MAT = 0.13, F = 0.085, D = 0.07, CY = 1.6, SP = 2.8, L = 0.018;
+      const gold = phys({ color: 0xe0b45a, metalness: 1, roughness: 0.22, clearcoat: 0.3, envMapIntensity: 1.1 });
+      const goldDark = phys({ color: 0xa87d36, metalness: 1, roughness: 0.3, envMapIntensity: 1 });
+      const matMat = std({ color: 0xf3efe6, roughness: 0.92 });
+      const white = std({ color: 0xfbfaf6, roughness: 0.7 });
+      const GP = new THREE.BoxGeometry(0.42, 0.235, 0.008);
+      const blank = mk(4, (g, n) => { g.fillStyle = '#0b0b10'; g.fillRect(0, 0, n, n); });
+      const liveTex = canvasTex(art);
+      const artSize = (asp) => { const h = Math.min(1.0, 1.2 / asp); return [h * asp, h]; };
+      const slots = [];
+      for (let i = 0; i < MAX_WORKS; i++) {
+        const x = -i * SP, grp = new THREE.Group(), frame = new THREE.Group(); scene.add(grp); grp.add(frame);
+        const artMat = std({ map: canvasTex(blank), roughness: 0.55 });
+        const pc = document.createElement('canvas'); pc.width = 1024; pc.height = 572;
+        const plTex = canvasTex(pc);
+        const pl = new THREE.Mesh(GP, [white, white, white, white, std({ map: plTex, roughness: 0.7 }), white]);
+        pl.castShadow = pl.receiveShadow = true; grp.add(pl);
+        slots.push({ x, grp, frame, artMat, pc, plTex, pl, img: null, asp: 0 });
+      }
+      const buildFrame = (sl, asp) => {
+        if (sl.asp === asp) return; sl.asp = asp;
+        for (const m of [...sl.frame.children]) { m.geometry.dispose(); sl.frame.remove(m); }
+        const [aw, ah] = artSize(asp), ow = aw / 2 + MAT, oh = ah / 2 + MAT, x = sl.x;
+        const put = (geo, mat, px, py, pz, cast = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz); m.castShadow = cast; m.receiveShadow = true; sl.frame.add(m); };
+        put(new THREE.BoxGeometry(2 * ow + 2 * F, F, D), gold, x, CY + oh + F / 2, D / 2);
+        put(new THREE.BoxGeometry(2 * ow + 2 * F, F, D), gold, x, CY - oh - F / 2, D / 2);
+        put(new THREE.BoxGeometry(F, 2 * oh, D), gold, x - ow - F / 2, CY, D / 2);
+        put(new THREE.BoxGeometry(F, 2 * oh, D), gold, x + ow + F / 2, CY, D / 2);
+        put(new THREE.BoxGeometry(2 * ow, L, D * 0.8), goldDark, x, CY + oh - L / 2, D * 0.4);
+        put(new THREE.BoxGeometry(2 * ow, L, D * 0.8), goldDark, x, CY - oh + L / 2, D * 0.4);
+        put(new THREE.BoxGeometry(L, 2 * oh, D * 0.8), goldDark, x - ow + L / 2, CY, D * 0.4);
+        put(new THREE.BoxGeometry(L, 2 * oh, D * 0.8), goldDark, x + ow - L / 2, CY, D * 0.4);
+        put(new THREE.PlaneGeometry(2 * ow, 2 * oh), matMat, x, CY, 0.02, false);
+        put(new THREE.PlaneGeometry(aw, ah), sl.artMat, x, CY, 0.024, false);
+        sl.pl.position.set(x + ow + F + 0.3, 1.32, 0.004);
+      };
+      const setSlot = (i, w) => {
+        const sl = slots[i];
+        sl.grp.visible = !!w; if (!w) return;
+        buildFrame(sl, w.asp || 1);
+        if (i === 0) { liveTex.dispose(); sl.artMat.map = liveTex; liveTex.needsUpdate = true; } // キャンバスの大きさが変わることがあるので作り直す
+        else if (sl.img !== w.img) {
+          sl.img = w.img;
+          const im = new Image(), tx = new THREE.Texture(im);
+          tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = aniso;
+          im.onload = () => { tx.needsUpdate = true; }; im.src = w.img;
+          sl.artMat.map = tx;
+        }
+        drawPlacard(sl.pc, w); sl.plTex.needsUpdate = true;
+      };
+      // 最初の表示で固まらないよう、質感を先に用意しておく
+      setSlot(0, { asp: 1, a: 0, n: 0, no: 1, y: 2026 });
+
+      // 柵（真ちゅうのポールと赤いロープ）
+      const brass = phys({ color: 0xd2ab55, metalness: 1, roughness: 0.18, clearcoat: 0.4, envMapIntensity: 1 });
+      const SZ = 0.95, ropeMat = phys({ color: 0x6e0c16, roughness: 0.8, sheen: 1, sheenColor: new THREE.Color(0xff5070), sheenRoughness: 0.5 });
+      for (let k = 0; k <= MAX_WORKS; k++) {
+        const x = SP / 2 - k * SP;
+        add(new THREE.CylinderGeometry(0.17, 0.19, 0.035, 48), brass, x, 0.0175, SZ);
+        add(new THREE.CylinderGeometry(0.022, 0.026, 0.92, 32), brass, x, 0.48, SZ);
+        add(new THREE.SphereGeometry(0.045, 32, 16), brass, x, 0.96, SZ);
+      }
+      const H = SP / 2, rope = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-H, 0.92, 0), new THREE.Vector3(-H * 0.5, 0.76, 0), new THREE.Vector3(0, 0.72, 0), new THREE.Vector3(H * 0.5, 0.76, 0), new THREE.Vector3(H, 0.92, 0)]), 80, 0.022, 16);
+      for (let i = 0; i < MAX_WORKS; i++) add(rope, ropeMat, -i * SP, 0, SZ);
+
+      // 照明（天井のスポット）
+      scene.add(new THREE.HemisphereLight(0xfff3e0, 0x3a2818, 0.35));
+      const spotAt = (x, y, z, tx, ty, tz, inten, ang, shadow) => {
+        const s = new THREE.SpotLight(0xffeccc, inten, 0, ang, 0.6, 2);
+        s.position.set(x, y, z); s.target.position.set(tx, ty, tz); scene.add(s, s.target);
+        if (shadow) { s.castShadow = true; s.shadow.mapSize.set(2048, 2048); s.shadow.bias = -0.0004; s.shadow.radius = 4; }
+        if (!s.castShadow) { const can = add(new THREE.CylinderGeometry(0.06, 0.08, 0.22, 24), std({ color: 0x151515, metalness: 0.6, roughness: 0.4 }), x, y, z, { cast: false });
+        can.lookAt(tx, ty, tz); can.rotateX(Math.PI / 2); }
+        return s;
+      };
+      // 作品ごとのスポット。見ている作品だけ、影を落とすスポットに置きかえる
+      const SPOT = 70;
+      const spots = slots.map((sl) => spotAt(sl.x, 4.25, 1.9, sl.x + 0.2, CY - 0.15, 0, SPOT, 0.42, false));
+      const keySpot = spotAt(0, 4.25, 1.9, 0.2, CY - 0.15, 0, SPOT, 0.42, true);
+      const floorSpot = spotAt(0, 4.25, 4.5, 0, 0, 1.6, 30, 0.9, true);
+      const focusLight = (x, i) => {
+        keySpot.position.x = x; keySpot.target.position.x = x + 0.2;
+        floorSpot.position.x = x; floorSpot.target.position.x = x;
+        spots.forEach((s, k) => { s.intensity = k === i ? 0 : SPOT; });
+      };
+      add(new THREE.BoxGeometry(30, 0.04, 0.06), std({ color: 0x151515, roughness: 0.5 }), -8, 4.37, 1.9, { cast: false });
+      add(new THREE.BoxGeometry(30, 0.04, 0.06), std({ color: 0x151515, roughness: 0.5 }), -8, 4.37, 4.5, { cast: false });
+
+      // カメラ（少しだけ動かせる）
+      const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 50);
+      const target = new THREE.Vector3(0.24, 1.3, 0);
+      let yaw = 0, pitch = 0, yawT = 0, pitchT = 0, intro = 0, drag = null, t0 = 0, cur = 0, camX = 0, count = 1;
+      const baseDist = () => {
+        const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+        return Math.max(1.3 / tan, 1.15 / (tan * camera.aspect)) + 0.4;
+      };
+      const resize = () => {
+        renderer.setSize(innerWidth, innerHeight, false);
+        camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+      };
+      const place = (now) => {
+        const sway = Math.sin(now / 4000) * 0.04;
+        yaw += (yawT + sway - yaw) * 0.08; pitch += (pitchT - pitch) * 0.08;
+        const k = 1 - Math.pow(1 - Math.min(1, intro), 3);
+        const d = baseDist() * (1.35 - 0.35 * k);
+        camX += (-cur * SP - camX) * 0.06; target.x = camX + 0.24;
+        const near = Math.round(-camX / SP);
+        if (near !== focusLight.at) { focusLight.at = near; focusLight(-near * SP, near); }
+        camera.position.set(target.x + d * Math.sin(yaw) * Math.cos(pitch), target.y + 0.1 + d * Math.sin(pitch), d * Math.cos(yaw) * Math.cos(pitch));
+        camera.lookAt(target);
+      };
+      gcv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw: yawT, pitch: pitchT }; gcv.setPointerCapture(e.pointerId); gcv.style.cursor = 'grabbing'; });
+      gcv.addEventListener('pointermove', (e) => {
+        if (!drag) return;
+        yawT = THREE.MathUtils.clamp(drag.yaw - (e.clientX - drag.x) * 0.004, -0.38, 0.38);
+        pitchT = THREE.MathUtils.clamp(drag.pitch + (e.clientY - drag.y) * 0.002, -0.06, 0.18);
+      });
+      const end = () => { drag = null; gcv.style.cursor = 'grab'; };
+      gcv.addEventListener('pointerup', end); gcv.addEventListener('pointercancel', end);
+      addEventListener('resize', resize); resize(); place(0);
+      try { await renderer.compileAsync(scene, camera); } catch { renderer.compile(scene, camera); }
+
+      return {
+        show(list) {
+          count = list.length; cur = 0; camX = 0; focusLight.at = -1;
+          slots.forEach((sl, i) => setSlot(i, list[i]));
+          yaw = yawT = 0.22; pitch = pitchT = 0.05; intro = 0; t0 = performance.now();
+          resize();
+          renderer.setAnimationLoop((now) => { intro = (now - t0) / 2600; yawT *= drag ? 1 : 0.995; place(now); renderer.render(scene, camera); museumFrame(gcv); });
+        },
+        refresh(list) { slots.forEach((sl, i) => list[i] && (drawPlacard(sl.pc, list[i]), sl.plTex.needsUpdate = true)); },
+        go(dir) { cur = Math.max(0, Math.min(count - 1, cur + dir)); yawT = 0; return cur; },
+        hide() { renderer.setAnimationLoop(null); },
+        snapshot: () => new Promise((res) => { renderer.render(scene, camera); gcv.toBlob(res, 'image/png'); }),
+      };
+    })();
+    museumP.catch(() => {});
+
+    const finish = () => {
+      state = 'done'; done = performance.now(); hum(0, 0);
+      const small = document.createElement('canvas'), k = 640 / Math.max(AW, AH);
+      small.width = Math.round(AW * k); small.height = Math.round(AH * k);
+      small.getContext('2d').drawImage(art, 0, 0, small.width, small.height);
+      works.unshift({ img: small.toDataURL('image/jpeg', 0.85), asp: AW / AH, a: Math.floor(Math.random() * 10), n: Math.floor(Math.random() * 10), no: (works[0]?.no || 0) + 1, y: new Date().getFullYear() });
+      works = works.slice(0, MAX_WORKS); saveWorks();
+    };
+    const errEl = document.getElementById('err');
+    const showGallery = () => {
+      state = 'gallery';
+      updatePost();
+      museumP.then((m) => {
+        m.show(works); navArrows(0);
+        gallery.classList.add('show');
+        requestAnimationFrame(() => requestAnimationFrame(() => gallery.classList.add('vis')));
+        chime();
+      }, () => { errEl.textContent = t('err'); errEl.style.display = 'block'; gallery.classList.add('show', 'vis'); });
+    };
+
+    // 前の作品・次の作品へ移る矢印
+    const prevBtn = document.getElementById('prev'), nextBtn = document.getElementById('next');
+    const navArrows = (c) => { prevBtn.classList.toggle('off', c >= works.length - 1); nextBtn.classList.toggle('off', c <= 0); };
+    prevBtn.addEventListener('click', () => museumP.then((m) => navArrows(m.go(1))));
+    nextBtn.addEventListener('click', () => museumP.then((m) => navArrows(m.go(-1))));
+
+    // ---- 共有 ----
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/triple-pendulum/';
+    const postA = document.getElementById('post');
+    if (matchMedia('(pointer: coarse)').matches) { postA.removeAttribute('target'); postA.removeAttribute('rel'); }
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    // 動画ができるまでは薄く表示する
+    const markPost = () => postA.classList.toggle('wait', !shareFile && 'VideoEncoder' in window && !!window.Mp4Muxer);
+    postA.addEventListener('click', (e) => {
+      // スマホは必ず共有メニューを開く（動画ができていれば動画つき、まだなら文とURLだけ）
+      if (coarse && navigator.share) {
+        e.preventDefault();
+        const text = `${t('share')(workTitle())}\n${SHARE_URL}`;
+        const data = shareFile && navigator.canShare?.({ files: [shareFile] }) ? { files: [shareFile], text } : { text };
+        navigator.share(data).catch(() => {});
+        return;
+      }
+      // PCは動画を保存してから投稿画面を開く
+      if (!coarse && shareFile) {
+        const d = document.createElement('a');
+        d.href = URL.createObjectURL(shareFile); d.download = shareFile.name;
+        document.body.appendChild(d); d.click(); d.remove();
+        setTimeout(() => URL.revokeObjectURL(d.href), 10000);
+      }
+    });
+    const updatePost = () => {
+      postA.href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(workTitle()))}&url=${encodeURIComponent(SHARE_URL)}`;
+    };
+    document.getElementById('save').addEventListener('click', () => {
+      museumP.then((m) => m.snapshot()).then((b) => {
+        if (!b) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = 'triple-pendulum.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      });
+    });
+    document.getElementById('retry').addEventListener('click', () => {
+      gallery.classList.remove('vis');
+      setTimeout(() => { gallery.classList.remove('show'); museumP.then((m) => m.hide()); }, 400);
+      errEl.style.display = 'none';
+      videoKey++; video = null; shareFile = null;
+      clearArt(); th = [...lastPose]; om = [0, 0, 0]; hue = 0;
+      timerBar.style.transform = 'scaleX(1)';
+      goBtn.classList.remove('hide');
+      state = 'ready';
+      fit();
+    });
+
+    const applyLang = () => {
+      document.documentElement.lang = lang;
+      document.title = t('doc');
+      document.getElementById('back').textContent = t('back');
+      document.getElementById('postLabel').textContent = t('post');
+      document.getElementById('goLabel').textContent = t('go');
+      if (state === 'gallery') { updatePost(); museumP.then((m) => m.refresh(works), () => { errEl.textContent = t('err'); }); }
+    };
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+    addEventListener('resize', fit);
+    fit();
+  </script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

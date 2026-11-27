@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>育毛模拟器 · LiteGame</title>
+  <meta name="description" content="给光头种头发，再用剃刀刮回去，随便折腾。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="育毛模拟器 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/ikumou-simulator/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/ikumou-simulator/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #e9f1f5; color: #2f3b44; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom)); box-sizing: border-box;
+    }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; }
+    header a { color: #2f3b44; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 8px; }
+    .pill { height: 34px; min-width: 34px; border: none; border-radius: 17px; background: #fff; color: #2f3b44;
+      font: inherit; font-size: 15px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    #stage { flex: 1; position: relative; min-height: 0; }
+    #stage canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+    #msg { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    .bar { display: flex; justify-content: center; gap: 10px; padding: 10px 12px 0; flex-wrap: wrap; }
+    .tool { height: 52px; min-width: 104px; border: 3px solid transparent; border-radius: 26px; background: #fff;
+      font: inherit; font-size: 17px; font-weight: bold; color: #2f3b44; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tool.on { border-color: #2f3b44; }
+    .tool svg { width: 26px; height: 26px; }
+    .sub { height: 44px; padding: 0 16px; border-radius: 22px; background: #2f3b44; color: #fff; border: none;
+      font: inherit; font-size: 15px; cursor: pointer; text-decoration: none; display: flex; align-items: center; }
+    #cutBar { align-items: center; }
+    #cutBar[hidden] { display: flex; visibility: hidden; }
+    #cut { width: min(220px, 55vw); accent-color: #2f3b44; touch-action: auto; }
+    .sub.light { background: #fff; color: #2f3b44; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">育毛模拟器</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill" aria-label="sound"></button>
+    </div>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><div id="msg"></div></div>
+  <div class="bar">
+    <button class="tool on" data-tool="grow"><svg viewBox="0 0 26 26"><path d="M13 23 V9 M13 14 C8 13 6 9 6 5 C10 6 13 9 13 14 M13 11 C18 10 20 6 20 3 C16 4 13 7 13 11" fill="#7cc36b" stroke="#3d7a32" stroke-width="2" stroke-linejoin="round"/></svg><span id="tGrow"></span></button>
+    <button class="tool" data-tool="shave"><svg viewBox="0 0 26 26"><rect x="3" y="4" width="20" height="7" rx="2" fill="#c9d3da" stroke="#2f3b44" stroke-width="2"/><rect x="11" y="11" width="4" height="12" rx="2" fill="#2f3b44"/></svg><span id="tShave"></span></button>
+  </div>
+  <div class="bar" id="cutBar" hidden>
+    <svg viewBox="0 0 26 26" width="26" height="26"><rect x="2" y="20" width="22" height="4" rx="2" fill="#f2c6a0"/><path d="M7 20v-3M11 20v-3M15 20v-3M19 20v-3" stroke="#2a2018" stroke-width="2"/></svg>
+    <input id="cut" type="range" min="0" max="0.9" step="0.01" value="0">
+    <svg viewBox="0 0 26 26" width="26" height="26"><rect x="2" y="20" width="22" height="4" rx="2" fill="#f2c6a0"/><path d="M7 20V4M11 20V4M15 20V4M19 20V4" stroke="#2a2018" stroke-width="2"/></svg>
+  </div>
+  <div class="bar">
+    <button id="reset" class="sub light"></button>
+    <a id="post" class="sub" href="#"></a>
+  </div>
+
+  </main>
+  <script type="importmap">{ "imports": { "three": "../lib/vendor/three@0.170.0/build/three.module.js" } }</script>
+  <script>
+    window.__loadFail = setTimeout(() => {
+      const m = document.getElementById('msg');
+      m.style.display = 'flex';
+      m.textContent = navigator.language.startsWith('ja') ? '読み込めませんでした。通信状況を確認して再読み込みしてください。' : 'Failed to load. Please check your connection and reload.';
+    }, 8000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 育毛模拟器 · 中文文案
+window.__KF_ZH__ = {
+  title: '育毛模拟器',
+  back: '← 大厅',
+  grow: '生发',
+  shave: '剃刀',
+  reset: '重置',
+  post: '分享到 X',
+  sound: '音效开关',
+  postText: '光头随便长头发、随便剃 #LiteGame'
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    clearTimeout(window.__loadFail);
+
+    // ---------- 保存・言語・音 ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('ikumou-simulator:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('ikumou-simulator:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const L = {
+      ja: { title: '育毛模拟器', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        grow: '育毛', shave: 'カミソリ', reset: 'リセット', post: 'Xにポスト', sound: '音のオン/オフ',
+        postText: 'ハゲ頭に毛を生やしたり剃ったりし放題 #育毛模拟器' },
+      en: { title: 'Hair Growth Simulator', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        grow: 'Grow', shave: 'Razor', reset: 'Reset', post: 'Post on X', sound: 'Sound on/off',
+        postText: 'Grow and shave hair on a bald head as much as you like #HairGrowthSimulator' },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const $ = id => document.getElementById(id);
+    const URL_ = new URL('./', location.href).href;
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+      $('sound').setAttribute('aria-label', t('sound'));
+      $('tGrow').textContent = t('grow'); $('tShave').textContent = t('shave');
+      $('reset').textContent = t('reset'); $('post').textContent = t('post');
+      $('post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(t('postText')) + '&url=' + encodeURIComponent(URL_);
+      if (!coarse) { $('post').target = '_blank'; $('post').rel = 'noopener'; }
+    }
+    $('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+
+    let soundOn = store.get('sound', true);
+    const spk = on => `<svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 7h3l4-3v12l-4-3H3z" fill="#2f3b44"/>` +
+      (on ? `<path d="M13 7a4 4 0 0 1 0 6M15 5a7 7 0 0 1 0 10" stroke="#2f3b44" stroke-width="1.8" fill="none" stroke-linecap="round"/>`
+          : `<path d="M13 7l5 6M18 7l-5 6" stroke="#2f3b44" stroke-width="1.8" stroke-linecap="round"/>`) + `</svg>`;
+    const updSound = () => { $('sound').innerHTML = spk(soundOn); };
+    $('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+    updSound();
+    let ac = null, lastSnd = 0;
+    function sfx(kind) {
+      if (!soundOn) return;
+      const now = performance.now();
+      if (now - lastSnd < (kind === 'grow' ? 140 : 90)) return;
+      lastSnd = now;
+      try {
+        ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+        const tt = ac.currentTime, g = ac.createGain(); g.connect(ac.destination);
+        if (kind === 'grow') {
+          const o = ac.createOscillator(); o.type = 'sine';
+          o.frequency.setValueAtTime(300 + Math.random() * 80, tt);
+          o.frequency.exponentialRampToValueAtTime(900, tt + 0.12);
+          g.gain.setValueAtTime(0.12, tt); g.gain.exponentialRampToValueAtTime(0.001, tt + 0.14);
+          o.connect(g); o.start(tt); o.stop(tt + 0.15);
+        } else {
+          const n = ac.sampleRate * 0.08, b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+          for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+          const s = ac.createBufferSource(); s.buffer = b;
+          const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 2500;
+          g.gain.value = 0.25; s.connect(f); f.connect(g); s.start(tt);
+        }
+      } catch {}
+    }
+
+    // ---------- 3D ----------
+    const stage = $('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    stage.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe9f1f5);
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.6));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(2, 3, 4); scene.add(sun);
+
+    const head = new THREE.Group(); scene.add(head);
+    const skin = new THREE.MeshStandardMaterial({ color: 0xf2c6a0, roughness: 0.45 });
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), skin);
+    head.add(headMesh);
+    const add = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); head.add(m); return m; };
+    const ball = new THREE.SphereGeometry(1, 32, 24);
+    add(ball, skin, 0, -0.12, 0.98, 0.14, 0.16, 0.14);            // 鼻
+    add(ball, skin, -1.0, -0.08, 0, 0.12, 0.22, 0.16);            // 耳
+    add(ball, skin, 1.0, -0.08, 0, 0.12, 0.22, 0.16);
+    const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+    const black = new THREE.MeshStandardMaterial({ color: 0x1d1d1d, roughness: 0.3 });
+    const EYES = [[-0.3, 0.12], [0.3, 0.12]];
+    const pupils = [];
+    for (const [x, y] of EYES) {
+      const z = Math.sqrt(1 - x * x - y * y);
+      add(ball, white, x, y, z - 0.04, 0.13, 0.13, 0.08);
+      const c = new THREE.Vector3(x, y, z - 0.04);
+      pupils.push({ c, m: add(ball, black, x, y - 0.01, z + 0.03, 0.06, 0.06, 0.04) });
+    }
+    // 首と服
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, 0.8, 32), skin); neck.position.y = -1.05; scene.add(neck);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshStandardMaterial({ color: 0x5b7fa6, roughness: 0.8 }));
+    body.scale.set(1.7, 0.9, 0.9); body.position.y = -2.15; scene.add(body);
+
+    // 口
+    function mouthCurve(k) {
+      const pts = [];
+      for (let i = 0; i <= 8; i++) {
+        const x = -0.26 + 0.52 * i / 8, u = x / 0.26;
+        const y = -0.45 + k * (1 - u * u);
+        pts.push(new THREE.Vector3(x, y, Math.sqrt(1 - x * x - y * y) + 0.005));
+      }
+      return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 32, 0.025, 8, false);
+    }
+    const mouthGeo = mouthCurve(0);
+    const mouth = new THREE.Mesh(mouthGeo, new THREE.MeshStandardMaterial({ color: 0x7a3a2e }));
+    head.add(mouth);
+    // 眉
+    function browGeo(k, side) {
+      const pts = [];
+      for (let i = 0; i <= 4; i++) {
+        const s = i / 4, x = side * (0.16 + 0.26 * s), y = 0.34 + k * (s - 0.5);
+        pts.push(new THREE.Vector3(x, y, Math.sqrt(1 - x * x - y * y) + 0.005));
+      }
+      return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, 0.022, 6, false);
+    }
+    [-1, 1].forEach(side => head.add(new THREE.Mesh(browGeo(0, side), black)));
+
+    // ---------- 毛：1本ずつモーフ（毛根 ⇔ 長いうねり毛） ----------
+    const SEG = 8, RAD = 4, LONG = 1.1;
+    function strand(len, bend) {
+      const pos = [], c = new THREE.Vector3(0, 0, 0);
+      const center = [];
+      let ang = 0;
+      for (let i = 0; i <= SEG; i++) {
+        center.push(c.clone());
+        ang = bend * (i / SEG) * 1.6;
+        c.add(new THREE.Vector3(0, Math.cos(ang), Math.sin(ang)).multiplyScalar(len / SEG));
+      }
+      for (let i = 0; i <= SEG; i++) {
+        const a = bend * (i / SEG) * 1.6;
+        const nY = new THREE.Vector3(0, -Math.sin(a), Math.cos(a)); // 断面の向き
+        const r = (len > 0.01 ? 0.0075 : 0.0) * (1 - 0.8 * i / SEG);
+        for (let j = 0; j < RAD; j++) {
+          const th = j / RAD * Math.PI * 2;
+          const p = center[i].clone().addScaledVector(new THREE.Vector3(1, 0, 0), Math.cos(th) * r).addScaledVector(nY, Math.sin(th) * r);
+          pos.push(p.x, p.y - (len > 0.01 ? 0.02 : 0.03), p.z);
+        }
+      }
+      return new THREE.Float32BufferAttribute(pos, 3);
+    }
+    const hairGeo = new THREE.BufferGeometry();
+    hairGeo.setAttribute('position', strand(0, 0));
+    const idx = [];
+    for (let i = 0; i < SEG; i++) for (let j = 0; j < RAD; j++) {
+      const a = i * RAD + j, b = i * RAD + (j + 1) % RAD, c2 = a + RAD, d = b + RAD;
+      idx.push(a, c2, b, b, c2, d);
+    }
+    hairGeo.setIndex(idx);
+    hairGeo.morphAttributes.position = [strand(LONG, 1)];
+    const longGeo = new THREE.BufferGeometry(); longGeo.setAttribute('position', strand(LONG, 1)); longGeo.setIndex(idx); longGeo.computeVertexNormals();
+    hairGeo.setAttribute('normal', longGeo.attributes.normal);
+
+    // 毛根を頭に並べる（目と口はよける）
+    const roots = [];
+    const N = 13000, GA = Math.PI * (3 - Math.sqrt(5));
+    const avoid = [[-0.3, 0.12, 0.17], [0.3, 0.12, 0.17], [0, -0.45, 0.12], [0, -0.12, 0.16], [-0.29, 0.34, 0.07], [0.29, 0.34, 0.07]];
+    for (let i = 0; i < N; i++) {
+      const y = 1 - 2 * (i + 0.5) / N, r = Math.sqrt(1 - y * y), th = GA * i;
+      const p = new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r);
+      if (y < -0.72) continue;
+      if (p.z > 0 && avoid.some(([ax, ay, ar]) => Math.hypot(p.x - ax, p.y - ay) < ar)) continue;
+      if (Math.abs(p.x) > 0.93 && Math.abs(p.y + 0.08) < 0.24) continue; // 耳
+      roots.push(p);
+    }
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 0.7 });
+    // 本数が多いと伸び具合のテクスチャが縦に長くなりすぎるので、4000本ずつに分ける
+    const CH = 4000, hairs = [];
+    for (let s = 0; s < roots.length; s += CH) {
+      const m = new THREE.InstancedMesh(hairGeo, hairMat, Math.min(CH, roots.length - s));
+      m.frustumCulled = false; hairs.push(m); head.add(m);
+    }
+    const hm = i => hairs[Math.floor(i / CH)];
+    const m4 = new THREE.Matrix4(), up = new THREE.Vector3(), zz = new THREE.Vector3(), xx = new THREE.Vector3();
+    roots.forEach((p, i) => {
+      up.copy(p).normalize();
+      zz.set(0, -1, 0).addScaledVector(up, up.y);          // 下向き（重力方向）を接平面へ
+      if (zz.lengthSq() < 0.01) zz.set(0, 0, -1).addScaledVector(up, -up.z);
+      zz.normalize(); xx.crossVectors(up, zz);
+      m4.makeBasis(xx, up, zz).setPosition(p.clone().multiplyScalar(0.995));
+      const s = 0.85 + Math.random() * 0.3; m4.scale(new THREE.Vector3(1, s, s));
+      hm(i).setMatrixAt(i % CH, m4);
+    });
+    const vals = new Float32Array(roots.length);
+    const dummy = { morphTargetInfluences: [0] };
+    const setV = (i, v) => { vals[i] = v; dummy.morphTargetInfluences[0] = v; hm(i).setMorphAt(i % CH, dummy); };
+    const flush = () => hairs.forEach(m => { m.morphTexture.needsUpdate = true; });
+    roots.forEach((_, i) => setV(i, 0));
+
+    // ---------- 画面サイズ ----------
+    // 拡大縮小：zoom 倍に寄り、tx/ty で見る場所をずらす
+    let zoom = 1, tx = 0, ty = 0, baseDist = 5, tf = 1;
+    const camD = z => 1.3 + (baseDist - 1.3) / z;  // 頭の表面からの距離で寄る
+    function placeCam() {
+      const lim = 1.4 * Math.max(0, 1 - 1 / zoom);
+      tx = THREE.MathUtils.clamp(tx, -lim, lim); ty = THREE.MathUtils.clamp(ty, -lim, lim);
+      camera.position.set(tx, ty + 0.05, camD(zoom)); camera.lookAt(tx, ty - 0.15, 0);
+    }
+    function zoomAt(cx, cy, z) {  // 画面上の (cx, cy) の位置を動かさずに寄る
+      const r = renderer.domElement.getBoundingClientRect();
+      const nx = (cx - r.left) / r.width * 2 - 1, ny = -((cy - r.top) / r.height) * 2 + 1;
+      const z2 = THREE.MathUtils.clamp(z, 0.35, 4), d1 = camD(zoom), d2 = camD(z2);
+      tx += nx * tf * camera.aspect * (d1 - d2); ty += ny * tf * (d1 - d2);
+      zoom = z2; placeCam();
+    }
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      tf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      baseDist = Math.max(1.45 / tf, 1.3 / (tf * camera.aspect));
+      placeCam();
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(stage); resize();
+
+    // ---------- 操作 ----------
+    let tool = 'grow';
+    document.querySelectorAll('.tool').forEach(b => b.onclick = () => {
+      tool = b.dataset.tool;
+      document.querySelectorAll('.tool').forEach(x => x.classList.toggle('on', x === b));
+      $('cutBar').hidden = tool !== 'shave';
+    });
+    $('reset').onclick = () => { roots.forEach((_, i) => setV(i, 0)); flush(); };
+
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    const pointers = new Map();
+    let brush = null, rot = null, rotY = 0, rotX = 0;
+    function hitAt(e) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const h = ray.intersectObject(headMesh)[0];
+      return h ? head.worldToLocal(h.point.clone()) : null;
+    }
+    const cv = renderer.domElement;
+    cv.addEventListener('pointerdown', e => {
+      cv.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size >= 2) { brush = null; rot = true; return; }
+      const p = hitAt(e);
+      if (p) brush = { id: e.pointerId, e, p, last: p.clone() }; else rot = true;
+      if (p) applyBrush(p, 0.05);
+    });
+    cv.addEventListener('pointermove', e => {
+      const prev = pointers.get(e.pointerId);
+      if (!prev) return;
+      const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size >= 2) {  // 2本指：ピンチで拡大縮小、動かすと回転
+        const [a, b] = [...pointers.values()], o = a === pointers.get(e.pointerId) ? b : a;
+        const d0 = Math.hypot(prev.x - o.x, prev.y - o.y), d1 = Math.hypot(e.clientX - o.x, e.clientY - o.y);
+        if (d0 > 10) zoomAt((e.clientX + o.x) / 2, (e.clientY + o.y) / 2, zoom * d1 / d0);
+        rotY += dx * 0.005; rotX = THREE.MathUtils.clamp(rotX + dy * 0.003, -0.5, 0.6);
+      } else if (rot) {
+        rotY += dx * 0.01; rotX = THREE.MathUtils.clamp(rotX + dy * 0.006, -0.5, 0.6);
+      } else if (brush && brush.id === e.pointerId) {
+        brush.e = e;
+        const p = hitAt(e);
+        if (p) {  // 素早くなでても途切れないよう、前回位置との間を補間
+          const steps = Math.ceil(p.distanceTo(brush.last) / 0.05);
+          for (let s = 1; s <= steps; s++) applyBrush(brush.last.clone().lerp(p, s / steps).normalize(), 0.04);
+          brush.last = p; brush.p = p;
+        } else brush.p = null;
+      }
+    });
+    // 黒目はポインタの位置を向く
+    const look = { x: 0, y: 0, on: false };
+    addEventListener('pointermove', e => { look.x = e.clientX; look.y = e.clientY; look.on = true; });
+    addEventListener('pointerdown', e => { look.x = e.clientX; look.y = e.clientY; look.on = true; });
+    const eyePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -1.6), lookW = new THREE.Vector3(), dir = new THREE.Vector3();
+    function updateEyes() {
+      if (look.on) {
+        const r = cv.getBoundingClientRect();
+        ndc.set((look.x - r.left) / r.width * 2 - 1, -((look.y - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, camera);
+        if (!ray.ray.intersectPlane(eyePlane, lookW)) lookW.set(0, 0, 5);
+      } else lookW.set(0, 0, 5);
+      const loc = head.worldToLocal(lookW.clone());
+      for (const { c, m } of pupils) {
+        dir.subVectors(loc, c); dir.z = Math.max(dir.z, 0.6); dir.normalize();
+        m.position.set(c.x + dir.x * 0.075, c.y + dir.y * 0.075, c.z + dir.z * 0.075);
+        m.lookAt(lookW);
+      }
+    }
+    cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+    const up_ = e => { pointers.delete(e.pointerId); if (pointers.size === 0) { brush = null; rot = null; } };
+    cv.addEventListener('pointerup', up_); cv.addEventListener('pointercancel', up_);
+
+    const BR0 = 0.15;
+    let cut = 0;
+    $('cut').oninput = e => { cut = +e.target.value; };
+    function applyBrush(p, amt) {
+      let changed = false;
+      const BR = BR0 / Math.sqrt(zoom);  // 寄るほど細かく塗れる
+      for (let i = 0; i < roots.length; i++) {
+        const d = roots[i].distanceTo(p);
+        if (d > BR) continue;
+        const f = 1 - d / BR;
+        if (tool === 'grow') {
+          const v = Math.min(1, vals[i] + amt * (0.4 + f));
+          if (v !== vals[i]) { setV(i, v); changed = true; }
+        } else if (vals[i] > cut && d < BR * 0.85) { setV(i, cut); changed = true; }  // 指定の長さで剃る
+      }
+      if (changed) { flush(); sfx(tool); }
+    }
+
+    // ---------- ループ ----------
+    let prevT = performance.now();
+    renderer.setAnimationLoop(() => {
+      const now = performance.now(), dt = Math.min(0.05, (now - prevT) / 1000); prevT = now;
+      if (brush && brush.p && tool === 'grow') applyBrush(brush.p, dt * 0.9); // 押しっぱなしで伸び続ける
+      head.rotation.y += (rotY - head.rotation.y) * 0.25;
+      head.rotation.x += (rotX - head.rotation.x) * 0.25;
+      updateEyes();
+      renderer.render(scene, camera);
+    });
+
+    // アイコン作成など用
+    window.__hair = { roots, setV, flush, vals, head, setRot(y, x) { rotY = y; rotX = x; } };
+  </script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>别打地鼠 · LiteGame</title>
+  <meta name="description" content="钻出来的地鼠别打，只打人。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="别打地鼠 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/dont-whack-mole/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/dont-whack-mole/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #bfe3f5; color: #2f2414;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif;
+      display: flex; flex-direction: column; overflow: hidden;
+      -webkit-user-select: none; user-select: none;
+    }
+    header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+    header a { color: #2f2414; font-size: 14px; text-decoration: none; margin-right: auto; }
+    header button, header select {
+      background: #fff; border: 1px solid #c2a77e; border-radius: 8px;
+      height: 34px; min-width: 40px; padding: 0 10px; font-size: 13px; color: #2f2414; cursor: pointer;
+    }
+    header svg { width: 18px; height: 18px; display: block; }
+    #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+    #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #love { position: absolute; left: 12px; right: 12px; top: 6px; max-width: 560px; margin: 0 auto; display: none; align-items: center; gap: 8px; pointer-events: none; }
+    #love svg { width: clamp(24px, 4.5vmin, 36px); height: auto; flex: none; }
+    #love div { flex: 1; height: clamp(14px, 2.4vmin, 20px); border-radius: 10px; background: rgba(255,255,255,.65); border: 2px solid #7a1a24; overflow: hidden; }
+    #love i { display: block; height: 100%; width: 100%; background: #e8344a; transform-origin: left; }
+    #result { position: absolute; left: 0; right: 0; bottom: var(--reserve, 160px); height: 30%; display: none; align-items: center; justify-content: center; pointer-events: none; }
+    #result b { font-size: clamp(48px, 14vmin, 120px); font-weight: 900; color: #fff; text-shadow: 0 4px 0 #6b3d1c, 0 0 18px rgba(0,0,0,.3); }
+    @media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+      #result { top: 0; bottom: var(--reserve, 160px); height: auto; width: 32%; }
+    }
+    #msg { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+    /* ゲーム画面は下まで描き、ボタンは下の80pxを空けて上に重ねる（Xアプリ内ブラウザの投稿文で隠れるため） */
+    #controls { position: fixed; left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom)); display: flex; gap: 8px; padding: 8px 12px 0; max-width: 640px; width: 100%; margin: 0 auto; }
+    #controls button, #controls a {
+      flex: 1; height: clamp(56px, 8vmin, 72px); border: none; border-radius: 14px; font-size: clamp(18px, 3vmin, 24px); font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none;
+      touch-action: manipulation;
+    }
+    .go { background: #e0603a; color: #fff; box-shadow: 0 4px 0 #8f3518; }
+    .post { background: #111; color: #fff; box-shadow: 0 4px 0 #000; flex: 0 0 34% !important; font-size: clamp(16px, 2.6vmin, 20px) !important; }
+    #controls button:active, #controls a:active { transform: translateY(3px); box-shadow: none; }
+    #controls.hide { visibility: hidden; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">别打地鼠</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="sound" aria-label="sound"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><div id="love"><svg viewBox="0 0 24 22"><path d="M12 21C5 15 1 11.5 1 7a5.5 5.5 0 0 1 11-1 5.5 5.5 0 0 1 11 1c0 4.5-4 8-11 14z" fill="#e8344a" stroke="#7a1a24" stroke-width="1.5"/></svg><div><i></i></div></div><div id="result"><b></b></div><div id="msg"></div></div>
+  <div id="controls"></div>
+
+  </main>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+  <script>
+    // CDN が読めないときの一言
+    setTimeout(() => { if (!window.MOLE_READY) { const m = document.getElementById('msg'); m.style.display = 'flex'; m.textContent = 'Failed to load. Please reload. / 読み込めませんでした。再読み込みしてください。'; } }, 8000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 别打地鼠 · 中文文案
+window.__KF_ZH__ = {
+  title: '别打地鼠',
+  back: '← 大厅',
+  again: '再来一次',
+  post: '分享到 X',
+  count: (n) => `${n} 人`,
+  share: (n) => `没打地鼠，只打了 ${n} 个人 #LiteGame`
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    window.MOLE_READY = true;
+
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/dont-whack-mole/';
+
+    // ---------- 言語 ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('dont-whack-mole:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('dont-whack-mole:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (['ja', 'ko', 'en', 'th'].includes(c)) return c; } return 'en'; };
+    const DICT = {
+      ja: { title: '别打地鼠', back: '← トップへ戻る', again: 'もう一度', post: 'Xに投稿', count: n => `${n}人`, share: n => `モグラを叩かずに人間を${n}人叩いた #别打地鼠ゲーム` },
+      ko: { title: '두더지 때리지 마', back: '← 처음으로', again: '다시 하기', post: 'X에 게시', count: n => `${n}명`, share: n => `두더지는 참고 사람을 ${n}명 때렸다 #别打地鼠ゲーム` },
+      en: { title: "Don't Whack the Mole", back: '← Back to top', again: 'Play again', post: 'Post on X', count: n => `${n} ${n === 1 ? 'person' : 'people'}`, share: n => `I whacked ${n} ${n === 1 ? 'person' : 'people'} without whacking the mole #别打地鼠ゲーム` },
+      th: { title: 'อย่าตีตัวตุ่น', back: '← กลับหน้าแรก', again: 'เล่นอีกครั้ง', post: 'โพสต์ลง X', count: n => `${n} คน`, share: n => `ตีคนไป ${n} คนโดยไม่ตีตัวตุ่นเลย #别打地鼠ゲーム` },
+    }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    const t = k => DICT[lang][k];
+    const langSel = document.getElementById('lang');
+    langSel.value = lang;
+    langSel.addEventListener('change', () => { lang = langSel.value; store.set('lang', lang); applyLang(); });
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('back').textContent = t('back');
+      renderControls();
+      if (state === 'result') { showResult(); prepareShare(); }
+    }
+
+    // ---------- 音 ----------
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const drawSoundBtn = () => {
+      soundBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+    };
+    drawSoundBtn();
+    soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('sound', soundOn); drawSoundBtn(); });
+    let ac = null;
+    function initAudio() {
+      if (ac) return;
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+        o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
+      } catch { ac = null; }
+    }
+    addEventListener('pointerdown', initAudio, { capture: true });
+    function tone(type, f0, f1, dur, vol, delay = 0) {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime + delay;
+      const o = ac.createOscillator(); o.type = type;
+      o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      const g = ac.createGain(); g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.connect(g).connect(ac.destination); o.start(now); o.stop(now + dur + 0.02);
+    }
+    function noise(dur, vol, freq) {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime;
+      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 2;
+      const s = ac.createBufferSource(); s.buffer = buf;
+      const fl = ac.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = freq;
+      const g = ac.createGain(); g.gain.value = vol;
+      s.connect(fl).connect(g).connect(ac.destination); s.start(now);
+    }
+    // 声: 声帯の振動（のこぎり波＋ゆらぎ）を、母音ごとの共鳴（フォルマント）に通す
+    const VOWEL = { a: [800, 1200, 2600], i: [300, 2300, 3000], u: [350, 1250, 2500], e: [500, 1900, 2600], o: [500, 850, 2500], g: [450, 1100, 2400] };
+    function voice(f0, seq, dur, vol = 0.5, shake = 0.04, breath = 0.15) {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime;
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      // 高く出て下がる抑揚
+      o.frequency.setValueAtTime(f0 * 1.25, now);
+      o.frequency.linearRampToValueAtTime(f0 * 1.4, now + dur * 0.15);
+      o.frequency.exponentialRampToValueAtTime(f0 * 0.7, now + dur);
+      const vib = ac.createOscillator(); vib.frequency.value = 5.5 + Math.random() * 3;
+      const vg = ac.createGain(); vg.gain.value = f0 * shake; vib.connect(vg).connect(o.frequency);
+      // 息の音
+      const nb = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate), nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      const ns = ac.createBufferSource(); ns.buffer = nb;
+      const ng = ac.createGain(); ng.gain.value = breath;
+      const src = ac.createGain();
+      o.connect(src); ns.connect(ng).connect(src);
+      const out = ac.createGain();
+      out.gain.setValueAtTime(0, now);
+      out.gain.linearRampToValueAtTime(vol, now + 0.02);
+      out.gain.setValueAtTime(vol, now + dur * 0.55);
+      out.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      const k = f0 > 260 ? 1.15 : 1; // 子どもや高い声は共鳴も少し高い
+      [1, 0.6, 0.25].forEach((amp, fi) => {
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = fi === 0 ? 6 : 9;
+        seq.forEach((v, si) => { const tt = now + dur * si / Math.max(1, seq.length - 1) * 0.7; bp.frequency[si ? 'linearRampToValueAtTime' : 'setValueAtTime'](VOWEL[v][fi] * k, tt); });
+        const g = ac.createGain(); g.gain.value = amp * 3;
+        src.connect(bp).connect(g).connect(out);
+      });
+      out.connect(ac.destination);
+      o.start(now); vib.start(now); ns.start(now);
+      o.stop(now + dur); vib.stop(now + dur); ns.stop(now + dur);
+    }
+    const CRIES = [['i', 'e'], ['a', 'u'], ['o', 'u'], ['a', 'i'], ['u', 'e'], ['g', 'a', 'o']];
+    // ハンマーの音: 木の当たる「コン」＋低い胴鳴り
+    function knock(vol = 1) {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime;
+      const len = 0.06, buf = ac.createBuffer(1, Math.floor(ac.sampleRate * len), ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * 0.008));
+      const s = ac.createBufferSource(); s.buffer = buf;
+      for (const [f, q, g0] of [[620, 8, 1.2], [1350, 10, 0.6], [2900, 6, 0.3]]) {
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * (0.95 + Math.random() * 0.1); bp.Q.value = q;
+        const g = ac.createGain(); g.gain.value = g0 * vol; s.connect(bp).connect(g).connect(ac.destination);
+      }
+      s.start(now);
+      tone('sine', 150, 60, 0.15, 0.35 * vol);
+    }
+    const sBonk = cry => { knock(); if (cry) setTimeout(() => voice(cry.f0 * (0.92 + Math.random() * 0.16), pick(CRIES), 0.32 + Math.random() * 0.15, 0.45), 30); };
+    const sWhiff = () => { knock(0.5); noise(0.12, 0.15, 600); };
+    const sTease = c => { voice(c.f0 * 1.1, ['e', 'e'], 0.15, 0.3, 0.02); setTimeout(() => voice(c.f0 * 1.25, ['e', 'a', 'a'], 0.32, 0.3, 0.02), 170); };
+    const sPop = () => { if (!soundOn || !ac) return; tone('sine', 300 + Math.random() * 80, 700, 0.07, 0.12); noise(0.1, 0.08, 1200); };
+    function sAngry() {
+      if (!soundOn || !ac) return;
+      // うなり声: 低い声をうねらせ、ざらつきを足す
+      voice(85, ['g', 'a', 'o'], 1.3, 0.6, 0.18, 0.5);
+      voice(62, ['o', 'a'], 1.2, 0.35, 0.25, 0.6);
+      noise(0.5, 0.25, 300);
+    }
+
+    // ---------- 3D ----------
+    const stage = document.getElementById('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    stage.prepend(renderer.domElement);
+    const scene = new THREE.Scene();
+    // 空: 上が濃い青、地平線が白っぽいグラデーション
+    const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
+    scene.background = canvasTex(4, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#6fb8ef'); gr.addColorStop(0.6, '#bfe3f5'); gr.addColorStop(1, '#eef8e8'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    scene.fog = new THREE.Fog('#dff0e6', 16, 40);
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+    scene.add(new THREE.HemisphereLight('#e8f4ff', '#5a7a3a', 1.1));
+    const sun = new THREE.DirectionalLight('#fff4e0', 2.4); sun.position.set(-4, 10, 6);
+    sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.radius = 4; sun.shadow.bias = -0.0008;
+    Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 30 });
+    scene.add(sun);
+
+    const mat = (c, rough = 0.75) => new THREE.MeshStandardMaterial({ color: c, roughness: rough });
+    const shade = o => { o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; };
+    let cat;
+    const SP = 2.1, HR = 0.78;
+    const HOLES = [];
+    for (let r = -1; r <= 1; r++) for (let c = -1; c <= 1; c++) HOLES.push(new THREE.Vector3(c * SP, 0, r * SP));
+
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    const SPHG = new THREE.SphereGeometry(1, 32, 20), CYLG = new THREE.CylinderGeometry(1, 1, 1, 24);
+    const part = (geo, m, x, y, z, sx, sy = sx, sz = sx, parent) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); parent?.add(o); return o; };
+
+    // 台: 穴の開いた厚い板
+    {
+      const W = 3.4 * SP / 2 + 0.6;
+      const s = new THREE.Shape();
+      s.moveTo(-W, -W); s.lineTo(W, -W); s.lineTo(W, W); s.lineTo(-W, W); s.lineTo(-W, -W);
+      for (const h of HOLES) { const p = new THREE.Path(); p.absarc(h.x, -h.z, HR, 0, Math.PI * 2, true); s.holes.push(p); }
+      const g = new THREE.ExtrudeGeometry(s, { depth: 2, bevelEnabled: true, bevelSize: 0.15, bevelThickness: 0.15, bevelSegments: 3, curveSegments: 32 });
+      g.rotateX(-Math.PI / 2); g.translate(0, -2, 0);
+      // 芝生と木目はキャンバスで描いた模様
+      const grass = canvasTex(256, 256, (c, w, h) => { c.fillStyle = '#6cbf4a'; c.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { c.fillStyle = `hsl(${95 + Math.random() * 20},${45 + Math.random() * 20}%,${34 + Math.random() * 22}%)`; c.fillRect(Math.random() * w, Math.random() * h, 1.5, 3 + Math.random() * 3); } });
+      grass.wrapS = grass.wrapT = THREE.RepeatWrapping; grass.repeat.set(0.35, 0.35);
+      const wood = canvasTex(256, 64, (c, w, h) => { c.fillStyle = '#9a6538'; c.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { c.strokeStyle = `rgba(70,35,10,${0.1 + Math.random() * 0.2})`; c.lineWidth = 1 + Math.random() * 2; const y = Math.random() * h; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(w * .3, y + Math.random() * 6 - 3, w * .6, y + Math.random() * 6 - 3, w, y); c.stroke(); } });
+      wood.wrapS = wood.wrapT = THREE.RepeatWrapping; wood.repeat.set(0.2, 0.5);
+      const board = new THREE.Mesh(g, [new THREE.MeshStandardMaterial({ map: grass, roughness: 0.95 }), new THREE.MeshStandardMaterial({ map: wood, roughness: 0.8 })]);
+      board.receiveShadow = true;
+      scene.add(board);
+      // 地面と、まわりの草・花・木
+      const ground = new THREE.Mesh(new THREE.CircleGeometry(40, 48), new THREE.MeshStandardMaterial({ color: '#8fcf6a', roughness: 1 }));
+      ground.rotation.x = -Math.PI / 2; ground.position.y = -2.15; ground.receiveShadow = true; scene.add(ground);
+      const tuft = new THREE.ConeGeometry(0.08, 0.45, 5), tuftM = mat('#4f9a35');
+      const petal = new THREE.SphereGeometry(0.11, 8, 6);
+      const rnd = (a, b) => a + Math.random() * (b - a);
+      for (let i = 0; i < 70; i++) {
+        const a = Math.random() * Math.PI * 2, d = rnd(W + 0.6, W + 5);
+        const x = Math.cos(a) * d, z = Math.sin(a) * d;
+        if (Math.random() < 0.3) {
+          const f = new THREE.Group(); f.position.set(x, -2.15, z);
+          part(CYLG, mat('#4f9a35'), 0, 0.22, 0, 0.02, 0.45, 0.02, f);
+          const fc = mat(pick(['#ffffff', '#ffd23a', '#ff8ab0', '#ff6a4a', '#b08aff']));
+          for (let k = 0; k < 5; k++) part(petal, fc, Math.cos(k * 1.26) * 0.1, 0.47, Math.sin(k * 1.26) * 0.1, 1, 0.5, 1, f);
+          part(petal, mat('#ffcf3a'), 0, 0.5, 0, 0.6, 0.5, 0.6, f);
+          scene.add(f);
+        } else for (let k = 0; k < 3; k++) { const m = part(tuft, tuftM, x + rnd(-.1, .1), -1.95, z + rnd(-.1, .1), 1, rnd(0.7, 1.3), 1); m.rotation.z = rnd(-.4, .4); scene.add(m); }
+      }
+      // 奥にとんでもなく大きい猫の顔（地面から覗いている）
+      const catTex = new THREE.TextureLoader().load('cat.png'); catTex.colorSpace = THREE.SRGBColorSpace;
+      cat = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: catTex, fog: false, alphaTest: 0.5, depthTest: false, depthWrite: false }));
+      // 地面の次に描き、台・キャラ・木はその上に描く（位置と大きさは resize で画面に合わせる）
+      cat.renderOrder = -1; ground.renderOrder = -2;
+      scene.add(cat);
+      const leaf = mat('#3f8f3a'), trunk = mat('#7a4a28');
+      for (let i = 0; i < 14; i++) {
+        const a = Math.PI * (i < 7 ? 1.02 + 0.2 * i / 6 : 1.78 + 0.2 * (i - 7) / 6), d = rnd(13, 19); // 手前と猫の前には置かない
+        const tr = new THREE.Group(); tr.position.set(Math.cos(a) * d, -2.15, Math.sin(a) * d); const k = rnd(0.8, 1.4); tr.scale.setScalar(k);
+        part(CYLG, trunk, 0, 0.8, 0, 0.25, 1.6, 0.25, tr);
+        part(SPHG, leaf, 0, 2.3, 0, 1.3, 1.2, 1.3, tr); part(SPHG, leaf, 0.6, 1.9, 0.3, 0.8, 0.8, 0.8, tr); part(SPHG, leaf, -0.6, 2.0, -0.2, 0.9, 0.8, 0.9, tr);
+        scene.add(shade(tr));
+      }
+      // 穴の中は下に行くほど暗く
+      const holeIn = new THREE.CylinderGeometry(HR, HR, 2.4, 32, 1, true);
+      const holeMat = new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: canvasTex(4, 128, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#6b4524'); gr.addColorStop(0.35, '#2a1a0c'); gr.addColorStop(1, '#0a0603'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }) });
+      // 穴のまわりの盛り土
+      const rimG = new THREE.TorusGeometry(HR + 0.1, 0.2, 10, 40); rimG.rotateX(Math.PI / 2);
+      { const pos = rimG.attributes.position; for (let i = 0; i < pos.count; i++) { const k = 1 + 0.08 * Math.sin(pos.getX(i) * 9 + pos.getZ(i) * 7); pos.setY(i, pos.getY(i) * 0.55 * k); } rimG.computeVertexNormals(); }
+      const rimM = mat('#7a5230', 1);
+      for (const h of HOLES) {
+        const m = new THREE.Mesh(holeIn, holeMat); m.position.set(h.x, -1.2, h.z); scene.add(m);
+        const rim = new THREE.Mesh(rimG, rimM); rim.position.set(h.x, 0.0, h.z); rim.rotation.y = Math.random() * 6; rim.castShadow = rim.receiveShadow = true; scene.add(rim);
+      }
+    }
+
+    // ---------- キャラクター ----------
+    const SKIN = ['#fbe0cf', '#f3c8a5', '#e5b088', '#cf9468', '#b07548', '#8c5a36', '#6a4026', '#4a2c1a'];
+    const HAIR = ['#1b1410', '#3a2414', '#6b4423', '#c99a4f', '#e8d08a', '#a63c1f', '#7a7a7a', '#dcdcdc', '#e85a9a', '#3a6ad8'];
+    const CLOTH = ['#e0603a', '#3a7be0', '#f2c43a', '#4ab07a', '#9a5ad0', '#ffffff', '#333333', '#e04a8a', '#3ac4d0'];
+    const SPH = SPHG;
+    const CAP = new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const CYL = CYLG, TORSO = new THREE.CapsuleGeometry(1, 1, 8, 24);
+    const BOX = new THREE.BoxGeometry(1, 1, 1);
+    const BLACK = new THREE.MeshStandardMaterial({ color: '#141018', roughness: 0.25 }), WHITE = mat('#fff', 0.4), PINK = mat('#ec8a9c', 0.45), RED = new THREE.MeshBasicMaterial({ color: '#e01010' });
+    const SHINE = new THREE.MeshBasicMaterial({ color: '#fff' }), CLAW = new THREE.ConeGeometry(0.035, 0.12, 6);
+    // 目（ぐるぐる目に切り替えられるように）
+    function addEyes(head, y, gap, r, z) {
+      const eyes = [];
+      for (const s of [-1, 1]) {
+        const e = part(SPH, BLACK, s * gap, y, z, r, r * 1.2, r * 0.6, head);
+        part(SPH, SHINE, 0.3, 0.35, 0.75, 0.32, 0.28, 0.3, e);
+        eyes.push(e);
+      }
+      return eyes;
+    }
+    function addHair(head, style, color) {
+      const m = mat(color);
+      if (style === 'bald') return;
+      if (style === 'afro') { part(SPH, m, 0, 0.25, -0.1, 0.72, 0.62, 0.68, head); return; }
+      if (style === 'scarf') {
+        part(SPH, m, 0, 0.02, -0.04, 0.6, 0.62, 0.58, head);
+        part(CYL, m, 0, -0.5, -0.05, 0.52, 0.5, 0.5, head);
+        return;
+      }
+      if (style === 'sides') { for (const s of [-1, 1]) part(SPH, m, s * 0.46, 0, -0.1, 0.14, 0.2, 0.25, head); return; }
+      part(CAP, m, 0, 0.03, -0.04, 0.54, 0.56, 0.56, head).rotation.x = -0.35;
+      if (style === 'long') part(BOX, m, 0, -0.25, -0.25, 1.0, 0.85, 0.45, head);
+      if (style === 'bob') part(SPH, m, 0, -0.05, -0.12, 0.56, 0.5, 0.5, head);
+      if (style === 'bun') part(SPH, m, 0, 0.62, -0.12, 0.22, 0.22, 0.22, head);
+      if (style === 'pony') part(SPH, m, 0, 0.1, -0.6, 0.16, 0.36, 0.16, head).rotation.x = 0.6;
+      if (style === 'spiky') for (let i = 0; i < 5; i++) { const c = part(new THREE.ConeGeometry(0.12, 0.35, 8), m, (i - 2) * 0.17, 0.52, -0.05, 1, 1, 1, head); c.rotation.z = -(i - 2) * 0.25; }
+    }
+
+    function makeHuman(hood) {
+      const age = pick(['child', 'child', 'adult', 'adult', 'adult', 'elder', 'elder']);
+      const skin = mat(pick(SKIN), 0.6);
+      const g = new THREE.Group();
+      const cloth = mat(pick(CLOTH), 0.9);
+      const body = part(TORSO, cloth, 0, -0.75, 0, 0.5, 0.9, 0.42, g);
+      part(CYL, cloth, 0, 0.12, 0.0, 0.17, 0.2, 0.17, g); // 首元
+      part(CYL, skin, 0, 0.2, 0, 0.14, 0.2, 0.14, g);
+      const head = new THREE.Group(); head.position.y = 0.55; g.add(head);
+      part(SPH, skin, 0, 0, 0, 0.5, 0.52, 0.48, head);
+      for (const s of [-1, 1]) part(SPH, skin, s * 0.5, 0, 0, 0.1, 0.14, 0.08, head);
+      const eyes = addEyes(head, 0.06, 0.17, age === 'child' ? 0.075 : 0.06, 0.43);
+      const mouth = part(new THREE.TorusGeometry(0.1, 0.025, 6, 12, Math.PI), BLACK, 0, -0.17, 0.45, 1, 1, 1, head); mouth.rotation.z = Math.PI;
+      part(SPH, skin, 0, -0.03, 0.48, 0.06, 0.07, 0.06, head);
+      const elder = age === 'elder';
+      let style, hairC;
+      if (age === 'child') { style = pick(['short', 'bob', 'pony', 'spiky', 'afro', 'bun']); hairC = pick(HAIR.slice(0, 6)); }
+      else if (elder) { style = pick(['bald', 'sides', 'short', 'bun', 'scarf', 'bob']); hairC = pick(['#9a9a9a', '#d8d8d8', '#f2f2f2']); }
+      else { style = pick(['short', 'long', 'bob', 'bun', 'pony', 'spiky', 'afro', 'bald', 'scarf']); hairC = pick(HAIR); }
+      if (style === 'scarf') hairC = pick(CLOTH);
+      if (!hood) addHair(head, style, hairC);
+      if (age === 'child') { for (const s of [-1, 1]) part(SPH, PINK, s * 0.27, -0.08, 0.4, 0.08, 0.05, 0.03, head); }
+      if (age !== 'child' && Math.random() < 0.3) { // ひげ
+        const bm = mat(elder ? '#e0e0e0' : pick(HAIR.slice(0, 4)));
+        if (Math.random() < 0.5) part(BOX, bm, 0, -0.1, 0.46, 0.22, 0.05, 0.05, head);
+        else part(SPH, bm, 0, -0.28, 0.3, 0.32, 0.22, 0.2, head);
+      }
+      if ((elder && Math.random() < 0.6) || Math.random() < 0.15) { // めがね
+        const gm = new THREE.MeshBasicMaterial({ color: '#222' });
+        for (const s of [-1, 1]) part(new THREE.TorusGeometry(0.1, 0.018, 6, 16), gm, s * 0.17, 0.06, 0.47, 1, 1, 1, head);
+        part(BOX, gm, 0, 0.07, 0.48, 0.12, 0.02, 0.02, head);
+      }
+      if (age !== 'child' && Math.random() < 0.25) for (const s of [-1, 1]) part(SPH, mat('#f2c43a'), s * 0.5, -0.15, 0.02, 0.04, 0.04, 0.04, head);
+      if (hood) { // モグラのかぶり物
+        const hm = mat('#4f4a5c');
+        part(SPH, hm, 0, 0.08, -0.06, 0.58, 0.6, 0.56, head);
+        part(SPH, PINK, 0, 0.5, 0.35, 0.14, 0.1, 0.12, head);
+        for (const s of [-1, 1]) part(SPH, BLACK, s * 0.17, 0.48, 0.33, 0.05, 0.06, 0.03, head);
+        part(SPH, skin, 0, -0.02, 0.06, 0.47, 0.46, 0.44, head);
+      }
+      const tongue = part(BOX, PINK, 0, -0.27, 0.45, 0.12, 0.18, 0.04, head); tongue.visible = false;
+      const s = age === 'child' ? 0.82 : 1;
+      g.scale.setScalar(s);
+      // 声の高さ: 子どもは高く、大人は低い声から高い声まで
+      const f0 = age === 'child' ? 300 + Math.random() * 80 : elder ? 120 + Math.random() * 120 : pick([110, 130, 200, 230]) * (0.9 + Math.random() * 0.2);
+      return { g, head, eyes, tongue, mole: false, body, f0 };
+    }
+
+    function makeMole(wig) {
+      const g = new THREE.Group();
+      const fur = mat('#4f4a5c', 0.95);
+      const body = part(TORSO, fur, 0, -0.75, 0, 0.56, 0.9, 0.5, g);
+      const head = new THREE.Group(); head.position.y = 0.45; g.add(head);
+      part(SPH, fur, 0, 0, 0, 0.58, 0.64, 0.54, head);
+      part(SPH, mat('#8a8494'), 0, -0.18, 0.32, 0.36, 0.3, 0.26, head);
+      const nose = part(SPH, PINK, 0, -0.05, 0.56, 0.13, 0.1, 0.1, head);
+      const eyes = addEyes(head, 0.2, 0.2, 0.06, 0.48);
+      part(BOX, WHITE, 0, -0.32, 0.53, 0.14, 0.1, 0.03, head);
+      for (const s of [-1, 1]) for (const a of [-0.15, 0.15]) {
+        const w = part(BOX, BLACK, s * 0.36, -0.08, 0.5, 0.35, 0.012, 0.012, head); w.rotation.z = s * a;
+      }
+      // 穴のふちにかけた手と爪
+      const paw = mat('#f0b8a8', 0.6);
+      for (const s of [-1, 1]) {
+        const h = part(SPH, paw, s * 0.42, -0.3, 0.58, 0.2, 0.09, 0.16, g);
+        for (let k = -1; k <= 1; k++) { const cl = part(CLAW, WHITE, s * 0.42 + k * 0.08, -0.3, 0.74, 1, 1, 1, g); cl.rotation.x = Math.PI / 2; }
+      }
+      for (const s of [-1, 1]) part(SPH, mat('#e8a0b0', 0.6), s * 0.38, 0.42, -0.05, 0.1, 0.12, 0.05, head);
+      if (wig) addHair(head, pick(['long', 'bob', 'pony', 'afro']), pick(HAIR.slice(0, 6)));
+      return { g, head, eyes, nose, mole: true, body };
+    }
+
+    // 頭上の星（叩かれた人）
+    const starG = new THREE.OctahedronGeometry(0.1);
+    const starM = new THREE.MeshBasicMaterial({ color: '#ffd23a' });
+
+    // 土ぼこり・叩いた時の火花（時間で消える）
+    const fx = [], dustG = new THREE.SphereGeometry(1, 8, 6);
+    function burst(pos, n, color, speed, size, life, up) {
+      for (let k = 0; k < n; k++) {
+        const m = new THREE.Mesh(dustG, new THREE.MeshBasicMaterial({ color, transparent: true, depthWrite: false }));
+        const a = Math.random() * Math.PI * 2, sp = speed * (0.5 + Math.random() * 0.7);
+        m.position.copy(pos); m.scale.setScalar(size * (0.6 + Math.random() * 0.6));
+        scene.add(m);
+        fx.push({ m, v: new THREE.Vector3(Math.cos(a) * sp, up * (0.5 + Math.random()), Math.sin(a) * sp), t: 0, life, s0: m.scale.x });
+      }
+    }
+    function stepFx(dt) {
+      for (let k = fx.length - 1; k >= 0; k--) {
+        const f = fx[k]; f.t += dt;
+        f.v.y -= dt * 6; f.m.position.addScaledVector(f.v, dt);
+        const q = f.t / f.life;
+        f.m.material.opacity = 1 - q; f.m.scale.setScalar(f.s0 * (1 + q * 0.8));
+        if (q >= 1) { scene.remove(f.m); f.m.material.dispose(); fx.splice(k, 1); }
+      }
+    }
+
+    const DOWN = -1.9, UP = 0.35;
+    const chars = [];     // 穴ごとの出ているキャラ
+    for (let i = 0; i < 9; i++) chars.push(null);
+    function spawn(i, mole, decoy) {
+      const c = mole ? makeMole(decoy) : makeHuman(decoy);
+      c.hole = i; c.y = c.prevY = DOWN; c.t = 0; c.phase = 'up'; c.hit = false; c.stay = 1;
+      c.g.position.copy(HOLES[i]); c.g.position.y = DOWN;
+      c.g.rotation.y = (Math.random() - 0.5) * 0.3;
+      scene.add(shade(c.g));
+      chars[i] = c;
+      return c;
+    }
+    function remove(i) {
+      const c = chars[i]; if (!c) return;
+      scene.remove(c.g);
+      c.g.traverse(o => { if (o.isMesh && o.material !== BLACK && o.material !== WHITE && o.material !== PINK && o.material !== RED && o.material !== starM && o.material !== SHINE) o.material.dispose?.(); });
+      chars[i] = null;
+    }
+
+    // ハンマー
+    const hammer = new THREE.Group();
+    const pivot = new THREE.Group(); hammer.add(pivot);
+    { const h = part(CYL, mat('#c89a5a'), 0, 0, -1.0, 0.07, 2.0, 0.07, pivot); h.rotation.x = Math.PI / 2;
+      const hd = part(CYL, mat('#d8402a'), 0, 0, -2.0, 0.32, 0.9, 0.32, pivot); hd.rotation.z = Math.PI / 2;
+      for (const s of [-1, 1]) { const e = part(CYL, mat('#f2c43a'), s * 0.47, 0, -2.0, 0.34, 0.06, 0.34, pivot); e.rotation.z = Math.PI / 2; } }
+    hammer.visible = false;
+    scene.add(shade(hammer));
+    let swingT = 1, hammerAt = new THREE.Vector3();
+    const placeHammer = p => { hammerAt.copy(p); hammer.position.set(p.x, 1.55, p.z + 2.0); };
+
+    // ---------- 画面サイズ ----------
+    const CENTER = new THREE.Vector3(0, 0.4, 0.1);
+    function resize() {
+      const w = stage.clientWidth, H = stage.clientHeight;
+      renderer.setSize(w, H, false);
+      // 下の空白とボタンの所には大事な物を置かないので、その上の範囲に台を収める（描画は下まで）
+      const btnH = Math.min(72, Math.max(56, 0.08 * Math.min(innerWidth, innerHeight))) + 12; // ボタン（プレイ中は隠れていても同じ高さで計算）
+      const reserve = Math.max(0, stage.getBoundingClientRect().bottom - controls.getBoundingClientRect().bottom) + btnH;
+      stage.style.setProperty('--reserve', reserve + 'px');
+      const h = Math.max(120, H - reserve);
+      // 上の方は奥の巨大な猫の顔を見せる所にして、台はその下に収める
+      const band = Math.round(h * 0.24), fh = h - band;
+      camera.aspect = w / fh;
+      camera.setViewOffset(w, fh, 0, -band, w, H);
+      const vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+      const R = 4.0; // 台が入る半径
+      const d = Math.min(R / Math.sin(Math.min(vf, hf) / 2), 30);
+      const dir = new THREE.Vector3(0, 1.05, 1).normalize();
+      // 背の低い横長では結果の文字を左に出すので、台を少し右へ
+      const side = (state === 'result' && h <= 520 && w / h >= 4 / 3) ? -2.2 : 0;
+      camera.position.copy(CENTER).addScaledVector(dir, d).add(new THREE.Vector3(side, 0, 0));
+      camera.lookAt(CENTER.x + side, CENTER.y, CENTER.z);
+      camera.updateProjectionMatrix();
+      camera.updateMatrixWorld();
+      // 猫: 上の帯の真ん中に顔が来るように、カメラに正対させて置く
+      const L = d + 18, py = band * 0.95, perPx = 2 * L * Math.tan(vf / 2) / fh;
+      const vp = new THREE.Vector3(0, 1 - 2 * py / H, 0.5).unproject(camera);
+      cat.position.copy(camera.position).addScaledVector(vp.sub(camera.position).normalize(), L);
+      cat.quaternion.copy(camera.quaternion);
+      cat.scale.setScalar(Math.max(band * 3.2, w * 0.9) * perPx);
+    }
+    addEventListener('resize', resize);
+
+    // ---------- 入力 ----------
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.9);
+    function toBoard(e) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const p = new THREE.Vector3();
+      return ray.ray.intersectPlane(plane, p) ? p : null;
+    }
+    renderer.domElement.addEventListener('pointermove', e => {
+      if (state !== 'play' || e.pointerType !== 'mouse') return;
+      const p = toBoard(e); if (p) { placeHammer(p); hammer.visible = true; }
+    });
+    renderer.domElement.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (state !== 'play') return;
+      armed = true;
+      const p = toBoard(e); if (!p) return;
+      // 当たり: キャラに当たればそれ、外れても近い穴のキャラを拾う
+      let target = null;
+      const meshes = [];
+      for (const c of chars) if (c && !c.hit && c.y > -1.1) c.g.traverse(o => { if (o.isMesh) { o.userData.c = c; meshes.push(o); } });
+      const hit = ray.intersectObjects(meshes, false)[0];
+      if (hit) target = hit.object.userData.c;
+      else {
+        let best = 1.1;
+        for (const c of chars) if (c && !c.hit && c.y > -1.1) { const d = Math.hypot(HOLES[c.hole].x - p.x, HOLES[c.hole].z - p.z); if (d < best) { best = d; target = c; } }
+      }
+      const at = target ? HOLES[target.hole] : p;
+      placeHammer(at); hammer.visible = true; swingT = 0;
+      if (!target) { sWhiff(); return; }
+      if (target.mole) { moleHit(target); return; }
+      target.hit = true; target.phase = 'stun'; target.t = 0;
+      burst(HOLES[target.hole].clone().setY(1.4), 10, '#ffd23a', 3, 0.07, 0.4, 2.5);
+      score++; love = Math.min(1, love + 0.14); drawLove();
+      sBonk(target);
+      for (const e2 of target.eyes) e2.scale.y *= 0.25;
+      target.stars = new THREE.Group();
+      for (let k = 0; k < 3; k++) part(starG, starM, Math.cos(k * 2.1) * 0.45, 0, Math.sin(k * 2.1) * 0.45, 1, 1, 1, target.stars);
+      target.stars.position.y = 0.75; target.head.add(target.stars);
+    }, { passive: false });
+    stage.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    // ---------- ゲーム ----------
+    let armed = false, state = 'title', score = 0, love = 1, shownLove = -1, elapsed = 0, nextSpawn = 0, angry = null, angryT = 0, needSnap = false;
+    // モグラ愛ゲージ: 何もしないと減り、人間を叩くと増える
+    const loveEl = document.getElementById('love'), loveBar = loveEl.querySelector('i');
+    const drawLove = () => {
+      const v = Math.round(love * 200) / 200;
+      if (v !== shownLove) { shownLove = v; loveBar.style.transform = `scaleX(${v})`; }
+    };
+    function clearAll() { for (let i = 0; i < 9; i++) remove(i); if (angry) { angry = null; } }
+    function reset() {
+      clearAll();
+      score = 0; love = 1; armed = false; elapsed = 0; nextSpawn = 0.6; angryT = 0;
+    }
+    function moleHit(c) {
+      burst(HOLES[c.hole].clone().setY(1.4), 16, '#ff4a3a', 4, 0.09, 0.6, 3);
+      state = 'over'; angry = c; angryT = 0; c.hit = true; c.phase = 'angry';
+      knock(1.2); sAngry();
+      for (const e of c.eyes) { e.material = RED; e.scale.set(0.09, 0.05, 0.04); e.rotation.z = 0; }
+      c.eyes[0].rotation.z = -0.5; c.eyes[1].rotation.z = 0.5;
+      // 眉
+      for (const s of [-1, 1]) { const b = part(BOX, BLACK, s * 0.2, 0.33, 0.47, 0.22, 0.05, 0.04, c.head); b.rotation.z = s * -0.5; }
+      renderControls();
+    }
+    function spawnTick() {
+      const free = []; for (let i = 0; i < 9; i++) if (!chars[i]) free.push(i);
+      if (!free.length) return;
+      const busy = 9 - free.length;
+      const maxBusy = Math.min(8, 3 + Math.floor(elapsed / 6));
+      if (busy >= maxBusy) return;
+      const mole = Math.random() < 0.45;
+      const decoy = elapsed > 18 && Math.random() < Math.min(0.4, (elapsed - 18) / 40);
+      const c = spawn(pick(free), mole, decoy);
+      c.stay = Math.max(0.5, 1.35 - elapsed * 0.018) * (0.8 + Math.random() * 0.4);
+    }
+    const STEP = 1 / 60;
+    function step(dt) {
+      if (state === 'play') {
+        // 最初に叩くまでは、ゲージも難しさも止めておく
+        if (armed) {
+          elapsed += dt;
+          love -= dt * (0.07 + elapsed * 0.006); // だんだん減りが速くなる
+          if (love <= 0) { love = 0; state = 'over'; angryT = 0; renderControls(); }
+          drawLove();
+        }
+        nextSpawn -= dt;
+        if (nextSpawn <= 0) { spawnTick(); nextSpawn = Math.max(0.12, 0.45 - elapsed * 0.008) * (0.6 + Math.random() * 0.8); }
+      }
+      swingT = Math.min(1, swingT + dt * 7);
+      stepFx(dt);
+      for (let i = 0; i < 9; i++) {
+        const c = chars[i]; if (!c) continue;
+        c.prevY = c.y; c.t += dt;
+        if (c.phase === 'up') { if (c.t === dt) { sPop(); } if (c.t === dt) burst(HOLES[i].clone().setY(0.15), 6, '#b08a60', 1.6, 0.12, 0.45, 1.2); c.y = Math.min(UP, c.y + dt * 14); if (c.y >= UP) { c.phase = 'stay'; c.t = 0; } }
+        else if (c.phase === 'hold') { c.y = Math.min(UP, c.y + dt * 8); }
+        else if (c.phase === 'stay') {
+          if (c.t > c.stay && state === 'play') {
+            if (!c.mole) { // 見逃し: あっかんべー
+              c.phase = 'tease'; c.t = 0; c.tongue.visible = true; sTease(c);
+            } else { c.phase = 'down'; }
+          }
+        }
+        else if (c.phase === 'tease') { c.head.rotation.z = Math.sin(c.t * 30) * 0.15; if (c.t > 0.5) c.phase = 'down'; }
+        else if (c.phase === 'stun') {
+          c.y = UP - 0.5 * Math.min(1, c.t * 12);
+          c.head.scale.y = 1 - 0.25 * Math.max(0, 1 - c.t * 4);
+          if (c.stars) c.stars.rotation.y += dt * 8;
+          if (c.t > 0.45) c.phase = 'down';
+        }
+        else if (c.phase === 'angry') {
+          const k = Math.min(1, c.t / 0.6), s = 1 + 2.6 * (1 - (1 - k) ** 3);
+          c.g.scale.setScalar(s);
+          c.y = 0.15 * s;
+          c.g.position.x = HOLES[i].x + Math.sin(c.t * 60) * 0.06 * (1 - k * 0.5);
+          c.g.rotation.y = 0;
+        }
+        if (c.phase === 'down') { c.y -= dt * 10; if (c.y <= DOWN) { remove(i); continue; } }
+      }
+      if (state === 'over') {
+        angryT += dt;
+        if (angryT > 1.1) finish();
+      }
+    }
+
+    // ---------- 画面 ----------
+    const controls = document.getElementById('controls');
+    const resultEl = document.getElementById('result');
+    function renderControls() {
+      controls.innerHTML = '';
+      controls.classList.toggle('hide', state !== 'result');
+      loveEl.style.display = state === 'result' ? 'none' : 'flex';
+      if (state !== 'result') return;
+      const b = document.createElement('button');
+      b.className = 'go'; b.textContent = t('again');
+      b.addEventListener('click', start);
+      controls.append(b);
+      if (state === 'result') {
+        const a = document.createElement('a');
+        a.className = 'post'; a.textContent = t('post');
+        a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(score))}&url=${encodeURIComponent(SHARE_URL)}`;
+        const coarse = matchMedia('(pointer: coarse)').matches;
+        if (!coarse) { a.target = '_blank'; a.rel = 'noopener'; }
+        // スマホは画像ごと共有シートへ。PCは画像を保存してから投稿画面を開く
+        a.addEventListener('click', e => {
+          const text = t('share')(score);
+          if (coarse && navigator.share) {
+            e.preventDefault();
+            const file = shareFile();
+            const data = file && navigator.canShare?.({ files: [file] }) ? { files: [file], text: `${text}\n${SHARE_URL}` } : { text: `${text}\n${SHARE_URL}` };
+            navigator.share(data).catch(() => {});
+            return;
+          }
+          const img = resultImage();
+          if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'dont-whack-mole.png'; d.click(); }
+        });
+        controls.append(a);
+      }
+    }
+    // 結果画像: 怒ったモグラの画面に人数を重ねる
+    let snap = null, shareCache = null;
+    function takeSnap() {
+      const src = renderer.domElement;
+      // 怒ったモグラ（なければ台の中心）が入るように切り抜く
+      const focus = (angry ? angry.g.position.clone().setY(1.5) : CENTER.clone()).project(camera);
+      const fx = (focus.x + 1) / 2 * src.width, fy = (1 - focus.y) / 2 * src.height;
+      const side = Math.min(src.width, src.height);
+      const sx = THREE.MathUtils.clamp(fx - side / 2, 0, src.width - side), sy = THREE.MathUtils.clamp(fy - side / 2, 0, src.height - side);
+      snap = document.createElement('canvas'); snap.width = snap.height = 1080;
+      snap.getContext('2d').drawImage(src, sx, sy, side, side, 0, 0, 1080, 1080);
+      shareCache = null;
+    }
+    function resultImage() {
+      if (!snap) return null;
+      const c = document.createElement('canvas'); c.width = c.height = 1080;
+      const g = c.getContext('2d');
+      g.drawImage(snap, 0, 0);
+      g.textAlign = 'center'; g.fillStyle = '#fff'; g.lineJoin = 'round';
+      const font = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+      const text = (str, y, px, max) => {
+        g.font = font(px);
+        const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = font(px); }
+        g.lineWidth = px * .16; g.strokeStyle = '#6b3d1c'; g.strokeText(str, 540, y); g.fillText(str, 540, y);
+      };
+      text(t('count')(score), 900, 170, 960);
+      text(t('title'), 90, 56, 900);
+      return c;
+    }
+    function prepareShare() {
+      if (!snap) return;
+      const key = lang;
+      if (shareCache?.key === key) return;
+      shareCache = { key, file: null };
+      resultImage().toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'dont-whack-mole.png', { type: 'image/png' }); }, 'image/png');
+    }
+    const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+    function start() {
+      reset();
+      state = 'play';
+      resultEl.style.display = 'none';
+      drawLove(); renderControls(); resize();
+    }
+    function showResult() { resultEl.children[0].textContent = t('count')(score); }
+    function finish() {
+      state = 'result'; hammer.visible = false;
+      showResult();
+      resultEl.style.display = 'flex';
+      snap = null; needSnap = true;
+      renderControls(); resize();
+    }
+
+    // ---------- ループ ----------
+    let last = performance.now(), acc = 0;
+    function render(alpha) {
+      for (const c of chars) if (c) c.g.position.y = c.prevY + (c.y - c.prevY) * alpha;
+      const k = swingT < 0.35 ? swingT / 0.35 : 1 - (swingT - 0.35) / 0.65;
+      pivot.rotation.x = 0.9 * (1 - k) + (-0.05) * k;
+      renderer.render(scene, camera);
+      if (needSnap) { needSnap = false; takeSnap(); prepareShare(); }
+    }
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      acc += dt;
+      while (acc >= STEP) { step(STEP); acc -= STEP; }
+      render(acc / STEP);
+      requestAnimationFrame(loop);
+    }
+
+    resize();
+    start();
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+    // 最初の1回が重くならないように、全部の形を一度描いておく
+    { const tmp = [spawn(1, true, true), spawn(3, false, true)]; tmp.forEach(c => c.g.position.y = 0); hammer.visible = true; renderer.compile(scene, camera); renderer.render(scene, camera); hammer.visible = false; remove(1); remove(3); }
+    requestAnimationFrame(t0 => { last = t0; loop(t0); });
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

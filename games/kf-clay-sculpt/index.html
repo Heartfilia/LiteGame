@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>黏土雕塑 · LiteGame</title>
+  <meta name="description" content="堆、削、抹、捏，捏个像出来。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="黏土雕塑 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/clay-sculpt/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/clay-sculpt/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #efe9e1; color: #5b4a3c; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 640px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #a0603a; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill {
+      font-size: 15px; background: #fff; border: 2px solid #e2d3c3; border-radius: 999px;
+      min-width: 44px; height: 36px; padding: 0 10px; cursor: pointer; font-weight: bold; color: #8a5a3a;
+      display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+    }
+    main {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    #stage { flex: 1; min-height: 0; position: relative; }
+    #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    .pane {
+      position: absolute; pointer-events: none; box-sizing: border-box; border: 1px solid #d8c8b6;
+      font-size: 12px; font-weight: bold; color: #9a7c62; padding: 4px 6px;
+    }
+    .pane button {
+      pointer-events: auto; margin-left: 4px; vertical-align: middle; width: 28px; height: 24px; padding: 0;
+      border-radius: 7px; border: 1.5px solid #d8c8b6; background: #fff; color: #8a5a3a; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .pane button.on { background: #8a5a3a; border-color: #8a5a3a; color: #fff; }
+    .pane button svg { width: 18px; height: 18px; }
+    #bar {
+      width: 100%; max-width: 640px; margin: 0 auto; box-sizing: border-box; padding: 6px 10px 0;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .row { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .tool {
+      width: 46px; height: 42px; border-radius: 12px; border: 2px solid #e2d3c3; background: #fff;
+      cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #8a5a3a;
+    }
+    .tool svg { width: 26px; height: 26px; }
+    .tool.on { background: #8a5a3a; border-color: #8a5a3a; color: #fff; }
+    .sw { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #e2d3c3; cursor: pointer; padding: 0; }
+    .sw.on { box-shadow: 0 0 0 3px #8a5a3a; }
+    #size { width: 140px; accent-color: #8a5a3a; }
+    #post { background: #111; border-color: #111; color: #fff; text-decoration: none; padding: 0; }
+    #post svg { width: 17px; height: 17px; }
+    body.clean #bar, body.clean #back, body.clean #lang, body.clean #sound, body.clean #post, body.clean .pane { visibility: hidden; }
+    @media (max-width: 360px) {
+      header { padding: 8px; } header a { font-size: 14px; }
+      .hbtns { gap: 4px; } #colors { gap: 4px; } .sw { width: 25px; height: 25px; } .pill { min-width: 38px; padding: 0 8px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">黏土雕塑</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill" aria-label="音"></button>
+      <button id="clean" class="pill"></button>
+      <a id="post" class="pill" href="#"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+    </div>
+  </header>
+  <main>
+    <div id="stage"><div id="msg"></div></div>
+    <div id="bar">
+      <div class="row" id="tools"></div>
+      <div class="row" id="colors"></div>
+      <div class="row">
+        <input id="size" type="range" min="0.06" max="0.6" step="0.01" value="0.25" aria-label="size">
+      </div>
+      <div class="row">
+        <button class="tool" id="sym"></button>
+        <button class="tool" id="quad"></button>
+        <button class="tool" id="undo"></button>
+        <button class="tool" id="reset"></button>
+      </div>
+    </div>
+  </main>
+  <input type="file" id="file" accept="image/*" hidden>
+
+  <script type="importmap">
+    { "imports": {
+      "three": "../lib/three/build/three.module.js",
+      "three/addons/": "../lib/three/examples/jsm/"
+    } }
+  </script>
+  <script>
+    // CDN が読めないときの一言（モジュールが動けば消える）
+    setTimeout(() => { if (!window.__sculptReady) document.getElementById('msg').textContent =
+      navigator.language.startsWith('ja') ? '読み込めませんでした。通信環境を確認してください。' : 'Could not load. Please check your connection.'; }, 8000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 黏土雕塑 · 中文文案
+window.__KF_ZH__ = {
+  title: '黏土雕塑',
+  back: '← 大厅',
+  lang: 'EN',
+  langLabel: 'Switch to English',
+  post: '分享到 X',
+  clean: '隐藏界面',
+  uiOn: '显示界面',
+  tweet: '用黏土捏的 #LiteGame',
+  sound: '音效开关',
+  add: '堆料',
+  carve: '削',
+  smooth: '抹平',
+  grab: '捏',
+  paint: '上色',
+  sym: '左右对称',
+  quad: '三视图',
+  undo: '撤销',
+  reset: '重置',
+  size: '大小',
+  top: '顶视',
+  front: '正视',
+  right: '右视',
+  persp: '透视',
+  img: '放参考图',
+  move: '移动参考图',
+  max: '放大',
+  del: '删除参考图'
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+    window.__sculptReady = true;
+    document.getElementById('msg').remove();
+
+    const KEY = 'clay-sculpt:';
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem(KEY + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch {} },
+    };
+
+    // ---------- 言語 ----------
+    const L = {
+      ja: {
+        title: '黏土雕塑', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        post: 'Xに投稿', clean: 'UIを消す', uiOn: 'UIを出す',
+        tweet: '粘土で作りました #黏土雕塑', sound: '音のオン/オフ',
+        add: '盛る', carve: '削る', smooth: 'ならす', grab: 'つまむ', paint: '塗る',
+        sym: '左右対称', quad: '三面図', undo: '戻す', reset: 'リセット', size: '大きさ',
+        top: '上面', front: '正面', right: '右側面', persp: 'パース', img: '下絵を置く', move: '下絵を動かす', max: '大きくする', del: '下絵を消す',
+      },
+      en: {
+        title: 'Clay Sculpt', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        post: 'Post on X', clean: 'Hide UI', uiOn: 'Show UI',
+        tweet: 'I made this out of clay #ClaySculpt', sound: 'Sound on/off',
+        add: 'Add', carve: 'Carve', smooth: 'Smooth', grab: 'Grab', paint: 'Paint',
+        sym: 'Mirror', quad: 'Ortho views', undo: 'Undo', reset: 'Reset', size: 'Size',
+        top: 'Top', front: 'Front', right: 'Right', persp: 'Persp', img: 'Add reference image', move: 'Move image', max: 'Enlarge', del: 'Remove image',
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const $ = id => document.getElementById(id);
+
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+      $('sound').setAttribute('aria-label', t('sound'));
+      $('post').setAttribute('aria-label', t('post'));
+      drawClean();
+      for (const b of document.querySelectorAll('[data-k]')) { b.setAttribute('aria-label', t(b.dataset.k)); b.title = t(b.dataset.k); }
+      $('size').setAttribute('aria-label', t('size'));
+      updatePostLink();
+      layoutPanes();
+    }
+    $('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+    // ---------- アイコン（SVG） ----------
+    const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"';
+    const ic = {
+      add: `<svg ${S}><path d="M3 19h18"/><path d="M6 19c0-6 3-9 6-9s6 3 6 9"/><path d="M12 3v4M10 5h4"/></svg>`,
+      carve: `<svg ${S}><path d="M3 8h18"/><path d="M6 8c0 6 3 9 6 9s6-3 6-9"/><path d="M10 3h4"/></svg>`,
+      smooth: `<svg ${S}><path d="M3 9c3-3 6 3 9 0s6 3 9 0"/><path d="M3 16h18"/></svg>`,
+      grab: `<svg ${S}><path d="M3 20c4 0 6-2 7-6l2-9 2 9c1 4 3 6 7 6"/></svg>`,
+      paint: `<svg ${S}><path d="M14 4l6 6-8 8-6-6z"/><path d="M6 12l-2 6 6-2"/></svg>`,
+      sym: `<svg ${S}><path d="M12 2v20" stroke-dasharray="2 3"/><path d="M9 6L3 12l6 6z"/><path d="M15 6l6 6-6 6z"/></svg>`,
+      quad: `<svg ${S}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18M3 12h18"/></svg>`,
+      undo: `<svg ${S}><path d="M9 5L4 10l5 5"/><path d="M4 10h10a6 6 0 0 1 0 12h-3"/></svg>`,
+      img: `<svg ${S}><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>`,
+      max: `<svg ${S}><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>`,
+      move: `<svg ${S}><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg>`,
+      del: `<svg ${S}><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+      eye: `<svg ${S} width="20" height="20"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+      eyeOff: `<svg ${S} width="20" height="20"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>`,
+      reset: `<svg ${S}><circle cx="12" cy="13" r="8"/><path d="M12 2v4"/></svg>`,
+      on: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>',
+      off: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 9l6 6M22 9l-6 6"/></svg>',
+    };
+
+    let tool = 'add';
+    const toolsEl = $('tools');
+    function setTool(k) { tool = k; for (const x of toolsEl.children) x.classList.toggle('on', x.dataset.k === k); }
+    for (const k of ['add', 'carve', 'smooth', 'grab', 'paint']) {
+      const b = document.createElement('button');
+      b.className = 'tool'; b.dataset.k = k; b.innerHTML = ic[k];
+      b.onclick = () => setTool(k);
+      toolsEl.appendChild(b);
+    }
+    setTool('add');
+    for (const k of ['sym', 'quad', 'undo', 'reset']) { $(k).innerHTML = ic[k]; $(k).dataset.k = k; }
+
+    // ---------- 音 ----------
+    let soundOn = store.get('sound', true);
+    const drawSound = () => { $('sound').innerHTML = soundOn ? ic.on : ic.off; };
+    drawSound();
+    $('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); drawSound(); };
+    let actx = null, lastSnd = 0;
+    function squish(amount) {
+      if (!soundOn) return;
+      const now = performance.now();
+      if (now - lastSnd < 90) return;
+      lastSnd = now;
+      try {
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = actx.createOscillator(), g = actx.createGain(), f = actx.createBiquadFilter();
+        const t0 = actx.currentTime;
+        o.type = 'sine';
+        const base = 90 + Math.random() * 60;
+        o.frequency.setValueAtTime(base, t0);
+        o.frequency.exponentialRampToValueAtTime(base * (tool === 'carve' ? 0.6 : 1.8), t0 + 0.12);
+        f.type = 'lowpass'; f.frequency.value = 600;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(Math.min(0.25, 0.08 + amount), t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+        o.connect(f); f.connect(g); g.connect(actx.destination);
+        o.start(t0); o.stop(t0 + 0.18);
+      } catch {}
+    }
+
+    // ---------- three.js ----------
+    const BG = 0xefe9e1;
+    const stage = $('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(BG);
+    stage.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.add(new THREE.HemisphereLight(0xfff6ec, 0x8a7a6a, 1.4));
+    // ライトは描画するカメラにくっつける
+    const lightRig = new THREE.Group();
+    const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(3, 5, 4);
+    const rim = new THREE.DirectionalLight(0xffe0c0, 0.6); rim.position.set(-4, -1, -3);
+    lightRig.add(key, rim);
+
+    // パース用カメラ＋三面図用の平行投影カメラ
+    const persp = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+    const mkOrtho = (p, up, layer) => {
+      const c = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+      c.position.copy(p); c.up.copy(up); c.lookAt(0, 0, 0); c.layers.enable(layer);
+      scene.add(c); return c;
+    };
+    const topCam = mkOrtho(new THREE.Vector3(0, 20, 0), new THREE.Vector3(0, 0, -1), 4);
+    const frontCam = mkOrtho(new THREE.Vector3(0, 0, 20), new THREE.Vector3(0, 1, 0), 2);
+    const rightCam = mkOrtho(new THREE.Vector3(20, 0, 0), new THREE.Vector3(0, 1, 0), 3);
+    persp.layers.enable(1);
+    scene.add(persp);
+
+    // グリッド：パースは原点を通る床（XZ）、三面図はそれぞれの面の奥に置く
+    function grid(layer, rot, offset) {
+      const g = new THREE.GridHelper(rot === 'xz' && layer === 1 ? 8 : 60, rot === 'xz' && layer === 1 ? 32 : 240, 0xc9b39c, 0xddd0c0);
+      g.material.transparent = true; g.material.opacity = 0.9;
+      if (rot === 'xy') g.rotation.x = Math.PI / 2;
+      if (rot === 'yz') g.rotation.z = Math.PI / 2;
+      g.position.copy(offset);
+      g.layers.set(layer); scene.add(g); return g;
+    }
+    grid(1, 'xz', new THREE.Vector3(0, 0, 0));
+    grid(4, 'xz', new THREE.Vector3(0, -6, 0));
+    grid(2, 'xy', new THREE.Vector3(0, 0, -6));
+    grid(3, 'yz', new THREE.Vector3(-6, 0, 0));
+
+    // XYZ 軸と文字
+    function label(text, color, p) {
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const g = c.getContext('2d');
+      g.font = 'bold 48px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillStyle = color; g.fillText(text, 32, 35);
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+      s.scale.setScalar(0.32); s.position.copy(p); s.renderOrder = 10;
+      s.layers.enableAll(); scene.add(s);
+    }
+    const AX = 2.4;
+    for (const [d, color, name] of [[new THREE.Vector3(1, 0, 0), '#d8473f', 'X'], [new THREE.Vector3(0, 1, 0), '#3f9a4a', 'Y'], [new THREE.Vector3(0, 0, 1), '#3f6fd8', 'Z']]) {
+      const pts = [d.clone().multiplyScalar(-AX), d.clone().multiplyScalar(AX)];
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color }));
+      line.layers.enableAll(); scene.add(line);
+      label(name, color, d.clone().multiplyScalar(AX + 0.2));
+    }
+    // 左右対称の面（X=0）
+    const symPlane = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.4),
+      new THREE.MeshBasicMaterial({ color: 0xd8473f, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false }));
+    symPlane.rotation.y = Math.PI / 2; symPlane.visible = false; symPlane.layers.enableAll(); scene.add(symPlane);
+
+    let sym = false;
+    $('sym').onclick = () => { sym = !sym; $('sym').classList.toggle('on', sym); symPlane.visible = sym; dirty = true; };
+
+    // 塗り色
+    const COLORS = ['#ffffff', '#2b2b2b', '#e0453a', '#f0a33a', '#f3d34a', '#5aa85a', '#3f74c9', '#8a4fc0', '#e89ab0', '#e8b896'];
+    const paint = new THREE.Color(COLORS[2]);
+    const colorsEl = $('colors');
+    COLORS.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.className = 'sw' + (i === 2 ? ' on' : ''); b.style.background = c; b.setAttribute('aria-label', c);
+      b.onclick = () => { paint.set(c); setTool('paint'); for (const x of colorsEl.children) x.classList.toggle('on', x === b); };
+      colorsEl.appendChild(b);
+    });
+    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.82, metalness: 0 });
+    // 頂点カラーは sRGB で指定した色を線形にして持つ
+    const BASE = new THREE.Color('#f4f1ec');
+
+    let dirty = true;
+    let geo, pos, nrm, col, N, neighbors, mesh;
+    function buildMesh() {
+      let g = new THREE.SphereGeometry(1, 160, 120);
+      g.deleteAttribute('normal'); g.deleteAttribute('uv');
+      g = mergeVertices(g, 1e-5);
+      g.computeVertexNormals();
+      const n = g.attributes.position.count, c = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { c[i * 3] = BASE.r; c[i * 3 + 1] = BASE.g; c[i * 3 + 2] = BASE.b; }
+      g.setAttribute('color', new THREE.BufferAttribute(c, 3));
+      if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); }
+      geo = g; pos = g.attributes.position.array; nrm = g.attributes.normal.array; col = c; N = n;
+      // 隣接頂点（ならす用）
+      const idx = g.index.array, sets = Array.from({ length: N }, () => new Set());
+      for (let i = 0; i < idx.length; i += 3) {
+        const a = idx[i], b = idx[i + 1], d = idx[i + 2];
+        sets[a].add(b).add(d); sets[b].add(a).add(d); sets[d].add(a).add(b);
+      }
+      neighbors = sets.map(s => Uint32Array.from(s));
+      mesh = new THREE.Mesh(g, mat);
+      scene.add(mesh);
+      dirty = true;
+    }
+    buildMesh();
+
+    // ---------- 表示（1画面 / 三面図） ----------
+    let quad = false, mainK = 'persp'; // mainK: 1画面のときに映す視点
+    const refs = {}; // 三面図の下絵 k -> mesh
+    let fileFor = null, editRef = null, refDrag = null; // editRef: 下絵を動かしている面
+    let theta = 0.5, phi = 1.15, dist = 6;
+    const views = []; // {cam, x, y, w, h, k}
+    const panesEl = [];
+    function placeCam() {
+      phi = Math.min(Math.PI - 0.05, Math.max(0.05, phi));
+      dist = Math.min(14, Math.max(2.4, dist));
+      persp.position.set(dist * Math.sin(phi) * Math.sin(theta), dist * Math.cos(phi), dist * Math.sin(phi) * Math.cos(theta));
+      persp.lookAt(0, 0, 0);
+      dirty = true;
+    }
+    function layoutPanes() {
+      const W = stage.clientWidth, H = stage.clientHeight;
+      views.length = 0;
+      const CAMS = { persp, top: topCam, front: frontCam, right: rightCam };
+      if (!quad) views.push({ cam: CAMS[mainK], x: 0, y: 0, w: W, h: H, k: mainK });
+      else {
+        const w = W / 2, h = H / 2;
+        views.push({ cam: topCam, x: 0, y: 0, w, h, k: 'top' }, { cam: persp, x: w, y: 0, w, h, k: 'persp' },
+          { cam: frontCam, x: 0, y: h, w, h, k: 'front' }, { cam: rightCam, x: w, y: h, w, h, k: 'right' });
+      }
+      for (const v of views) {
+        if (v.cam.isPerspectiveCamera) {
+          v.cam.aspect = v.w / v.h;
+          v.cam.fov = v.w < v.h ? 35 * Math.min(1.6, v.h / v.w) : 35;
+        } else {
+          const hh = dist * 0.32, hw = hh * v.w / v.h, s = Math.max(1, hh / hw);
+          v.cam.top = hh * s; v.cam.bottom = -hh * s; v.cam.left = -hw * s; v.cam.right = hw * s;
+        }
+        v.cam.updateProjectionMatrix();
+      }
+      for (const p of panesEl) p.remove();
+      panesEl.length = 0;
+      // 1画面のパースは枠なし、それ以外は名前とボタンを出す
+      for (const v of views) {
+        if (!quad && v.k === 'persp') continue;
+        const d = document.createElement('div');
+        d.className = 'pane'; d.textContent = t(v.k);
+        if (quad) {
+          const m = document.createElement('button');
+          m.innerHTML = ic.max; m.setAttribute('aria-label', t('max'));
+          m.onclick = () => { mainK = v.k; quad = false; $('quad').classList.remove('on'); layoutPanes(); };
+          d.appendChild(m);
+        }
+        if (v.k !== 'persp') {
+          const b = document.createElement('button');
+          b.innerHTML = ic.img; b.setAttribute('aria-label', t('img'));
+          b.onclick = () => { fileFor = v.k; $('file').value = ''; $('file').click(); };
+          d.appendChild(b);
+          if (refs[v.k]) {
+            const x = document.createElement('button');
+            x.innerHTML = ic.del; x.setAttribute('aria-label', t('del'));
+            x.onclick = () => { removeRef(v.k); layoutPanes(); };
+            const mv = document.createElement('button');
+            mv.innerHTML = ic.move; mv.setAttribute('aria-label', t('move'));
+            mv.classList.toggle('on', editRef === v.k);
+            mv.onclick = () => { editRef = editRef === v.k ? null : v.k; layoutPanes(); };
+            d.appendChild(mv);
+            d.appendChild(x);
+          }
+        }
+        Object.assign(d.style, { left: v.x + 'px', top: v.y + 'px', width: v.w + 'px', height: v.h + 'px' });
+        stage.appendChild(d); panesEl.push(d);
+      }
+      dirty = true;
+    }
+    // ---------- 三面図の下絵 ----------
+    const REF_D = 2.6, REF_S = 4;
+    function removeRef(k) {
+      const m = refs[k]; if (!m) return;
+      scene.remove(m); m.geometry.dispose(); m.material.map.dispose(); m.material.dispose();
+      delete refs[k]; if (editRef === k) editRef = null; dirty = true;
+    }
+    // 下絵を画面上の動きに合わせて、その面の中で動かす
+    function moveRef(v, dx, dy) {
+      const m = refs[v.k]; if (!m) return;
+      const c = v.cam, px = (c.right - c.left) / v.w;
+      m.position.addScaledVector(new THREE.Vector3(1, 0, 0).applyQuaternion(c.quaternion), dx * px);
+      m.position.addScaledVector(new THREE.Vector3(0, 1, 0).applyQuaternion(c.quaternion), -dy * px);
+      dirty = true;
+    }
+    function scaleRef(k, f) {
+      const m = refs[k]; if (!m) return;
+      m.scale.setScalar(Math.min(10, Math.max(0.1, m.scale.x * f)));
+      dirty = true;
+    }
+    $('file').onchange = () => {
+      const f = $('file').files[0], k = fileFor;
+      if (!f || !k) return;
+      const url = URL.createObjectURL(f);
+      new THREE.TextureLoader().load(url, tex => {
+        URL.revokeObjectURL(url);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const a = tex.image.width / tex.image.height;
+        const w = a >= 1 ? REF_S : REF_S * a, h = a >= 1 ? REF_S / a : REF_S;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+          new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
+        if (k === 'front') m.position.set(0, 0, -REF_D);
+        if (k === 'right') { m.position.set(-REF_D, 0, 0); m.rotation.y = Math.PI / 2; }
+        if (k === 'top') { m.position.set(0, -REF_D, 0); m.rotation.x = -Math.PI / 2; }
+        m.layers.enableAll();
+        removeRef(k);
+        refs[k] = m; scene.add(m);
+        editRef = k; // 置いた直後はそのまま位置を合わせられるようにする
+        layoutPanes();
+      });
+    };
+    $('quad').onclick = () => { quad = !quad; $('quad').classList.toggle('on', quad); layoutPanes(); };
+    function resize() {
+      renderer.setSize(stage.clientWidth, stage.clientHeight, false);
+      layoutPanes();
+    }
+    new ResizeObserver(resize).observe(stage);
+    placeCam();
+    resize();
+
+    function render() {
+      const H = stage.clientHeight;
+      renderer.setScissorTest(true);
+      for (const v of views) {
+        v.cam.add(lightRig);
+        v.cam.updateMatrixWorld();
+        // その面の下絵は作品の手前に半透明で重ねる（奥にあると隠れて見えないため）
+        for (const k in refs) {
+          const front = k === v.k, m = refs[k];
+          m.material.depthTest = !front; m.renderOrder = front ? 5 : 0;
+          m.material.opacity = front ? 0.4 : 0.55;
+        }
+        renderer.setViewport(v.x, H - v.y - v.h, v.w, v.h);
+        renderer.setScissor(v.x, H - v.y - v.h, v.w, v.h);
+        renderer.render(scene, v.cam);
+      }
+      renderer.setScissorTest(false);
+    }
+
+    // ---------- スカルプト ----------
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    function viewAt(x, y) {
+      const r = renderer.domElement.getBoundingClientRect();
+      const lx = x - r.left, ly = y - r.top;
+      return views.find(v => lx >= v.x && lx < v.x + v.w && ly >= v.y && ly < v.y + v.h) || views[0];
+    }
+    function setRay(v, x, y) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ndc.set(((x - r.left - v.x) / v.w) * 2 - 1, -((y - r.top - v.y) / v.h) * 2 + 1);
+      ray.setFromCamera(ndc, v.cam);
+    }
+    function hitAt(v, x, y) { setRay(v, x, y); return ray.intersectObject(mesh, false)[0] || null; }
+
+    const undoStack = [];
+    function pushUndo() { undoStack.push([pos.slice(), col.slice()]); if (undoStack.length > 25) undoStack.shift(); }
+    $('undo').onclick = () => {
+      const s = undoStack.pop(); if (!s) return;
+      pos.set(s[0]); col.set(s[1]); geo.attributes.color.needsUpdate = true; refresh(true);
+    };
+    $('reset').onclick = () => { pushUndo(); buildMesh(); };
+
+    function refresh(full) {
+      geo.attributes.position.needsUpdate = true;
+      geo.computeVertexNormals();
+      if (full) geo.computeBoundingSphere();
+      dirty = true;
+    }
+
+    const tmp = new THREE.Vector3();
+    // 中心 c・半径 r の範囲に関数を適用
+    function brush(cx, cy, cz, r, fn) {
+      const r2 = r * r;
+      for (let i = 0; i < N; i++) {
+        const dx = pos[i * 3] - cx, dy = pos[i * 3 + 1] - cy, dz = pos[i * 3 + 2] - cz;
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 >= r2) continue;
+        const q = 1 - d2 / r2;
+        fn(i, q * q);
+      }
+    }
+    function stamp(p, n, r) {
+      if (tool === 'add' || tool === 'carve') {
+        const s = r * 0.09 * (tool === 'carve' ? -1 : 1);
+        brush(p.x, p.y, p.z, r, (i, f) => {
+          pos[i * 3] += n.x * s * f; pos[i * 3 + 1] += n.y * s * f; pos[i * 3 + 2] += n.z * s * f;
+        });
+      } else if (tool === 'smooth') {
+        const list = [];
+        brush(p.x, p.y, p.z, r, (i, f) => {
+          const nb = neighbors[i]; let ax = 0, ay = 0, az = 0;
+          for (let k = 0; k < nb.length; k++) { const j = nb[k] * 3; ax += pos[j]; ay += pos[j + 1]; az += pos[j + 2]; }
+          list.push(i, ax / nb.length, ay / nb.length, az / nb.length, f * 0.5);
+        });
+        for (let k = 0; k < list.length; k += 5) {
+          const i = list[k] * 3, f = list[k + 4];
+          pos[i] += (list[k + 1] - pos[i]) * f; pos[i + 1] += (list[k + 2] - pos[i + 1]) * f; pos[i + 2] += (list[k + 3] - pos[i + 2]) * f;
+        }
+      } else if (tool === 'paint') {
+        brush(p.x, p.y, p.z, r, (i, f) => {
+          const a = Math.min(1, f * 1.6);
+          col[i * 3] += (paint.r - col[i * 3]) * a; col[i * 3 + 1] += (paint.g - col[i * 3 + 1]) * a; col[i * 3 + 2] += (paint.b - col[i * 3 + 2]) * a;
+        });
+        geo.attributes.color.needsUpdate = true;
+      }
+    }
+
+    let stroke = null; // {id, view, last:{x,y}, grab}
+    const pointers = new Map();
+    let orbit = null;
+    const brushR = () => +$('size').value;
+
+    function strokeAt(v, x, y) {
+      const h = hitAt(v, x, y);
+      if (!h) return;
+      const n = h.face.normal.clone().transformDirection(mesh.matrixWorld);
+      // 法線は周囲の頂点法線の平均で安定させる
+      const r = brushR(), avg = new THREE.Vector3();
+      brush(h.point.x, h.point.y, h.point.z, r * 0.6, (i, f) => { avg.x += nrm[i * 3] * f; avg.y += nrm[i * 3 + 1] * f; avg.z += nrm[i * 3 + 2] * f; });
+      if (avg.lengthSq() > 1e-6) n.copy(avg.normalize());
+      stamp(h.point, n, r);
+      if (sym) stamp(tmp.set(-h.point.x, h.point.y, h.point.z), n.clone().set(-n.x, n.y, n.z), r);
+      if (tool === 'paint') dirty = true; else refresh(false);
+      squish(0.05);
+    }
+
+    function startGrab(v, h) {
+      const r = brushR() * 1.3, seen = new Set(), idx = [], w = [], orig = [];
+      const addSide = (cx) => brush(cx, h.point.y, h.point.z, r, (i, f) => {
+        if (seen.has(i)) return; seen.add(i); idx.push(i); w.push(f * (cx === h.point.x ? 1 : -1)); orig.push(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
+      });
+      addSide(h.point.x);
+      if (sym && Math.abs(h.point.x) > 1e-3) addSide(-h.point.x);
+      const normal = v.cam.getWorldDirection(new THREE.Vector3());
+      return { idx, w, orig, plane: new THREE.Plane().setFromNormalAndCoplanarPoint(normal, h.point), start: h.point.clone() };
+    }
+    function moveGrab(v, g, x, y) {
+      setRay(v, x, y);
+      const p = ray.ray.intersectPlane(g.plane, tmp);
+      if (!p) return;
+      const dx = p.x - g.start.x, dy = p.y - g.start.y, dz = p.z - g.start.z;
+      for (let k = 0; k < g.idx.length; k++) {
+        const i = g.idx[k] * 3, w = g.w[k], aw = Math.abs(w);
+        pos[i] = g.orig[k * 3] + dx * w; // 反対側は x が反転
+        pos[i + 1] = g.orig[k * 3 + 1] + dy * aw;
+        pos[i + 2] = g.orig[k * 3 + 2] + dz * aw;
+      }
+      refresh(false);
+      squish(0.03);
+    }
+
+    const cvs = renderer.domElement;
+    cvs.addEventListener('contextmenu', e => e.preventDefault());
+    cvs.addEventListener('pointerdown', e => {
+      cvs.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size >= 2) {
+        endStroke();
+        orbit = { two: true, ref: refDrag && refDrag.k };
+        refDrag = null;
+        return;
+      }
+      const v = viewAt(e.clientX, e.clientY);
+      if (editRef && v.k === editRef && refs[editRef]) { refDrag = { id: e.pointerId, v, k: editRef }; return; }
+      const h = e.button === 0 ? hitAt(v, e.clientX, e.clientY) : null;
+      if (h) {
+        pushUndo();
+        stroke = { id: e.pointerId, view: v, last: { x: e.clientX, y: e.clientY } };
+        if (tool === 'grab') stroke.grab = startGrab(v, h);
+        else strokeAt(v, e.clientX, e.clientY);
+      } else {
+        orbit = { two: false };
+      }
+    });
+    cvs.addEventListener('pointermove', e => {
+      const prev = pointers.get(e.pointerId);
+      if (!prev) return;
+      const cur = { x: e.clientX, y: e.clientY };
+      if (refDrag && refDrag.id === e.pointerId) {
+        moveRef(refDrag.v, cur.x - prev.x, cur.y - prev.y);
+      } else if (stroke && stroke.id === e.pointerId) {
+        const v = stroke.view;
+        if (stroke.grab) moveGrab(v, stroke.grab, cur.x, cur.y);
+        else {
+          // 間隔をあけて連続で押す
+          const step = Math.max(3, v.h * brushR() * 0.08);
+          let dx = cur.x - stroke.last.x, dy = cur.y - stroke.last.y, d = Math.hypot(dx, dy);
+          while (d >= step) {
+            stroke.last.x += dx / d * step; stroke.last.y += dy / d * step;
+            strokeAt(v, stroke.last.x, stroke.last.y);
+            dx = cur.x - stroke.last.x; dy = cur.y - stroke.last.y; d = Math.hypot(dx, dy);
+          }
+        }
+      } else if (orbit && orbit.ref) {
+        // 2本指で下絵の拡大縮小
+        if (pointers.size >= 2) {
+          const ps = [...pointers.values()];
+          const before = Math.hypot(ps[0].x - ps[1].x, ps[0].y - ps[1].y);
+          pointers.set(e.pointerId, cur);
+          const qs = [...pointers.values()];
+          const after = Math.hypot(qs[0].x - qs[1].x, qs[0].y - qs[1].y);
+          if (before > 0 && after > 0) scaleRef(orbit.ref, after / before);
+          return;
+        }
+      } else if (orbit) {
+        // 平面の図を大きくしているときにカメラを動かしたら、その向きのままパースに戻す
+        if (!quad && mainK !== 'persp') {
+          if (mainK === 'front') { theta = 0; phi = Math.PI / 2; }
+          if (mainK === 'right') { theta = Math.PI / 2; phi = Math.PI / 2; }
+          if (mainK === 'top') { theta = 0; phi = 0.05; }
+          mainK = 'persp'; placeCam(); layoutPanes();
+        }
+        if (orbit.two && pointers.size >= 2) {
+          const ps = [...pointers.values()];
+          const before = Math.hypot(ps[0].x - ps[1].x, ps[0].y - ps[1].y);
+          pointers.set(e.pointerId, cur);
+          const qs = [...pointers.values()];
+          const after = Math.hypot(qs[0].x - qs[1].x, qs[0].y - qs[1].y);
+          if (before > 0 && after > 0) dist *= before / after;
+          theta -= (cur.x - prev.x) * 0.004; phi -= (cur.y - prev.y) * 0.004;
+          placeCam(); layoutPanes();
+          return;
+        } else if (!orbit.two) {
+          theta -= (cur.x - prev.x) * 0.008; phi -= (cur.y - prev.y) * 0.008;
+          placeCam();
+        }
+      }
+      pointers.set(e.pointerId, cur);
+    });
+    function endStroke() { if (stroke) { refresh(true); stroke = null; } }
+    function up(e) {
+      pointers.delete(e.pointerId);
+      if (stroke && stroke.id === e.pointerId) endStroke();
+      if (refDrag && refDrag.id === e.pointerId) refDrag = null;
+      if (pointers.size === 0) orbit = null;
+    }
+    cvs.addEventListener('pointerup', up);
+    cvs.addEventListener('pointercancel', up);
+    cvs.addEventListener('wheel', e => {
+      e.preventDefault();
+      const v = viewAt(e.clientX, e.clientY);
+      if (editRef && v.k === editRef && refs[editRef]) { scaleRef(editRef, Math.exp(-e.deltaY * 0.001)); return; }
+      dist *= Math.exp(e.deltaY * 0.001); placeCam(); layoutPanes(); }, { passive: false });
+
+    renderer.setAnimationLoop(() => { if (dirty) { render(); dirty = false; } });
+
+    // ---------- 完成 ----------
+    let shotURL = '';
+    function makeShot() {
+      // 作品だけをパースで正方形に撮る（グリッドや軸は写さない）
+      const SZ = 1080;
+      const hide = scene.children.filter(o => o !== mesh && !o.isLight && !o.isCamera && o.visible);
+      for (const o of hide) o.visible = false;
+      const cam = persp.clone(); cam.aspect = 1; cam.fov = 35; cam.updateProjectionMatrix();
+      cam.add(lightRig); scene.add(cam); cam.updateMatrixWorld();
+      const rt = new THREE.WebGLRenderTarget(SZ, SZ, { samples: 4, colorSpace: THREE.SRGBColorSpace });
+      renderer.setRenderTarget(rt);
+      renderer.setViewport(0, 0, SZ, SZ); renderer.setScissorTest(false);
+      renderer.clear();
+      renderer.render(scene, cam);
+      const buf = new Uint8Array(SZ * SZ * 4);
+      renderer.readRenderTargetPixels(rt, 0, 0, SZ, SZ, buf);
+      renderer.setRenderTarget(null); rt.dispose();
+      for (const o of hide) o.visible = true;
+      scene.remove(cam);
+      const c = document.createElement('canvas'); c.width = c.height = SZ;
+      const g = c.getContext('2d'), img = g.createImageData(SZ, SZ);
+      for (let y = 0; y < SZ; y++) img.data.set(buf.subarray((SZ - 1 - y) * SZ * 4, (SZ - y) * SZ * 4), y * SZ * 4);
+      g.putImageData(img, 0, 0);
+      dirty = true;
+      return c;
+    }
+    const isTouch = matchMedia('(pointer: coarse)').matches;
+    function updatePostLink() {
+      const a = $('post');
+      a.href = 'https://x.com/intent/post?text=' + encodeURIComponent(t('tweet')) + '&url=' + encodeURIComponent('https://keifurukawafunnych.com/games/clay-sculpt/');
+      if (isTouch) a.removeAttribute('target'); else { a.target = '_blank'; a.rel = 'noopener'; }
+    }
+    function download() {
+      const a = document.createElement('a'); a.href = shotURL; a.download = 'clay-sculpt.png';
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    // 画像はクリックした瞬間に同期で作る（共有シートはクリック直後でないと開けない）
+    function makeShotFile() {
+      const url = makeShot().toDataURL('image/png');
+      const bin = atob(url.split(',')[1]), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      shotURL = url;
+      return new File([u8], 'clay-sculpt.png', { type: 'image/png' });
+    }
+    $('post').onclick = e => {
+      const file = makeShotFile();
+      if (isTouch && navigator.canShare && navigator.canShare({ files: [file] })) {
+        e.preventDefault();
+        navigator.share({ files: [file], text: t('tweet') + ' https://keifurukawafunnych.com/games/clay-sculpt/' }).catch(() => {});
+        return;
+      }
+      if (!isTouch) download();
+    };
+
+    // UIを消す：ボタン類と、グリッド・軸・下絵などの補助表示をまとめて隠す
+    let clean = false, hidden = [];
+    function drawClean() {
+      $('clean').innerHTML = clean ? ic.eye : ic.eyeOff;
+      $('clean').setAttribute('aria-label', t(clean ? 'uiOn' : 'clean'));
+    }
+    $('clean').onclick = () => {
+      clean = !clean;
+      document.body.classList.toggle('clean', clean);
+      if (clean) {
+        hidden = scene.children.filter(o => o !== mesh && !o.isLight && !o.isCamera && o.visible);
+        for (const o of hidden) o.visible = false;
+      } else {
+        for (const o of hidden) o.visible = true;
+        symPlane.visible = sym; hidden = [];
+      }
+      drawClean(); dirty = true;
+    };
+
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+  </script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

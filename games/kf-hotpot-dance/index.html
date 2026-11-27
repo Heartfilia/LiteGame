@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>火锅舞蹈培训 · LiteGame</title>
+  <meta name="description" content="跟前辈跳同一段，最后对齐率打分。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="火锅舞蹈培训 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/hotpot-dance/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/hotpot-dance/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #2a0c0a; color: #fff3e0; overflow: hidden;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans KR", "Noto Sans Thai", sans-serif;
+    }
+    #stage { position: fixed; inset: 0; }
+    #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; pointer-events: none; z-index: 5; }
+    header > * { pointer-events: auto; }
+    header a { color: #fff3e0; font-size: 14px; text-decoration: none; margin-right: auto; text-shadow: 0 1px 3px #000; }
+    header button, header select {
+      background: rgba(255,255,255,.92); border: none; border-radius: 8px;
+      height: 34px; min-width: 40px; padding: 0 10px; font-size: 13px; color: #3a1512; cursor: pointer;
+    }
+    header svg { width: 18px; height: 18px; display: block; }
+    #bar {
+      position: fixed; top: 58px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 24px));
+      display: flex; gap: 3px; pointer-events: none; z-index: 4;
+    }
+    #bar i { flex: 1; height: 10px; border-radius: 3px; background: rgba(255,255,255,.18); transition: background .15s, transform .15s; }
+    #bar i.now { background: rgba(255,255,255,.55); transform: scaleY(1.4); }
+    #bar i.p { background: #ffd23f; box-shadow: 0 0 6px #ffb800; }
+    #bar i.g { background: #ff9a4a; }
+    #bar i.m { background: #5a1410; box-shadow: inset 0 0 0 1px #c0392b; }
+    #hint {
+      position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+      width: clamp(96px, 16vmin, 150px); pointer-events: none; z-index: 4; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
+    }
+    #hint svg { display: block; width: 100%; }
+    #hint .ar { animation: pulse 1.6s infinite; }
+    #hint .ar:nth-child(2) { animation-delay: .4s; } #hint .ar:nth-child(3) { animation-delay: .8s; } #hint .ar:nth-child(4) { animation-delay: 1.2s; }
+    @keyframes pulse { 0%, 100% { opacity: .35; } 20% { opacity: 1; } }
+    #hint[hidden] { display: none; }
+    #panel {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom));
+      width: min(440px, calc(100% - 24px)); display: none; flex-direction: column; align-items: center; gap: 10px;
+      padding: 14px 16px 16px; background: rgba(34,8,6,.86); border-radius: 18px; box-shadow: 0 6px 24px rgba(0,0,0,.5); z-index: 6;
+    }
+    #panel.show { display: flex; }
+    #panel.ghost { visibility: hidden; }
+    #rateL { font-size: clamp(14px, 2.2vmin, 18px); opacity: .85; }
+    #rate { font-size: clamp(44px, 9vmin, 76px); font-weight: 900; line-height: 1; color: #ffd23f; letter-spacing: .02em; }
+    #btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    #btns a, #btns button {
+      height: clamp(46px, 7vmin, 56px); padding: 0 22px; border-radius: 28px; border: none; font: inherit; font-weight: 800;
+      font-size: clamp(15px, 2.4vmin, 19px); display: flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none; touch-action: manipulation;
+    }
+    #again { background: #fff; color: #3a1512; }
+    #post { background: #111; color: #fff; }
+    #post.wait { opacity: .45; }
+    @media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+      #panel { left: auto; right: 12px; transform: none; width: min(300px, 34vw); top: 76px; bottom: calc(80px + env(safe-area-inset-bottom)); justify-content: center; }
+      #btns { flex-direction: column; align-items: stretch; }
+      #btns a, #btns button { justify-content: center; }
+    }
+    #msg { position: fixed; left: 16px; right: 16px; top: 38%; max-width: 420px; margin: 0 auto; display: none; justify-content: center; padding: 16px 18px; text-align: center; line-height: 1.6; background: rgba(0,0,0,.85); border-radius: 14px; pointer-events: none; z-index: 20; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">火锅舞蹈培训</h1>
+  <main style="display:contents">
+  <div id="stage"></div>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="sound" aria-label="sound"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <div id="bar"></div>
+  <div id="hint">
+    <svg viewBox="0 0 120 120" fill="#fff3e0">
+      <path class="ar" d="M60 6l16 18H66v16H54V24H44z"/>
+      <path class="ar" d="M114 60L96 76V66H80V54h16V44z"/>
+      <path class="ar" d="M60 114L44 96h10V80h12v16h10z"/>
+      <path class="ar" d="M6 60l18-16v10h16v12H24v10z"/>
+      <circle cx="60" cy="60" r="9" fill="#e0281a" stroke="#fff3e0" stroke-width="3"/>
+    </svg>
+  </div>
+  <div id="panel">
+    <div id="rateL"></div>
+    <div id="rate"></div>
+    <div id="btns">
+      <button id="again"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5"/></svg><span></span></button>
+      <a id="post" class="wait"></a>
+    </div>
+  </div>
+  <div id="msg"></div>
+  </main>
+  <script src="../lib/vendor/mp4-muxer@5.1.3/build/mp4-muxer.min.js"></script>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 火锅舞蹈培训 · 中文文案
+window.__KF_ZH__ = {
+  title: '火锅舞蹈培训',
+  back: '← 大厅',
+  again: '再来一次',
+  post: '分享到 X',
+  rate: '整齐度',
+  saved: '视频已保存，发帖时附上',
+  savedPc: '视频已保存，请在发帖页面附上',
+  savedImg: '图片已保存，请在发帖页面附上',
+  load: '加载失败，请检查网络',
+  share: (n) => `火锅店舞蹈培训，整齐度 ${n}% #LiteGame`
+};
+</script>
+<script type="module">
+    const DICT = {
+      ja: { title: '火锅舞蹈培训', back: '← トップへ戻る', again: 'もう一度', post: 'Xに投稿', rate: 'そろい率',
+            saved: '動画を保存しました。Xで投稿するときに添付してください。保存できないときは、SafariやChromeで開き直してください。', savedPc: '動画を保存しました。投稿画面で動画を添付してください。',
+            savedImg: '画像を保存しました。投稿画面で画像を添付してください。', load: '読み込めませんでした。通信を確認してください。',
+            share: n => `火鍋店のダンス研修、そろい率${n}%でした #火锅舞蹈培训ゲーム` },
+      ko: { title: '훠궈 댄스 연수', back: '← 처음으로', again: '다시 하기', post: 'X에 게시', rate: '싱크로율',
+            saved: '동영상을 저장했습니다. X에 게시할 때 첨부해 주세요. 저장되지 않으면 Safari나 Chrome에서 다시 열어 주세요.', savedPc: '동영상을 저장했습니다. 게시 화면에서 동영상을 첨부해 주세요.',
+            savedImg: '이미지를 저장했습니다. 게시 화면에서 이미지를 첨부해 주세요.', load: '불러오지 못했습니다. 연결을 확인해 주세요.',
+            share: n => `훠궈집 댄스 연수, 싱크로율 ${n}%였어요 #火锅舞蹈培训ゲーム` },
+      en: { title: 'Hot Pot Dance Training', back: '← Back to top', again: 'Again', post: 'Post', rate: 'In sync',
+            saved: 'Video saved. Attach it when you post on X. If it did not save, reopen this page in Safari or Chrome.', savedPc: 'Video saved. Attach it on the post screen.',
+            savedImg: 'Image saved. Attach it on the post screen.', load: 'Could not load. Please check your connection.',
+            share: n => `Hot pot staff dance training: ${n}% in sync #火锅舞蹈培训ゲーム` },
+      th: { title: 'ฝึกเต้นร้านหม้อไฟ', back: '← กลับหน้าแรก', again: 'อีกครั้ง', post: 'โพสต์ลง X', rate: 'ความพร้อมเพรียง',
+            saved: 'บันทึกวิดีโอแล้ว แนบวิดีโอตอนโพสต์ลง X หากบันทึกไม่ได้ โปรดเปิดหน้านี้ใหม่ใน Safari หรือ Chrome', savedPc: 'บันทึกวิดีโอแล้ว โปรดแนบวิดีโอในหน้าโพสต์',
+            savedImg: 'บันทึกรูปแล้ว โปรดแนบรูปในหน้าโพสต์', load: 'โหลดไม่สำเร็จ โปรดตรวจสอบการเชื่อมต่อ',
+            share: n => `ฝึกเต้นพนักงานร้านหม้อไฟ เต้นพร้อมกัน ${n}% #火锅舞蹈培训ゲーム` },
+    }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/hotpot-dance/';
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('hotpot-dance:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('hotpot-dance:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (['ja', 'ko', 'en', 'th'].includes(c)) return c; } return 'en'; };
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!DICT[lang]) lang = 'en';
+    let muted = store.get('muted', false);
+    const t = k => DICT[lang][k];
+    const $ = id => document.getElementById(id);
+
+    // 長押しの拡大鏡・メニューを出さない
+    document.addEventListener('touchstart', e => { if (!e.target.closest('a, button, select, input')) e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+
+    let THREE;
+    try { THREE = await import('three'); } catch {
+      const m = $('msg'); m.textContent = t('load'); m.style.display = 'flex';
+      throw new Error('three.js load failed');
+    }
+    const clamp01 = x => Math.min(1, Math.max(0, x));
+    const lerp = (a, b, k) => a + (b - a) * k;
+    const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+    const backOut = x => { x = clamp01(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+
+    // ---------- 振り付け（拍 0.5 秒。4拍のカウント → 32回のポーズ → 決めポーズ） ----------
+    const BEAT = .5, SONG_END = 80 * BEAT;
+    const POSES = [];
+    {
+      let b = 4;
+      for (const p of ['U', 'L', 'R', 'D', 'U', 'R', 'L', 'D']) { POSES.push({ b, d: 4, p }); b += 4; }
+      for (const p of ['L', 'R', 'L', 'R', 'U', 'D', 'U', 'D', 'UL', 'UR', 'UL', 'UR', 'L', 'U', 'R', 'D']) { POSES.push({ b, d: 2, p }); b += 2; }
+      for (const p of ['U', 'D', 'L', 'R', 'UL', 'UR', 'D', 'U']) { POSES.push({ b, d: 1, p }); b += 1; }
+      for (const q of POSES) { q.t = q.b * BEAT; q.dur = q.d * BEAT; q.win = Math.min(.6, q.dur); }
+    }
+    const LEAD = .1; // 先輩は拍の少し前から動き出す
+    const SEN_TL = [{ t: -1e9, p: 'N' }, ...POSES.map(q => ({ t: q.t - LEAD, p: q.p }))];
+    // 手の位置は腰からの相対。x がマイナスで画面の左
+    const PO = {
+      N: { l: [-.36, -.16, .12], r: [.36, -.16, .12], c: 0, tl: 0, sh: 0, f: .17 },
+      U: { l: [-.3, 1.38, .02], r: [.3, 1.38, .02], c: 0, tl: 0, sh: 0, f: .22 },
+      L: { l: [-1.16, .64, .05], r: [.36, .02, .2], c: .06, tl: .1, sh: -.06, f: .3 },
+      R: { l: [-.36, .02, .2], r: [1.16, .64, .05], c: .06, tl: -.1, sh: .06, f: .3 },
+      D: { l: [-.05, .38, .45], r: [.05, .38, .45], c: .3, tl: 0, sh: 0, f: .3, clap: 1 },
+      UL: { l: [-.8, 1.2, .05], r: [.72, -.08, .1], c: .02, tl: .16, sh: -.04, f: .26 },
+      UR: { l: [-.72, -.08, .1], r: [.8, 1.2, .05], c: .02, tl: -.16, sh: .04, f: .26 },
+    };
+
+    // ---------- 画面 ----------
+    const stage = $('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    stage.append(renderer.domElement);
+    const cv = renderer.domElement;
+    const scene = new THREE.Scene();
+    const FOG = 0x2a0c0a;
+    scene.background = new THREE.Color(FOG);
+    scene.fog = new THREE.Fog(FOG, 10, 30);
+    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 80);
+    scene.add(new THREE.HemisphereLight(0xb8d4ff, 0x5a2414, .85));
+    const sun = new THREE.DirectionalLight(0xffdcb0, 2.3);
+    sun.position.set(2.2, 6.5, 6); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.bias = -.0005;
+    Object.assign(sun.shadow.camera, { left: -4.5, right: 4.5, top: 4.5, bottom: -2, near: 2, far: 18 });
+    scene.add(sun);
+    const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: .7, ...o });
+    function canvasTex(w, h, draw, rx = 1, ry = 1) {
+      const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+      const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+      if (rx !== 1 || ry !== 1) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(rx, ry); }
+      tx.anisotropy = 4; return tx;
+    }
+    // 木の床
+    const floorTex = canvasTex(512, 512, (g, w, h) => {
+      const rows = 8;
+      for (let r = 0; r < rows; r++) {
+        let x = -(r % 2) * 128;
+        while (x < w) {
+          const L = 160 + Math.random() * 120, base = 120 + Math.random() * 30;
+          g.fillStyle = `rgb(${base},${base * .62 | 0},${base * .38 | 0})`; g.fillRect(x, r * h / rows, L, h / rows);
+          for (let i = 0; i < 9; i++) { g.strokeStyle = `rgba(60,30,10,${.08 + Math.random() * .12})`; g.lineWidth = 1 + Math.random() * 1.5; g.beginPath(); const y = r * h / rows + Math.random() * h / rows; g.moveTo(x, y); g.bezierCurveTo(x + L * .3, y + 4, x + L * .6, y - 4, x + L, y + Math.random() * 3); g.stroke(); }
+          g.fillStyle = 'rgba(30,12,4,.55)'; g.fillRect(x, r * h / rows, 2, h / rows);
+          x += L;
+        }
+        g.fillStyle = 'rgba(30,12,4,.6)'; g.fillRect(0, r * h / rows, w, 2);
+      }
+    }, 10, 10);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), std(0xffffff, { map: floorTex, roughness: .45 }));
+    floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+    // 赤い壁（格子模様。上ほど暗い）
+    const WALL_Z = -2.6;
+    const wallTex = canvasTex(1024, 1024, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#2c0705'); gr.addColorStop(.55, '#6e130d'); gr.addColorStop(.85, '#9a2015'); gr.addColorStop(1, '#7a170f');
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.strokeStyle = 'rgba(255,190,90,.13)'; g.lineWidth = 2;
+      const s = 34;
+      for (let y = 0; y < h; y += s) for (let x = 0; x < w; x += s) {
+        g.strokeRect(x + 5, y + 5, s - 10, s - 10);
+        g.beginPath(); g.moveTo(x + s / 2, y + 5); g.lineTo(x + s / 2, y + 11); g.moveTo(x + s / 2, y + s - 5); g.lineTo(x + s / 2, y + s - 11); g.stroke();
+      }
+      g.fillStyle = '#3a0b07'; g.fillRect(0, h * .94, w, h * .06); // 腰板
+      g.fillStyle = 'rgba(255,200,100,.5)'; g.fillRect(0, h * .94, w, 3);
+    });
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(34, 20), std(0xffffff, { map: wallTex, roughness: .85 }));
+    wall.position.set(0, 10, WALL_Z); wall.receiveShadow = true; scene.add(wall);
+    // 後列の段
+    const stepMat = std(0x5a3018, { map: floorTex, roughness: .5 });
+    const STEP_H = .22;
+    const step = new THREE.Mesh(new THREE.BoxGeometry(5.4, STEP_H, 1.3), stepMat);
+    step.position.set(0, STEP_H / 2, -1.05); step.receiveShadow = true; step.castShadow = true; scene.add(step);
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(5.42, .04, .04), std(0xd8a040, { metalness: .7, roughness: .3 }));
+    trim.position.set(0, STEP_H, -.4); scene.add(trim);
+    // 床のバミリ（立ち位置の印）
+    const tapeMat = std(0xf2d03a, { roughness: .6 }), tapeGeo = new THREE.BoxGeometry(.32, .006, .05);
+    function tape(x, y, z) { for (const r of [.785, -.785]) { const m = new THREE.Mesh(tapeGeo, tapeMat); m.position.set(x, y + .004, z + .12); m.rotation.y = r; m.receiveShadow = true; scene.add(m); } }
+    // ちょうちん
+    const lanGeo = new THREE.SphereGeometry(1, 20, 14), capGeo = new THREE.CylinderGeometry(.13, .13, .06, 14), tassGeo = new THREE.CylinderGeometry(.015, .04, .22, 6);
+    const lanMat = std(0xd8261a, { emissive: 0x801808, emissiveIntensity: .9, roughness: .5 }), goldMat = std(0xe0a838, { metalness: .7, roughness: .35 }), strMat = std(0x220a06);
+    const ribGeo = new THREE.TorusGeometry(1, .012, 4, 24);
+    function lantern(x, y, z, s = 1) {
+      const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s); scene.add(g);
+      const b = new THREE.Mesh(lanGeo, lanMat); b.scale.set(.3, .36, .3); g.add(b);
+      for (const k of [-.18, 0, .18]) { const r = new THREE.Mesh(ribGeo, strMat); const rr = Math.sqrt(1 - (k / .36) ** 2) * .3; r.scale.set(rr, rr, 1); r.rotation.x = Math.PI / 2; r.position.y = k; g.add(r); }
+      for (const k of [-1, 1]) { const c = new THREE.Mesh(capGeo, goldMat); c.position.y = k * .36; g.add(c); }
+      const ta = new THREE.Mesh(tassGeo, goldMat); ta.position.y = -.5; g.add(ta);
+      const st = new THREE.Mesh(tassGeo, strMat); st.scale.set(.5, 4, .5); st.position.y = .8; g.add(st);
+      g.userData.ph = Math.random() * 6; lanterns.push(g);
+    }
+    const lanterns = [];
+    for (let i = -3; i <= 3; i++) if (i) lantern(i * 1.35, 4.9 + (i % 2) * .15, -2.1);
+    for (let i = -4; i <= 4; i++) lantern(i * 1.5 + .75, 7.6, -2.35, 1.1);
+    for (let i = -3; i <= 3; i++) lantern(i * 1.7, 10.4, -2.45, 1.2);
+    // 奥の火鍋テーブル
+    const steamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .14, depthWrite: false });
+    const steams = [];
+    for (const x of [-3.9, 3.9]) {
+      const g = new THREE.Group(); g.position.set(x, 0, -1.3); scene.add(g);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, .08, 32), std(0x3b2418, { roughness: .4 })); top.position.y = .8; top.castShadow = top.receiveShadow = true; g.add(top);
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(.1, .14, .8, 12), std(0x2a1a10)); leg.position.y = .4; g.add(leg);
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(.5, .42, .28, 32), std(0xc0c0c0, { metalness: .85, roughness: .25 })); pot.position.y = .98; pot.castShadow = true; g.add(pot);
+      const soup = new THREE.Mesh(new THREE.CircleGeometry(.47, 32, 0, Math.PI), std(0xd8261a, { roughness: .15 })); soup.rotation.x = -Math.PI / 2; soup.position.y = 1.1; g.add(soup);
+      const soup2 = new THREE.Mesh(new THREE.CircleGeometry(.47, 32, Math.PI, Math.PI), std(0xf0e0c0, { roughness: .15 })); soup2.rotation.x = -Math.PI / 2; soup2.position.y = 1.1; g.add(soup2);
+      for (let i = 0; i < 4; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), steamMat); s.userData.p = i / 4; g.add(s); steams.push(s); }
+    }
+    // 額縁（いつもの猫の講師と、火鍋の絵）
+    function frame(x, y, w, h, tex) {
+      const g = new THREE.Group(); g.position.set(x, y, WALL_Z + .03); scene.add(g);
+      const fr = new THREE.Mesh(new THREE.BoxGeometry(w + .14, h + .14, .05), goldMat); fr.castShadow = true; g.add(fr);
+      const pic = new THREE.Mesh(new THREE.PlaneGeometry(w, h), std(0xffffff, { map: tex, roughness: .6 })); pic.position.z = .03; g.add(pic);
+      return g;
+    }
+    const catTex = new THREE.TextureLoader().load('cat.png', tx => { tx.colorSpace = THREE.SRGBColorSpace; });
+    const catBg = canvasTex(256, 320, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h * .45, 10, w / 2, h * .45, w * .8); gr.addColorStop(0, '#fff4d8'); gr.addColorStop(1, '#e8b860'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    const catFrame = frame(-2.05, 3.45, .9, 1.12, catBg);
+    { const c = new THREE.Mesh(new THREE.PlaneGeometry(.82, .82), new THREE.MeshStandardMaterial({ map: catTex, transparent: true, roughness: .6 })); c.position.set(0, .06, .04); catFrame.add(c);
+      const rib = new THREE.Mesh(new THREE.PlaneGeometry(.9, .16), std(0xc8231a)); rib.position.set(0, -.44, .045); catFrame.add(rib); }
+    frame(2.05, 3.45, .9, 1.12, canvasTex(256, 320, (g, w, h) => {
+      g.fillStyle = '#f4e4c4'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#9a9a9a'; g.beginPath(); g.ellipse(w / 2, h * .55, 100, 46, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#d82a1a'; g.beginPath(); g.ellipse(w / 2, h * .52, 88, 36, 0, Math.PI * .5, Math.PI * 1.5); g.fill();
+      g.fillStyle = '#fff2da'; g.beginPath(); g.ellipse(w / 2, h * .52, 88, 36, 0, -Math.PI * .5, Math.PI * .5); g.fill();
+      g.fillStyle = '#d82a1a'; g.beginPath(); g.arc(w / 2, h * .52 - 18, 18, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#fff2da'; g.beginPath(); g.arc(w / 2, h * .52 + 18, 18, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 6; g.lineCap = 'round';
+      for (let i = 0; i < 3; i++) { g.beginPath(); const x = w / 2 - 40 + i * 40; g.moveTo(x, h * .38); g.bezierCurveTo(x - 16, h * .3, x + 16, h * .22, x, h * .12); g.stroke(); }
+    }));
+    // 壁のテレビ（研修中はカメラの映像、終わったら録画を流す）
+    const TV_Y = 3.4, TV_W = 1.9, TV_H = TV_W * 9 / 16;
+    const tvRT = new THREE.WebGLRenderTarget(640, 360, { samples: 4 });
+    const tv = new THREE.Group(); tv.position.set(0, TV_Y, WALL_Z + .08); scene.add(tv);
+    const bezel = new THREE.Mesh(new THREE.BoxGeometry(TV_W + .12, TV_H + .12, .08), std(0x111111, { roughness: .3, metalness: .4 })); bezel.castShadow = true; tv.add(bezel);
+    const screenMat = new THREE.MeshBasicMaterial({ map: tvRT.texture }), offMat = std(0x0a0a0c, { roughness: .2 });
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(TV_W, TV_H), screenMat); screen.position.z = .045; tv.add(screen);
+    const missGlow = new THREE.Group(); tv.add(missGlow);
+    { const m = new THREE.MeshBasicMaterial({ color: 0xff2a1a }); const th = .045;
+      for (const [w, h, x, y] of [[TV_W, th, 0, TV_H / 2 - th / 2], [TV_W, th, 0, -TV_H / 2 + th / 2], [th, TV_H, TV_W / 2 - th / 2, 0], [th, TV_H, -TV_W / 2 + th / 2, 0]]) { const b = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); b.position.set(x, y, .05); missGlow.add(b); } }
+    missGlow.visible = false;
+    const recDot = new THREE.Mesh(new THREE.CircleGeometry(.045, 16), new THREE.MeshBasicMaterial({ color: 0xff2020 })); recDot.position.set(-TV_W / 2 + .1, TV_H / 2 - .1, .05); tv.add(recDot);
+    const playMark = new THREE.Mesh(new THREE.CircleGeometry(.06, 3), new THREE.MeshBasicMaterial({ color: 0xffffff })); playMark.position.set(-TV_W / 2 + .11, TV_H / 2 - .1, .05); playMark.visible = false; tv.add(playMark);
+    const tvCam = new THREE.PerspectiveCamera(30, 16 / 9, .1, 60);
+    { const D = 6.7 / (16 / 9 * 2 * Math.tan(THREE.MathUtils.degToRad(15))); tvCam.position.set(0, 1.85, -.3 + D); tvCam.lookAt(0, 1.3, -.3); tvCam.userData.D = D; }
+
+    // ---------- 店員さん ----------
+    const cyl = new THREE.CylinderGeometry(1, 1, 1, 14), ball = new THREE.SphereGeometry(1, 18, 12);
+    const M = { shirt: std(0x1c1c1c, { roughness: .8 }), pants: std(0x2a2a3a, { roughness: .8 }), glove: std(0xffffff, { roughness: .5 }), shoe: std(0x111111, { roughness: .4 }),
+                eye: std(0x111111, { roughness: .2 }), hi: new THREE.MeshBasicMaterial({ color: 0xffffff }), mouth: std(0x7a1a10), hairB: std(0x141010, { roughness: .55 }), hairBr: std(0x4a2a18, { roughness: .55 }) };
+    const UP = new THREE.Vector3(0, 1, 0);
+    const ARM = .46, LEG = .48;
+    const hemi = new THREE.SphereGeometry(.22, 18, 12, 0, Math.PI * 2, 0, Math.PI * .5);
+    function makeDancer(o) {
+      const root = new THREE.Group(); root.position.set(o.x, o.y, o.z); scene.add(root);
+      const add = (m, parent = root) => { m.castShadow = true; parent.add(m); return m; };
+      const limb = (mat, r) => { const m = add(new THREE.Mesh(cyl, mat)); m.userData.r = r; return m; };
+      const joint = (mat, r) => { const m = add(new THREE.Mesh(ball, mat)); m.scale.setScalar(r); return m; };
+      const skin = std(o.skin, { roughness: .6 }), apronM = std(o.apron, { roughness: .75 });
+      const torso = new THREE.Group(); root.add(torso);
+      add(new THREE.Mesh(new THREE.CapsuleGeometry(.26, .38, 6, 16), M.shirt), torso).position.y = .36;
+      const apron = add(new THREE.Mesh(new THREE.BoxGeometry(.42, .44, .04), apronM), torso); apron.position.set(0, .2, .25);
+      const strap = add(new THREE.Mesh(new THREE.BoxGeometry(.05, .3, .03), apronM), torso); strap.position.set(0, .55, .22); strap.rotation.x = -.25;
+      add(new THREE.Mesh(cyl, skin), torso).scale.set(.07, .2, .07); torso.children.at(-1).position.y = .72;
+      const head = new THREE.Group(); head.position.y = .9; torso.add(head);
+      add(new THREE.Mesh(ball, skin), head).scale.setScalar(.21);
+      for (const s of [-1, 1]) { const ear = add(new THREE.Mesh(ball, skin), head); ear.scale.set(.04, .06, .03); ear.position.set(s * .2, 0, 0); }
+      const hairM = o.brown ? M.hairBr : M.hairB;
+      const hair = add(new THREE.Mesh(hemi, hairM), head); hair.position.y = .015; hair.rotation.x = -.3;
+      if (o.hair === 'bun') { const b = add(new THREE.Mesh(ball, hairM), head); b.scale.setScalar(.09); b.position.set(0, .2, -.07); }
+      if (o.hair === 'pony') { const p = add(new THREE.Mesh(new THREE.CapsuleGeometry(.05, .16, 4, 8), hairM), head); p.position.set(0, -.02, -.22); p.rotation.x = .35; }
+      if (o.hair === 'band') { const b = add(new THREE.Mesh(new THREE.TorusGeometry(.205, .022, 6, 24), std(0xffffff)), head); b.rotation.x = Math.PI / 2 - .3; b.position.y = .07; }
+      if (o.hair === 'cap') { const c = add(new THREE.Mesh(new THREE.CylinderGeometry(.2, .22, .1, 18), apronM), head); c.position.set(0, .18, -.02); }
+      for (const s of [-1, 1]) {
+        const e = add(new THREE.Mesh(ball, M.eye), head); e.scale.set(.026, .036, .02); e.position.set(s * .07, .03, .196);
+        const h = new THREE.Mesh(ball, M.hi); h.scale.setScalar(.009); h.position.set(s * .07 + .008, .042, .213); head.add(h);
+      }
+      const mouth = add(new THREE.Mesh(new THREE.TorusGeometry(.05, .012, 6, 12, Math.PI), M.mouth), head); mouth.rotation.z = Math.PI; mouth.position.set(0, -.07, .196);
+      const arms = [-1, 1].map(s => ({ s, up: limb(M.shirt, .075), fo: limb(skin, .06), el: joint(M.shirt, .075), sh: joint(M.shirt, .085), hand: joint(M.glove, .1) }));
+      const legs = [-1, 1].map(s => ({ s, th: limb(M.pants, .1), sn: limb(M.pants, .085), kn: joint(M.pants, .1), foot: add(new THREE.Mesh(new THREE.BoxGeometry(.16, .1, .3), M.shoe)) }));
+      const hip = joint(M.pants, .22); hip.scale.set(.24, .15, .2);
+      tape(o.x, o.y, o.z);
+      return { root, torso, head, mouth, arms, legs, hip, ph: o.ph || 0, x: o.x };
+    }
+    const me = makeDancer({ x: 0, y: 0, z: .7, apron: 0xc8231a, skin: 0xf2c9a0, hair: 'cap' });
+    const seniors = [
+      makeDancer({ x: -1.8, y: STEP_H, z: -1.0, apron: 0x2a5ea8, skin: 0xe8b890, hair: 'band', ph: .02 }),
+      makeDancer({ x: -.65, y: STEP_H, z: -1.0, apron: 0x2f8a4a, skin: 0xf5d0aa, hair: 'bun', brown: true, ph: -.02 }),
+      makeDancer({ x: .65, y: STEP_H, z: -1.0, apron: 0xe8902a, skin: 0xdcaa80, hair: 'short', ph: .03 }),
+      makeDancer({ x: 1.8, y: STEP_H, z: -1.0, apron: 0x7a3aa0, skin: 0xf0c49c, hair: 'pony', ph: -.01 }),
+    ];
+    const dancers = [me, ...seniors];
+    seniors[1].lookYaw = .55; seniors[2].lookYaw = -.55;
+    // 自分の足もとのライト
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(.75, 40), glowMat); glow.rotation.x = -Math.PI / 2; glow.position.set(0, .01, .75); scene.add(glow);
+    const spotMat = new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: .1, depthWrite: false, blending: THREE.AdditiveBlending });
+    const spot = new THREE.Mesh(new THREE.CircleGeometry(.6, 40), spotMat); spot.rotation.x = -Math.PI / 2; spot.position.set(0, .008, .75); scene.add(spot);
+
+    function ik(a, b, l1, l2, pole) {
+      const d = b.clone().sub(a); let len = d.length();
+      len = Math.min(len, (l1 + l2) * .999); d.normalize();
+      const ca = (l1 * l1 + len * len - l2 * l2) / (2 * l1 * len);
+      const sa = Math.sqrt(Math.max(0, 1 - ca * ca));
+      const p = pole.clone().sub(d.clone().multiplyScalar(pole.dot(d))).normalize();
+      return a.clone().add(d.multiplyScalar(l1 * ca)).add(p.multiplyScalar(l1 * sa));
+    }
+    function placeLimb(m, a, b) {
+      const d = b.clone().sub(a), len = d.length();
+      m.position.copy(a).add(b).multiplyScalar(.5);
+      m.quaternion.setFromUnitVectors(UP, d.normalize());
+      m.scale.set(m.userData.r, len, m.userData.r);
+    }
+    const vA = new THREE.Vector3(), vB = new THREE.Vector3();
+    // t の時点の姿勢にする。tl はポーズの並び、o は { g: ノリ, rot: 向き, look: 振り向き, nod: うなずき, smile }
+    function applyPose(d, t, tl, o) {
+      let k = 0; for (let i = tl.length - 1; i >= 0; i--) if (tl[i].t <= t) { k = i; break; }
+      const cur = tl[k], prev = tl[k - 1] || cur, A = PO[prev.p], Bq = PO[cur.p];
+      const e = clamp01((t - cur.t) / .15), eb = k ? backOut(e) : 1, es = k ? smooth(e) : 1;
+      const bp = t / BEAT + d.ph, g = o.g;
+      const bounce = Math.abs(Math.sin(Math.PI * bp));
+      const crouch = lerp(A.c, Bq.c, es), shift = lerp(A.sh, Bq.sh, es), tilt = lerp(A.tl, Bq.tl, eb), fw = lerp(A.f, Bq.f, es);
+      const hipY = 1 - crouch - .05 * g * (1 - bounce);
+      d.root.rotation.y = o.rot || 0;
+      d.torso.position.set(shift, hipY, 0);
+      d.torso.rotation.set(0, Math.sin(Math.PI * bp * .5) * .1 * g, tilt + Math.sin(Math.PI * bp * .5) * .03 * g);
+      d.torso.updateMatrix();
+      d.head.rotation.set(.07 * g * Math.sin(2 * Math.PI * bp) + (o.look || 0) * .42 + (o.nod || 0) * .32, (o.look || 0) * (d.lookYaw || 0), -tilt * .5 + Math.sin(Math.PI * bp * .5) * .08 * g);
+      d.mouth.scale.set(1, 1 + (o.smile || 0) * 1.6 + (o.look || 0) * .8, 1);
+      const clapW = (A.clap ? 1 - es : 0) + (Bq.clap ? es : 0);
+      for (const a of d.arms) {
+        const side = a.s < 0 ? 'l' : 'r';
+        const hand = vA.fromArray(A[side]).lerp(vB.fromArray(Bq[side]), eb).clone();
+        if (clapW > 0) hand.x = lerp(hand.x, a.s * (.04 + .15 * bounce), clapW);
+        hand.x += shift; hand.y += hipY;
+        const sh = new THREE.Vector3(a.s * .33, .6, 0).applyMatrix4(d.torso.matrix);
+        const dd = hand.clone().sub(sh); if (dd.length() > ARM * 2 * .97) hand.copy(sh).add(dd.setLength(ARM * 2 * .97));
+        const el = ik(sh, hand, ARM, ARM, new THREE.Vector3(a.s, -1, -.4));
+        placeLimb(a.up, sh, el); placeLimb(a.fo, el, hand);
+        a.sh.position.copy(sh); a.el.position.copy(el); a.hand.position.copy(hand);
+      }
+      for (const l of d.legs) {
+        const hp = new THREE.Vector3(shift + l.s * .13, hipY - .08, 0);
+        const fx = l.s * fw + shift * .4;
+        const ank = new THREE.Vector3(fx, .11, .01);
+        const kn = ik(hp, ank, LEG, LEG, new THREE.Vector3(l.s * .3, 0, 1));
+        placeLimb(l.th, hp, kn); placeLimb(l.sn, kn, ank);
+        l.kn.position.copy(kn); l.foot.position.set(fx, .05, .08);
+      }
+      d.hip.position.set(shift, hipY, 0);
+    }
+
+    // ---------- 判定 ----------
+    let inputs = [], results = [], nextJudge = 0;
+    const poseAt = (tl, s) => { let p = 'N'; for (const q of tl) { if (q.t <= s) p = q.p; else break; } return p; };
+    function judge(i, upTo) {
+      const q = POSES[i];
+      if (poseAt(inputs, q.t) === q.p) return { r: 1, at: q.t };
+      for (const inp of inputs) {
+        if (inp.t <= q.t) continue;
+        if (inp.t > Math.min(q.t + q.win, upTo)) break;
+        if (inp.p === q.p) { const lat = inp.t - q.t; return { r: lat <= .3 ? 1 : .5, at: inp.t }; }
+      }
+      if (upTo >= q.t + q.win) return { r: 0, at: q.t + q.win };
+      return null;
+    }
+    // 先輩の反応（ずれたら振り向き、ぴったりならうなずく）
+    function reactAt(s, res) {
+      let look = 0, nod = 0;
+      for (const r of res) {
+        if (!r) continue;
+        const x = s - r.at;
+        if (r.r === 0 && x >= 0 && x < .9) look = Math.max(look, Math.sin(Math.PI * x / .9));
+        if (r.r === 1 && x >= 0 && x < .4) nod = Math.max(nod, Math.sin(Math.PI * x / .4));
+      }
+      return { look, nod };
+    }
+    const grooveAt = s => s < 0 ? .7 : s < SONG_END ? 1 : .3;
+    // 研修中（または録画の再生中）の全員の姿勢
+    function poseLesson(s, res) {
+      const plTL = [{ t: -1e9, p: 'N' }, ...inputs];
+      const re = reactAt(s, res), g = grooveAt(s);
+      applyPose(me, s, plTL, { g, smile: re.nod });
+      seniors.forEach((d, i) => applyPose(d, s, SEN_TL, { g, look: i === 1 || i === 2 ? re.look : 0, nod: i === 1 || i === 2 ? re.nod : 0, smile: re.nod * .5 }));
+    }
+
+    // ---------- 音 ----------
+    let ac = null, master = null, songBus = null, replayBus = null;
+    function unmuteIOS() {
+      try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch {}
+      try {
+        const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+        const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+        const a = document.createElement('audio');
+        a.src = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.loop = true; a.setAttribute('playsinline', '');
+        a.play().catch(() => {});
+      } catch {}
+    }
+    function initAudio() {
+      if (ac) { ac.resume?.(); return; }
+      unmuteIOS();
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        master = ac.createGain(); master.gain.value = muted ? 0 : .9;
+        const comp = ac.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 4;
+        master.connect(comp).connect(ac.destination);
+        const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+        o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + .05);
+        noiseOf(ac);
+      } catch { ac = null; }
+    }
+    addEventListener('pointerdown', initAudio, { capture: true });
+    addEventListener('keydown', initAudio, { capture: true });
+    const latency = () => ac ? Math.min(.3, (ac.outputLatency || 0) + (ac.baseLatency || 0)) : 0;
+    const noiseCache = new WeakMap();
+    function noiseOf(c) {
+      let b = noiseCache.get(c);
+      if (!b) { b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; noiseCache.set(c, b); }
+      return b;
+    }
+    function env(c, dest, w, vol, att, dec) {
+      const g = c.createGain(); g.gain.setValueAtTime(0, w); g.gain.linearRampToValueAtTime(vol, w + att); g.gain.exponentialRampToValueAtTime(.0005, w + att + dec); g.connect(dest); return g;
+    }
+    function noise(c, w, dur) { const s = c.createBufferSource(); s.buffer = noiseOf(c); s.start(w, Math.random(), dur + .05); return s; }
+    // 大太鼓
+    function drum(c, d, w, k, vol = 1) {
+      const o = c.createOscillator(); o.frequency.setValueAtTime(150, w); o.frequency.exponentialRampToValueAtTime(52, w + .2 * k);
+      o.connect(env(c, d, w, .9 * vol, .004, .45 * k)); o.start(w); o.stop(w + .5 * k + .05);
+      const n = noise(c, w, .1), f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+      n.connect(f).connect(env(c, d, w, .35 * vol, .002, .07));
+    }
+    // 拍子木
+    function wood(c, d, w, k, vol = 1, fr = 1250) {
+      const o = c.createOscillator(); o.frequency.value = fr; o.connect(env(c, d, w, .25 * vol, .001, .06)); o.start(w); o.stop(w + .1);
+      const n = noise(c, w, .04), f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = fr * 1.7; f.Q.value = 6;
+      n.connect(f).connect(env(c, d, w, .5 * vol, .001, .03));
+    }
+    function bass(c, d, w, k, fr, dur) {
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(900, w); f.frequency.exponentialRampToValueAtTime(220, w + dur * k);
+      const g = env(c, d, w, .4, .006, dur * k);
+      f.connect(g);
+      for (const [ty, m] of [['triangle', 1], ['sawtooth', .5]]) { const o = c.createOscillator(); o.type = ty; o.frequency.value = fr; const og = c.createGain(); og.gain.value = m; o.connect(og).connect(f); o.start(w); o.stop(w + dur * k + .1); }
+    }
+    // 二胡っぽい笛の音
+    function erhu(c, d, w, k, fr, dur) {
+      dur *= k;
+      const o = c.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(fr * .95, w); o.frequency.exponentialRampToValueAtTime(fr, w + .05);
+      const vib = c.createOscillator(); vib.frequency.value = 6; const vg = c.createGain();
+      vg.gain.setValueAtTime(0, w); vg.gain.linearRampToValueAtTime(fr * .014, w + Math.min(.25, dur)); vib.connect(vg).connect(o.frequency);
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2800;
+      const out = c.createGain(); out.gain.setValueAtTime(0, w); out.gain.linearRampToValueAtTime(.12, w + .04); out.gain.setValueAtTime(.11, w + Math.max(.05, dur - .06)); out.gain.exponentialRampToValueAtTime(.0005, w + dur + .1);
+      o.connect(lp);
+      for (const [fq, q, a] of [[950, 3, 1], [2400, 5, .6]]) { const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fq; bp.Q.value = q; const g = c.createGain(); g.gain.value = a * 2.2; lp.connect(bp).connect(g).connect(out); }
+      const dry = c.createGain(); dry.gain.value = .3; lp.connect(dry).connect(out);
+      out.connect(d); o.start(w); vib.start(w); o.stop(w + dur + .15); vib.stop(w + dur + .15);
+    }
+    // 銅鑼
+    function gong(c, d, w, k) {
+      const dec = 2.8 * Math.max(.5, k);
+      [[1, .5], [1.48, .3], [2.03, .25], [2.76, .18], [3.4, .12], [4.1, .08]].forEach(([r, a]) => {
+        const o = c.createOscillator(); o.frequency.setValueAtTime(96 * r, w); o.frequency.linearRampToValueAtTime(96 * r * 1.03, w + .6);
+        o.connect(env(c, d, w, a * .7, .01, dec / Math.sqrt(r))); o.start(w); o.stop(w + dec + .1);
+      });
+      const n = noise(c, w, 1.2), f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 1.5;
+      n.connect(f).connect(env(c, d, w, .25, .01, 1.1));
+    }
+    function cymbal(c, d, w, k) {
+      const n = noise(c, w, 1.5), f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 4500;
+      n.connect(f).connect(env(c, d, w, .3, .002, 1.2 * Math.max(.5, k)));
+    }
+    const VOWEL = { a: [800, 1200, 2600], i: [300, 2300, 3000], u: [350, 1250, 2500], e: [500, 1900, 2600], o: [500, 850, 2500] };
+    function voice(c, d, w, f0, seq, dur, vol = .4, rise = false) {
+      const o = c.createOscillator(); o.type = 'sawtooth';
+      if (rise) { o.frequency.setValueAtTime(f0 * .9, w); o.frequency.exponentialRampToValueAtTime(f0 * 1.5, w + dur); }
+      else { o.frequency.setValueAtTime(f0 * 1.2, w); o.frequency.linearRampToValueAtTime(f0 * 1.35, w + dur * .15); o.frequency.exponentialRampToValueAtTime(f0 * .75, w + dur); }
+      const vib = c.createOscillator(); vib.frequency.value = 5.5 + Math.random() * 2; const vg = c.createGain(); vg.gain.value = f0 * .03; vib.connect(vg).connect(o.frequency);
+      const ns = noise(c, w, dur), ng = c.createGain(); ng.gain.value = .15;
+      const src = c.createGain(); o.connect(src); ns.connect(ng).connect(src);
+      const out = c.createGain(); out.gain.setValueAtTime(0, w); out.gain.linearRampToValueAtTime(vol, w + .02); out.gain.setValueAtTime(vol, w + dur * .55); out.gain.exponentialRampToValueAtTime(.001, w + dur);
+      const kf = f0 > 230 ? 1.15 : 1;
+      [1, .6, .25].forEach((amp, fi) => {
+        const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = fi ? 9 : 6;
+        seq.forEach((v, si) => { const tt = w + dur * si / Math.max(1, seq.length - 1) * .7; bp.frequency[si ? 'linearRampToValueAtTime' : 'setValueAtTime'](VOWEL[v][fi] * kf, tt); });
+        const g = c.createGain(); g.gain.value = amp * 3; src.connect(bp).connect(g).connect(out);
+      });
+      out.connect(d); o.start(w); vib.start(w); o.stop(w + dur + .05); vib.stop(w + dur + .05);
+    }
+    // 先輩たちの掛け声（何人かの声を重ねる）
+    function chorus(c, d, w, k, seq, dur, vol = .32) {
+      [[140, 0], [175, .012], [250, .006], [300, .018]].forEach(([f, dl]) => voice(c, d, w + dl, f * (.97 + Math.random() * .06), seq, dur * Math.min(1, k * 1.2), vol));
+    }
+    // ---------- 曲（拍を並べた譜面） ----------
+    const SCALE = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99];
+    const PH = {
+      P1: [4, '-', 3, 4, 5, '-', 4, 3, 2, '-', 1, 2, 3, '-', '-', '.'],
+      P2: [5, 6, 5, 3, 4, '-', 3, 2, 1, 2, 3, 4, 2, '-', '-', '.'],
+      P3: [7, '-', 6, 5, 6, '-', 5, 4, 5, 4, 3, 2, 4, '-', '-', '.'],
+      P4: [3, 2, 1, 2, 3, 4, 5, '-', 6, 5, 4, 3, 5, '-', '-', '.'],
+    };
+    const ROOTS = [65.41, 55, 43.65, 49];
+    const EVENTS = [];
+    {
+      const ev = (b, f) => EVENTS.push({ s: b * BEAT, f });
+      // カウント（イー、アル、サン、スー）
+      [['i'], ['a', 'u'], ['a', 'u'], ['u']].forEach((sq, i) => { ev(i, (c, d, w, k) => { wood(c, d, w, k, 1.2, 1500); voice(c, d, w, 190, sq, .3 * k, .4); }); });
+      for (const b of [4, 36, 68]) ev(b, (c, d, w, k) => { gong(c, d, w, k); chorus(c, d, w, k, ['a', 'i'], .3); });
+      // メロディ
+      let b = 4;
+      for (const name of ['P1', 'P2', 'P1', 'P4', 'P3', 'P2', 'P3', 'P4', 'P3']) {
+        const ph = PH[name];
+        for (let i = 0; i < ph.length; i++) {
+          if (typeof ph[i] !== 'number') continue;
+          let n = 1; while (ph[i + n] === '-') n++;
+          const fr = SCALE[ph[i]], du = n * BEAT / 2;
+          ev(b + i / 2, (c, d, w, k) => erhu(c, d, w, k, fr, du));
+        }
+        b += 8;
+      }
+      // 太鼓・拍子木・ベース
+      for (let b = 4; b < 76; b++) {
+        const inA = b < 36, inC = b >= 68, bar = b % 4;
+        if (!inA || bar === 0 || bar === 2) ev(b, (c, d, w, k) => drum(c, d, w, k, bar === 0 ? 1 : .75));
+        if (inC) ev(b + .5, (c, d, w, k) => drum(c, d, w, k, .55));
+        if (inA && bar === 3) ev(b + .5, (c, d, w, k) => drum(c, d, w, k, .5));
+        ev(b + .5, (c, d, w, k) => wood(c, d, w, k, .8));
+        if (!inA) ev(b + .25, (c, d, w, k) => wood(c, d, w, k, .35, 1800)), ev(b + .75, (c, d, w, k) => wood(c, d, w, k, .35, 1800));
+        const root = ROOTS[Math.floor((b - 4) / 4) % 4];
+        if (bar === 0) ev(b, (c, d, w, k) => bass(c, d, w, k, root, BEAT * 1.4));
+        if (bar === 2) ev(b, (c, d, w, k) => bass(c, d, w, k, root, BEAT * .9));
+        if (bar === 2 || bar === 3) ev(b + .5, (c, d, w, k) => bass(c, d, w, k, root * 2, BEAT * .4));
+      }
+      // 決め
+      ev(76, (c, d, w, k) => { gong(c, d, w, k); cymbal(c, d, w, k); drum(c, d, w, k, 1.2); bass(c, d, w, k, 65.41, 1.5); erhu(c, d, w, k, 523.25, 1.4); chorus(c, d, w, k, ['a', 'i'], .45, .42); });
+      EVENTS.sort((a, b) => a.s - b.s);
+    }
+    // 先読みして鳴らす。perfBase は曲の頭の時刻（performance.now）、offOf は曲の時刻 → 再生の秒
+    function makeSched(bus, perfBase, offOf, kOf, from) {
+      let i = EVENTS.findIndex(e => e.s >= from); if (i < 0) i = EVENTS.length;
+      return { bus, perfBase, offOf, kOf, i };
+    }
+    function tickSched(sc, now) {
+      if (!ac || !sc) return;
+      while (sc.i < EVENTS.length) {
+        const e = EVENTS[sc.i], off = sc.offOf(e.s);
+        const at = sc.perfBase + off * 1000;
+        if (at - now > 350) break;
+        sc.i++;
+        if (at - now < -60) continue;
+        try { e.f(ac, sc.bus, ac.currentTime + Math.max(0, (at - now) / 1000), sc.kOf(e.s)); } catch {}
+      }
+    }
+    function newBus() { const g = ac.createGain(); g.connect(master); return g; }
+    const sfxOn = () => ac && !muted;
+    function bell(vol) {
+      if (!sfxOn()) return;
+      const w = ac.currentTime;
+      [[1568, 1], [2349, .5], [3136, .3]].forEach(([f, a]) => { const o = ac.createOscillator(); o.frequency.value = f; o.connect(env(ac, master, w, .12 * a * vol, .003, .5)); o.start(w); o.stop(w + .6); });
+    }
+
+    // ---------- 入力 ----------
+    let phase = 'idle', perfStart = 0, liveSched = null;
+    const songT = now => (now - perfStart) / 1000 - latency();
+    function input(p) {
+      if (phase === 'idle') startSong();
+      if (phase !== 'play') return;
+      const s = songT(performance.now());
+      if (inputs.length && inputs.at(-1).p === p) return;
+      inputs.push({ t: s, p });
+    }
+    const KEYS = { ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r' };
+    const held = new Map();
+    addEventListener('keydown', e => {
+      const k = KEYS[e.code]; if (!k) return;
+      e.preventDefault(); if (e.repeat) return;
+      const now = performance.now(); held.set(k, now);
+      const recent = new Set([...held].filter(([, tm]) => now - tm < 130).map(([kk]) => kk));
+      const u = recent.has('u'), l = recent.has('l'), r = recent.has('r');
+      let p;
+      if (u && l) p = 'UL'; else if (u && r) p = 'UR';
+      else p = { u: 'U', d: 'D', l: 'L', r: 'R' }[k];
+      input(p);
+    });
+    addEventListener('keyup', e => { const k = KEYS[e.code]; if (k) held.delete(k); });
+    const swipe = new Map();
+    cv.addEventListener('pointerdown', e => {
+      if (phase === 'tv') { showPanel(); return; }
+      swipe.set(e.pointerId, { x: e.clientX, y: e.clientY, need: 22, last: null });
+      try { cv.setPointerCapture(e.pointerId); } catch {}
+    });
+    cv.addEventListener('pointermove', e => {
+      const s = swipe.get(e.pointerId); if (!s) return;
+      const dx = e.clientX - s.x, dy = e.clientY - s.y;
+      if (Math.hypot(dx, dy) < s.need) return;
+      const a = Math.atan2(-dy, dx) * 180 / Math.PI; // 右が0、上が90
+      let p;
+      if (a >= 67.5 && a < 112.5) p = 'U';
+      else if (a >= 22.5 && a < 67.5) p = 'UR';
+      else if (a >= 112.5 && a < 157.5) p = 'UL';
+      else if (a >= -22.5 && a < 22.5) p = 'R';
+      else if (a >= 157.5 || a < -157.5) p = 'L';
+      else p = 'D';
+      s.x = e.clientX; s.y = e.clientY; s.need = 40;
+      if (p !== s.last) { s.last = p; input(p); }
+    });
+    const pend = e => swipe.delete(e.pointerId);
+    cv.addEventListener('pointerup', pend); cv.addEventListener('pointercancel', pend);
+
+    // ---------- 進行 ----------
+    const bar = $('bar');
+    bar.innerHTML = POSES.map(() => '<i></i>').join('');
+    const cells = [...bar.children];
+    function paintBar(cur) {
+      cells.forEach((c, i) => {
+        const r = results[i];
+        const cls = r ? (r.r === 1 ? 'p' : r.r > 0 ? 'g' : 'm') : (i === cur ? 'now' : '');
+        if (c.className !== cls) c.className = cls;
+      });
+    }
+    let fx = { glow: 0, glowCol: 0xffd23f };
+    function startSong() {
+      phase = 'play';
+      inputs = []; results = []; nextJudge = 0;
+      $('hint').hidden = true;
+      const now = performance.now();
+      perfStart = now + 150;
+      if (ac) { songBus = newBus(); liveSched = makeSched(songBus, perfStart, s => s, () => 1, -1); }
+    }
+    function onJudge(i, r) {
+      results[i] = r;
+      if (r.r === 1) { fx.glow = 1; fx.glowCol = 0xffd23f; bell(1); sparkle(me, 10); }
+      else if (r.r > 0) { fx.glow = .6; fx.glowCol = 0xff9a4a; bell(.5); sparkle(me, 4); }
+      else if (sfxOn() && Math.random() < .6) voice(ac, master, ac.currentTime, 210 + Math.random() * 60, ['e'], .28, .28, true);
+    }
+    // キラキラ
+    const sparkTex = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(255,230,140,.9)'); gr.addColorStop(1, 'rgba(255,180,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
+    const sparks = [];
+    for (let i = 0; i < 48; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: sparkTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); s.visible = false; scene.add(s); sparks.push({ s, life: 0, v: new THREE.Vector3() }); }
+    function sparkle(d, n) {
+      for (let k = 0; k < n; k++) {
+        const p = sparks.find(q => q.life <= 0); if (!p) return;
+        const h = d.arms[k % 2].hand.getWorldPosition(new THREE.Vector3());
+        p.s.position.copy(h); p.v.set((Math.random() - .5) * 1.6, Math.random() * 1.6 + .4, (Math.random() - .5) * .6);
+        p.life = .7 + Math.random() * .3; p.s.visible = true;
+      }
+    }
+
+    // ---------- 研修ビデオ ----------
+    let frames = [], slowSegs = [], tvStart = 0, replaySched = null, panelShown = false, outroStart = 0;
+    const RB = 2.6, RS = .6, REPLAY_FPS = 30;
+    function buildReplay() {
+      const miss = results.map((r, i) => r && r.r === 0 ? i : -1).filter(i => i >= 0);
+      const pick = [];
+      const nPick = Math.min(4, miss.length);
+      for (let j = 0; j < nPick; j++) pick.push(miss[Math.floor((j + .5) * miss.length / nPick)]);
+      slowSegs = pick.map(i => [POSES[i].t - .25, POSES[i].t + Math.min(POSES[i].dur, 1) + .15]);
+      const rate = s => slowSegs.some(([a, b]) => s >= a && s < b) ? RS : RB;
+      frames = [];
+      let s = 1.6;
+      while (s < SONG_END + .2) { frames.push(s); s += rate(s) / REPLAY_FPS; }
+      for (let i = 0; i < 30; i++) frames.push(SONG_END + .2 + i / 30 * .5); // 決めポーズで少し止める
+      replayRate = rate;
+    }
+    let replayRate = () => RB;
+    const inSlow = s => slowSegs.some(([a, b]) => s >= a && s < b);
+    function offOfReplay(s) {
+      // frames は 1/30 秒ごと。s が来る再生の秒を返す
+      let lo = 0, hi = frames.length - 1;
+      if (s <= frames[0]) return 0;
+      if (s >= frames[hi]) return hi / REPLAY_FPS;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (frames[m] <= s) lo = m; else hi = m; }
+      return (lo + (s - frames[lo]) / (frames[hi] - frames[lo])) / REPLAY_FPS;
+    }
+    const replayLen = () => frames.length / REPLAY_FPS;
+    function replaySongAt(el) {
+      const f = Math.min(frames.length - 1, Math.max(0, el * REPLAY_FPS)), i = Math.floor(f), j = Math.min(frames.length - 1, i + 1);
+      return lerp(frames[i], frames[j], f - i);
+    }
+    function endSong() {
+      phase = 'outro'; outroStart = performance.now();
+      for (let i = nextJudge; i < POSES.length; i++) results[i] = results[i] || judge(i, 1e9);
+      paintBar(-1);
+      buildReplay();
+      layoutPanel();
+      $('panel').className = 'show ghost'; panelShown = false;
+      shareFile = null; shareImg = null; render();
+      makeVideo();
+    }
+    function startTV() {
+      phase = 'tv'; tvStart = performance.now() + 100;
+      if (ac) { replayBus = newBus(); replaySched = makeSched(replayBus, tvStart, offOfReplay, s => 1 / replayRate(s), frames[0]); }
+    }
+    function showPanel() {
+      if (panelShown) return;
+      panelShown = true; phase = 'result';
+      $('panel').className = 'show';
+    }
+    function score() { return Math.round(results.reduce((a, r) => a + (r ? r.r : 0), 0) / POSES.length * 100); }
+    function restart() {
+      phase = 'idle';
+      try { songBus?.disconnect(); replayBus?.disconnect(); } catch {}
+      liveSched = replaySched = null;
+      videoGen++; if (videoJob) videoJob.cancel = true;
+      inputs = []; results = []; nextJudge = 0; paintBar(-1);
+      $('panel').className = ''; panelShown = false;
+      $('hint').hidden = false;
+      camMix = 0;
+    }
+    $('again').addEventListener('click', restart);
+
+    // ---------- カメラ ----------
+    // rect（画面のこの範囲）に、center を中心とした size の範囲が収まるように置く
+    const GAME = { c: new THREE.Vector3(0, 1.25, .1), s: new THREE.Vector2(6.6, 3.15), d: new THREE.Vector3(0, .2, 1).normalize(), bias: .45 };
+    const TVF = { c: new THREE.Vector3(0, TV_Y, WALL_Z), s: new THREE.Vector2(TV_W + .25, TV_H + .25), d: new THREE.Vector3(0, .0, 1), bias: 0 };
+    let camMix = 0;
+    function gameRect() { const W = innerWidth, H = innerHeight; return { x: 8, y: 76, w: W - 16, h: H - 76 - 84 }; }
+    let tvRect = null;
+    function layoutPanel() {
+      const p = $('panel'); const was = p.className; p.className = 'show ghost';
+      const r = p.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+      if (r.left > W * .45 && r.top < H * .5) tvRect = { x: 10, y: 76, w: r.left - 20, h: H - 76 - 84 };
+      else tvRect = { x: 10, y: 76, w: W - 20, h: r.top - 76 - 10 };
+      tvRect.w = Math.max(80, tvRect.w); tvRect.h = Math.max(60, tvRect.h);
+      p.className = was;
+    }
+    function frameCam(cam, rect, c, s, d, bias) {
+      const W = innerWidth, H = innerHeight;
+      const ppm = Math.min(rect.w / s.x, rect.h / s.y);
+      const objH = s.y * ppm;
+      const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2 + (rect.h - objH) / 2 * bias;
+      const fullW = 2 * Math.max(cx, W - cx), fullH = 2 * Math.max(cy, H - cy);
+      const D = fullH / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * ppm);
+      cam.aspect = fullW / fullH;
+      cam.setViewOffset(fullW, fullH, fullW / 2 - cx, fullH / 2 - cy, W, H);
+      cam.position.copy(c).addScaledVector(d, D);
+      cam.lookAt(c);
+      cam.far = D + 40; cam.updateProjectionMatrix();
+      cam.userData.D = D;
+    }
+    function placeCamera() {
+      const k = smooth(camMix), g = gameRect(), r = tvRect || g;
+      const rect = { x: lerp(g.x, r.x, k), y: lerp(g.y, r.y, k), w: lerp(g.w, r.w, k), h: lerp(g.h, r.h, k) };
+      const c = GAME.c.clone().lerp(TVF.c, k), s = GAME.s.clone().lerp(TVF.s, k), d = GAME.d.clone().lerp(TVF.d, k).normalize();
+      frameCam(camera, rect, c, s, d, lerp(GAME.bias, TVF.bias, k));
+    }
+    function fogFor(cam) { const D = cam.userData.D || 8; scene.fog.near = D * .8 + 2; scene.fog.far = D + 22; }
+    function resize() {
+      renderer.setSize(innerWidth, innerHeight);
+      if (phase !== 'idle' && phase !== 'play') layoutPanel();
+    }
+    addEventListener('resize', resize); resize();
+
+    // ---------- X投稿用の動画（研修ビデオを縦長の MP4 に。表示の合間に1コマずつ描く） ----------
+    const VW = 720, VH = 1280, vidCam = new THREE.PerspectiveCamera(36, VW / VH, .1, 80);
+    { const D = 5.1 / (VW / VH * 2 * Math.tan(THREE.MathUtils.degToRad(18))); vidCam.position.set(0, 2.3, -.1 + D); vidCam.lookAt(0, 2.05, -.1); vidCam.userData.D = D; }
+    const vOut = document.createElement('canvas'); vOut.width = VW; vOut.height = VH; const vctx = vOut.getContext('2d');
+    let shareFile = null, shareImg = null, videoJob = null, videoGen = 0;
+    function drawOverlay(s, n) {
+      const g = vctx;
+      const gr = g.createLinearGradient(0, 0, 0, 300); gr.addColorStop(0, 'rgba(20,4,2,.85)'); gr.addColorStop(1, 'rgba(20,4,2,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, VW, 300);
+      g.textAlign = 'center'; g.fillStyle = '#ffd23f'; g.font = '900 150px system-ui, sans-serif';
+      g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 16; g.fillText(`${n}%`, VW / 2, 190); g.shadowBlur = 0;
+      // そろい具合のマス（再生位置まで色を付ける）
+      const bw = VW - 80, cw = bw / POSES.length, y = VH - 150;
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(30, y - 16, VW - 60, 52);
+      POSES.forEach((q, i) => {
+        const r = results[i];
+        g.fillStyle = s < q.t ? 'rgba(255,255,255,.2)' : r.r === 1 ? '#ffd23f' : r.r > 0 ? '#ff9a4a' : '#7a1810';
+        g.fillRect(40 + i * cw + 1.5, y, cw - 3, 20);
+      });
+      if (inSlow(s)) { g.strokeStyle = '#ff2a1a'; g.lineWidth = 18; g.strokeRect(9, 9, VW - 18, VH - 18); }
+    }
+    async function makeVideo() {
+      const job = { cancel: false, i: 0, n: score(), gen: ++videoGen };
+      if (!('VideoEncoder' in window) || !window.Mp4Muxer) { videoJob = { ...job, imageOnly: true }; return; }
+      let cfg = null;
+      for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42001f']) {
+        const c = { codec, width: VW, height: VH, bitrate: 6e6, framerate: REPLAY_FPS };
+        try { if ((await VideoEncoder.isConfigSupported(c)).supported) { cfg = c; break; } } catch {}
+      }
+      if (!cfg) { videoJob = { ...job, imageOnly: true }; return; }
+      // 音（曲を研修ビデオの速さで書き出す）
+      let acfg = null, audioBuf = null;
+      if ('AudioEncoder' in window && window.OfflineAudioContext) {
+        const c = { codec: 'mp4a.40.2', sampleRate: 44100, numberOfChannels: 2, bitrate: 128000 };
+        try { if ((await AudioEncoder.isConfigSupported(c)).supported) acfg = c; } catch {}
+      }
+      if (job.gen !== videoGen) return;
+      if (acfg) {
+        try {
+          const len = Math.ceil((replayLen() + .3) * 44100);
+          const oc = new OfflineAudioContext(2, len, 44100);
+          const m = oc.createGain(); m.gain.value = .9; const comp = oc.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 4; m.connect(comp).connect(oc.destination);
+          for (const e of EVENTS) { if (e.s < frames[0]) continue; const off = offOfReplay(e.s); if (off >= replayLen()) continue; try { e.f(oc, m, off, 1 / replayRate(e.s)); } catch {} }
+          audioBuf = await oc.startRendering();
+        } catch { acfg = null; }
+      }
+      if (job.gen !== videoGen) return;
+      const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: 'avc', width: VW, height: VH, frameRate: REPLAY_FPS },
+        ...(acfg ? { audio: { codec: 'aac', numberOfChannels: 2, sampleRate: 44100 } } : {}), fastStart: 'in-memory' });
+      job.muxer = muxer; job.failed = false;
+      job.enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: () => { job.failed = true; } });
+      job.enc.configure(cfg);
+      if (acfg && audioBuf) {
+        try {
+          const aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: () => {} });
+          aenc.configure(acfg);
+          const L = audioBuf.getChannelData(0), R = audioBuf.getChannelData(1), N = Math.floor(replayLen() * 44100), CH = 4410;
+          for (let o = 0; o < N; o += CH) {
+            const n = Math.min(CH, N - o), data = new Float32Array(n * 2);
+            data.set(L.subarray(o, o + n), 0); data.set(R.subarray(o, o + n), n);
+            const ad = new AudioData({ format: 'f32-planar', sampleRate: 44100, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(o / 44100 * 1e6), data });
+            aenc.encode(ad); ad.close();
+          }
+          job.aenc = aenc;
+        } catch {}
+      }
+      videoJob = job;
+    }
+    // 録画の映像には、今のキラキラや足もとの光を映さない
+    function liveFx(on) { for (const p of sparks) p.s.visible = on && p.life > 0; glow.visible = on; }
+    function renderVidFrame(s, n) {
+      poseLesson(s, results); liveFx(false);
+      screen.material = offMat; recDot.visible = playMark.visible = missGlow.visible = false;
+      const pr = renderer.getPixelRatio(), cw = cv.width, ch = cv.height;
+      const k = Math.min(1, cw / VW, ch / VH), w = Math.floor(VW * k), h = Math.floor(VH * k);
+      fogFor(vidCam);
+      renderer.setScissorTest(true);
+      renderer.setViewport(0, 0, w / pr, h / pr); renderer.setScissor(0, 0, w / pr, h / pr);
+      renderer.render(scene, vidCam);
+      renderer.setScissorTest(false); renderer.setViewport(0, 0, innerWidth, innerHeight);
+      vctx.drawImage(cv, 0, ch - h, w, h, 0, 0, VW, VH);
+      drawOverlay(s, n);
+      screen.material = screenMat; liveFx(true);
+    }
+    // ループの中から呼ぶ。1回で1コマ
+    function videoStep() {
+      const job = videoJob;
+      if (job.cancel) { try { job.enc?.close(); job.aenc?.close(); } catch {} videoJob = null; return; }
+      if (job.imageOnly) {
+        renderVidFrame(SONG_END + .3, job.n);
+        videoJob = null;
+        vOut.toBlob(b => { if (!job.cancel && b) { shareImg = new File([b], 'hotpot-dance.png', { type: 'image/png' }); render(); } }, 'image/png');
+        return;
+      }
+      if (job.failed) { try { job.enc.close(); } catch {} videoJob = { ...job, imageOnly: true, failed: false }; return; }
+      renderVidFrame(frames[job.i], job.n);
+      const f = new VideoFrame(vOut, { timestamp: Math.round(job.i * 1e6 / REPLAY_FPS), duration: Math.round(1e6 / REPLAY_FPS) });
+      job.enc.encode(f, { keyFrame: job.i % 60 === 0 }); f.close();
+      job.i++;
+      if (job.i === frames.length - 1) vOut.toBlob(b => { if (!job.cancel && b) shareImg = new File([b], 'hotpot-dance.png', { type: 'image/png' }); }, 'image/png');
+      if (job.i < frames.length) return;
+      videoJob = null;
+      (async () => {
+        await job.enc.flush(); job.enc.close();
+        if (job.aenc) { await job.aenc.flush(); job.aenc.close(); }
+        job.muxer.finalize();
+        if (job.cancel || job.failed || job.gen !== videoGen) return;
+        shareFile = new File([job.muxer.target.buffer], 'hotpot-dance.mp4', { type: 'video/mp4' });
+        render();
+      })().catch(() => {});
+    }
+
+    // ---------- UI ----------
+    const post = $('post');
+    function render() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').value = lang;
+      $('sound').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${muted ? '<path d="M17 9l5 6M22 9l-5 6"/>' : '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>'}</svg>`;
+      $('again').querySelector('span').textContent = t('again');
+      $('rateL').textContent = t('rate');
+      const n = results.length ? score() : 0;
+      $('rate').textContent = `${n}%`;
+      post.textContent = t('post');
+      post.href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(n))}&url=${encodeURIComponent(SHARE_URL)}`;
+      if (!matchMedia('(pointer: coarse)').matches) { post.target = '_blank'; post.rel = 'noopener'; } else post.removeAttribute('target');
+      post.classList.toggle('wait', !shareFile && !shareImg);
+      if (phase === 'tv' || phase === 'result' || phase === 'outro') layoutPanel();
+    }
+    function save(file) {
+      const d = document.createElement('a');
+      d.href = URL.createObjectURL(file); d.download = file.name; d.click();
+      setTimeout(() => URL.revokeObjectURL(d.href), 60000);
+    }
+    let noteTimer = 0;
+    function note(k) {
+      const m = $('msg'); m.textContent = t(k); m.style.display = 'flex';
+      clearTimeout(noteTimer); noteTimer = setTimeout(() => { m.style.display = 'none'; }, 5000);
+    }
+    post.addEventListener('click', e => {
+      const file = shareFile || shareImg;
+      if (matchMedia('(pointer: coarse)').matches && navigator.share) {
+        // スマホは必ず共有メニュー。動画ができていれば動画つき
+        e.preventDefault();
+        const text = `${t('share')(score())}\n${SHARE_URL}`;
+        const data = file && navigator.canShare?.({ files: [file] }) ? { files: [file], text } : { text };
+        navigator.share(data).catch(() => {});
+        return;
+      }
+      if (file) { save(file); note(shareFile ? 'savedPc' : 'savedImg'); }
+    });
+    $('lang').addEventListener('change', e => { lang = e.target.value; store.set('lang', lang); render(); });
+    $('sound').addEventListener('click', () => { muted = !muted; store.set('muted', muted); initAudio(); if (master) master.gain.value = muted ? 0 : .9; render(); });
+    render();
+
+    // ---------- ループ ----------
+    try { renderer.compile(scene, camera); } catch {}
+    let last = performance.now();
+    function loop(now) {
+      window.resultAd?.(phase === 'result'); // 結果画面の広告（../../ad.js）
+      const dt = Math.min(.05, (now - last) / 1000); last = now;
+      const clock = now / 1000;
+      // 曲
+      if (phase === 'play') {
+        tickSched(liveSched, now);
+        const s = songT(now);
+        while (nextJudge < POSES.length && s >= POSES[nextJudge].t) {
+          const r = judge(nextJudge, s);
+          if (!r) break;
+          onJudge(nextJudge, r); nextJudge++;
+        }
+        paintBar(nextJudge);
+        if (s >= SONG_END + .3) endSong();
+      }
+      if (phase === 'outro') {
+        camMix = clamp01((now - outroStart) / 2200);
+        if (now - outroStart > 2300) startTV();
+      }
+      if (phase === 'tv' || phase === 'result') {
+        tickSched(replaySched, now);
+        camMix = 1;
+        if (phase === 'tv' && (now - tvStart) / 1000 - latency() > replayLen()) showPanel();
+      }
+      // 動画のコマ（画面の描画より先に）
+      // 速い端末では時間の余裕があるだけ進める
+      const vt0 = performance.now();
+      while (videoJob && (videoJob.cancel || phase === 'tv' || phase === 'result' || phase === 'outro')) { videoStep(); if (performance.now() - vt0 > 7) break; }
+      // テレビの中身
+      let tvS = null;
+      if (phase === 'tv' || phase === 'result') {
+        const el = (now - tvStart) / 1000 - latency();
+        tvS = replaySongAt(phase === 'result' && el > replayLen() ? el % replayLen() : el);
+        poseLesson(tvS, results);
+        missGlow.visible = false;
+      } else if (phase === 'play' || phase === 'outro') poseLesson(songT(now), results.slice(0, nextJudge));
+      else for (const d of dancers) applyPose(d, clock, SEN_TL.slice(0, 1), { g: .35 });
+      screen.material = offMat; recDot.visible = playMark.visible = false;
+      fogFor(tvCam);
+      if (tvS !== null) liveFx(false);
+      renderer.setRenderTarget(tvRT); renderer.render(scene, tvCam); renderer.setRenderTarget(null);
+      screen.material = screenMat; liveFx(true);
+      recDot.visible = (phase === 'idle' || phase === 'play') && Math.floor(clock * 1.5) % 2 === 0;
+      playMark.visible = phase === 'tv' || phase === 'result';
+      missGlow.visible = tvS !== null && inSlow(tvS) && Math.floor(clock * 6) % 2 === 0;
+      // 部屋の店員さん（研修が終わったらテレビの方を向く）
+      if (phase === 'tv' || phase === 'result' || phase === 'outro') {
+        const s = songT(now), turn = smooth((s - SONG_END - 1.0) / .9);
+        const tl = [...SEN_TL, { t: SONG_END + .9, p: 'N' }];
+        const plTL = [{ t: -1e9, p: 'N' }, ...inputs, { t: SONG_END + .9, p: 'N' }];
+        applyPose(me, s, plTL, { g: grooveAt(s), rot: Math.PI * turn });
+        seniors.forEach(d => applyPose(d, s, tl, { g: grooveAt(s), rot: Math.PI * turn }));
+      }
+      // 演出
+      fx.glow = Math.max(0, fx.glow - dt * 2.2);
+      glowMat.color.setHex(fx.glowCol); glowMat.opacity = fx.glow * .7;
+      for (const p of sparks) {
+        if (p.life <= 0) continue;
+        p.life -= dt; p.v.y -= dt * 2.5; p.s.position.addScaledVector(p.v, dt);
+        const k = clamp01(p.life); p.s.scale.setScalar(.12 + .1 * k); p.s.material.opacity = k;
+        if (p.life <= 0) p.s.visible = false;
+      }
+      for (const s of steams) {
+        const k = (s.userData.p + clock * .22) % 1;
+        s.position.set(Math.sin(k * 9 + s.userData.p * 5) * .12, 1.2 + k * 1.5, 0);
+        s.scale.setScalar(.5 + k); s.material.opacity = .14;
+      }
+      steamMat.opacity = .14 * 1;
+      for (const l of lanterns) l.rotation.z = Math.sin(clock * 1.2 + l.userData.ph) * .04;
+      if (window.__camOv) window.__camOv(camera, THREE); else placeCamera();
+      fogFor(camera);
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+    window.__hd = { POSES, get phase() { return phase; }, songT: () => songT(performance.now()), get results() { return results; }, input, get shareFile() { return shareFile; }, get shareImg() { return shareImg; }, get frames() { return frames; }, showPanel, skip: sec => { perfStart -= sec * 1000; }, vj: () => videoJob && videoJob.i };
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

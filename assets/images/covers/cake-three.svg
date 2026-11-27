@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <defs><linearGradient id="ckInk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#171512"/><stop offset="1" stop-color="#0b0a09"/></linearGradient></defs>
+  <rect width="640" height="400" fill="url(#ckInk)"/>
+  <g transform="translate(190 200)">
+    <circle r="128" fill="#f0d6a8"/>
+    <path d="M0 0 0-128A128 128 0 0 1 111-64Z" fill="#f8e8c8" transform="rotate(-7)"/>
+    <path d="M0 0 111-64A128 128 0 0 1 0 128Z" fill="#e4c491" transform="rotate(-7)"/>
+    <path d="M0 0 0 128A128 128 0 0 1-111-64Z" fill="#d3ab74" transform="rotate(-7)"/>
+    <g stroke="#8a5f30" stroke-width="3" opacity="0.55"><path d="M0 0 0-128M0 0 111-64M0 0-111-64"/></g>
+    <circle r="6" fill="#b0402f"/>
+  </g>
+  <g font-family="'Songti SC','Noto Serif SC',serif" fill="#f4e8d2">
+    <text x="372" y="152" font-size="40" letter-spacing="4">蛋糕三等分</text>
+    <text x="372" y="196" font-size="18" fill="#8f8674" letter-spacing="3">三刀，一样大的三份</text>
+    <text x="372" y="288" font-size="30" fill="#d9b06a">120° · 120° · 120°</text>
+  </g>
+</svg>

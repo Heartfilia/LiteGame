@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>剪刘海 · LiteGame</title>
+  <meta name="description" content="照片上随手剪刘海，剪坏了也没关系。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="剪刘海 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/maegami-cut/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/maegami-cut/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #eef1f3; color: #34424c; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #3a6e8f; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill, header select {
+      font: inherit; font-size: 14px; background: #fff; border: 2px solid #cfdae1; border-radius: 999px;
+      min-width: 44px; height: 36px; cursor: pointer; font-weight: bold; color: #3a6e8f; padding: 0 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    main {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    #stage { flex: 1; min-height: 0; position: relative; touch-action: none; }
+    #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .bar {
+      display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;
+      padding: 8px 12px; min-height: 52px;
+    }
+    .btn {
+      font: inherit; font-weight: bold; font-size: 16px; border: none; border-radius: 999px;
+      background: #3a6e8f; color: #fff; height: 46px; padding: 0 18px; cursor: pointer;
+      box-shadow: 0 4px 0 #24485f; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #24485f; }
+    .btn.sub { background: #fff; color: #3a6e8f; box-shadow: 0 4px 0 #cfdae1; }
+    .btn.ic { width: 46px; padding: 0; }
+    .btn.on { background: #e8763c; color: #fff; box-shadow: 0 4px 0 #a84a1c; }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .sw {
+      width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; padding: 0;
+      box-shadow: 0 0 0 2px #cfdae1;
+    }
+    .sw.on { box-shadow: 0 0 0 3px #3a6e8f; }
+    #colorBtn { width: 46px; height: 46px; }
+    #palette {
+      position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: min(340px, calc(100% - 24px));
+      background: #fff; border-radius: 16px; padding: 12px; box-sizing: border-box; box-shadow: 0 6px 20px rgba(0,0,0,.18);
+      display: flex; flex-direction: column; gap: 10px; touch-action: none;
+    }
+    #palette canvas { position: static; width: 100%; height: 36px; border-radius: 10px; cursor: pointer; }
+    #palette .row { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+    #presets .sw { width: 28px; height: 28px; }
+    .dot { display: inline-block; background: currentColor; border-radius: 50%; }
+    .hide { display: none !important; }
+    #result { position: absolute; left: 0; right: 0; bottom: 0; }
+    .btn.wait { opacity: .45; }
+    #err { position: absolute; top: 40%; left: 0; right: 0; text-align: center; color: #b03020; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">剪刘海</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+      <button id="snd" class="pill" aria-label="sound"></button>
+    </div>
+  </header>
+  <main>
+    <div id="stage">
+      <canvas id="gl"></canvas>
+      <canvas id="ov"></canvas>
+      <div id="palette" class="hide">
+        <canvas id="hueBar" width="300" height="36"></canvas>
+        <canvas id="shadeBar" width="300" height="36"></canvas>
+        <div class="row">
+          <div id="presets" class="row"></div>
+          <button id="dye" class="btn sub ic" aria-label="dye brush"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-8 8-6-6z"/><path d="M6 12l-2 6 2 2 6-2"/></svg></button>
+        </div>
+      </div>
+      <div id="result" class="hide">
+        <div class="bar">
+          <a id="post" class="btn"></a>
+          <button id="again" class="btn sub"></button>
+        </div>
+      </div>
+    </div>
+    <div id="barCut" class="bar">
+      <button id="photo" class="btn sub ic" aria-label="photo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8" fill="currentColor"/><path d="M4 18l5-5 3 3 3-4 5 6"/></svg></button>
+      <button id="turn" class="btn sub ic" aria-label="turn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
+      <button id="undoCut" class="btn sub ic" aria-label="undo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 11l5 4"/><path d="M4 11h10a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button id="colorBtn" class="sw" aria-label="color"></button>
+      <button id="finish" class="btn ic" aria-label="post"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 8.5L12 4l5 4.5"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg></button>
+    </div>
+    <div id="barPaint" class="bar hide">
+      <button id="brush" class="btn sub ic" aria-label="brush"><span class="dot" style="width:11px;height:11px"></span></button>
+      <button id="erase" class="btn sub"></button>
+      <button id="undo" class="btn sub"></button>
+      <button id="cancel" class="btn sub"></button>
+      <button id="done" class="btn" disabled></button>
+    </div>
+    <input id="file" type="file" accept="image/*" class="hide">
+  </main>
+  <script src="../lib/vendor/mp4-muxer@5.1.3/build/mp4-muxer.min.js"></script>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 剪刘海 · 中文文案
+window.__KF_ZH__ = {
+  title: '剪刘海',
+  back: '← 大厅',
+  erase: '擦除',
+  undo: '撤销',
+  cancel: '取消',
+  done: '好了',
+  post: '分享到 X',
+  again: '返回',
+  err: '这张图读不出来',
+  cdn: '加载失败，请检查网络',
+  share: '给照片剪了个刘海 #LiteGame'
+};
+</script>
+<script type="module">
+  const $ = id => document.getElementById(id);
+  const DICT = {
+    ja: { title: '剪刘海', back: '← トップへ戻る', erase: '消す', undo: '戻す', cancel: 'やめる', done: 'できた',
+          post: 'Xに投稿', again: 'もどる', err: '画像を読み込めませんでした', cdn: '読み込みに失敗しました。通信を確認してください',
+          share: '前髪を切りました #剪刘海ゲーム' },
+    ko: { title: '앞머리 컷', back: '← 처음으로', erase: '지우기', undo: '되돌리기', cancel: '취소', done: '완성',
+          post: 'X에 게시', again: '돌아가기', err: '이미지를 불러올 수 없습니다', cdn: '불러오기에 실패했습니다. 연결을 확인해 주세요',
+          share: '앞머리를 잘랐어요 #剪刘海ゲーム' },
+    en: { title: 'Bangs Cut', back: '← Back to top', erase: 'Erase', undo: 'Undo', cancel: 'Cancel', done: 'Done',
+          post: 'Post on X', again: 'Back', err: 'Could not load the image', cdn: 'Failed to load. Please check your connection',
+          share: 'I cut my bangs #剪刘海ゲーム' },
+    th: { title: 'ตัดหน้าม้า', back: '← กลับหน้าแรก', erase: 'ลบ', undo: 'ย้อนกลับ', cancel: 'ยกเลิก', done: 'เสร็จ',
+          post: 'โพสต์ลง X', again: 'กลับ', err: 'โหลดรูปไม่ได้', cdn: 'โหลดไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ',
+          share: 'ตัดหน้าม้าแล้ว #剪刘海ゲーム' },
+  }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+  const SHARE_URL = 'https://keifurukawafunnych.com/games/maegami-cut/';
+  // 告知ポストへのリンクも投稿文に入れる
+  const POST_URL = 'https://x.com/furukawakeigame/status/2112028586643480798';
+  const shareText = () => `${t('share')}\n${POST_URL}`;
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('maegami-cut:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('maegami-cut:' + k, JSON.stringify(v)); } catch {} },
+  };
+  const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (['ja', 'ko', 'en', 'th'].includes(c)) return c; } return 'en'; };
+  let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+  if (!DICT[lang]) lang = 'en';
+  const t = k => DICT[lang][k];
+  function showErr(msg, keep) {
+    const d = document.createElement('div'); d.id = 'err'; d.textContent = msg;
+    $('stage').appendChild(d); if (!keep) setTimeout(() => d.remove(), 2000);
+  }
+
+  let THREE;
+  try { THREE = await import('three'); } catch { showErr(t('cdn'), true); throw new Error('three.js failed to load'); }
+
+  // ---------- sound ----------
+  let soundOn = store.get('sound', true), actx = null, noiseBuf = null, lastSnip = 0;
+  const SPK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
+  function drawSnd() {
+    $('snd').innerHTML = SPK + (soundOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>';
+  }
+  function snip() {
+    const now = performance.now();
+    if (!soundOn || now - lastSnip < 90) return;
+    lastSnip = now;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (!noiseBuf) {
+        noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.06, actx.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+      }
+      // ハサミの「チョキ」: 高い音のノイズを2回
+      for (const [dly, vol] of [[0, 0.5], [0.045, 0.3]]) {
+        const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+        s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = 3200 + Math.random() * 1500;
+        g.gain.value = vol; s.connect(f).connect(g).connect(actx.destination);
+        s.start(actx.currentTime + dly);
+      }
+    } catch {}
+  }
+
+  // ---------- three.js scene ----------
+  const glc = $('gl'), ov = $('ov'), octx = ov.getContext('2d');
+  const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true });
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.setClearColor(0xeef1f3);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+  let viewCam = camera;   // 毛の帯をどのカメラに向けるか
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8a898, 1.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(1.5, 3, 4); scene.add(sun);
+
+  const RAD = new THREE.Vector3(1, 1.15, 1.05);   // 頭の楕円体の半径
+  const SKIN = 0xf2c9a8;
+  const head = new THREE.Group(); scene.add(head);
+  const skinMat = new THREE.MeshLambertMaterial({ color: SKIN });
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), skinMat);
+  skull.scale.copy(RAD); head.add(skull);
+  for (const s of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), skinMat);
+    ear.scale.set(0.6, 1, 0.8); ear.position.set(s * 0.98, -0.15, -0.05); head.add(ear);
+  }
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 1, 24), skinMat);
+  neck.position.y = -1.35; scene.add(neck);
+  const cape = new THREE.Mesh(new THREE.ConeGeometry(2.2, 1.8, 40, 1, true), new THREE.MeshLambertMaterial({ color: 0x9fc3d6, side: THREE.DoubleSide }));
+  cape.position.y = -2.55; scene.add(cape);
+
+  // 頭皮の髪（上と後ろ）
+  const capMat = new THREE.MeshLambertMaterial({ color: 0x2a1d17 });
+  // 生え際の高さ（仰角）: 前はおでこの上、横は耳の上、後ろはうなじまで
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const hairline = az => 0.6 - 1.1 * smooth(0.9, 2.7, Math.abs(az));
+  // 頭皮: 球の生え際より下の頂点を頭の中へ沈めて、髪の生えている所だけ見せる
+  const capGeo = new THREE.SphereGeometry(1, 64, 48), cp = capGeo.attributes.position;
+  for (let i = 0; i < cp.count; i++) {
+    const x = cp.getX(i), y = cp.getY(i), z = cp.getZ(i);
+    if (Math.asin(Math.max(-1, Math.min(1, y))) < hairline(Math.atan2(x, z)) - 0.03) cp.setXYZ(i, x * 0.9, y * 0.9, z * 0.9);
+  }
+  capGeo.computeVertexNormals();
+  const cap = new THREE.Mesh(capGeo, capMat);
+  cap.scale.copy(RAD).multiplyScalar(1.02); head.add(cap);
+
+  // 顔: 頭の前半分に、切り抜いた画像を正面から投影して貼る
+  const faceGeo = new THREE.SphereGeometry(1, 64, 48, 0, Math.PI);
+  const faceMat = new THREE.MeshLambertMaterial({ transparent: true, depthWrite: false });
+  const face = new THREE.Mesh(faceGeo, faceMat);
+  face.scale.copy(RAD).multiplyScalar(1.006); head.add(face);
+  function setFace(sprite) {
+    // 端を透明にして、はみ出た部分は肌の色が見えるようにする
+    const pad = 4, c = document.createElement('canvas');
+    c.width = sprite.width + pad * 2; c.height = sprite.height + pad * 2;
+    c.getContext('2d').drawImage(sprite, pad, pad);
+    if (faceMat.map) faceMat.map.dispose();
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    faceMat.map = tex; faceMat.needsUpdate = true;
+    const asp = c.width / c.height;
+    let fh = 1.6, fw = fh * asp;
+    if (fw > 1.9) { fw = 1.9; fh = fw / asp; }
+    const fy = -0.28, p = faceGeo.attributes.position, uv = faceGeo.attributes.uv;
+    for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) * RAD.x / fw + 0.5, (p.getY(i) * RAD.y - fy) / fh + 0.5);
+    uv.needsUpdate = true;
+  }
+  function defaultFace() {
+    const c = document.createElement('canvas'); c.width = 300; c.height = 380;
+    const g = c.getContext('2d');
+    g.fillStyle = 'rgba(240,140,140,.35)';
+    for (const x of [70, 230]) { g.beginPath(); g.ellipse(x, 250, 32, 18, 0, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#2a2220';
+    for (const x of [95, 205]) { g.beginPath(); g.ellipse(x, 185, 16, 22, 0, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#fff';
+    for (const x of [100, 210]) { g.beginPath(); g.arc(x, 178, 5, 0, Math.PI * 2); g.fill(); }
+    g.strokeStyle = '#c98f70'; g.lineWidth = 6; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(150, 215); g.lineTo(142, 250); g.lineTo(154, 252); g.stroke();
+    g.strokeStyle = '#a04a3a'; g.lineWidth = 8;
+    g.beginPath(); g.arc(150, 280, 34, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+    return c;
+  }
+
+  // ---------- 髪（ひも状の毛をベルレ積分で動かす） ----------
+  const P = 16;                    // 1本あたりの点の数
+  const roots = [];                // { pos, dir, seg, tint }
+  // 頭全体に均等に散らした点（フィボナッチ球）のうち、生え際より上のものを根元にする
+  for (let k = 0, M = 1500; k < M; k++) {
+    const yy = 1 - 2 * (k + 0.5) / M, el = Math.asin(yy), az = Math.atan2(Math.sin(k * 2.39996), Math.cos(k * 2.39996));
+    if (el < hairline(az)) continue;
+    const d = new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
+    const pos = d.clone().multiply(RAD).multiplyScalar(1.03);
+    const nrm = new THREE.Vector3(d.x / RAD.x, d.y / RAD.y, d.z / RAD.z).normalize();
+    const front = Math.max(0, Math.cos(az));
+    // 根元はななめ下へ（頭頂部の毛が逆立たないように）
+    const dir = nrm.multiplyScalar(0.6).add(new THREE.Vector3(0, 0.15 - 0.45 * smooth(0.5, 1.3, el), 0.3 * front)).normalize();
+    // 前髪はあごまで、横と後ろは肩につくくらい
+    const L = 1.45 + 0.75 * smooth(0.7, 2.6, Math.abs(az)) + 0.3 * smooth(0.6, 1.4, el) + Math.random() * 0.1;
+    roots.push({ pos, dir, seg: L / (P - 1), tint: 0.82 + Math.random() * 0.3 });
+  }
+  const N = roots.length;
+  const pos = new Float32Array(N * P * 3), prev = new Float32Array(N * P * 3), lens = new Int16Array(N).fill(P);
+  const rw = new Float32Array(N * 6);   // 根元2点のワールド座標
+  let pieces = [];                      // 切れて落ちる毛
+  const MAXPIECE = 500;
+
+  const R = new THREE.Matrix3(), tmpV = new THREE.Vector3();
+  function updateRoots() {
+    head.updateMatrixWorld(true);
+    R.setFromMatrix4(head.matrixWorld);
+    for (let s = 0; s < N; s++) {
+      const r = roots[s];
+      tmpV.copy(r.pos).applyMatrix3(R); rw[s * 6] = tmpV.x; rw[s * 6 + 1] = tmpV.y; rw[s * 6 + 2] = tmpV.z;
+      tmpV.copy(r.dir).multiplyScalar(r.seg * 0.8).add(r.pos).applyMatrix3(R);
+      rw[s * 6 + 3] = tmpV.x; rw[s * 6 + 4] = tmpV.y; rw[s * 6 + 5] = tmpV.z;
+    }
+  }
+  // 頭（楕円体）から外へ押し出す
+  const COL = 1.06;
+  function collide(a, i) {
+    const e = R.elements;
+    const x = a[i], y = a[i + 1], z = a[i + 2];
+    // ワールド → 頭のローカル（回転の転置）
+    let lx = (e[0] * x + e[1] * y + e[2] * z) / RAD.x, ly = (e[3] * x + e[4] * y + e[5] * z) / RAD.y, lz = (e[6] * x + e[7] * y + e[8] * z) / RAD.z;
+    const m = Math.hypot(lx, ly, lz);
+    if (m >= COL || m === 0) return;
+    const k = COL / m; lx *= k * RAD.x; ly *= k * RAD.y; lz *= k * RAD.z;
+    a[i] = e[0] * lx + e[3] * ly + e[6] * lz; a[i + 1] = e[1] * lx + e[4] * ly + e[7] * lz; a[i + 2] = e[2] * lx + e[5] * ly + e[8] * lz;
+  }
+  // 首（円柱）とケープ（円すい）から外へ押し出す
+  function collideBody(a, i) {
+    const y = a[i + 1];
+    if (y > -0.85) return;
+    const r = Math.hypot(a[i], a[i + 2]) || 1e-6;
+    const need = y > -1.65 ? 0.5 : Math.max(0.5, (-1.65 - y) * 1.22 + 0.08);
+    if (r < need) { a[i] *= need / r; a[i + 2] *= need / r; }
+  }
+  function constrain(a, b, i, j, rest, wi, wj, stiff) {
+    const dx = a[j] - a[i], dy = a[j + 1] - a[i + 1], dz = a[j + 2] - a[i + 2];
+    const d = Math.hypot(dx, dy, dz) || 1e-6, w = wi + wj;
+    if (!w) return;
+    const f = (d - rest) / d / w * stiff;
+    a[i] += dx * f * wi; a[i + 1] += dy * f * wi; a[i + 2] += dz * f * wi;
+    a[j] -= dx * f * wj; a[j + 1] -= dy * f * wj; a[j + 2] -= dz * f * wj;
+  }
+  const G = -5.5, DAMP = 0.975;
+  function verlet(a, b, i0, i1, dt) {
+    const g = G * dt * dt;
+    for (let i = i0; i < i1; i += 3) {
+      const vx = (a[i] - b[i]) * DAMP, vy = (a[i + 1] - b[i + 1]) * DAMP, vz = (a[i + 2] - b[i + 2]) * DAMP;
+      b[i] = a[i]; b[i + 1] = a[i + 1]; b[i + 2] = a[i + 2];
+      a[i] += vx; a[i + 1] += vy + g; a[i + 2] += vz;
+    }
+  }
+  function step(dt) {
+    updateRoots();
+    for (let s = 0; s < N; s++) {
+      const o = s * P * 3, n = lens[s], seg = roots[s].seg;
+      verlet(pos, prev, o + 6, o + n * 3, dt);
+      for (let k = 0; k < 6; k++) { pos[o + k] = rw[s * 6 + k]; prev[o + k] = rw[s * 6 + k]; }
+      for (let it = 0; it < 3; it++) {
+        for (let i = 1; i < n - 1; i++) constrain(pos, prev, o + i * 3, o + i * 3 + 3, seg, i < 2 ? 0 : 1, 1, 1);
+        // 曲げにくさ（1つとばしの点どうし）
+        for (let i = 0; i < n - 2; i++) constrain(pos, prev, o + i * 3, o + i * 3 + 6, seg * 1.94, i < 2 ? 0 : 1, 1, 0.12);
+        for (let i = 2; i < n; i++) { collide(pos, o + i * 3); collideBody(pos, o + i * 3); }
+      }
+    }
+    for (const pc of pieces) {
+      pc.age += dt;
+      verlet(pc.pos, pc.prev, 0, pc.n * 3, dt);
+      for (let it = 0; it < 2; it++) {
+        for (let i = 0; i < pc.n - 1; i++) constrain(pc.pos, pc.prev, i * 3, i * 3 + 3, pc.seg, 1, 1, 1);
+        for (let i = 0; i < pc.n; i++) { collide(pc.pos, i * 3); collideBody(pc.pos, i * 3); }
+      }
+    }
+    pieces = pieces.filter(pc => pc.age < 5 && pc.pos[1] > -4);
+  }
+  // 根元から下へまっすぐ垂らした形に並べる（くし・やり直し用）
+  function hangStrand(s, from) {
+    const o = s * P * 3, seg = roots[s].seg;
+    for (let i = Math.max(2, from); i < P; i++) {
+      const j = o + i * 3, q = j - 3;
+      // 頭から少し外向きに垂らす
+      const h = Math.hypot(pos[q], pos[q + 2]) || 1;
+      pos[j] = pos[q] + pos[q] / h * seg * 0.3; pos[j + 1] = pos[q + 1] - seg; pos[j + 2] = pos[q + 2] + pos[q + 2] / h * seg * 0.3;
+      prev[j] = pos[j]; prev[j + 1] = pos[j + 1]; prev[j + 2] = pos[j + 2];
+    }
+  }
+  function resetHair(full) {
+    if (full) lens.fill(P);
+    updateRoots();
+    for (let s = 0; s < N; s++) {
+      for (let k = 0; k < 6; k++) pos[s * P * 3 + k] = prev[s * P * 3 + k] = rw[s * 6 + k];
+      hangStrand(s, 2);
+    }
+    for (let i = 0; i < 200; i++) step(1 / 60);
+  }
+
+  // 毛を、カメラに向いた細い帯として描く
+  function makeRibbonMesh(slots) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(slots * P * 2 * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(slots * P * 2 * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    const idx = new Uint32Array(slots * (P - 1) * 6);
+    let k = 0;
+    for (let s = 0; s < slots; s++) for (let i = 0; i < P - 1; i++) {
+      const v = (s * P + i) * 2;
+      idx.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k); k += 6;
+    }
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+    mesh.frustumCulled = false; scene.add(mesh);
+    return mesh;
+  }
+  const hairMesh = makeRibbonMesh(N), pieceMesh = makeRibbonMesh(MAXPIECE);
+  // 髪の色は1本ずつ持つ（リニアの RGB）。選んでいる色は色相・明るさ・鮮やかさで持つ
+  const PRESETS = [[0.06, 0.25, 0.18], [0.07, 0.5, 0.32], [0.12, 0.65, 0.62], [0, 0, 0.78], [0.93, 0.75, 0.68], [0.58, 0.75, 0.5], [0.42, 0.6, 0.45], [0.99, 0.75, 0.42]];
+  let cur = store.get('hsl', PRESETS[0]);
+  const curColor = () => new THREE.Color().setHSL(cur[0], cur[1], cur[2], THREE.SRGBColorSpace);
+  const strandCol = new Float32Array(N * 3);
+  function dyeAll() { const c = curColor(); for (let s = 0; s < N; s++) strandCol.set([c.r, c.g, c.b], s * 3); capMat.color.copy(c).multiplyScalar(0.8); }
+  // src の off から n 点を、帯の slot 番目に書き込む。i0 は元の毛での何番目の点か（太さ用）
+  function writeRibbon(mesh, slot, src, off, n, i0, tint, hc) {
+    const pa = mesh.geometry.attributes.position.array, ca = mesh.geometry.attributes.color.array;
+    const cp = viewCam.position;
+    let v = slot * P * 2 * 3;
+    for (let i = 0; i < P; i++, v += 6) {
+      const ii = Math.min(i, n - 1), j = off + ii * 3;
+      const a = off + Math.max(0, ii - 1) * 3, b = off + Math.min(n - 1, ii + 1) * 3;
+      const tx = src[b] - src[a], ty = src[b + 1] - src[a + 1], tz = src[b + 2] - src[a + 2];
+      const vx = cp.x - src[j], vy = cp.y - src[j + 1], vz = cp.z - src[j + 2];
+      let sx = ty * vz - tz * vy, sy = tz * vx - tx * vz, sz = tx * vy - ty * vx;
+      const w = (0.04 - 0.022 * (i0 + ii) / P) / 2 / (Math.hypot(sx, sy, sz) || 1);
+      sx *= w; sy *= w; sz *= w;
+      pa[v] = src[j] - sx; pa[v + 1] = src[j + 1] - sy; pa[v + 2] = src[j + 2] - sz;
+      pa[v + 3] = src[j] + sx; pa[v + 4] = src[j + 1] + sy; pa[v + 5] = src[j + 2] + sz;
+      const sh = tint * (0.7 + 0.45 * Math.sin(Math.min(1, (i0 + ii) / P * 1.6) * Math.PI * 0.8));
+      for (const q of [v, v + 3]) { ca[q] = hc[0] * sh; ca[q + 1] = hc[1] * sh; ca[q + 2] = hc[2] * sh; }
+    }
+  }
+  function writeHair() {
+    for (let s = 0; s < N; s++) writeRibbon(hairMesh, s, pos, s * P * 3, lens[s], 0, roots[s].tint, strandCol.subarray(s * 3, s * 3 + 3));
+    for (let k = 0; k < MAXPIECE; k++) {
+      const pc = pieces[k];
+      if (pc) writeRibbon(pieceMesh, k, pc.pos, 0, pc.n, pc.i0, pc.tint, pc.col);
+      else writeRibbon(pieceMesh, k, ZERO, 0, 1, 0, 0, ZERO);
+    }
+    hairMesh.geometry.attributes.position.needsUpdate = hairMesh.geometry.attributes.color.needsUpdate = true;
+    pieceMesh.geometry.attributes.position.needsUpdate = pieceMesh.geometry.attributes.color.needsUpdate = true;
+  }
+  const ZERO = new Float32Array([0, -50, 0]);
+  // ---------- 色えらび ----------
+  let dyeMode = false;
+  const css = hsl => `hsl(${hsl[0] * 360} ${hsl[1] * 100}% ${hsl[2] * 100}%)`;
+  function drawPalette() {
+    const hb = $('hueBar').getContext('2d'), sb = $('shadeBar').getContext('2d');
+    for (let x = 0; x < 300; x++) {
+      hb.fillStyle = css([x / 300, 0.75, 0.5]); hb.fillRect(x, 0, 1, 36);
+      // 左ほど灰色っぽく暗い、右ほど明るい（鮮やかさは真ん中が最大）
+      sb.fillStyle = css(shadeAt(x / 300)); sb.fillRect(x, 0, 1, 36);
+    }
+    for (const [g, x] of [[hb, cur[0] * 300], [sb, shadeX * 300]]) {
+      g.strokeStyle = '#fff'; g.lineWidth = 3; g.strokeRect(x - 3, 2, 6, 32);
+    }
+    $('colorBtn').style.background = css(cur);
+    $('dye').classList.toggle('on', dyeMode);
+  }
+  let lastColorUndo = 0;
+  let shadeX = store.get('shadeX', 0.3);
+  const shadeAt = t => [cur[0], Math.min(0.85, 0.15 + Math.sin(t * Math.PI) * 0.75), 0.06 + t * 0.84];
+  function pickColor(changeAll) {
+    store.set('hsl', cur); store.set('shadeX', shadeX);
+    if (changeAll && !dyeMode) {
+      // 色を変え始めた最初の1回だけ「戻す」用に覚える
+      const now = performance.now();
+      if (now - lastColorUndo > 800) undoStack.push({ lens: lens.slice(), col: strandCol.slice(), cap: capMat.color.clone() });
+      lastColorUndo = now;
+      dyeAll();
+    }
+    drawPalette();
+  }
+  function barInput(id, fn) {
+    const el = $(id);
+    const go = e => { const r = el.getBoundingClientRect(); fn(Math.max(0, Math.min(0.999, (e.clientX - r.left) / r.width))); };
+    el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); go(e); });
+    el.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') go(e); });
+  }
+  barInput('hueBar', t => { cur[0] = t; cur = shadeAt(shadeX); pickColor(true); });
+  barInput('shadeBar', t => { shadeX = t; cur = shadeAt(t); pickColor(true); });
+  PRESETS.forEach(h => {
+    const b = document.createElement('button'); b.className = 'sw'; b.style.background = css(h);
+    b.onclick = () => { cur = h.slice(); shadeX = (h[2] - 0.06) / 0.84; pickColor(true); };
+    $('presets').appendChild(b);
+  });
+  // 色パネルを閉じると、染めるブラシも終わる
+  function closePalette() { $('palette').classList.add('hide'); dyeMode = false; drawPalette(); }
+  $('colorBtn').onclick = () => { if ($('palette').classList.contains('hide')) $('palette').classList.remove('hide'); else closePalette(); };
+  $('dye').onclick = () => { dyeMode = !dyeMode; drawPalette(); };
+
+  // ---------- 切る ----------
+  const scr = new Float32Array(N * P * 2);
+  const vp = new THREE.Matrix4();
+  function project() {
+    vp.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    const e = vp.elements;
+    for (let k = 0, n = N * P; k < n; k++) {
+      const x = pos[k * 3], y = pos[k * 3 + 1], z = pos[k * 3 + 2];
+      const w = e[3] * x + e[7] * y + e[11] * z + e[15];
+      scr[k * 2] = ((e[0] * x + e[4] * y + e[8] * z + e[12]) / w * 0.5 + 0.5) * W;
+      scr[k * 2 + 1] = (0.5 - (e[1] * x + e[5] * y + e[9] * z + e[13]) / w * 0.5) * H;
+    }
+  }
+  function hit(ax, ay, bx, by, cx, cy, dx, dy) {
+    const r = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx);
+    if (!r) return false;
+    const u = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / r, v = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / r;
+    return u >= 0 && u <= 1 && v >= 0 && v <= 1;
+  }
+  let cutQueue = [], undoStack = [], strokeCut = false;
+  function doCuts() {
+    if (!cutQueue.length) return;
+    project();
+    const cl = camera.position.length(), cdx = camera.position.x / cl, cdy = camera.position.y / cl, cdz = camera.position.z / cl;
+    let any = false;
+    const dc = curColor();
+    for (const [ax, ay, bx, by] of cutQueue) {
+      for (let s = 0; s < N; s++) {
+        const n = lens[s];
+        for (let j = dyeMode ? 0 : 1; j < n - 1; j++) {
+          const k = (s * P + j) * 2, q = (s * P + j) * 3;
+          // 頭の向こう側（カメラから見えない）の毛は切らない
+          if (pos[q] * cdx + pos[q + 1] * cdy + pos[q + 2] * cdz < -0.25 && Math.hypot(pos[q], pos[q + 2]) < 1.4 && pos[q + 1] > -1.3) continue;
+          if (!hit(ax, ay, bx, by, scr[k], scr[k + 1], scr[k + 2], scr[k + 3])) continue;
+          if (dyeMode) { strandCol.set([dc.r, dc.g, dc.b], s * 3); any = true; break; }
+          // j より先を切り離して落とす
+          const o = s * P * 3, m = n - j;
+          if (pieces.length >= MAXPIECE) pieces.shift();
+          pieces.push({
+            pos: pos.slice(o + j * 3, o + n * 3), prev: prev.slice(o + j * 3, o + n * 3),
+            n: m, seg: roots[s].seg, age: 0, i0: j, tint: roots[s].tint, col: strandCol.slice(s * 3, s * 3 + 3),
+          });
+          lens[s] = j + 1; any = true;
+          break;
+        }
+      }
+    }
+    cutQueue = [];
+    if (any) {
+      if (!strokeCut) { strokeCut = true; undoStack.push(pendingUndo); if (undoStack.length > 30) undoStack.shift(); }
+      if (!dyeMode) snip();
+    }
+  }
+  let pendingUndo = null;
+
+  // ---------- 頭の向き ----------
+  let yaw = 0, yawV = 0, yawT = 0, pitch = 0, pitchV = 0, pitchT = 0;
+  function moveHead(dt) {
+    yawV += (-(yaw - yawT) * 25 - yawV * 7) * dt; yaw += yawV * dt;
+    pitchV += (-(pitch - pitchT) * 60 - pitchV * 6) * dt; pitch += pitchV * dt;
+    head.rotation.set(pitch, yaw, 0, 'YXZ');
+  }
+
+  // ---------- layout ----------
+  let W = 1, H = 1, DPR = 1;
+  function resize() {
+    const r = $('stage').getBoundingClientRect();
+    W = Math.max(1, r.width); H = Math.max(1, r.height); DPR = Math.min(devicePixelRatio || 1, 2);
+    renderer.setPixelRatio(DPR); renderer.setSize(W, H, false);
+    ov.width = Math.round(W * DPR); ov.height = Math.round(H * DPR);
+    camera.aspect = W / H;
+    const tf = Math.tan(camera.fov * Math.PI / 360);
+    const dist = Math.max(1.9 / tf, 1.55 / (tf * camera.aspect)) + 1.1;
+    camera.position.set(0, -0.05, dist); camera.lookAt(0, -0.35, 0);
+    camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    if (img) placeImage();
+    drawOverlay();
+  }
+
+  // ---------- 画像の切り抜き（タピオカメーカーと同じ塗り方式） ----------
+  let mode = 'cut', img = null, mask = null, mctx = null, view = null, brushIdx = 1, erasing = false, paintUndo = [];
+  function loadFile(f) {
+    if (!f || !f.type.startsWith('image/')) return;
+    const url = URL.createObjectURL(f), im = new Image();
+    im.onload = () => {
+      URL.revokeObjectURL(url);
+      const k = Math.min(1, 1600 / Math.max(im.width, im.height));
+      img = document.createElement('canvas');
+      img.width = Math.max(1, Math.round(im.width * k)); img.height = Math.max(1, Math.round(im.height * k));
+      img.getContext('2d').drawImage(im, 0, 0, img.width, img.height);
+      mask = document.createElement('canvas'); mask.width = img.width; mask.height = img.height;
+      mctx = mask.getContext('2d');
+      paintUndo = []; erasing = false; touches.clear(); pinch = null;
+      placeImage(); setMode('paint');
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); showErr(t('err')); };
+    im.src = url;
+  }
+  function snapFit() { if (view.k <= view.fit * 1.001) { view.x = (W - img.width * view.k) / 2; view.y = (H - img.height * view.k) / 2; } }
+  function placeImage() {
+    const pad = 12, k = Math.min((W - pad * 2) / img.width, (H - pad * 2) / img.height);
+    view = { k, fit: k, x: (W - img.width * k) / 2, y: (H - img.height * k) / 2 };
+  }
+  const BRUSH = [8, 22, 50];
+  const brushPx = () => BRUSH[brushIdx] / view.k;
+  function toImg(e) {
+    const r = ov.getBoundingClientRect();
+    return { x: (e.clientX - r.left - view.x) / view.k, y: (e.clientY - r.top - view.y) / view.k };
+  }
+  function paintStroke(a, b) {
+    mctx.save();
+    mctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
+    mctx.strokeStyle = mctx.fillStyle = '#000';
+    mctx.lineCap = mctx.lineJoin = 'round'; mctx.lineWidth = brushPx();
+    mctx.beginPath(); mctx.moveTo(a.x, a.y); mctx.lineTo(b.x, b.y); mctx.stroke();
+    mctx.beginPath(); mctx.arc(b.x, b.y, brushPx() / 2, 0, Math.PI * 2); mctx.fill();
+    mctx.restore();
+  }
+  function maskBox() {
+    const d = mctx.getImageData(0, 0, mask.width, mask.height).data;
+    let x0 = mask.width, y0 = mask.height, x1 = -1, y1 = -1;
+    for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) {
+      if (d[(y * mask.width + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  }
+  const updateDone = () => { $('done').disabled = !maskBox(); };
+  function makeSprite() {
+    const b = maskBox(); if (!b) return null;
+    const k = Math.min(1, 512 / Math.max(b.w, b.h));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(b.w * k)); c.height = Math.max(1, Math.round(b.h * k));
+    const g = c.getContext('2d');
+    g.drawImage(img, b.x, b.y, b.w, b.h, 0, 0, c.width, c.height);
+    g.globalCompositeOperation = 'destination-in';
+    g.drawImage(mask, b.x, b.y, b.w, b.h, 0, 0, c.width, c.height);
+    return c;
+  }
+  let tmpC = null;
+  function paintTmp() {
+    if (!tmpC || tmpC.width !== img.width || tmpC.height !== img.height) {
+      tmpC = document.createElement('canvas'); tmpC.width = img.width; tmpC.height = img.height;
+    }
+    const g = tmpC.getContext('2d');
+    g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, tmpC.width, tmpC.height);
+    g.drawImage(mask, 0, 0);
+    g.globalCompositeOperation = 'source-in'; g.drawImage(img, 0, 0);
+    g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(60, 220, 110, 0.45)'; g.fillRect(0, 0, tmpC.width, tmpC.height);
+    return tmpC;
+  }
+
+  // ---------- 2D の重ね描き（切り抜き画面・ハサミの軌跡） ----------
+  let trail = [];
+  function drawOverlay() {
+    octx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    octx.clearRect(0, 0, W, H);
+    if (mode === 'paint' && img) {
+      const { k, x, y } = view;
+      octx.fillStyle = '#2c3a44'; octx.fillRect(x, y, img.width * k, img.height * k);
+      octx.globalAlpha = 0.35; octx.drawImage(img, x, y, img.width * k, img.height * k); octx.globalAlpha = 1;
+      octx.drawImage(paintTmp(), x, y, img.width * k, img.height * k);
+      return;
+    }
+    const now = performance.now();
+    trail = trail.filter(p => now - p.t < 250);
+    if (trail.length > 1) {
+      octx.lineCap = octx.lineJoin = 'round';
+      for (let i = 1; i < trail.length; i++) {
+        const a = trail[i - 1], b = trail[i];
+        if (b.id !== a.id) continue;
+        octx.strokeStyle = `rgba(255,255,255,${0.9 * (1 - (now - b.t) / 250)})`; octx.lineWidth = 4;
+        octx.beginPath(); octx.moveTo(a.x, a.y); octx.lineTo(b.x, b.y); octx.stroke();
+      }
+    }
+  }
+
+  // ---------- input ----------
+  const touches = new Map();
+  let pinch = null, lastPt = null, rot = null, cutPt = null, strokeId = 0;
+  const local = e => { const r = ov.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const midOf = (a, b) => { const r = ov.getBoundingClientRect(); return { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top }; };
+  ov.addEventListener('contextmenu', e => e.preventDefault());
+  ov.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    ov.setPointerCapture(e.pointerId);
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (mode === 'paint') {
+      if (touches.size === 1 && !pinch) {
+        paintUndo.push(mctx.getImageData(0, 0, mask.width, mask.height));
+        if (paintUndo.length > 20) paintUndo.shift();
+        lastPt = toImg(e); paintStroke(lastPt, lastPt); drawOverlay();
+      } else if (touches.size === 2) {
+        if (lastPt) { const d = paintUndo.pop(); if (d) mctx.putImageData(d, 0, 0); lastPt = null; }
+        const [a, b] = [...touches.values()];
+        pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: midOf(a, b), k0: view.k, x0: view.x, y0: view.y };
+        drawOverlay();
+      }
+      return;
+    }
+    if (mode !== 'cut') return;
+    if (e.button === 2 || e.button === 1 || touches.size >= 2) {
+      // 2本指／右ドラッグで頭を回す
+      cutPt = null;
+      const [a, b] = [...touches.values()];
+      rot = { m: b ? midOf(a, b) : local(e), y0: yawT, p0: pitchT };
+      return;
+    }
+    if (!dyeMode) $('palette').classList.add('hide');
+    cutPt = local(e); strokeId++; strokeCut = false; pendingUndo = { lens: lens.slice(), col: strandCol.slice(), cap: capMat.color.clone() };
+    trail.push({ ...cutPt, t: performance.now(), id: strokeId });
+  });
+  ov.addEventListener('pointermove', e => {
+    if (!touches.has(e.pointerId)) return;
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (mode === 'paint') {
+      if (pinch && touches.size >= 2) {
+        const [a, b] = [...touches.values()], m = midOf(a, b);
+        const k = Math.max(view.fit, Math.min(view.fit * 12, pinch.k0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+        view.x = m.x - (pinch.m0.x - pinch.x0) / pinch.k0 * k;
+        view.y = m.y - (pinch.m0.y - pinch.y0) / pinch.k0 * k;
+        view.k = k; snapFit(); drawOverlay();
+      } else if (lastPt) { const p = toImg(e); paintStroke(lastPt, p); lastPt = p; drawOverlay(); }
+      return;
+    }
+    if (mode !== 'cut') return;
+    if (rot) {
+      const vals = [...touches.values()], m = vals.length >= 2 ? midOf(vals[0], vals[1]) : local(e);
+      yawT = rot.y0 + (m.x - rot.m.x) * 0.01;
+      pitchT = Math.max(-0.5, Math.min(0.6, rot.p0 + (m.y - rot.m.y) * 0.008));
+      return;
+    }
+    if (cutPt) {
+      const p = local(e);
+      cutQueue.push([cutPt.x, cutPt.y, p.x, p.y]);
+      cutPt = p; trail.push({ ...p, t: performance.now(), id: strokeId });
+    }
+  });
+  const up = e => {
+    touches.delete(e.pointerId);
+    if (mode === 'paint') {
+      if (touches.size === 0) pinch = null;
+      if (lastPt) { lastPt = null; updateDone(); }
+    }
+    if (touches.size === 0) { rot = null; cutPt = null; }
+  };
+  ov.addEventListener('pointerup', up);
+  ov.addEventListener('pointercancel', up);
+  ov.addEventListener('wheel', e => {
+    if (mode !== 'paint') return;
+    e.preventDefault();
+    const r = ov.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    const k = Math.max(view.fit, Math.min(view.fit * 12, view.k * Math.exp(-e.deltaY * 0.0015)));
+    view.x = mx - (mx - view.x) / view.k * k; view.y = my - (my - view.y) / view.k * k; view.k = k; snapFit();
+    drawOverlay();
+  }, { passive: false });
+
+  // ---------- buttons ----------
+  $('photo').onclick = () => $('file').click();
+  $('file').onchange = e => { loadFile(e.target.files[0]); e.target.value = ''; };
+  $('turn').onclick = () => { yawT += Math.PI / 2; };
+  $('undoCut').onclick = () => {
+    const u = undoStack.pop(); if (!u) return;
+    for (let s = 0; s < N; s++) if (u.lens[s] > lens[s]) { const from = lens[s]; lens[s] = u.lens[s]; hangStrand(s, from); }
+    strandCol.set(u.col); capMat.color.copy(u.cap);
+  };
+  $('brush').onclick = () => {
+    brushIdx = (brushIdx + 1) % BRUSH.length;
+    const d = $('brush').firstChild; d.style.width = d.style.height = [5, 11, 20][brushIdx] + 'px';
+  };
+  $('erase').onclick = () => { erasing = !erasing; $('erase').classList.toggle('on', erasing); };
+  $('undo').onclick = () => { const d = paintUndo.pop(); if (d) { mctx.putImageData(d, 0, 0); drawOverlay(); updateDone(); } };
+  $('cancel').onclick = () => setMode('cut');
+  $('done').onclick = () => {
+    const sp = makeSprite(); if (!sp) return;
+    setFace(sp); undoStack = []; pieces = []; yaw = yawT = yawV = pitch = pitchT = pitchV = 0; moveHead(0);
+    resetHair(true); setMode('cut');
+  };
+  // ---------- X投稿用の動画（頭のまわりをカメラが1周する。最初と最後がつながるループ） ----------
+  // 画面と同じ renderer で、表示の合間に1コマずつ描いて MP4 にする
+  const VFPS = 30, VFRAMES = 120, VW = 720, VH = 900;  // 4秒で1周
+  let shareFile = null, videoJob = null, videoKey = 0;
+  const vidCam = new THREE.PerspectiveCamera(35, VW / VH, 0.1, 50);
+  // a 周目の角度にカメラを置く（cam の縦横比に合わせて距離を決める）
+  function orbit(cam, a) {
+    const tf = Math.tan(cam.fov * Math.PI / 360);
+    const d = Math.max(1.9 / tf, 1.55 / (tf * cam.aspect)) + 1.1;
+    cam.position.set(Math.sin(a) * d, -0.05, Math.cos(a) * d); cam.lookAt(0, -0.35, 0);
+    cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+  }
+  async function makeVideo(key) {
+    shareFile = null; updatePost();
+    if (!('VideoEncoder' in window) || !window.Mp4Muxer) return;
+    let cfg = null;
+    for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42001f']) {
+      const c = { codec, width: VW, height: VH, bitrate: 6e6, framerate: VFPS };
+      try { if ((await VideoEncoder.isConfigSupported(c)).supported) { cfg = c; break; } } catch {}
+    }
+    if (!cfg || key !== videoKey) return;
+    const out = document.createElement('canvas'); out.width = VW; out.height = VH;
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: 'avc', width: VW, height: VH, frameRate: VFPS }, fastStart: 'in-memory' });
+    const job = { key, out, ctx: out.getContext('2d'), muxer, i: 0, failed: false };
+    job.enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: () => { job.failed = true; } });
+    job.enc.configure(cfg);
+    videoJob = job;
+  }
+  // ループの中から呼ぶ。1回で1コマ。画面の左下に描いて 2D キャンバスへ写す（このあと画面は描き直す）
+  function videoFrame() {
+    const job = videoJob;
+    if (job.key !== videoKey || job.failed) { try { job.enc.close(); } catch {} videoJob = null; return; }
+    const cw = glc.width, ch = glc.height, pr = renderer.getPixelRatio();
+    const sw = Math.floor(Math.min(cw, ch * VW / VH) / 2) * 2, sh = Math.floor(sw * VH / VW / 2) * 2;
+    orbit(vidCam, job.i / VFRAMES * Math.PI * 2);
+    viewCam = vidCam; writeHair(); viewCam = camera;
+    renderer.setScissorTest(true);
+    renderer.setViewport(0, 0, sw / pr, sh / pr); renderer.setScissor(0, 0, sw / pr, sh / pr);
+    renderer.render(scene, vidCam);
+    renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
+    const g = job.ctx;
+    g.drawImage(glc, 0, ch - sh, sw, sh, 0, 0, VW, VH);
+    g.fillStyle = 'rgba(58,110,143,.8)'; g.font = 'bold 26px sans-serif'; g.textAlign = 'right';
+    g.fillText('keifurukawafunnych.com', VW - 24, VH - 24);
+    const frame = new VideoFrame(job.out, { timestamp: Math.round(job.i * 1e6 / VFPS), duration: Math.round(1e6 / VFPS) });
+    job.enc.encode(frame, { keyFrame: job.i % 60 === 0 }); frame.close();
+    job.i++;
+    if (job.i < VFRAMES) return;
+    videoJob = null;
+    (async () => {
+      await job.enc.flush(); job.enc.close(); job.muxer.finalize();
+      if (job.key !== videoKey || job.failed) return;
+      shareFile = new File([job.muxer.target.buffer], 'maegami-cut.mp4', { type: 'video/mp4' });
+      updatePost();
+    })().catch(() => {});
+  }
+  let resultT0 = 0;
+  $('finish').onclick = () => {
+    trail = []; pieces = [];
+    resultT0 = performance.now();
+    setMode('result');
+    makeVideo(++videoKey);
+  };
+  $('again').onclick = () => { videoKey++; shareFile = null; resize(); setMode('cut'); };
+  const canVideo = 'VideoEncoder' in window;
+  $('post').addEventListener('click', e => {
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    // 動画ができるまでは押せない（動画なしで投稿されないように）
+    if (!shareFile && canVideo) { e.preventDefault(); return; }
+    // スマホは動画ごと共有メニューへ
+    if (coarse && navigator.share) {
+      e.preventDefault();
+      const text = `${shareText()}\n${SHARE_URL}`;
+      const data = shareFile && navigator.canShare?.({ files: [shareFile] }) ? { files: [shareFile], text } : { text };
+      navigator.share(data).catch(() => {});
+      return;
+    }
+    // PCは動画を保存してから投稿画面を開く
+    if (shareFile) {
+      const d = document.createElement('a');
+      d.href = URL.createObjectURL(shareFile); d.download = shareFile.name; document.body.appendChild(d); d.click(); d.remove();
+      setTimeout(() => URL.revokeObjectURL(d.href), 10000);
+    }
+  });
+
+  // ---------- modes / text ----------
+  function updatePost() {
+    const a = $('post');
+    a.href = `https://x.com/intent/post?text=${encodeURIComponent(shareText())}&url=${encodeURIComponent(SHARE_URL)}`;
+    if (!matchMedia('(pointer: coarse)').matches) { a.target = '_blank'; a.rel = 'noopener'; }
+    a.classList.toggle('wait', !shareFile && canVideo);
+  }
+  function setMode(m) {
+    mode = m;
+    if (m !== 'cut' && dyeMode) closePalette(); else $('palette').classList.add('hide');
+    $('barCut').classList.toggle('hide', m !== 'cut');
+    $('barPaint').classList.toggle('hide', m !== 'paint');
+    $('result').classList.toggle('hide', m !== 'result');
+    glc.style.visibility = m === 'paint' ? 'hidden' : 'visible';
+    if (m === 'paint') { $('erase').classList.remove('on'); updateDone(); }
+    touches.clear(); rot = null; cutPt = null;
+    drawOverlay();
+  }
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    $('back').textContent = t('back');
+    $('lang').value = lang;
+    for (const k of ['erase', 'undo', 'cancel', 'done', 'post', 'again']) $(k).textContent = t(k);
+    updatePost();
+  }
+  $('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+  $('snd').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); drawSnd(); };
+
+  // ---------- loop ----------
+  let lastT = performance.now(), acc = 0;
+  function loop(now) {
+    const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    if (mode === 'cut') {
+      acc += dt;
+      while (acc >= 1 / 60) { moveHead(1 / 60); step(1 / 60); acc -= 1 / 60; }
+      doCuts();
+      writeHair();
+      renderer.render(scene, camera);
+      drawOverlay();
+    } else if (mode === 'result') {
+      // 動画と同じ速さでカメラが頭のまわりを回る
+      if (videoJob) videoFrame();
+      orbit(camera, (now - resultT0) / (VFRAMES / VFPS * 1000) * Math.PI * 2);
+      writeHair();
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  drawSnd(); applyLang(); dyeAll(); drawPalette();
+  setFace(defaultFace());
+  new ResizeObserver(resize).observe($('stage'));
+  resize();
+  resetHair(true);
+  setMode('cut');
+  requestAnimationFrame(loop);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>现代艺术 · LiteGame</title>
+  <meta name="description" content="随手涂两笔，挂进美术馆，还会生成作品卡。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="现代艺术 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/modern-art/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/modern-art/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #e9e5de; color: #222; font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      display: flex; flex-direction: column; overflow: hidden;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; }
+    header a { color: #444; text-decoration: none; font-size: 14px; }
+    .pill { border: 1px solid #999; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 14px; cursor: pointer; color: #222; }
+    #stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 4px 12px; }
+    #art { background: #f8f6f1; box-shadow: 0 2px 10px rgba(0,0,0,.18); touch-action: none; cursor: crosshair; display: block; }
+    #tools { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px 12px 0; flex-wrap: wrap; }
+    .tool { width: 52px; height: 52px; border-radius: 12px; border: 2px solid transparent; background: #fff; cursor: pointer; padding: 6px; }
+    .tool.on { border-color: #222; }
+    #undo:disabled { opacity: .35; cursor: default; }
+    .tool svg { width: 100%; height: 100%; display: block; }
+    #done { height: 52px; padding: 0 22px; border-radius: 12px; border: 0; background: #222; color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; margin-left: 6px; }
+    #gallery { position: fixed; inset: 0; background: #2a2724; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 0 12px calc(80px + env(safe-area-inset-bottom)); }
+    #gallery.show { display: flex; }
+    #view { width: 100%; max-width: 720px; flex: 1; min-height: 0; color: #ddd; display: flex; align-items: center; justify-content: center; }
+    #titlein { width: min(100%, 420px); height: 44px; border-radius: 10px; border: 1px solid #555; background: #2b2926; color: #fff; font-size: 17px; padding: 0 14px; text-align: center; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+    #gbtns { display: flex; gap: 10px; }
+    #gbtns a, #gbtns button { height: 48px; padding: 0 20px; border-radius: 999px; font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; cursor: pointer; text-decoration: none; border: 0; }
+    #post { background: #000; color: #fff; border: 1px solid #555 !important; }
+    #again { background: #f2efe8; color: #222; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">现代艺术</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="lang" class="pill">EN</button>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><canvas id="art" width="800" height="1000"></canvas></div>
+  <div id="tools">
+    <button class="tool on" data-t="splash"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="8" fill="#d6392b"/><circle cx="8" cy="10" r="3" fill="#d6392b"/><circle cx="32" cy="12" r="2.5" fill="#d6392b"/><circle cx="31" cy="31" r="3.5" fill="#d6392b"/><circle cx="9" cy="30" r="2" fill="#d6392b"/><circle cx="20" cy="5" r="1.6" fill="#d6392b"/></svg></button>
+    <button class="tool" data-t="drip"><svg viewBox="0 0 40 40"><path d="M4 12 C12 4 20 20 36 10" stroke="#1f4fa8" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M14 11 V30" stroke="#1f4fa8" stroke-width="2"/><circle cx="14" cy="31" r="2.5" fill="#1f4fa8"/><path d="M27 12 V22" stroke="#1f4fa8" stroke-width="2"/><circle cx="27" cy="23" r="2" fill="#1f4fa8"/></svg></button>
+    <button class="tool" data-t="shape"><svg viewBox="0 0 40 40"><rect x="3" y="3" width="20" height="20" fill="#f2c230" stroke="#111" stroke-width="2.5"/><circle cx="27" cy="27" r="10" fill="#d6392b" stroke="#111" stroke-width="2.5"/></svg></button>
+    <button class="tool" data-t="broad"><svg viewBox="0 0 40 40"><path d="M5 30 C14 10 26 30 35 10" stroke="#2a2a2a" stroke-width="10" fill="none" stroke-linecap="round"/></svg></button>
+    <button id="undo" class="tool" aria-label="戻す" disabled><svg viewBox="0 0 40 40"><path d="M15 9 L6 17 L15 25" fill="none" stroke="#222" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 17 H24 A9 9 0 0 1 24 35 H16" fill="none" stroke="#222" stroke-width="3.5" stroke-linecap="round"/></svg></button>
+    <button id="done">完成</button>
+  </div>
+  <div id="gallery">
+    <div id="view"></div>
+    <input id="titlein" maxlength="40" enterkeyhint="done">
+    <div id="gbtns"><a id="post" href="#">Xにポスト</a><button id="again">もう一度</button></div>
+  </div>
+  </main>
+<script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 现代艺术 · 中文文案
+window.__KF_ZH__ = {
+  title: '现代艺术',
+  back: '← 大厅',
+  done: '完成',
+  post: '分享到 X',
+  again: '再画一张',
+  undo: '撤销',
+  artist: '作者：你',
+  titlePh: '作品名',
+  tweet: (t) => `「${t}」被美术馆收藏了 #LiteGame`
+};
+</script>
+<script type="module">
+const L = {
+  ja: { title: '现代艺术', back: '← トップへ戻る', lang: 'EN', done: '完成', post: 'Xにポスト', again: 'もう一度',
+        undo: '戻す', artist: '作者：あなた', titlePh: '作品名', cdn: '読み込みに失敗しました。通信を確認してください', medium: 'キャンバスにアクリル', year: '2026年',
+        a: ['沈黙の','無題の','記憶の','境界の','反復する','解体された','名もなき','揺らぐ','都市の','内なる','終わらない','透明な'],
+        b: ['青','叫び','構成','風景','午後','祈り','断片','時間','余白','衝動','対話','重力'],
+        tweet: t => `「${t}」が美術館に展示されました` },
+  en: { title: 'Modern Art Maker', back: '← Top', lang: '日本語', done: 'Done', post: 'Post on X', again: 'Again',
+        undo: 'Undo', artist: 'Artist: You', titlePh: 'Title', cdn: 'Failed to load. Check your connection.', medium: 'Acrylic on canvas', year: '2026',
+        a: ['Silent','Untitled','Remembered','Liminal','Repeating','Deconstructed','Nameless','Trembling','Urban','Inner','Endless','Transparent'],
+        b: ['Blue','Scream','Composition','Landscape','Afternoon','Prayer','Fragment','Time','Void','Impulse','Dialogue','Gravity'],
+        tweet: t => `"${t}" is now on display at the museum` }
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const store = { get(k, d) { try { return localStorage.getItem('modern-art-' + k) || d; } catch (e) { return d; } },
+                set(k, v) { try { localStorage.setItem('modern-art-' + k, v); } catch (e) {} } };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'ja';
+const t = k => L[lang][k];
+const $ = id => document.getElementById(id);
+let work = null; // {a, b, no}
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('back').textContent = t('back'); $('lang').textContent = t('lang');
+  $('done').textContent = t('done'); $('undo').setAttribute('aria-label', t('undo')); $('post').textContent = t('post'); $('again').textContent = t('again');
+  if (work) renderGallery();
+}
+$('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+// ---- canvas ----
+const cv = $('art'), cx = cv.getContext('2d');
+const W = cv.width, H = cv.height, BG = '#f8f6f1';
+function fit() {
+  const s = $('stage'), r = s.getBoundingClientRect();
+  const w = Math.min(r.width - 24, (r.height - 8) * 0.8);
+  cv.style.width = Math.max(100, w) + 'px'; cv.style.height = Math.max(125, w * 1.25) + 'px';
+}
+addEventListener('resize', fit);
+
+const PALETTES = [
+  ['#d6392b','#1f4fa8','#f2c230','#111111','#ffffff'],
+  ['#e85d3f','#2b2d42','#8d99ae','#f4d35e','#0f7b6c'],
+  ['#ff4f79','#222222','#2ec4b6','#ffbf00','#3a0ca3'],
+  ['#3d348b','#7678ed','#f7b801','#f18701','#f35b04'],
+  ['#264653','#2a9d8f','#e9c46a','#f4a261','#e76f51'],
+];
+let pal, ci = 0, color;
+function newColor() { ci = (ci + 1 + Math.floor(Math.random() * (pal.length - 1))) % pal.length; color = pal[ci]; }
+function reset() {
+  cx.fillStyle = BG; cx.fillRect(0, 0, W, H);
+  history.length = 0; $('undo').disabled = true;
+  pal = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+  ci = 0; newColor();
+}
+
+const history = [];
+function snapshot() { history.push(cx.getImageData(0, 0, W, H)); if (history.length > 20) history.shift(); $('undo').disabled = false; }
+$('undo').onclick = () => { if (!history.length) return; cx.putImageData(history.pop(), 0, 0); $('undo').disabled = !history.length; };
+let tool = 'splash';
+document.querySelectorAll('.tool[data-t]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tool[data-t]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); tool = b.dataset.t;
+});
+
+const R = (a, b) => a + Math.random() * (b - a);
+function dot(x, y, r, c) { cx.fillStyle = c; cx.beginPath(); cx.arc(x, y, r, 0, Math.PI * 2); cx.fill(); }
+
+let down = false, lx = 0, ly = 0, acc = 0;
+function pos(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; }
+
+function splash(x, y, sp) {
+  const big = 10 + Math.min(40, sp * 0.6);
+  dot(x, y, R(big * 0.5, big), color);
+  const n = 3 + Math.floor(sp / 6);
+  for (let i = 0; i < n; i++) {
+    const a = R(0, 6.283), d = R(big, big * 3 + sp);
+    dot(x + Math.cos(a) * d, y + Math.sin(a) * d, R(1.5, big * 0.3), color);
+  }
+}
+function drip(x0, y0, x, y) {
+  cx.strokeStyle = color; cx.lineCap = 'round'; cx.lineWidth = R(3, 9);
+  cx.beginPath(); cx.moveTo(x0, y0); cx.lineTo(x, y); cx.stroke();
+  if (Math.random() < 0.12) {
+    const len = R(30, 200), w = R(2, 5);
+    cx.lineWidth = w; cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + R(-3, 3), y + len); cx.stroke();
+    dot(x, y + len, w * 1.3, color);
+  }
+}
+function shape(x, y) {
+  cx.fillStyle = color; cx.strokeStyle = '#111'; cx.lineWidth = 10; cx.lineJoin = 'miter';
+  const k = Math.random(), s = R(60, 220);
+  cx.beginPath();
+  if (k < 0.55) { const w = s * R(0.5, 1.6), h = s * R(0.5, 1.6); cx.rect(x - w / 2, y - h / 2, w, h); }
+  else if (k < 0.85) cx.arc(x, y, s / 2, 0, Math.PI * 2);
+  else { cx.moveTo(x, y - s / 2); cx.lineTo(x + s / 2, y + s / 2); cx.lineTo(x - s / 2, y + s / 2); cx.closePath(); }
+  cx.fill(); cx.stroke();
+  newColor();
+}
+function broad(x0, y0, x, y) {
+  const dx = x - x0, dy = y - y0, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+  cx.lineCap = 'round';
+  for (let i = -6; i <= 6; i++) {
+    const o = i * 4.5;
+    cx.strokeStyle = color; cx.globalAlpha = R(0.35, 0.9); cx.lineWidth = R(3, 7);
+    cx.beginPath(); cx.moveTo(x0 + nx * o, y0 + ny * o); cx.lineTo(x + nx * o, y + ny * o); cx.stroke();
+  }
+  cx.globalAlpha = 1;
+}
+
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault(); cv.setPointerCapture(e.pointerId);
+  snapshot(); down = true; [lx, ly] = pos(e); acc = 0;
+  if (tool === 'shape') shape(lx, ly);
+  else if (tool === 'splash') splash(lx, ly, 10);
+});
+cv.addEventListener('pointermove', e => {
+  if (!down) return; e.preventDefault();
+  const [x, y] = pos(e), d = Math.hypot(x - lx, y - ly);
+  if (tool === 'splash') { if (d < 12) return; splash(x, y, d); }
+  else if (tool === 'drip') drip(lx, ly, x, y);
+  else if (tool === 'broad') broad(lx, ly, x, y);
+  else if (tool === 'shape') { acc += d; if (acc > 150) { acc = 0; shape(x, y); } }
+  lx = x; ly = y;
+});
+const up = () => { if (down && tool !== 'shape') newColor(); down = false; };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+document.addEventListener('touchmove', e => { if (e.target === cv) e.preventDefault(); }, { passive: false });
+
+// ---- gallery (3D) ----
+let three = null;
+const plaqueCv = document.createElement('canvas'); plaqueCv.width = 1024; plaqueCv.height = 360;
+const titleIn = $('titlein');
+function defaultTitle() { return lang === 'ja' ? `${t('a')[work.a]}${t('b')[work.b]} No.${work.no}` : `${t('a')[work.a]} ${t('b')[work.b]} No.${work.no}`; }
+function workTitle() { return work.custom != null ? work.custom : defaultTitle(); }
+
+function drawPlaque() {
+  const g = plaqueCv.getContext('2d'), pw = plaqueCv.width, ph = plaqueCv.height;
+  g.fillStyle = '#fbfaf6'; g.fillRect(0, 0, pw, ph);
+  g.fillStyle = '#222'; g.textBaseline = 'alphabetic';
+  let fs = 92; const ti = workTitle() || ' ';
+  do { g.font = `700 ${fs}px "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif`; fs -= 3; } while (g.measureText(ti).width > pw - 100 && fs > 30);
+  g.fillText(ti, 50, 140);
+  g.font = '56px system-ui, sans-serif'; g.fillStyle = '#555';
+  g.fillText(t('artist'), 50, 240);
+  g.fillText(`${t('medium')}, ${t('year')}`, 50, 320);
+  if (three) three.plaqueTex.needsUpdate = true;
+}
+function updatePost() {
+  const text = t('tweet')(workTitle()), url = 'https://keifurukawafunnych.com/games/modern-art/';
+  const a = $('post');
+  a.href = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
+  if (matchMedia('(pointer: coarse)').matches) { a.removeAttribute('target'); a.removeAttribute('rel'); }
+  else { a.target = '_blank'; a.rel = 'noopener'; }
+}
+function renderGallery() {
+  titleIn.placeholder = t('titlePh');
+  if (work.custom == null) titleIn.value = defaultTitle();
+  drawPlaque(); updatePost();
+}
+titleIn.addEventListener('input', () => { work.custom = titleIn.value.slice(0, 40); drawPlaque(); updatePost(); });
+titleIn.addEventListener('keydown', e => { if (e.key === 'Enter') titleIn.blur(); });
+
+async function initThree() {
+  const THREE = await import('three');
+  const view = $('view');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  view.appendChild(renderer.domElement);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color('#2a2724');
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+
+  // room
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 12), new THREE.MeshStandardMaterial({ color: '#e8e3da', roughness: 0.95 }));
+  wall.position.set(0, 3, 0); wall.receiveShadow = true; scene.add(wall);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 20), new THREE.MeshStandardMaterial({ color: '#7d6a55', roughness: 0.6 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(0, -2.4, 10); floor.receiveShadow = true; scene.add(floor);
+
+  // frame: art 2.0 x 2.5, mat, gold beveled frame
+  const AW = 2.0, AH = 2.5, MAT = 0.28, FW = 0.32, FD = 0.16;
+  const group = new THREE.Group(); group.position.set(0, 0.9, 0.0); scene.add(group);
+  const gold = new THREE.MeshStandardMaterial({ color: '#c8963a', metalness: 0.85, roughness: 0.32 });
+  const ow = AW + 2 * MAT, oh = AH + 2 * MAT;
+  const outer = new THREE.Shape(); outer.moveTo(-ow / 2 - FW, -oh / 2 - FW); outer.lineTo(ow / 2 + FW, -oh / 2 - FW); outer.lineTo(ow / 2 + FW, oh / 2 + FW); outer.lineTo(-ow / 2 - FW, oh / 2 + FW); outer.closePath();
+  const hole = new THREE.Path(); hole.moveTo(-ow / 2, -oh / 2); hole.lineTo(-ow / 2, oh / 2); hole.lineTo(ow / 2, oh / 2); hole.lineTo(ow / 2, -oh / 2); hole.closePath();
+  outer.holes.push(hole);
+  const fgeo = new THREE.ExtrudeGeometry(outer, { depth: FD, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.07, bevelSegments: 4 });
+  const frame = new THREE.Mesh(fgeo, gold); frame.castShadow = true; group.add(frame);
+  // inner moulding ring
+  const ring = new THREE.Shape(); const rw = ow / 2 + 0.06, rh = oh / 2 + 0.06;
+  ring.moveTo(-rw, -rh); ring.lineTo(rw, -rh); ring.lineTo(rw, rh); ring.lineTo(-rw, rh); ring.closePath();
+  const rh2 = new THREE.Path(); rh2.moveTo(-ow / 2, -oh / 2); rh2.lineTo(-ow / 2, oh / 2); rh2.lineTo(ow / 2, oh / 2); rh2.lineTo(ow / 2, -oh / 2); rh2.closePath(); ring.holes.push(rh2);
+  const rmesh = new THREE.Mesh(new THREE.ExtrudeGeometry(ring, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 3 }), gold);
+  rmesh.position.z = FD + 0.04; group.add(rmesh);
+  const mat = new THREE.Mesh(new THREE.BoxGeometry(ow, oh, 0.04), new THREE.MeshStandardMaterial({ color: '#fbfaf6', roughness: 0.9 }));
+  mat.position.z = 0.04; mat.receiveShadow = true; group.add(mat);
+  const artTex = new THREE.CanvasTexture(cv); artTex.colorSpace = THREE.SRGBColorSpace; artTex.anisotropy = 4;
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(AW, AH), new THREE.MeshStandardMaterial({ map: artTex, roughness: 0.75 }));
+  art.position.z = 0.065; art.receiveShadow = true; group.add(art);
+
+  // plaque
+  const plaqueTex = new THREE.CanvasTexture(plaqueCv); plaqueTex.colorSpace = THREE.SRGBColorSpace; plaqueTex.anisotropy = 4;
+  const plaque = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5625, 0.03), [
+    ...Array(4).fill(new THREE.MeshStandardMaterial({ color: '#ddd' })),
+    new THREE.MeshStandardMaterial({ map: plaqueTex, roughness: 0.6 }), new THREE.MeshStandardMaterial({ color: '#ddd' })]);
+  plaque.position.set(0, -2.15 + 0.9 - 0.15, 0.02); plaque.castShadow = true; scene.add(plaque);
+  plaque.position.y = 0.9 - oh / 2 - FW - 0.75;
+
+  // lights
+  scene.add(new THREE.HemisphereLight('#fff6e8', '#3a3128', 0.55));
+  const spot = new THREE.SpotLight('#fff1d6', 60, 20, 0.5, 0.6, 1.6);
+  spot.position.set(0, 6.5, 4.5); spot.target = group; spot.castShadow = true;
+  spot.shadow.mapSize.set(1024, 1024); spot.shadow.bias = -0.0005; scene.add(spot);
+  const fill = new THREE.DirectionalLight('#ffffff', 0.35); fill.position.set(-3, 2, 6); scene.add(fill);
+
+  // camera orbit
+  let yaw = 0, pitch = 0, tyaw = 0.35, tpitch = 0.05, drag = null, idle = 0;
+  const el = renderer.domElement; el.style.touchAction = 'none'; el.style.display = 'block';
+  el.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, tyaw, tpitch]; idle = 0; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', e => { if (!drag) return;
+    tyaw = Math.max(-0.9, Math.min(0.9, drag[2] - (e.clientX - drag[0]) * 0.006));
+    tpitch = Math.max(-0.3, Math.min(0.4, drag[3] + (e.clientY - drag[1]) * 0.004)); });
+  const end = () => drag = null; el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+
+  function resize() {
+    const r = view.getBoundingClientRect(); renderer.setSize(r.width, r.height);
+    camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
+  let last = performance.now(), dist = 9;
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (!$('gallery').classList.contains('show')) return;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!drag) { idle += dt; if (idle > 2.5) tyaw = Math.sin(now / 4000) * 0.35; }
+    yaw += (tyaw - yaw) * Math.min(1, dt * 4); pitch += (tpitch - pitch) * Math.min(1, dt * 4);
+    // fit whole frame+plaque vertically & horizontally
+    const needH = 5.6, needW = 3.9, vf = 2 * Math.tan(camera.fov * Math.PI / 360);
+    dist = Math.max(needH / vf, needW / (vf * camera.aspect)) + 0.5;
+    const cy = 0.15;
+    camera.position.set(Math.sin(yaw) * Math.cos(pitch) * dist, cy + Math.sin(pitch) * dist, Math.cos(yaw) * Math.cos(pitch) * dist);
+    camera.lookAt(0, cy, 0);
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(loop);
+  three = { artTex, plaqueTex, resize, reset() { yaw = 0.9; tyaw = 0.35; tpitch = 0.05; idle = 0; } };
+}
+
+$('done').onclick = async () => {
+  work = { a: Math.floor(Math.random() * 12), b: Math.floor(Math.random() * 12), no: 1 + Math.floor(Math.random() * 99), custom: null };
+  $('gallery').classList.add('show');
+  try { if (!three) await initThree(); } catch (e) { $('view').textContent = t('cdn'); console.error(e); return; }
+  three.artTex.needsUpdate = true; three.reset(); three.resize();
+  renderGallery();
+};
+$('again').onclick = () => { work = null; $('gallery').classList.remove('show'); reset(); };
+
+reset(); applyLang(); fit();
+</script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

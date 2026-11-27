@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <defs>
+    <linearGradient id="gyInk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#171512"/>
+      <stop offset="1" stop-color="#0b0a09"/>
+    </linearGradient>
+    <radialGradient id="gyBasket" cx="50%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#d8b985"/>
+      <stop offset="1" stop-color="#8a6a3f"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#gyInk)"/>
+
+  <g transform="translate(60 120)">
+    <circle cx="80" cy="80" r="80" fill="url(#gyBasket)" stroke="#5a4022" stroke-width="5"/>
+    <circle cx="80" cy="80" r="66" fill="none" stroke="#f2e0bb" stroke-width="2" opacity="0.25"/>
+    <g fill="#f6e6c6">
+      <path d="M30 70c0-18 13-29 27-29s27 11 27 29c0 5-4 8-9 8H39c-5 0-9-3-9-8Z"/>
+      <path d="M78 48c0-16 12-26 24-26s24 10 24 26c0 5-4 7-8 7H86c-4 0-8-2-8-7Z" fill="#efdcb6"/>
+      <path d="M74 96c0-17 12-28 26-28s26 11 26 28c0 5-4 8-9 8H83c-5 0-9-3-9-8Z" fill="#efdcb6"/>
+      <path d="M28 106c0-14 11-23 22-23s22 9 22 23c0 4-4 6-7 6H35c-3 0-7-2-7-6Z" fill="#e8d3b0"/>
+    </g>
+  </g>
+
+  <g transform="translate(272 96)" font-family="'Songti SC','Noto Serif SC',serif">
+    <text font-size="42" fill="#f4e8d2" letter-spacing="8">饺 子</text>
+    <text y="42" font-size="15" fill="#8f8674" letter-spacing="4">最后一只归谁</text>
+    <g transform="translate(0 86)" fill="#f6e6c6">
+      <path d="M0 26c0-14 11-23 22-23s22 9 22 23c0 4-4 6-7 6H7c-3 0-7-2-7-6Z" opacity="0.9"/>
+      <path d="M40 26c0-14 11-23 22-23s22 9 22 23c0 4-4 6-7 6H47c-3 0-7-2-7-6Z" opacity="0.55"/>
+      <path d="M80 26c0-14 11-23 22-23s22 9 22 23c0 4-4 6-7 6H87c-3 0-7-2-7-6Z" opacity="0.25"/>
+    </g>
+  </g>
+
+  <text x="40" y="372" font-family="'Songti SC','Noto Serif SC',serif" font-size="15" fill="#8f8674" letter-spacing="4">7 · 5 · 3</text>
+</svg>

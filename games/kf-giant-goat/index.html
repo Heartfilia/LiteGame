@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>巨大山羊 · LiteGame</title>
+  <meta name="description" content="喂草，把山羊喂成灾难级的体型。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="巨大山羊 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/giant-goat/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/giant-goat/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #cfe9f7; color: #2a3a1a;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif;
+      display: flex; flex-direction: column; overflow: hidden;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      -webkit-user-select: none; user-select: none;
+    }
+    header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+    header a { color: #2a3a1a; font-size: 14px; text-decoration: none; margin-right: auto; }
+    header button, header select {
+      background: #fff; border: 1px solid #a9c7a0; border-radius: 8px;
+      height: 34px; min-width: 40px; padding: 0 10px; font-size: 13px; color: #2a3a1a; cursor: pointer;
+    }
+    header svg { width: 18px; height: 18px; display: block; }
+    #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+    #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #gauge { position: absolute; left: 12px; right: 12px; top: 10px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.55); display: none; overflow: hidden; pointer-events: none; }
+    #gauge i { display: block; height: 100%; width: 100%; background: #f2a531; border-radius: 5px; transform-origin: left; }
+    #result { position: absolute; inset: 0 0 45% 0; display: none; align-items: center; justify-content: center; pointer-events: none; }
+    #result { flex-direction: column; gap: 4px; }
+    #result b { font-size: clamp(44px, 14vw, 96px); font-weight: 900; color: #fff; text-shadow: 0 4px 0 #3b6b2a, 0 0 18px rgba(0,0,0,.25); }
+    #result span { font-size: clamp(22px, 7vw, 40px); font-weight: 900; color: #fff; text-shadow: 0 3px 0 #3b6b2a, 0 0 12px rgba(0,0,0,.25); padding: 0 12px; text-align: center; }
+    #stick { position: absolute; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 3px solid rgba(255,255,255,.7); display: none; pointer-events: none; }
+    #stick i { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: rgba(255,255,255,.8); }
+    #msg { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+    #controls { display: flex; gap: 8px; padding: 8px 12px 0; max-width: 640px; width: 100%; margin: 0 auto; }
+    #controls button, #controls a {
+      flex: 1; height: 64px; border: none; border-radius: 14px; font-size: 20px; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none;
+      touch-action: manipulation;
+    }
+    .go { background: #5aa83a; color: #fff; box-shadow: 0 4px 0 #3b6b2a; }
+    .post { background: #111; color: #fff; box-shadow: 0 4px 0 #000; flex: 0 0 34% !important; font-size: 17px !important; }
+    #controls button:active, #controls a:active { transform: translateY(3px); box-shadow: none; }
+    #controls.hide { visibility: hidden; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">巨大山羊</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="sound" aria-label="sound"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><div id="gauge"><i></i></div><div id="result"><b></b><span></span></div><div id="stick"><i></i></div><div id="msg"></div></div>
+  <div id="controls"></div>
+
+  </main>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+  <script>
+    // CDN が読めないときの一言
+    setTimeout(() => { if (!window.GOAT_READY) { const m = document.getElementById('msg'); m.style.display = 'flex'; m.textContent = 'Failed to load. Please reload. / 読み込めませんでした。再読み込みしてください。'; } }, 8000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 巨大山羊 · 中文文案
+window.__KF_ZH__ = {
+  title: '巨大山羊',
+  back: '← 大厅',
+  start: '开始',
+  again: '再来一次',
+  post: '分享到 X',
+  about: (p) => `${p} 左右`
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    window.GOAT_READY = true;
+
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/giant-goat/';
+    const PLAY_TIME = 60;
+
+    // ---------- 言語 ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('giant-goat:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('giant-goat:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (['ja', 'ko', 'en', 'th'].includes(c)) return c; } return 'en'; };
+    const DICT = {
+      ja: { title: '巨大山羊', back: '← トップへ戻る', start: 'スタート', again: 'もう一度', post: 'Xに投稿', share: (s, p) => `ヤギが${s}（${p}くらい）になった #巨大山羊ゲーム`, about: p => `${p}くらい` },
+      ko: { title: '거대 염소', back: '← 처음으로', start: '시작', again: '다시 하기', post: 'X에 게시', share: (s, p) => `염소가 ${s}(${p} 정도)가 됐다 #巨大山羊ゲーム`, about: p => `${p} 정도` },
+      en: { title: 'Giant Goat', back: '← Back to top', start: 'Start', again: 'Play again', post: 'Post on X', share: (s, p) => `My goat grew to ${s} (about the size of ${p}) #巨大山羊ゲーム`, about: p => `about ${p}` },
+      th: { title: 'แพะยักษ์', back: '← กลับหน้าแรก', start: 'เริ่ม', again: 'เล่นอีกครั้ง', post: 'โพสต์ลง X', share: (s, p) => `แพะโตถึง ${s} (ใหญ่พอ ๆ กับ${p}) #巨大山羊ゲーム`, about: p => `ใหญ่พอ ๆ กับ${p}` },
+    }
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    // 大きさに近い日本の地名（目安の大きさ m）
+    const PLACES = [
+      [2, 'ハチ公', '하치코', 'Hachiko', 'ฮาจิโก'],
+      [12, '雷門', '가미나리몬', 'Kaminarimon', 'ประตูคามินาริมง'],
+      [46, '姫路城', '히메지성', 'Himeji Castle', 'ปราสาทฮิเมจิ'],
+      [206, '国会議事堂', '국회의사당', 'the National Diet Building', 'อาคารรัฐสภาญี่ปุ่น'],
+      [333, '東京タワー', '도쿄 타워', 'Tokyo Tower', 'โตเกียวทาวเวอร์'],
+      [634, '東京スカイツリー', '도쿄 스카이트리', 'Tokyo Skytree', 'โตเกียวสกายทรี'],
+      [1000, '四ツ谷', '요쓰야', 'Yotsuya', 'โยตสึยะ'],
+      [3776, '富士山', '후지산', 'Mt. Fuji', 'ภูเขาไฟฟูจิ'],
+      [8000, '山手線', '야마노테선', 'the Yamanote Line', 'รถไฟสายยามาโนเตะ'],
+      [25000, '東京23区', '도쿄 23구', "Tokyo's 23 wards", '23 เขตของโตเกียว'],
+      [63000, '琵琶湖', '비와호', 'Lake Biwa', 'ทะเลสาบบิวะ'],
+      [200000, '四国', '시코쿠', 'Shikoku', 'ชิโกกุ'],
+      [1300000, '本州', '혼슈', 'Honshu', 'ฮนชู'],
+      [3000000, '日本列島', '일본 열도', 'Japan', 'หมู่เกาะญี่ปุ่น'],
+    ];
+    const placeOf = size => {
+      let best = PLACES[0], bd = Infinity;
+      for (const p of PLACES) { const d = Math.abs(Math.log(size / p[0])); if (d < bd) { bd = d; best = p; } }
+      return best[1 + ['ja', 'ko', 'en', 'th'].indexOf(lang)];
+    };
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    const t = k => DICT[lang][k];
+    const langSel = document.getElementById('lang');
+    langSel.value = lang;
+    langSel.addEventListener('change', () => { lang = langSel.value; store.set('lang', lang); applyLang(); });
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('back').textContent = t('back');
+      renderControls();
+      if (state === 'result') { showResult(); prepareShare(); }
+    }
+
+    // ---------- 音 ----------
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const drawSoundBtn = () => {
+      soundBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+    };
+    drawSoundBtn();
+    soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('sound', soundOn); drawSoundBtn(); });
+    let ac = null;
+    function initAudio() {
+      if (ac) return;
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+        o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
+      } catch { ac = null; }
+    }
+    addEventListener('pointerdown', initAudio, { capture: true });
+    addEventListener('keydown', initAudio, { capture: true });
+    let lastMeh = 0;
+    function meh(size) {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime;
+      // 鳴きすぎないように
+      if (now - lastMeh < 0.18) { munch(); return; }
+      lastMeh = now;
+      // 大きくなるほど声が低くなる
+      const f = Math.max(70, 520 / (1 + Math.log10(1 + size * 4) * 1.2)) * (0.93 + Math.random() * 0.14);
+      const dur = 0.42;
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f, now);
+      o.frequency.linearRampToValueAtTime(f * 0.92, now + dur);
+      const lfo = ac.createOscillator(); lfo.frequency.value = 9;
+      const lg = ac.createGain(); lg.gain.value = f * 0.06;
+      lfo.connect(lg).connect(o.frequency);
+      const am = ac.createGain(); am.gain.value = 0.5;
+      const amL = ac.createGain(); amL.gain.value = 0.35; lfo.connect(amL).connect(am.gain);
+      const fl = ac.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = f * 3; fl.Q.value = 1.2;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.32, now + 0.04);
+      g.gain.setValueAtTime(0.32, now + dur - 0.12);
+      g.gain.linearRampToValueAtTime(0, now + dur);
+      o.connect(fl).connect(am).connect(g).connect(ac.destination);
+      o.start(now); lfo.start(now); o.stop(now + dur); lfo.stop(now + dur);
+    }
+    function munch() {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime, len = 0.08;
+      const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * len), ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const s = ac.createBufferSource(); s.buffer = buf;
+      const fl = ac.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 1800;
+      const g = ac.createGain(); g.gain.value = 0.25;
+      s.connect(fl).connect(g).connect(ac.destination); s.start(now);
+    }
+    function bonk() {
+      if (!soundOn || !ac) return;
+      const now = ac.currentTime;
+      const o = ac.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(160, now); o.frequency.exponentialRampToValueAtTime(60, now + 0.15);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.3, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      o.connect(g).connect(ac.destination); o.start(now); o.stop(now + 0.2);
+    }
+
+    // ---------- 3D ----------
+    const stage = document.getElementById('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    stage.prepend(renderer.domElement);
+    const scene = new THREE.Scene();
+    const SKY = 0xcfe9f7;
+    scene.background = new THREE.Color(SKY);
+    scene.fog = new THREE.Fog(SKY, 10, 30);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x6a8f4a, 1.1));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.position.set(0.5, 1, 0.35);
+    scene.add(sun);
+
+    const mat = c => new THREE.MeshLambertMaterial({ color: c, flatShading: true });
+    const M = {
+      white: mat(0xf6f2ea), pink: mat(0xf0a8a0), black: mat(0x222222), horn: mat(0xb8a98a), hoof: mat(0x5b4a3a),
+      grass: mat(0x4f9a2e), grass2: mat(0x7cc246), leaf: mat(0x3f8a34), trunk: mat(0x8a5a33), stem: mat(0x4a8a2a),
+      red: mat(0xe0473a), yellow: mat(0xf4c430), purple: mat(0xa36bd6), blue: mat(0x4a7fd6), orange: mat(0xf08a2a),
+      wall: mat(0xf4e6cc), roof: mat(0xc0483a), roof2: mat(0x3a6ab0), glass: mat(0x9cc6e0), concrete: mat(0xb0b6bd), concrete2: mat(0x8d96a0),
+      rock: mat(0x8a8f7a), snow: mat(0xffffff), tire: mat(0x333333),
+    };
+
+    // 地面: 世界に固定された模様を、ヤギの大きさに合わせた細かさで貼る
+    const groundTex = (() => {
+      const c = document.createElement('canvas'); c.width = c.height = 128;
+      const g = c.getContext('2d');
+      g.fillStyle = '#7fbf4f'; g.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 260; i++) {
+        g.fillStyle = Math.random() < .5 ? '#73b346' : '#8bc95a';
+        g.fillRect(Math.random() * 128, Math.random() * 128, 3 + Math.random() * 5, 3 + Math.random() * 5);
+      }
+      const tx = new THREE.CanvasTexture(c);
+      tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace;
+      tx.magFilter = THREE.NearestFilter;
+      return tx;
+    })();
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshLambertMaterial({ map: groundTex }));
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    // ヤギ（体長1、+z向き）
+    function box(w, h, d, m, x, y, z) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); return b; }
+    const goat = new THREE.Group();
+    const goatBody = new THREE.Group(); goat.add(goatBody);
+    const belly = box(0.42, 0.36, 0.72, M.white, 0, 0.5, 0); goatBody.add(belly);
+    for (const [x, z] of [[-.14, .26], [.14, .26], [-.14, -.26], [.14, -.26]]) {
+      goatBody.add(box(.09, .32, .09, M.white, x, 0.16, z));
+      goatBody.add(box(.1, .06, .1, M.hoof, x, 0.03, z));
+    }
+    const head = new THREE.Group(); head.position.set(0, 0.78, 0.4); goatBody.add(head);
+    head.add(box(.16, .26, .14, M.white, 0, -0.06, -0.04));
+    head.add(box(.22, .2, .3, M.white, 0, 0.04, 0.1));
+    head.add(box(.16, .13, .1, M.pink, 0, -0.01, 0.28));
+    head.add(box(.04, .04, .02, M.black, -.08, 0.09, 0.25));
+    head.add(box(.04, .04, .02, M.black, .08, 0.09, 0.25));
+    head.add(box(.06, .12, .05, M.white, 0, -0.14, 0.22));
+    for (const s of [-1, 1]) {
+      const h = new THREE.Mesh(new THREE.ConeGeometry(.04, .2, 5), M.horn); h.position.set(s * .07, 0.22, 0.0); h.rotation.x = -0.6; head.add(h);
+      const e = box(.14, .05, .08, M.white, s * .17, 0.08, 0.02); e.rotation.z = s * -0.4; head.add(e);
+    }
+    goatBody.add(box(.08, .14, .06, M.white, 0, 0.72, -0.37));
+    scene.add(goat);
+
+    // 食べ物の種類（unit: 高さ1前後）
+    const TYPES = [];
+    function defType(base, build) { TYPES.push({ base, build }); }
+    defType(0.15, () => { const g = new THREE.Group(); for (let i = 0; i < 4; i++) { const c = new THREE.Mesh(new THREE.ConeGeometry(.12, 1, 4), i % 2 ? M.grass : M.grass2); c.position.set((Math.random() - .5) * .5, .5, (Math.random() - .5) * .5); c.rotation.z = (Math.random() - .5) * .4; g.add(c); } return g; });
+    defType(0.3, () => { const g = new THREE.Group(); const s = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, .8, 5), M.stem); s.position.y = .4; g.add(s); const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.22, 0), [M.red, M.yellow, M.purple, M.orange][Math.random() * 4 | 0]); f.position.y = .85; g.add(f); return g; });
+    defType(0.8, () => { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.IcosahedronGeometry(.5, 0), M.leaf); b.position.y = .45; b.scale.set(1.1, .9, 1.1); g.add(b); return g; });
+    defType(1.6, () => { const g = new THREE.Group(); g.add(box(.9, .45, .45, [M.red, M.blue, M.yellow][Math.random() * 3 | 0], 0, .35, 0)); g.add(box(.5, .3, .42, M.glass, -.05, .7, 0)); for (const [x, z] of [[-.28, .22], [.28, .22], [-.28, -.22], [.28, -.22]]) g.add(box(.2, .2, .08, M.tire, x, .12, z)); g.scale.setScalar(1.1); return g; });
+    defType(4, () => { const g = new THREE.Group(); const tr = new THREE.Mesh(new THREE.CylinderGeometry(.07, .1, .4, 6), M.trunk); tr.position.y = .2; g.add(tr); const c = new THREE.Mesh(new THREE.ConeGeometry(.35, .75, 7), M.leaf); c.position.y = .62; g.add(c); return g; });
+    defType(8, () => { const g = new THREE.Group(); g.add(box(.8, .55, .7, M.wall, 0, .275, 0)); const r = new THREE.Mesh(new THREE.ConeGeometry(.65, .45, 4), Math.random() < .5 ? M.roof : M.roof2); r.position.y = .77; r.rotation.y = Math.PI / 4; g.add(r); g.add(box(.16, .26, .02, M.trunk, 0, .13, .36)); return g; });
+    defType(30, () => { const g = new THREE.Group(); const w = .32 + Math.random() * .1; g.add(box(w, 1, w, Math.random() < .5 ? M.concrete : M.concrete2, 0, .5, 0)); for (let y = .12; y < .95; y += .14) g.add(box(w + .01, .05, w + .01, M.glass, 0, y, 0)); return g; });
+    defType(150, () => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.ConeGeometry(.6, 1, 7), M.rock); m.position.y = .5; g.add(m); const s = new THREE.Mesh(new THREE.ConeGeometry(.21, .35, 7), M.snow); s.position.y = .83; g.add(s); return g; });
+    M.volcano = mat(0x6e6a5a); M.cloud = mat(0xffffff); M.moon = mat(0xd8d4c4); M.crater = mat(0xb4ae9c); M.sea = mat(0x2f7fd0); M.land = mat(0x4fae4a);
+    defType(700, () => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(.14, .75, 1, 10), M.volcano); m.position.y = .5; g.add(m); const s = new THREE.Mesh(new THREE.CylinderGeometry(.15, .3, .3, 10), M.snow); s.position.y = .86; g.add(s); return g; });
+    defType(2500, () => { const g = new THREE.Group(); for (const [x, y, z, r] of [[0, .45, 0, .32], [.3, .38, .05, .24], [-.3, .38, -.05, .24], [.05, .62, .05, .22]]) { const c = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), M.cloud); c.position.set(x, y, z); g.add(c); } return g; });
+    defType(10000, () => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.IcosahedronGeometry(.5, 2), M.moon); m.position.y = .5; g.add(m); for (let i = 0; i < 6; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.08 + Math.random() * .06, .06, .04, 8), M.crater); const v = new THREE.Vector3().randomDirection(); c.position.copy(v.clone().multiplyScalar(.49)).add(new THREE.Vector3(0, .5, 0)); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v); g.add(c); } return g; });
+    defType(50000, () => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.IcosahedronGeometry(.5, 2), M.sea); m.position.y = .5; g.add(m); for (let i = 0; i < 5; i++) { const c = new THREE.Mesh(new THREE.IcosahedronGeometry(.2 + Math.random() * .1, 0), M.land); const v = new THREE.Vector3().randomDirection(); c.position.copy(v.multiplyScalar(.36)).add(new THREE.Vector3(0, .5, 0)); g.add(c); } return g; });
+    // 種類ごとの見た目をいくつか作り回しする（生成の重さを抑える）
+    const VARIANTS = TYPES.map(tp => Array.from({ length: 4 }, () => tp.build()));
+    const pickType = size => {
+      let best = 0, bd = Infinity;
+      for (let i = 0; i < TYPES.length; i++) { const d = Math.abs(Math.log(size / TYPES[i].base)); if (d < bd) { bd = d; best = i; } }
+      return best;
+    };
+
+    // ---------- ゲームの状態 ----------
+    const objs = [];
+    const N = 180;
+    let S, px, pz, prevS, ppx, ppz, heading, dirX = 0, dirZ = 0;
+    let state = 'title', timeLeft = PLAY_TIME, pulse = 0, finalS = 0;
+    let camDist;
+
+    function spawn(near) {
+      // 食べられるものが多めに出る。たまに大きいもの
+      const r = Math.random();
+      const size = S * (r < 0.8 ? 0.15 + Math.random() * 0.65 : 1.1 + Math.random() * 1.1);
+      const ti = pickType(size);
+      const proto = VARIANTS[ti][Math.random() * 4 | 0];
+      const m = proto.clone();
+      const k = size * (ti === 3 ? 1.1 : 1);
+      m.scale.setScalar(k);
+      m.rotation.y = Math.random() * Math.PI * 2;
+      const ang = Math.random() * Math.PI * 2;
+      const R = near ? 1.6 * S + Math.random() * 20 * S : (8 + Math.random() * 14) * S;
+      let ox = px + Math.cos(ang) * R, oz = pz + Math.sin(ang) * R;
+      // 進行方向の前に多めに出す
+      if (!near && (dirX || dirZ) && Math.random() < .6) { const a = Math.atan2(dirZ, dirX) + (Math.random() - .5) * 1.6; ox = px + Math.cos(a) * R; oz = pz + Math.sin(a) * R; }
+      m.position.set(ox, 0, oz);
+      scene.add(m);
+      objs.push({ m, k, x: ox, z: oz, size, r: size * 0.42, eat: -1 });
+    }
+    function clearObjs() { for (const o of objs) scene.remove(o.m); objs.length = 0; }
+    function reset() {
+      S = prevS = 0.5; px = pz = ppx = ppz = 0; heading = 0; pulse = 0; camDist = S;
+      timeLeft = PLAY_TIME;
+      clearObjs();
+      for (let i = 0; i < N; i++) spawn(true);
+    }
+
+    // ---------- 入力 ----------
+    const keys = new Set();
+    addEventListener('keydown', e => { keys.add(e.key.toLowerCase()); if (e.key.startsWith('Arrow')) e.preventDefault(); });
+    addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+    // ドラッグした向きに進む（押した場所が中心のスティック）
+    let ptr = null;
+    const cv = renderer.domElement;
+    const stick = document.getElementById('stick'), knob = stick.firstElementChild;
+    const local = e => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    cv.addEventListener('pointerdown', e => {
+      if (ptr) return;
+      e.preventDefault(); cv.setPointerCapture(e.pointerId);
+      const [x, y] = local(e);
+      ptr = { id: e.pointerId, ox: x, oy: y, x: 0, y: 0 };
+      if (state === 'play') { stick.style.left = x + 'px'; stick.style.top = y + 'px'; knob.style.transform = ''; stick.style.display = 'block'; }
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!ptr || e.pointerId !== ptr.id) return;
+      const [x, y] = local(e);
+      ptr.x = x - ptr.ox; ptr.y = y - ptr.oy;
+      const l = Math.hypot(ptr.x, ptr.y), k = l > 36 ? 36 / l : 1;
+      knob.style.transform = `translate(${ptr.x * k}px, ${ptr.y * k}px)`;
+    });
+    const up = e => { if (ptr && e.pointerId === ptr.id) { ptr = null; stick.style.display = 'none'; } };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+
+    function readDir() {
+      let x = 0, z = 0;
+      if (keys.has('arrowleft') || keys.has('a')) x -= 1;
+      if (keys.has('arrowright') || keys.has('d')) x += 1;
+      if (keys.has('arrowup') || keys.has('w')) z -= 1;
+      if (keys.has('arrowdown') || keys.has('s')) z += 1;
+      if (x || z) { const l = Math.hypot(x, z); return [x / l, z / l, 1]; }
+      if (ptr) {
+        const l = Math.hypot(ptr.x, ptr.y);
+        if (l > 6) return [ptr.x / l, ptr.y / l, Math.min(1, (l - 6) / 30)];
+      }
+      return [0, 0, 0];
+    }
+
+    // ---------- 更新（固定刻み） ----------
+    const DT = 1 / 60;
+    function step() {
+      prevS = S; ppx = px; ppz = pz;
+      if (state !== 'play') return;
+      timeLeft -= DT;
+      const [dx, dz, sp] = readDir();
+      dirX = dx; dirZ = dz;
+      const speed = 3.2 * S * sp;
+      px += dx * speed * DT; pz += dz * speed * DT;
+      if (sp > 0) {
+        const target = Math.atan2(dx, dz);
+        let d = target - heading; d = Math.atan2(Math.sin(d), Math.cos(d));
+        heading += d * Math.min(1, DT * 12);
+      }
+      const gr = S * 0.42;
+      for (let i = objs.length - 1; i >= 0; i--) {
+        const o = objs[i];
+        if (o.eat >= 0) continue;
+        const ddx = o.x - px, ddz = o.z - pz, dist = Math.hypot(ddx, ddz);
+        if (o.size < S * 0.95) {
+          if (dist < gr + o.r * 0.5) {
+            o.eat = 0;
+            // 食べた量（面積）だけ大きくなる
+            S = Math.sqrt(S * S + 0.9 * o.size * o.size);
+            pulse = 1;
+            if (o.size > S * 0.25) meh(S); else munch();
+          } else if (dist > 30 * S || o.size < S * 0.06) { scene.remove(o.m); objs.splice(i, 1); }
+        } else if (dist < gr + o.r * 0.8 && dist > 0) {
+          // 大きすぎるものは押し返される
+          const push = gr + o.r * 0.8 - dist;
+          px -= ddx / dist * push; pz -= ddz / dist * push;
+          if (!o.bonked || performance.now() - o.bonked > 600) { o.bonked = performance.now(); bonk(); }
+        } else if (dist > 30 * S) { scene.remove(o.m); objs.splice(i, 1); }
+      }
+      let live = 0; for (const o of objs) if (o.eat < 0) live++;
+      for (let k = 0; live < N && k < 10; k++, live++) spawn(false);
+      if (timeLeft <= 0) finish();
+    }
+
+    // ---------- 描画 ----------
+    const gaugeEl = document.getElementById('gauge'), gaugeBar = gaugeEl.firstElementChild;
+    let lastGauge = -1;
+    function draw(alpha, dtReal) {
+      const s = prevS + (S - prevS) * alpha;
+      const x = ppx + (px - ppx) * alpha, z = ppz + (pz - ppz) * alpha;
+      pulse = Math.max(0, pulse - dtReal * 5);
+      const now = performance.now() / 1000;
+      const walking = state === 'play' && (dirX || dirZ);
+      goat.position.set(x, 0, z);
+      goat.rotation.y = heading;
+      goat.scale.setScalar(s);
+      belly.scale.set(1 + pulse * .25, 1 + pulse * .25, 1 + pulse * .1);
+      goatBody.position.y = walking ? Math.abs(Math.sin(now * 14)) * .04 : 0;
+      head.rotation.x = pulse > 0 ? Math.sin(pulse * 12) * .25 : (state === 'title' ? Math.sin(now * 2) * .08 : 0);
+
+      // 食べられているものはヤギの口に吸い込まれる
+      for (let i = objs.length - 1; i >= 0; i--) {
+        const o = objs[i];
+        if (o.eat < 0) continue;
+        o.eat += dtReal / 0.18;
+        if (o.eat >= 1) { scene.remove(o.m); objs.splice(i, 1); continue; }
+        const mx = x + Math.sin(heading) * s * .5, mz = z + Math.cos(heading) * s * .5;
+        o.m.position.set(o.x + (mx - o.x) * o.eat, s * .6 * o.eat, o.z + (mz - o.z) * o.eat);
+        o.m.scale.setScalar(o.k * (1 - o.eat));
+      }
+
+      camDist += (s - camDist) * Math.min(1, dtReal * 3);
+      const c = camDist;
+      const asp = camera.aspect;
+      const k = asp < 0.8 ? 1.35 : 1;
+      camera.position.set(x, c * 5.2 * k, z + c * 3.6 * k);
+      camera.lookAt(x, c * 0.4, z);
+      camera.near = c * 0.05; camera.far = c * 60; camera.updateProjectionMatrix();
+      scene.fog.near = c * 12; scene.fog.far = c * 26;
+      ground.position.set(x, 0, z);
+      ground.scale.set(c * 120, c * 120, 1);
+      // 模様の細かさは2のべき乗で切り替え、世界に固定して見せる
+      const tile = Math.pow(2, Math.round(Math.log2(c * 2)));
+      groundTex.repeat.set(c * 120 / tile, c * 120 / tile);
+      groundTex.offset.set((x - c * 60) / tile, -(z + c * 60) / tile);
+
+      if (state === 'play') {
+        const g = Math.max(0, timeLeft / PLAY_TIME);
+        const q = Math.round(g * 400);
+        if (q !== lastGauge) { lastGauge = q; gaugeBar.style.transform = `scaleX(${g})`; gaugeBar.style.background = g < .2 ? '#e0473a' : '#f2a531'; }
+      }
+      renderer.render(scene, camera);
+    }
+
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    let needSnap = false;
+    let acc = 0, last = performance.now();
+    function loop(tm) {
+      const dt = Math.min(0.05, (tm - last) / 1000); last = tm;
+      acc += dt;
+      while (acc >= DT) { step(); acc -= DT; }
+      draw(acc / DT, dt);
+      // 描いた直後なら WebGL の画面を読み取れる
+      if (needSnap) { needSnap = false; takeSnap(); prepareShare(); }
+      requestAnimationFrame(loop);
+    }
+
+    // ---------- 画面 ----------
+    const controls = document.getElementById('controls');
+    const resultEl = document.getElementById('result');
+    const fmt = s => s >= 1000 ? `${(s / 1000).toFixed(s >= 10000 ? 1 : 2)}km` : s >= 10 ? `${Math.round(s)}m` : `${s.toFixed(1)}m`;
+    function renderControls() {
+      controls.innerHTML = '';
+      controls.classList.toggle('hide', state === 'play');
+      if (state === 'play') return;
+      const b = document.createElement('button');
+      b.className = 'go'; b.textContent = state === 'result' ? t('again') : t('start');
+      b.addEventListener('click', start);
+      controls.append(b);
+      if (state === 'result') {
+        const a = document.createElement('a');
+        a.className = 'post'; a.textContent = t('post');
+        a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(fmt(finalS), placeOf(finalS)))}&url=${encodeURIComponent(SHARE_URL)}`;
+        const coarse = matchMedia('(pointer: coarse)').matches;
+        if (!coarse) { a.target = '_blank'; a.rel = 'noopener'; }
+        // スマホは画像ごと共有シートへ。PCは画像を保存してから投稿画面を開く
+        a.addEventListener('click', e => {
+          const text = t('share')(fmt(finalS), placeOf(finalS));
+          if (coarse && navigator.share) {
+            e.preventDefault();
+            const file = shareFile();
+            const data = file && navigator.canShare?.({ files: [file] }) ? { files: [file], text: `${text}\n${SHARE_URL}` } : { text: `${text}\n${SHARE_URL}` };
+            navigator.share(data).catch(() => {});
+            return;
+          }
+          const img = resultImage();
+          if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'giant-goat.png'; d.click(); }
+        });
+        controls.append(a);
+      }
+    }
+    // 結果画像: 結果が出た瞬間の3D画面に、大きさと地名を重ねる
+    let snap = null, shareCache = null;
+    function takeSnap() {
+      const src = renderer.domElement, side = Math.min(src.width, src.height);
+      snap = document.createElement('canvas'); snap.width = snap.height = 1080;
+      snap.getContext('2d').drawImage(src, (src.width - side) / 2, (src.height - side) / 2, side, side, 0, 0, 1080, 1080);
+      shareCache = null;
+    }
+    function resultImage() {
+      if (!snap) return null;
+      const c = document.createElement('canvas'); c.width = c.height = 1080;
+      const g = c.getContext('2d');
+      g.drawImage(snap, 0, 0);
+      g.textAlign = 'center'; g.fillStyle = '#fff'; g.lineJoin = 'round';
+      const font = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+      const text = (str, y, px, max) => {
+        g.font = font(px);
+        const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = font(px); }
+        g.lineWidth = px * .16; g.strokeStyle = '#3b6b2a'; g.strokeText(str, 540, y); g.fillText(str, 540, y);
+      };
+      text(fmt(finalS), 250, 190, 960);
+      text(t('about')(placeOf(finalS)), 360, 80, 960);
+      text(t('title'), 1020, 52, 900);
+      return c;
+    }
+    // 共有用ファイルは言語ごとに作っておく（クリック時に待つと Safari で共有が止まるため）
+    function prepareShare() {
+      if (!snap) return;
+      const key = lang;
+      if (shareCache?.key === key) return;
+      shareCache = { key, file: null };
+      resultImage().toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'giant-goat.png', { type: 'image/png' }); }, 'image/png');
+    }
+    const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+    function start() {
+      reset();
+      state = 'play'; lastGauge = -1;
+      gaugeEl.style.display = 'block'; resultEl.style.display = 'none';
+      renderControls();
+    }
+    function showResult() {
+      resultEl.children[0].textContent = fmt(finalS);
+      resultEl.children[1].textContent = t('about')(placeOf(finalS));
+    }
+    function finish() {
+      state = 'result'; finalS = S;
+      gaugeEl.style.display = 'none';
+      stick.style.display = 'none';
+      showResult();
+      resultEl.style.display = 'flex';
+      meh(S);
+      snap = null; needSnap = true;
+      renderControls();
+    }
+
+    reset();
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+    // 最初のフレームで固まらないよう、先に1回描いておく
+    draw(1, 0);
+    requestAnimationFrame(t0 => { last = t0; requestAnimationFrame(loop); });
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

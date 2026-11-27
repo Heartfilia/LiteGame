@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>翻页动画 · LiteGame</title>
+  <meta name="description" content="一帧一帧画，连起来就是动画，还能导出视频。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="翻页动画 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/flipbook/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/flipbook/icon.png">
+  <meta name="twitter:card" content="summary">
+  <!-- 投稿用の動画（MP4）を作るのに使う。読めなければ動画なしの投稿リンクになる -->
+  <script src="../lib/vendor/mp4-muxer@5.1.3/build/mp4-muxer.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #efe9dd; color: #3a3328; }
+    /* ボタンを素早く連打してもダブルタップで拡大しないように */
+    html, body, button, a { touch-action: manipulation; }
+    body {
+      display: flex; flex-direction: column; min-height: 100dvh;
+      font-family: "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 520px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #8a5a2b; text-decoration: none; font-weight: bold; }
+    main {
+      width: 100%; max-width: 520px; margin: 0 auto; box-sizing: border-box;
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 0 12px calc(80px + env(safe-area-inset-bottom));
+    }
+    .pill {
+      background: #fff; border: 2px solid #d8ccb6; border-radius: 999px;
+      height: 36px; padding: 0 12px; font-size: 15px; font-weight: bold; color: #6b5233; cursor: pointer;
+    }
+    #paper {
+      width: 100%; aspect-ratio: 4 / 3; background: #fff; border-radius: 6px;
+      box-shadow: 0 2px 0 #d8ccb6, 0 4px 12px rgba(0,0,0,.08);
+      touch-action: none; display: block; cursor: crosshair;
+    }
+    #info { display: flex; justify-content: space-between; font-weight: bold; font-variant-numeric: tabular-nums; }
+    .row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      width: 44px; height: 44px; border-radius: 10px; border: 2px solid #d8ccb6; background: #fff;
+      display: grid; place-items: center; cursor: pointer; padding: 0; color: #3a3328;
+    }
+    .btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn.on { border-color: #8a5a2b; background: #f6ead6; }
+    .btn:disabled { opacity: .35; cursor: default; }
+    .sw { width: 26px; height: 26px; border-radius: 50%; }
+    .dot { border-radius: 50%; background: #3a3328; }
+    #play { width: 60px; background: #8a5a2b; border-color: #8a5a2b; color: #fff; }
+    #share {
+      align-self: center; display: inline-flex; align-items: center; gap: 8px;
+      background: #000; color: #fff; text-decoration: none; font-weight: bold;
+      padding: 10px 20px; border-radius: 999px;
+    }
+    #share svg { width: 18px; height: 18px; fill: #fff; }
+    #msg { text-align: center; font-size: 13px; min-height: 1.2em; margin: -4px 0 0; color: #6b5233; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">翻页动画</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <button id="lang" class="pill">EN</button>
+  </header>
+  <main>
+    <canvas id="paper" width="640" height="480"></canvas>
+    <div id="info"><span id="count">1 / 144</span><span id="secs">0.0</span></div>
+    <div class="row" id="tools">
+      <button class="btn on" id="pen"><svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg></button>
+      <button class="btn" id="eraser"><svg viewBox="0 0 24 24"><path d="M8 20h12M5 15l9-9 5 5-9 9H8z"/></svg></button>
+      <span id="colors" class="row"></span>
+      <span id="sizes" class="row"></span>
+      <button class="btn" id="undo"><svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-3"/></svg></button>
+    </div>
+    <div class="row">
+      <button class="btn" id="prev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="btn" id="play"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg></button>
+      <button class="btn" id="next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="btn" id="addBlank"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="13" height="15" rx="1"/><path d="M19 2v6M16 5h6"/></svg></button>
+      <button class="btn" id="addCopy"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="14" rx="1"/><path d="M7 7V3h12v14h-4"/></svg></button>
+      <button class="btn" id="del"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+    </div>
+    <a id="share" href="#"><svg viewBox="0 0 24 24"><path d="M18.2 2.3h3.4l-7.4 8.4 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9L.9 2.3h7l4.8 6.3zm-1.2 17.9h1.9L6.9 4.2H4.9z"/></svg><span id="shareLabel">ポストする</span></a>
+    <p id="msg"></p>
+  </main>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 翻页动画 · 中文文案
+window.__KF_ZH__ = {
+  title: '翻页动画',
+  back: '← 大厅',
+  lang: 'EN',
+  langLabel: 'Switch to English',
+  sec: (s) => s.toFixed(1) + '秒',
+  share: '分享',
+  post: (n) => `画了一本翻页动画（${n} 帧）#LiteGame`,
+  pen: '画笔',
+  eraser: '橡皮',
+  undo: '撤销',
+  prev: '上一帧',
+  next: '下一帧',
+  play: '播放 / 停止',
+  addBlank: '加一张白纸',
+  addCopy: '复制这一帧',
+  del: '删除这一帧',
+  full: '存储满了，存不下',
+  making: '正在合成视频…',
+  again: '视频好了，再点一次',
+  saved: '视频已保存，发帖时附上'
+};
+</script>
+<script>
+    const FPS = 24, MAX = FPS * 6, W = 640, H = 480;
+    const KEY = 'flipbook:';
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem(KEY + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); return true; } catch { return false; } },
+    };
+
+    // ---- 言語 ----
+    const L = {
+      ja: {
+        title: '翻页动画', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        sec: s => s.toFixed(1) + '秒', share: 'ポストする',
+        post: n => `パラパラ漫画を描いた（${n}コマ）\n#翻页动画`,
+        pen: 'ペン', eraser: '消しゴム', undo: '元に戻す', prev: '前のコマ', next: '次のコマ', play: '再生／停止',
+        addBlank: '白紙のコマを追加', addCopy: 'このコマを複製して追加', del: 'このコマを削除',
+        full: 'ストレージがいっぱいで保存できませんでした',
+        making: '動画を作っています…', again: '動画ができました。もう一度押してください', saved: '動画を保存しました。投稿に添付してください',
+      },
+      en: {
+        title: 'Flipbook Maker', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        sec: s => s.toFixed(1) + 's', share: 'Post',
+        post: n => `I drew a flipbook (${n} frames)\n#翻页动画`,
+        pen: 'Pen', eraser: 'Eraser', undo: 'Undo', prev: 'Previous frame', next: 'Next frame', play: 'Play / Stop',
+        addBlank: 'Add blank frame', addCopy: 'Duplicate this frame', del: 'Delete this frame',
+        full: 'Storage is full, could not save',
+        making: 'Making the video…', again: 'Video ready. Tap again', saved: 'Video saved. Attach it to your post',
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const $ = id => document.getElementById(id);
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+      $('shareLabel').textContent = t('share'); $('msg').textContent = '';
+      for (const id of ['pen', 'eraser', 'undo', 'prev', 'next', 'play', 'addBlank', 'addCopy', 'del']) {
+        $(id).title = t(id); $(id).setAttribute('aria-label', t(id));
+      }
+      updateUI();
+    }
+    $('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+    // ---- コマ ----
+    const paper = $('paper'), ctx = paper.getContext('2d');
+    const newFrame = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+    let frames = [newFrame()], cur = 0, playing = null;
+    const undoStacks = new WeakMap();
+
+    function render() {
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+      if (!playing && cur > 0) { ctx.globalAlpha = 0.22; ctx.drawImage(frames[cur - 1], 0, 0); ctx.globalAlpha = 1; }
+      ctx.drawImage(frames[cur], 0, 0);
+    }
+    function updateUI() {
+      $('count').textContent = `${cur + 1} / ${MAX}`;
+      $('secs').textContent = t('sec')(frames.length / FPS);
+      $('prev').disabled = cur === 0;
+      $('next').disabled = cur === frames.length - 1;
+      $('addBlank').disabled = $('addCopy').disabled = frames.length >= MAX || !!playing;
+      $('del').disabled = !!playing;
+      $('undo').disabled = !(undoStacks.get(frames[cur]) || []).length;
+      $('play').innerHTML = playing
+        ? '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" fill="currentColor"/><rect x="14" y="5" width="4" height="14" fill="currentColor"/></svg>'
+        : '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>';
+      const coarse = matchMedia('(pointer: coarse)').matches;
+      const sh = $('share');
+      sh.href = `https://x.com/intent/post?text=${encodeURIComponent(t('post')(frames.length))}&url=${encodeURIComponent('https://keifurukawafunnych.com/games/flipbook/')}`;
+      if (coarse) { sh.removeAttribute('target'); sh.removeAttribute('rel'); } else { sh.target = '_blank'; sh.rel = 'noopener'; }
+    }
+    function go(i) { stop(); cur = Math.max(0, Math.min(frames.length - 1, i)); render(); updateUI(); }
+
+    // ---- 保存 ----
+    let saveTimer = 0;
+    function save() {
+      clearTimeout(saveTimer); changed();
+      saveTimer = setTimeout(() => {
+        if (!store.set('frames', frames.map(f => f.toDataURL('image/png')))) alert(t('full'));
+      }, 400);
+    }
+    function load() {
+      const data = store.get('frames', null);
+      if (!Array.isArray(data) || !data.length) return Promise.resolve();
+      return Promise.all(data.slice(0, MAX).map(src => new Promise(res => {
+        const f = newFrame(), img = new Image();
+        img.onload = () => { f.getContext('2d').drawImage(img, 0, 0); res(f); };
+        img.onerror = () => res(f);
+        img.src = src;
+      }))).then(fs => { frames = fs; });
+    }
+
+    // ---- 道具 ----
+    const COLORS = ['#222', '#e0393e', '#2f6fd6', '#2e9e4f', '#f2c12e'];
+    const SIZES = [3, 7, 16];
+    let tool = 'pen', color = COLORS[0], size = SIZES[1];
+    COLORS.forEach((c, i) => {
+      const b = document.createElement('button'); b.className = 'btn' + (i ? '' : ' on');
+      b.innerHTML = `<span class="sw" style="background:${c}"></span>`;
+      b.onclick = () => { color = c; setTool('pen'); mark($('colors'), b); };
+      $('colors').appendChild(b);
+    });
+    SIZES.forEach((s, i) => {
+      const b = document.createElement('button'); b.className = 'btn' + (i === 1 ? ' on' : '');
+      const d = Math.max(4, s * 1.2);
+      b.innerHTML = `<span class="dot" style="width:${d}px;height:${d}px"></span>`;
+      b.onclick = () => { size = s; mark($('sizes'), b); };
+      $('sizes').appendChild(b);
+    });
+    function mark(group, b) { for (const x of group.children) x.classList.toggle('on', x === b); }
+    function setTool(x) { tool = x; $('pen').classList.toggle('on', x === 'pen'); $('eraser').classList.toggle('on', x === 'eraser'); }
+    $('pen').onclick = () => setTool('pen');
+    $('eraser').onclick = () => setTool('eraser');
+
+    // ---- 描く ----
+    let drawing = null;
+    function pos(e) { const r = paper.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; }
+    paper.addEventListener('pointerdown', e => {
+      if (drawing) return;
+      stop();
+      const f = frames[cur], fc = f.getContext('2d');
+      const st = undoStacks.get(f) || []; st.push(fc.getImageData(0, 0, W, H)); if (st.length > 20) st.shift(); undoStacks.set(f, st);
+      paper.setPointerCapture(e.pointerId);
+      fc.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+      fc.strokeStyle = fc.fillStyle = color;
+      fc.lineWidth = tool === 'eraser' ? size * 2.5 : size;
+      fc.lineCap = fc.lineJoin = 'round';
+      const p = pos(e);
+      fc.beginPath(); fc.arc(p[0], p[1], fc.lineWidth / 2, 0, Math.PI * 2); fc.fill();
+      drawing = { id: e.pointerId, fc, p };
+      render(); updateUI();
+    });
+    paper.addEventListener('pointermove', e => {
+      if (!drawing || e.pointerId !== drawing.id) return;
+      const pts = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      const fc = drawing.fc;
+      fc.beginPath(); fc.moveTo(...drawing.p);
+      for (const ev of (pts.length ? pts : [e])) { drawing.p = pos(ev); fc.lineTo(...drawing.p); }
+      fc.stroke(); render();
+    });
+    const end = e => { if (drawing && e.pointerId === drawing.id) { drawing.fc.globalCompositeOperation = 'source-over'; drawing = null; save(); } };
+    paper.addEventListener('pointerup', end);
+    paper.addEventListener('pointercancel', end);
+
+    $('undo').onclick = () => {
+      const f = frames[cur], st = undoStacks.get(f);
+      if (st && st.length) { f.getContext('2d').putImageData(st.pop(), 0, 0); render(); updateUI(); save(); }
+    };
+
+    // ---- コマ操作 ----
+    $('prev').onclick = () => go(cur - 1);
+    $('next').onclick = () => go(cur + 1);
+    function add(copy) {
+      if (frames.length >= MAX) return;
+      const f = newFrame();
+      if (copy) f.getContext('2d').drawImage(frames[cur], 0, 0);
+      frames.splice(cur + 1, 0, f); go(cur + 1); save();
+    }
+    $('addBlank').onclick = () => add(false);
+    $('addCopy').onclick = () => add(true);
+    $('del').onclick = () => {
+      if (frames.length === 1) frames[0] = newFrame(); else frames.splice(cur, 1);
+      go(Math.min(cur, frames.length - 1)); save();
+    };
+
+    // ---- 再生 ----
+    function stop() { if (playing) { clearInterval(playing); playing = null; render(); updateUI(); } }
+    function play() {
+      if (playing) { stop(); return; }
+      if (frames.length < 2) return;
+      playing = setInterval(() => { cur = (cur + 1) % frames.length; render(); $('count').textContent = `${cur + 1} / ${MAX}`; }, 1000 / FPS);
+      render(); updateUI();
+    }
+    $('play').onclick = play;
+    addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowLeft') { go(cur - 1); e.preventDefault(); }
+      else if (e.key === 'ArrowRight') { go(cur + 1); e.preventDefault(); }
+      else if (e.key === ' ') { play(); e.preventDefault(); }
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'z') { $('undo').click(); e.preventDefault(); }
+    });
+
+    addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+    // ---- 投稿用の動画 ----
+    // Xの投稿URLには動画を付けられないので、MP4を作って
+    // スマホは共有シートに動画と文を渡し、PCは動画を保存してから投稿画面を開く。
+    // 共有シートは「押した直後」でないと開けないので、描くたびに裏で作っておく。
+    const canVideo = () => 'VideoEncoder' in window && 'VideoFrame' in window && window.Mp4Muxer;
+    let version = 0, video = null, building = null, buildTimer = 0;
+    function changed() { version++; clearTimeout(buildTimer); buildTimer = setTimeout(buildVideo, 1500); }
+    async function encode() {
+      let cfg = null;
+      for (const codec of ['avc1.42001f', 'avc1.4d001f', 'avc1.640028']) {
+        const c = { codec, width: W, height: H, bitrate: 2e6, framerate: FPS };
+        try { if ((await VideoEncoder.isConfigSupported(c)).supported) { cfg = c; break; } } catch {}
+      }
+      if (!cfg) return null;
+      const target = new Mp4Muxer.ArrayBufferTarget();
+      const muxer = new Mp4Muxer.Muxer({ target, video: { codec: 'avc', width: W, height: H, frameRate: FPS }, fastStart: 'in-memory' });
+      let err = null;
+      const enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { err = e; } });
+      enc.configure(cfg);
+      // 短い作品は3秒以上になるまで繰り返す
+      const loops = Math.max(1, Math.ceil(FPS * 3 / frames.length));
+      const cv = newFrame(), c2 = cv.getContext('2d');
+      for (let i = 0; i < frames.length * loops; i++) {
+        c2.fillStyle = '#fff'; c2.fillRect(0, 0, W, H); c2.drawImage(frames[i % frames.length], 0, 0);
+        const vf = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+        enc.encode(vf, { keyFrame: i % FPS === 0 }); vf.close();
+        if (enc.encodeQueueSize > 10) await new Promise(r => setTimeout(r, 0));
+      }
+      await enc.flush(); enc.close();
+      if (err) throw err;
+      muxer.finalize();
+      return new File([target.buffer], 'flipbook.mp4', { type: 'video/mp4' });
+    }
+    function buildVideo() {
+      if (!canVideo()) return Promise.resolve(null);
+      if (building) return building;
+      const v = version;
+      building = encode().catch(() => null).then(file => {
+        building = null;
+        video = file ? { file, version: v } : null;
+        return v === version ? file : buildVideo();
+      });
+      return building;
+    }
+    const readyVideo = () => video && video.version === version ? video.file : null;
+    const postText = () => `${t('post')(frames.length)}\nhttps://keifurukawafunnych.com/games/flipbook/`;
+    function download(file) {
+      const a = document.createElement('a'), u = URL.createObjectURL(file);
+      a.href = u; a.download = file.name; a.click();
+      setTimeout(() => URL.revokeObjectURL(u), 10000);
+      $('msg').textContent = t('saved');
+    }
+    $('share').addEventListener('click', e => {
+      if (!canVideo()) return; // 動画が作れないときは普通の投稿リンク
+      stop();
+      const mobile = matchMedia('(pointer: coarse)').matches;
+      const file = readyVideo();
+      if (mobile) {
+        if (file && navigator.canShare?.({ files: [file] })) {
+          e.preventDefault();
+          navigator.share({ files: [file], text: postText() }).catch(err => { if (err.name !== 'AbortError') location.href = $('share').href; });
+        } else if (!file && navigator.canShare) {
+          // まだできていない：作り終えたら、もう一度押してもらう
+          e.preventDefault(); $('msg').textContent = t('making');
+          buildVideo().then(f => { $('msg').textContent = f ? t('again') : ''; if (!f) location.href = $('share').href; });
+        }
+        return;
+      }
+      if (file) { download(file); return; }
+      e.preventDefault(); $('msg').textContent = t('making');
+      const href = $('share').href, w = window.open('about:blank', '_blank');
+      buildVideo().then(f => { if (f) download(f); else $('msg').textContent = ''; if (w) w.location.href = href; else location.href = href; });
+    });
+
+    load().then(() => { cur = 0; render(); applyLang(); buildVideo(); });
+  </script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

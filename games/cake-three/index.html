@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e0d0b" />
+  <meta name="description" content="蛋糕三等分：转盘不停，三刀切出三等份。" />
+  <title>蛋糕三等分 · LiteGame</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../premium/theme.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-game="cake-three">
+  <div class="px-stage">
+    <header class="px-top">
+      <a class="px-back" href="../../index.html#/category/premium">← 大厅</a>
+      <div class="px-name">蛋糕三等分</div>
+      <div class="px-tools">
+        <button id="btnSound" type="button" class="is-on" aria-pressed="true" aria-label="音效开关">音</button>
+      </div>
+    </header>
+
+    <main class="ch-gamemain">
+      <section class="px-screen px-start" id="screen-start">
+        <div class="px-seal" aria-hidden="true">切</div>
+        <h1 class="px-title">蛋糕三等分</h1>
+        <p class="px-sub">三刀，切出一样大的三份</p>
+        <div class="px-modes">
+          <button id="startSingle" type="button">开始切</button>
+        </div>
+        <p class="px-rules">
+          刀在转盘上不停旋转，<b>点一下落一刀</b>。<br />
+          三刀切完看三等份的偏差：<br />
+          每份越接近 120°，分数越高。
+        </p>
+      </section>
+
+      <section class="px-screen" id="screen-game" hidden>
+        <div class="ck-wrap">
+          <div class="ck-hud">
+            <span>最佳 <b id="bestScore">0.0°</b></span>
+            <span id="roundLabel">第 1 刀</span>
+          </div>
+          <div class="ck-stage" id="stage">
+            <canvas id="cv"></canvas>
+          </div>
+          <div class="ck-tip" id="tip">点一下落刀</div>
+          <div class="ck-dots"><i id="d1"></i><i id="d2"></i><i id="d3"></i></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../assets/js/mobile-ui.js"></script>
+  <script src="../../assets/js/server-sync.js"></script>
+  <script src="../premium/util.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

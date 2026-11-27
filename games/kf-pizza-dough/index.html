@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>图片披萨 · LiteGame</title>
+  <meta name="description" content="把一张图擀成饼底，抹酱撒料，再送进烤炉。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="图片披萨 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/pizza-dough/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/pizza-dough/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #f4e6d4; color: #5a3824; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      padding: 8px 12px; width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #a0522d; text-decoration: none; font-weight: bold; white-space: nowrap; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill {
+      font: inherit; font-size: 15px; background: #fff; border: 2px solid #e5cdb8; border-radius: 999px;
+      min-width: 44px; height: 36px; cursor: pointer; font-weight: bold; color: #8a4a26; padding: 0 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    main {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    #stage { flex: 1; min-height: 0; position: relative; touch-action: none; }
+    #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    .bar {
+      display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;
+      padding: 8px 12px; min-height: 52px;
+    }
+    .btn {
+      font: inherit; font-weight: bold; font-size: 17px; border: none; border-radius: 999px;
+      background: #b5482a; color: #fff; height: 46px; padding: 0 20px; cursor: pointer;
+      box-shadow: 0 4px 0 #7a2c16; text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #7a2c16; }
+    .btn.sub { background: #fff; color: #8a3a20; box-shadow: 0 4px 0 #e0c8b4; }
+    .btn.on { background: #e8763c; color: #fff; box-shadow: 0 4px 0 #a84a1c; }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .dot { display: inline-block; background: currentColor; border-radius: 50%; }
+    .hide { display: none !important; }
+    #drop {
+      position: absolute; inset: 10px; border: 4px dashed #e8763c; border-radius: 20px;
+      background: rgba(255, 255, 255, .5); pointer-events: none;
+    }
+    #err { position: absolute; top: 40%; left: 0; right: 0; text-align: center; color: #b03020; padding: 0 16px; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">图片披萨</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="snd" class="pill" aria-label="sound"></button>
+      <select id="lang" class="pill" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+    </div>
+  </header>
+  <main>
+    <div id="stage">
+      <canvas id="gl"></canvas>
+      <canvas id="cv" class="hide"></canvas>
+      <div id="drop" class="hide"></div>
+    </div>
+    <div id="barStart" class="bar">
+      <button id="pick" class="btn"></button>
+    </div>
+    <div id="barPaint" class="bar hide">
+      <button id="shape" class="btn sub" aria-label="shape"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3c3 0 4 1.5 6 3s3 3.5 3 6-1.5 4-3 5.5-3.5 3.5-6 3.5-4-1-6-2.5S3 15 3 12s2-4.5 3.5-6S9 3 12 3z"/></svg></button>
+      <button id="done" class="btn"></button>
+    </div>
+    <div id="barPlay" class="bar hide">
+      <button id="bake" class="btn"></button>
+    </div>
+    <div id="barResult" class="bar hide">
+      <button id="save" class="btn sub"></button>
+      <a id="post" class="btn"></a>
+      <button id="again" class="btn sub"></button>
+    </div>
+    <input id="file" type="file" accept="image/*" class="hide">
+  </main>
+<script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js" } }</script>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 图片披萨 · 中文文案
+window.__KF_ZH__ = {
+  title: '图片披萨',
+  back: '← 大厅',
+  pick: '选一张图',
+  done: '好了',
+  bake: '送进烤炉',
+  save: '保存',
+  post: '分享到 X',
+  again: '换一张图',
+  err: '这张图读不出来',
+  share: '把一张图擀成饼底，烤成了披萨 #LiteGame'
+};
+</script>
+<script type="module">
+const SHARE_URL = 'https://keifurukawafunnych.com/games/pizza-dough/';
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('pizzadough:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('pizzadough:' + k, JSON.stringify(v)); } catch {} },
+};
+const TAG = '#图片披萨ゲーム';
+const DICT = {
+  ja: { title: '图片披萨', back: '← トップへ戻る', pick: '画像をえらぶ', done: 'できた',
+    bake: '焼く', save: '保存', post: 'Xに投稿', again: '画像を変える', err: '画像を読み込めませんでした',
+    cdn: '読み込みに失敗しました。通信を確認して再読み込みしてください。', share: '画像をピザ生地にして焼きました' },
+  ko: { title: '이미지 피자 반죽', back: '← 처음으로', pick: '이미지 선택', done: '완성',
+    bake: '굽기', save: '저장', post: 'X에 게시', again: '이미지 바꾸기', err: '이미지를 불러올 수 없어요',
+    cdn: '불러오지 못했어요. 연결을 확인하고 새로고침해 주세요.', share: '이미지를 피자 반죽으로 만들어 구웠어요' },
+  en: { title: 'Image Pizza Dough', back: '← Back to top', pick: 'Choose image', done: 'Done',
+    bake: 'Bake', save: 'Save', post: 'Post on X', again: 'New image', err: 'Could not load the image',
+    cdn: 'Failed to load. Check your connection and reload.', share: 'I turned my picture into pizza dough and baked it' },
+  th: { title: 'แป้งพิซซ่าจากรูป', back: '← กลับหน้าแรก', pick: 'เลือกรูป', done: 'เสร็จ',
+    bake: 'อบ', save: 'บันทึก', post: 'โพสต์ลง X', again: 'เปลี่ยนรูป', err: 'โหลดรูปไม่ได้',
+    cdn: 'โหลดไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วโหลดใหม่', share: 'เอารูปมาทำเป็นแป้งพิซซ่าแล้วอบ' },
+}
+const __KF_ZH_LANG = Object.assign(DICT, { zh: window.__KF_ZH__ || {} });
+for (const __k in DICT.ja) if (DICT.zh[__k] == null) DICT.zh[__k] = DICT.ja[__k];
+if (!DICT.zh.lang) DICT.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (DICT[c]) return c; } return 'en'; };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!DICT[lang]) lang = 'en';
+const t = k => DICT[lang][k];
+const coarse = matchMedia('(pointer: coarse)').matches;
+
+let THREE;
+try { THREE = await import('three'); } catch {
+  const d = document.createElement('div'); d.id = 'err'; d.textContent = t('cdn'); $('stage').appendChild(d);
+  throw new Error('three.js failed to load');
+}
+
+// ---------- sound ----------
+let soundOn = store.get('sound', true), actx = null;
+function drawSnd() {
+  $('snd').innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>'
+    + (soundOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>';
+}
+function ac() {
+  if (!soundOn) return null;
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); return actx; } catch { return null; }
+}
+function noiseBuf(a, sec) {
+  const b = a.createBuffer(1, Math.round(a.sampleRate * sec), a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+function sndPeta(vol = 1) {
+  const a = ac(); if (!a) return;
+  const now = a.currentTime, o = a.createOscillator(), g = a.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(170, now); o.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+  g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.5 * vol, now + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+  o.connect(g).connect(a.destination); o.start(now); o.stop(now + 0.18);
+  const n = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
+  n.buffer = noiseBuf(a, 0.08); f.type = 'lowpass'; f.frequency.value = 900;
+  ng.gain.setValueAtTime(0.35 * vol, now); ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+  n.connect(f).connect(ng).connect(a.destination); n.start(now);
+}
+function sndJuu(sec) {
+  const a = ac(); if (!a) return;
+  const now = a.currentTime, n = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  const b = noiseBuf(a, sec), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] *= Math.random() < 0.002 ? 4 : 0.5;   // crackles
+  n.buffer = b; f.type = 'highpass'; f.frequency.value = 1800;
+  g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.22, now + 0.3);
+  g.gain.setValueAtTime(0.22, now + sec - 0.6); g.gain.exponentialRampToValueAtTime(0.0001, now + sec);
+  n.connect(f).connect(g).connect(a.destination); n.start(now);
+}
+
+// ---------- three.js scene ----------
+const gl = $('gl');
+const renderer = new THREE.WebGLRenderer({ canvas: gl, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+const BG = new THREE.Color('#f4e6d4'), BG_HOT = new THREE.Color('#f2b27a');
+scene.background = BG.clone();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+const CAM_DIR = new THREE.Vector3(0, 0.84, 0.54).normalize();
+const PITCH0 = Math.asin(CAM_DIR.y);
+let camYaw = 0, camPitch = PITCH0, orbit = null, orbited = false;
+const hemi = new THREE.HemisphereLight(0xfff4e6, 0x8a6a50, 1.3);
+const sun = new THREE.DirectionalLight(0xffffff, 1.7); sun.position.set(2.5, 6, 3);
+const ovenLight = new THREE.PointLight(0xff7a2a, 0, 30); ovenLight.position.set(0, 3, 0);
+scene.add(hemi, sun, ovenLight);
+
+function canvasTex(c) { const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; return tx; }
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+// wooden board dusted with flour
+{
+  const c = mkCanvas(512, 512), g = c.getContext('2d');
+  g.fillStyle = '#c99561'; g.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 90; i++) {
+    g.strokeStyle = `rgba(${120 + Math.random() * 40},${70 + Math.random() * 30},30,${0.08 + Math.random() * 0.12})`;
+    g.lineWidth = 1 + Math.random() * 3;
+    const y = Math.random() * 512; g.beginPath(); g.moveTo(0, y);
+    for (let x = 0; x <= 512; x += 32) g.lineTo(x, y + Math.sin(x * 0.02 + i) * 4);
+    g.stroke();
+  }
+  for (let i = 0; i < 1600; i++) {
+    const r = Math.hypot(Math.random() - 0.5, Math.random() - 0.5);
+    g.fillStyle = `rgba(255,255,250,${0.15 + Math.random() * 0.35})`;
+    const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * 200;
+    g.fillRect(256 + Math.cos(a) * d, 256 + Math.sin(a) * d, 1 + Math.random() * 3, 1 + Math.random() * 3);
+  }
+  const board = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.7, 0.16, 64),
+    [new THREE.MeshStandardMaterial({ color: '#a8743f', roughness: 0.9 }), new THREE.MeshStandardMaterial({ map: canvasTex(c), roughness: 0.95 }), new THREE.MeshStandardMaterial({ color: '#a8743f' })]);
+  board.position.y = -0.08; scene.add(board);
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.MeshStandardMaterial({ color: '#e9d6bf', roughness: 1 }));
+  table.rotation.x = -Math.PI / 2; table.position.y = -0.16; scene.add(table);
+}
+// soft shadow under the dough
+const shadowC = mkCanvas(128, 128);
+{ const g = shadowC.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  rg.addColorStop(0, 'rgba(60,30,10,0.55)'); rg.addColorStop(0.6, 'rgba(60,30,10,0.25)'); rg.addColorStop(1, 'rgba(60,30,10,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, 128, 128); }
+const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shadowC), transparent: true, depthWrite: false }));
+shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.004; scene.add(shadow);
+
+// ---------- dough ----------
+const group = new THREE.Group(); scene.add(group);
+let D = null;   // current dough
+const bakeU = { value: 0 };
+// char blotches for the crust
+const charTex = (() => {
+  const c = mkCanvas(256, 256), g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 70; i++) {
+    const x = Math.random() * 256, y = Math.random() * 256, r = 4 + Math.random() * 14, a = 0.35 + Math.random() * 0.55;
+    for (const [dx, dy] of [[0, 0], [256, 0], [-256, 0], [0, 256], [0, -256]]) {
+      const rg = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+      rg.addColorStop(0, `rgba(30,12,4,${a})`); rg.addColorStop(1, 'rgba(30,12,4,0)');
+      g.fillStyle = rg; g.fillRect(x + dx - r, y + dy - r, r * 2, r * 2);
+    }
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+})();
+function patchBake(mat, bakeTex) {
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.bakeMap = { value: bakeTex }; sh.uniforms.uBake = bakeU; sh.uniforms.charMap = { value: charTex };
+    sh.vertexShader = 'attribute vec2 aCrust;\nvarying vec2 vCrust;\n' + sh.vertexShader.replace('#include <uv_vertex>', '#include <uv_vertex>\n vCrust = aCrust;');
+    sh.fragmentShader = 'uniform sampler2D bakeMap;\nuniform sampler2D charMap;\nuniform float uBake;\nvarying vec2 vCrust;\n' + sh.fragmentShader.replace('#include <map_fragment>',
+      '#ifdef USE_MAP\n vec4 sampledDiffuseColor = mix(texture2D(map, vMapUv), texture2D(bakeMap, vMapUv), uBake);\n'
+      + ' vec3 crust = mix(vec3(0.8, 0.5, 0.22), vec3(0.45, 0.22, 0.07), vCrust.y) * mix(1.0, texture2D(charMap, vMapUv * 3.0).r, 0.3 + 0.7 * vCrust.y);\n'
+      + ' sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, crust, vCrust.x * uBake);\n diffuseColor *= sampledDiffuseColor;\n#endif');
+  };
+}
+function softAlpha(src, w, h, k) {
+  // blur the alpha by shrinking and growing the picture back
+  const s = mkCanvas(Math.max(2, Math.round(w / k)), Math.max(2, Math.round(h / k)));
+  s.getContext('2d').drawImage(src, 0, 0, s.width, s.height);
+  const o = mkCanvas(w, h), g = o.getContext('2d'); g.imageSmoothingQuality = 'high';
+  g.drawImage(s, 0, 0, w, h);
+  return g.getImageData(0, 0, w, h).data;
+}
+function makeBaked(spr) {
+  const w = spr.width, h = spr.height, M = Math.max(w, h), c = mkCanvas(w, h), g = c.getContext('2d');
+  g.drawImage(spr, 0, 0);
+  const id = g.getImageData(0, 0, w, h), d = id.data, soft = softAlpha(spr, w, h, 22);
+  const sm = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+  for (let i = 0; i < d.length; i += 4) {
+    const s = soft[i + 3] / 255, inner = sm(0.25, 0.5, s), dark = Math.min(1, (1 - s) * 1.9);
+    // crust: golden toward the inside, browner toward the edge
+    const cr = 232 + (160 - 232) * dark, cg = 182 + (92 - 182) * dark, cb = 104 + (36 - 104) * dark;
+    const r = d[i] * 0.93 + 8, gg = d[i + 1] * 0.85, b = d[i + 2] * 0.7;
+    d[i] = cr + (r - cr) * inner; d[i + 1] = cg + (gg - cg) * inner; d[i + 2] = cb + (b - cb) * inner;
+  }
+  g.putImageData(id, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  const at = (x, y) => soft[(Math.min(h - 1, Math.max(0, y | 0)) * w + Math.min(w - 1, Math.max(0, x | 0))) * 4 + 3] / 255;
+  const spot = (x, y, r, col) => { const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, col); rg.addColorStop(1, col.replace(/[\d.]+\)$/, '0)')); g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2); };
+  const inside = (min) => { for (let k = 0; k < 40; k++) { const x = Math.random() * w, y = Math.random() * h; if (at(x, y) > min) return [x, y]; } return null; };
+  const area = w * h / (M * M);
+  // melted cheese
+  for (let n = 0; n < 22 * area + 8; n++) {
+    const p = inside(0.88); if (!p) break;
+    const r = (0.02 + Math.random() * 0.03) * M;
+    g.save(); g.translate(p[0], p[1]); g.rotate(Math.random() * 3); g.scale(1, 0.55 + Math.random() * 0.4);
+    const rg = g.createRadialGradient(0, 0, 0, 0, 0, r);
+    rg.addColorStop(0, 'rgba(255,240,180,0.3)'); rg.addColorStop(0.7, 'rgba(250,215,120,0.2)'); rg.addColorStop(1, 'rgba(240,190,90,0)');
+    g.fillStyle = rg; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill(); g.restore();
+  }
+  // browned blisters on the cheese and char spots on the crust
+  for (let n = 0; n < 90 * area + 30; n++) {
+    const x = Math.random() * w, y = Math.random() * h, s = at(x, y);
+    if (s < 0.3) continue;
+    const crust = s < 0.8, r = (crust ? 0.008 + Math.random() * 0.018 : 0.01 + Math.random() * 0.02) * M;
+    spot(x, y, r, crust ? `rgba(60,28,10,${0.5 + Math.random() * 0.4})` : `rgba(130,62,14,${0.2 + Math.random() * 0.25})`);
+  }
+  return c;
+}
+function fillUnder(src, col) {
+  const c = mkCanvas(src.width, src.height), g = c.getContext('2d');
+  g.fillStyle = col; g.fillRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0);
+  return c;
+}
+function makeUnder(spr) {
+  const c = mkCanvas(spr.width, spr.height), g = c.getContext('2d');
+  g.fillStyle = '#ecd2a8'; g.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+const EDGE = 0.1, CRUST = 0.24;
+function buildDough(spr, shape) {
+  // round (polar) mesh following the wobbly outline: smooth edge, closes exactly at the rim
+  clearToppings();
+  if (D) { group.remove(D.top, D.bot); D.geo.dispose(); D.top.material.dispose(); D.bot.material.dispose(); D.texs.forEach(x => x.dispose()); }
+  const S = 2.6, NR = 56, NS = 180, N = (NR + 1) * NS;
+  const bx = new Float32Array(N), bz = new Float32Array(N), puff = new Float32Array(N), rim = new Float32Array(N), op = new Uint8Array(N).fill(1), inner = new Uint8Array(N);
+  const pos = new Float32Array(N * 3), uv = new Float32Array(N * 2), crust = new Float32Array(N * 2);
+  for (let jj = 0; jj < NS; jj++) {
+    const a = jj / NS * Math.PI * 2;
+    let k = 1; for (const [n, amp, ph] of shape.wob) k += amp * Math.sin(n * a + ph);
+    const rEdge = shape.rf * k;
+    for (let ii = 0; ii <= NR; ii++) {
+      const v = ii * NS + jj, t = 1 - Math.pow(1 - ii / NR, 1.5);   // denser toward the edge
+      const px = 0.5 + Math.cos(a) * rEdge * t, py = 0.5 + Math.sin(a) * rEdge * t;
+      bx[v] = (px - 0.5) * S; bz[v] = (py - 0.5) * S;
+      uv[v * 2] = px; uv[v * 2 + 1] = 1 - py;
+      const dw = (1 - t) * rEdge * S, e = Math.min(1, dw / EDGE);
+      puff[v] = Math.sqrt(1 - (1 - e) ** 2);   // rounded edge
+      const u = dw / CRUST;
+      rim[v] = u > 0 && u < 1 ? Math.sqrt(1 - (2 * u - 1) ** 2) : 0;   // round cross-section
+      inner[v] = dw > CRUST + 0.06 ? 1 : 0;
+      crust[v * 2] = Math.max(0, Math.min(1, (CRUST + 0.04 - dw) / 0.08)); crust[v * 2 + 1] = Math.pow(1 - Math.min(1, dw / CRUST), 1.5);
+    }
+  }
+  const idx = [];
+  for (let ii = 0; ii < NR; ii++) for (let jj = 0; jj < NS; jj++) {
+    const a = ii * NS + jj, b = ii * NS + (jj + 1) % NS, c = a + NS, d = b + NS;
+    idx.push(a, c, b, b, c, d);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  geo.setAttribute('aCrust', new THREE.BufferAttribute(crust, 2));
+  geo.setIndex(idx);
+  const tex = canvasTex(fillUnder(spr, '#ecd2a8')), baked = canvasTex(fillUnder(makeBaked(spr), '#b06a2c')), under = canvasTex(makeUnder(spr));
+  const topM = new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, roughness: 0.82 });
+  patchBake(topM, baked);
+  const top = new THREE.Mesh(geo, topM);
+  const bot = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: under, side: THREE.DoubleSide, roughness: 0.9 }));
+  bot.scale.y = -0.12;
+  group.add(top, bot);
+  D = { geo, top, bot, bx, bz, puff, rim, op, inner, idx, NR, NS, crust, texs: [tex, baked, under], area0: 0, dirty: true };
+  D.area0 = area();
+  group.position.set(0, 0, 0); group.rotation.set(0, 0, 0); group.scale.set(1, 1, 1);
+  bakeU.value = 0; land = 0;
+  updateGeom();
+}
+function area() {
+  const { bx, bz, idx } = D; let s = 0;
+  for (let k = 0; k < idx.length; k += 3) {
+    const a = idx[k], b = idx[k + 1], c = idx[k + 2];
+    s += 0.5 * Math.abs((bx[b] - bx[a]) * (bz[c] - bz[a]) - (bz[b] - bz[a]) * (bx[c] - bx[a]));
+  }
+  return s;
+}
+let thin = 1;
+function updateGeom() {
+  const { bx, bz, puff, rim, geo } = D, pos = geo.attributes.position.array;
+  thin = Math.max(0.1, Math.min(1, D.area0 / area()));
+  const T = 0.2 * thin, R = 0.17 * bakeU.value;
+  for (let v = 0; v < bx.length; v++) {
+    pos[v * 3] = bx[v]; pos[v * 3 + 1] = T * puff[v] + R * rim[v]; pos[v * 3 + 2] = bz[v];
+  }
+  geo.attributes.position.needsUpdate = true;
+  geo.computeVertexNormals(); geo.computeBoundingSphere();
+  D.dirty = false;
+}
+function doughExtent() {
+  // center and radius of the opaque part (local)
+  const { bx, bz, op } = D; let cx = 0, cz = 0, n = 0;
+  for (let v = 0; v < bx.length; v++) if (op[v]) { cx += bx[v]; cz += bz[v]; n++; }
+  if (!n) return { cx: 0, cz: 0, r: 1 };
+  cx /= n; cz /= n; let r = 0;
+  for (let v = 0; v < bx.length; v++) if (op[v]) r = Math.max(r, Math.hypot(bx[v] - cx, bz[v] - cz));
+  return { cx, cz, r };
+}
+
+// ---------- toppings that fall from above ----------
+let tops = [], dropT = -1;
+const TOP_GEO = {
+  pep: new THREE.CylinderGeometry(0.12, 0.12, 0.03, 28),
+  cheese: new THREE.BoxGeometry(0.13, 0.022, 0.03),
+  basil: (() => { const sh = new THREE.Shape(); sh.moveTo(-0.11, 0); sh.quadraticCurveTo(0, -0.085, 0.11, 0); sh.quadraticCurveTo(0, 0.085, -0.11, 0);
+    const g = new THREE.ShapeGeometry(sh, 8); g.rotateX(-Math.PI / 2); return g; })(),
+};
+const pepTex = (() => {
+  const c = mkCanvas(128, 128), g = c.getContext('2d'), rg = g.createRadialGradient(54, 54, 8, 64, 64, 64);
+  rg.addColorStop(0, '#d8483a'); rg.addColorStop(0.85, '#b02a20'); rg.addColorStop(1, '#7a1a12');
+  g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+  for (let k = 0; k < 14; k++) { g.fillStyle = 'rgba(245,175,155,0.6)'; g.beginPath(); g.arc(20 + Math.random() * 88, 20 + Math.random() * 88, 3 + Math.random() * 3, 0, 7); g.fill(); }
+  return canvasTex(c);
+})();
+function clearToppings() {
+  for (const p of tops) { group.remove(p.m); p.m.material.dispose(); }
+  tops = []; dropT = -1;
+}
+function addToppings() {
+  const { inner, bx } = D, cand = [];
+  for (let v = 0; v < bx.length; v++) if (inner[v]) cand.push(v);
+  if (!cand.length) for (let v = 0; v < bx.length; v++) if (D.op[v]) cand.push(v);
+  const pick = () => cand[(Math.random() * cand.length) | 0];
+  const scale = Math.max(1, Math.sqrt(1 / thin) * 0.8);
+  const add = (kind, n, t0, t1, y, mat) => {
+    for (let i = 0; i < n; i++) {
+      const m = new THREE.Mesh(TOP_GEO[kind], mat.clone());
+      m.scale.setScalar(scale); m.rotation.order = 'YXZ';
+      m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+      group.add(m); const c0 = m.material.color.clone();
+      tops.push({ m, c0, kind, v: pick(), off: y, delay: t0 + Math.random() * (t1 - t0), h: 5 + Math.random() * 2, vy: 0, landed: false, spin: (Math.random() - 0.5) * 12, yaw: Math.random() * 7 });
+    }
+  };
+  add('cheese', 40, 0, 0.9, 0.012, new THREE.MeshStandardMaterial({ color: '#fff1b8', roughness: 0.6, transparent: true }));
+  add('pep', Math.round(6 * scale), 0.8, 1.5, 0.03, new THREE.MeshStandardMaterial({ map: pepTex, roughness: 0.5 }));
+  add('basil', 5, 1.3, 1.8, 0.05, new THREE.MeshStandardMaterial({ color: '#2f7a2a', roughness: 0.7, side: THREE.DoubleSide }));
+  dropT = 0;
+}
+let pataN = 0;
+function stepToppings(dt) {
+  const pos = D.geo.attributes.position.array, sy = group.scale.y;
+  let done = true;
+  for (const p of tops) {
+    const sx = D.bx[p.v], sz = D.bz[p.v], surf = pos[p.v * 3 + 1] + p.off;
+    if (!p.landed) {
+      if (dropT < p.delay) { p.m.visible = false; done = false; continue; }
+      p.m.visible = true; done = false;
+      p.vy -= 22 * dt; p.h += p.vy * dt;
+      p.m.rotation.x += p.spin * dt; p.m.rotation.z += p.spin * 0.7 * dt;
+      if (p.h <= 0) {
+        p.h = 0; p.landed = true; p.m.rotation.set(0, p.yaw, 0);
+        if (p.kind !== 'cheese' || pataN++ % 6 === 0) sndPeta(p.kind === 'pep' ? 0.6 : 0.25);
+      }
+    }
+    p.m.position.set(sx, (surf + p.h) * sy, sz);
+    if (p.kind === 'cheese') {
+      // melts into the baked texture
+      const b = bakeU.value;
+      p.m.material.opacity = 1 - b;
+      p.m.scale.y = Math.max(0.2, 1 - b) * p.m.scale.x;
+    } else p.m.material.color.copy(p.c0).multiplyScalar(1 - 0.4 * bakeU.value);
+  }
+  return done;
+}
+
+// ---------- camera fit ----------
+let W = 1, H = 1, camDist = 7, camDistT = 7, ext = { cx: 0, cz: 0, r: 1.3 };
+function fitTarget() {
+  const r = Math.max(1.6, ext.r + Math.hypot(ext.cx, ext.cz));
+  const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  camDistT = r * 1.05 / (tanH * Math.min(1, camera.aspect)) + 0.3;
+}
+function resize() {
+  const r = $('stage').getBoundingClientRect();
+  W = Math.max(1, r.width); H = Math.max(1, r.height);
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H; camera.updateProjectionMatrix();
+  fitTarget(); if (mode !== 'paint') camDist = camDistT;
+  resizePaint();
+}
+
+// ---------- play: stretch ----------
+let land = 0, drag = null;
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
+function boardPoint(e) {
+  const r = gl.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  if (!ray.ray.intersectPlane(plane, hit)) return null;
+  return group.worldToLocal(hit.clone());
+}
+function smudge(p, q, gain) {
+  const { bx, bz } = D, dx = q.x - p.x, dz = q.z - p.z;
+  const R = 0.3 * Math.sqrt(1 / thin), R2 = R * R;
+  for (let v = 0; v < bx.length; v++) {
+    const d2 = (bx[v] - p.x) ** 2 + (bz[v] - p.z) ** 2;
+    if (d2 > R2 * 9) continue;
+    const k = Math.exp(-d2 / R2) * gain;
+    bx[v] += dx * k; bz[v] += dz * k;
+  }
+  smoothOutline();
+  D.dirty = true;
+}
+function smoothOutline() {
+  // keep the edge rounded: relax the outer rings along the outline
+  const { bx, bz, NR, NS } = D;
+  for (let ii = NR - 4; ii <= NR; ii++) {
+    const w = 0.25 * (1 - (NR - ii) / 5);
+    for (let it = 0; it < 2; it++) {
+      const ox = [], oz = [];
+      for (let jj = 0; jj < NS; jj++) { const v = ii * NS + jj; ox.push(bx[v]); oz.push(bz[v]); }
+      for (let jj = 0; jj < NS; jj++) {
+        const v = ii * NS + jj, a = (jj + NS - 1) % NS, b = (jj + 1) % NS;
+        bx[v] += ((ox[a] + ox[b]) / 2 - ox[jj]) * w; bz[v] += ((oz[a] + oz[b]) / 2 - oz[jj]) * w;
+      }
+    }
+  }
+}
+function refitCrust() {
+  // after stretching: rebuild the rim from the real distance to the edge
+  const { bx, bz, NR, NS, puff, rim, inner, crust } = D, eb = NR * NS;
+  for (let v = 0; v < bx.length; v++) {
+    let m = 1e9;
+    for (let jj = 0; jj < NS; jj++) { const q = eb + jj, d = (bx[v] - bx[q]) ** 2 + (bz[v] - bz[q]) ** 2; if (d < m) m = d; }
+    const dw = Math.sqrt(m), e = Math.min(1, dw / EDGE), u = dw / CRUST;
+    puff[v] = Math.sqrt(1 - (1 - e) ** 2);
+    rim[v] = u > 0 && u < 1 ? Math.sqrt(1 - (2 * u - 1) ** 2) : 0;
+    inner[v] = dw > CRUST + 0.06 ? 1 : 0;
+    crust[v * 2] = Math.max(0, Math.min(1, (CRUST + 0.04 - dw) / 0.08)); crust[v * 2 + 1] = Math.pow(1 - Math.min(1, dw / CRUST), 1.5);
+  }
+  D.geo.attributes.aCrust.needsUpdate = true; D.dirty = true;
+}
+gl.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (mode === 'start') { $('file').click(); return; }
+  if (mode === 'result' && !orbit) { gl.setPointerCapture(e.pointerId); orbit = { id: e.pointerId, x: e.clientX, y: e.clientY }; orbited = true; return; }
+  if (mode !== 'play' || drag) return;
+  ac();
+  gl.setPointerCapture(e.pointerId);
+  const p = boardPoint(e);
+  drag = { id: e.pointerId, p, moved: 0 };
+  if (p) sndPeta(0.5);
+});
+gl.addEventListener('pointermove', e => {
+  if (orbit && orbit.id === e.pointerId) {
+    // drag to look around the finished pizza
+    camYaw -= (e.clientX - orbit.x) * 0.008;
+    camPitch = Math.max(0.12, Math.min(1.55, camPitch + (e.clientY - orbit.y) * 0.006));
+    orbit.x = e.clientX; orbit.y = e.clientY;
+    return;
+  }
+  if (!drag || drag.id !== e.pointerId) return;
+  const q = boardPoint(e);
+  if (q && drag.p) { smudge(drag.p, q, 0.35 / (1 + drag.moved * 1.2)); drag.moved += Math.hypot(q.x - drag.p.x, q.z - drag.p.z); }
+  drag.p = q;
+});
+const pUp = e => {
+  if (orbit && orbit.id === e.pointerId) orbit = null;
+  if (!drag || drag.id !== e.pointerId) return;
+  drag = null;
+};
+gl.addEventListener('pointerup', pUp);
+gl.addEventListener('pointercancel', pUp);
+
+// ---------- loop ----------
+let mode = 'start', last = performance.now(), bakeT = -1;
+const camTarget = new THREE.Vector3();
+function frame(now) {
+  const dt = Math.min(0.04, (now - last) / 1000); last = now;
+  if (D) {
+    if (mode === 'result' && !orbited) group.rotation.y += 0.25 * dt;
+    if (land > 0) { land = Math.max(0, land - dt * 3); group.scale.y = 1 - 0.5 * Math.sin(land * Math.PI) * land; }
+    if (tops.length) {
+      if (dropT >= 0) dropT += dt;
+      if (stepToppings(dt) && dropT >= 0) { dropT = -1; bakeT = 0; sndJuu(3.2); }
+    }
+    if (bakeT >= 0) {
+      bakeT += dt;
+      const u = Math.min(1, bakeT / 2.6);
+      bakeU.value = u * u * (3 - 2 * u); D.dirty = true;
+      const glow = Math.sin(Math.min(1, bakeT / 3.2) * Math.PI);
+      ovenLight.intensity = glow * 22; scene.background.copy(BG).lerp(BG_HOT, glow * 0.5);
+      if (bakeT >= 3.2) { bakeT = -1; ovenLight.intensity = 0; scene.background.copy(BG); setMode('result'); }
+    }
+    if (D.dirty) { updateGeom(); if (!drag) { ext = doughExtent(); fitTarget(); } }
+    const sc = (ext.r + 0.3) * 2.3 * (1 - Math.min(0.6, group.position.y / 5));
+    const cs = Math.cos(group.rotation.y), sn = Math.sin(group.rotation.y);
+    shadow.position.x = group.position.x + ext.cx * cs + ext.cz * sn; shadow.position.z = group.position.z - ext.cx * sn + ext.cz * cs;
+    shadow.scale.set(sc, sc, 1); shadow.material.opacity = 0.7 - Math.min(0.5, group.position.y / 4);
+  }
+  if (!drag) camDist += (camDistT - camDist) * Math.min(1, dt * 2.5);
+  CAM_DIR.set(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch));
+  camera.position.copy(CAM_DIR).multiplyScalar(camDist).add(camTarget);
+  camera.lookAt(camTarget);
+  if (mode !== 'paint') renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+// ---------- cut-out: a wobbly circle over the picture ----------
+const cv = $('cv'), ctx = cv.getContext('2d');
+let DPR = 1, img = null, view = null, wob = null;
+const DOUGH = '#ecd2a8';
+function resizePaint() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  if (img) placeImage();
+  renderPaint();
+}
+function newWobble() {
+  const r = () => Math.random() * Math.PI * 2;
+  wob = [[3, 0.05 + Math.random() * 0.03, r()], [5, 0.03 + Math.random() * 0.02, r()], [8, 0.015 + Math.random() * 0.012, r()], [2, 0.03, r()]];
+}
+const circR = () => Math.min(W, H) * 0.38;
+function wobblePath(g, cx, cy, R, keep) {
+  if (!keep) g.beginPath();
+  for (let i = 0; i <= 120; i++) {
+    const a = i / 120 * Math.PI * 2;
+    let k = 1; for (const [n, amp, ph] of wob) k += amp * Math.sin(n * a + ph);
+    const x = cx + Math.cos(a) * R * k, y = cy + Math.sin(a) * R * k;
+    i ? g.lineTo(x, y) : g.moveTo(x, y);
+  }
+  g.closePath();
+}
+function loadFile(f) {
+  if (!f || !f.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    URL.revokeObjectURL(url);
+    const k = Math.min(1, 1600 / Math.max(im.width, im.height));
+    img = mkCanvas(Math.max(1, Math.round(im.width * k)), Math.max(1, Math.round(im.height * k)));
+    img.getContext('2d').drawImage(im, 0, 0, img.width, img.height);
+    touches.clear(); pinch = null; newWobble();
+    placeImage(); setMode('paint');
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); flashErr(); };
+  im.src = url;
+}
+function flashErr() {
+  const d = document.createElement('div'); d.id = 'err'; d.textContent = t('err');
+  $('stage').appendChild(d); setTimeout(() => d.remove(), 2000);
+}
+function placeImage() {
+  // fill the circle with the picture
+  const k = circR() * 2.3 / Math.min(img.width, img.height);
+  view = { k, min: k * 0.3, x: (W - img.width * k) / 2, y: (H - img.height * k) / 2 };
+}
+let pinch = null, panPt = null;
+const touches = new Map();
+const mid = (a, b) => { const r = cv.getBoundingClientRect(); return { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top }; };
+function zoomAt(mx, my, k) {
+  k = Math.max(view.min, Math.min(view.min * 40, k));
+  view.x = mx - (mx - view.x) / view.k * k; view.y = my - (my - view.y) / view.k * k; view.k = k;
+}
+function makeSprite() {
+  const R = circR(), S = 512, f = (S / 2) / (R * 1.3);
+  const c = mkCanvas(S, S), g = c.getContext('2d');
+  g.translate(S / 2, S / 2); g.scale(f, f); g.translate(-W / 2, -H / 2);
+  wobblePath(g, W / 2, H / 2, R); g.clip();
+  g.fillStyle = DOUGH; g.fillRect(0, 0, W, H);
+  g.drawImage(img, view.x, view.y, img.width * view.k, img.height * view.k);
+  return { c, shape: { rf: 1 / 2.6, wob: wob.map(x => x.slice()) } };
+}
+function renderPaint() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  if (mode !== 'paint' || !img) return;
+  const R = circR();
+  ctx.fillStyle = DOUGH; wobblePath(ctx, W / 2, H / 2, R); ctx.fill();
+  ctx.drawImage(img, view.x, view.y, img.width * view.k, img.height * view.k);
+  // dim outside the circle
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, W, H); wobblePath(ctx, W / 2, H / 2, R, true);
+  ctx.fillStyle = 'rgba(244, 230, 212, 0.82)'; ctx.fill('evenodd');
+  ctx.restore();
+  wobblePath(ctx, W / 2, H / 2, R);
+  ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.setLineDash([10, 8]); ctx.stroke(); ctx.setLineDash([]);
+}
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault(); cv.setPointerCapture(e.pointerId);
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touches.size === 1) panPt = { x: e.clientX, y: e.clientY };
+  else if (touches.size === 2) {
+    const [a, b] = [...touches.values()];
+    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, m: mid(a, b) }; panPt = null;
+  }
+});
+cv.addEventListener('pointermove', e => {
+  if (!touches.has(e.pointerId)) return;
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && touches.size >= 2) {
+    const [a, b] = [...touches.values()], m = mid(a, b), d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    view.x += m.x - pinch.m.x; view.y += m.y - pinch.m.y;
+    zoomAt(m.x, m.y, view.k * d / pinch.d);
+    pinch = { d, m }; renderPaint();
+  } else if (panPt) {
+    view.x += e.clientX - panPt.x; view.y += e.clientY - panPt.y;
+    panPt = { x: e.clientX, y: e.clientY }; renderPaint();
+  }
+});
+const cUp = e => {
+  touches.delete(e.pointerId);
+  if (touches.size < 2) pinch = null;
+  if (touches.size === 1) { const p = [...touches.values()][0]; panPt = { x: p.x, y: p.y }; } else panPt = null;
+};
+cv.addEventListener('pointerup', cUp);
+cv.addEventListener('pointercancel', cUp);
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = cv.getBoundingClientRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, view.k * Math.exp(-e.deltaY * 0.0015));
+  renderPaint();
+}, { passive: false });
+$('shape').onclick = () => { newWobble(); renderPaint(); };
+
+// ---------- buttons ----------
+$('pick').onclick = () => $('file').click();
+$('again').onclick = () => $('file').click();
+$('file').onchange = e => { loadFile(e.target.files[0]); e.target.value = ''; };
+$('done').onclick = () => {
+  const s = makeSprite(); if (!s) return;
+  buildDough(s.c, s.shape); ext = doughExtent(); fitTarget(); camDist = camDistT;
+  setMode('play'); sndPeta(1); land = 1;
+};
+$('bake').onclick = () => {
+  setMode('baking'); refitCrust(); updateGeom(); addToppings();
+};
+['dragenter', 'dragover'].forEach(ev => window.addEventListener(ev, e => { e.preventDefault(); $('drop').classList.remove('hide'); }));
+['dragleave', 'drop'].forEach(ev => window.addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('hide'); }));
+window.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) loadFile(f); });
+
+// ---------- export / share ----------
+function exportBlob() {
+  return new Promise(res => {
+    renderer.render(scene, camera);
+    const S = 1080, c = mkCanvas(S, S), g = c.getContext('2d');
+    g.fillStyle = '#f4e6d4'; g.fillRect(0, 0, S, S);
+    const s = Math.min(gl.width, gl.height);
+    g.drawImage(gl, (gl.width - s) / 2, (gl.height - s) / 2, s, s, 0, 0, S, S);
+    g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(S - 470, S - 74, 470, 74);
+    g.fillStyle = '#a0522d'; g.font = 'bold 34px sans-serif'; g.textAlign = 'right';
+    g.fillText('keifurukawafunnych.com', S - 30, S - 26);
+    c.toBlob(res, 'image/png');
+  });
+}
+function download(blob) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pizza-dough.png';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+let resultBlob = null;
+const shareText = () => `${t('share')}\n${TAG}`;
+$('save').onclick = async () => {
+  const blob = resultBlob || await exportBlob();
+  const file = new File([blob], 'pizza-dough.png', { type: 'image/png' });
+  if (coarse && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  download(blob);
+};
+$('post').onclick = e => {
+  if (coarse && navigator.share) {
+    e.preventDefault();
+    const data = { text: `${shareText()}\n${SHARE_URL}` };
+    if (resultBlob) {
+      const file = new File([resultBlob], 'pizza-dough.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) data.files = [file];
+    }
+    navigator.share(data).catch(() => {});
+    return;
+  }
+  if (resultBlob) download(resultBlob);
+};
+function updatePost() {
+  const a = $('post');
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(shareText())}&url=${encodeURIComponent(SHARE_URL)}`;
+  if (!coarse) { a.target = '_blank'; a.rel = 'noopener'; }
+}
+
+// ---------- modes / text ----------
+function setMode(m) {
+  mode = m;
+  if (m !== 'result') { camYaw = 0; camPitch = PITCH0; orbit = null; orbited = false; }
+  $('barStart').classList.toggle('hide', m !== 'start');
+  $('barPaint').classList.toggle('hide', m !== 'paint');
+  $('barPlay').classList.toggle('hide', m !== 'play');
+  $('barResult').classList.toggle('hide', m !== 'result');
+  gl.classList.toggle('hide', m === 'paint');
+  cv.classList.toggle('hide', m !== 'paint');
+    if (m === 'result') { resultBlob = null; setTimeout(() => exportBlob().then(b => { if (mode === 'result') resultBlob = b; }), 50); }
+  renderPaint();
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('back').textContent = t('back');
+  $('lang').value = lang;
+  for (const k of ['pick', 'done', 'bake', 'save', 'post', 'again']) $(k).textContent = t(k);
+  updatePost();
+}
+$('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+$('snd').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); drawSnd(); };
+
+// start screen: a plain round dough on the board
+{
+  const c = mkCanvas(256, 256), g = c.getContext('2d');
+  g.fillStyle = '#f1dcb6'; g.beginPath(); g.arc(128, 128, 104, 0, Math.PI * 2); g.fill();
+  g.globalCompositeOperation = 'source-atop';
+  for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(255,255,250,${Math.random() * 0.4})`; g.fillRect(Math.random() * 256, Math.random() * 256, 2, 2); }
+  buildDough(c, { rf: 104 / 256, wob: [] }); ext = doughExtent();
+}
+drawSnd(); applyLang(); setMode('start');
+new ResizeObserver(resize).observe($('stage'));
+resize();
+requestAnimationFrame(frame);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

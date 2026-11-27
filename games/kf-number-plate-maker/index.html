@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>车牌工坊 · LiteGame</title>
+  <meta name="description" content="挑颜色、选汉字，做一块只属于你的车牌。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="车牌工坊 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/number-plate-maker/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/number-plate-maker/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; background: #dfe3e6; color: #333; }
+    body {
+      min-height: 100dvh; box-sizing: border-box;
+      font-family: "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; }
+    header a { color: #333; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 8px; }
+    .pill {
+      height: 36px; min-width: 36px; border: 1px solid #bbb; border-radius: 18px; background: #fff;
+      color: #333; font-size: 15px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    main { max-width: 520px; margin: 0 auto; padding: 8px 16px; display: flex; flex-direction: column; gap: 14px; }
+    canvas { width: 100%; aspect-ratio: 2 / 1; display: block; filter: drop-shadow(0 4px 8px rgba(0,0,0,.25)); }
+    .row { display: flex; gap: 8px; }
+    input {
+      min-width: 0; font-size: 20px; padding: 10px; border: 1px solid #bbb; border-radius: 10px; text-align: center;
+      font-family: inherit; background: #fff; color: #333; box-sizing: border-box;
+    }
+    #place { flex: 3; } #cls { flex: 2; } #kana { flex: 1; } #num { flex: 2.5; }
+    .colors { display: flex; gap: 12px; justify-content: center; }
+    .color { width: 52px; height: 30px; border-radius: 6px; cursor: pointer; border: 3px solid transparent; box-shadow: 0 0 0 1px #999; }
+    .color.on { border-color: #e05a00; }
+    .btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      font-size: 16px; padding: 10px 20px; border-radius: 24px; border: none; cursor: pointer;
+      background: #1f6b3a; color: #fff; text-decoration: none; font-family: inherit;
+    }
+    .btn.sub { background: #fff; color: #333; box-shadow: 0 0 0 1px #bbb inset; }
+    .btn.x { background: #111; }
+    #saved { font-size: 13px; color: #777; text-align: center; min-height: 1em; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">车牌工坊</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill" aria-label="音のオン/オフ"></button>
+    </div>
+  </header>
+  <main>
+    <canvas id="cv" width="1100" height="550"></canvas>
+    <div class="row">
+      <input id="place" maxlength="4" value="品川">
+      <input id="cls" maxlength="3" inputmode="numeric" value="300">
+    </div>
+    <div class="row">
+      <input id="kana" maxlength="1" value="さ">
+      <input id="num" maxlength="4" inputmode="numeric" value="1234">
+    </div>
+    <div class="colors">
+      <button class="color on" data-c="0" style="background:#fff"></button>
+      <button class="color" data-c="1" style="background:#1f6b3a"></button>
+      <button class="color" data-c="2" style="background:#f2c400"></button>
+      <button class="color" data-c="3" style="background:#111"></button>
+    </div>
+    <div class="btns">
+      <button id="rand" class="btn sub">ランダム</button>
+      <button id="save" class="btn">保存</button>
+      <a id="post" class="btn x" href="#">Xに投稿</a>
+    </div>
+    <div id="saved"></div>
+  </main>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 车牌工坊 · 中文文案
+window.__KF_ZH__ = {
+  title: '车牌工坊',
+  back: '← 大厅',
+  langLabel: '切换语言',
+  sound: '音效开关',
+  rand: '随机',
+  save: '保存',
+  post: '分享到 X',
+  saved: '图片已保存',
+  share: (p) => `用车牌工坊做了「${p}」#LiteGame`
+};
+</script>
+<script>
+    const $ = id => document.getElementById(id);
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/number-plate-maker/';
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('number-plate-maker-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('number-plate-maker-' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    const L = {
+      ja: {
+        title: '车牌工坊', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English', sound: '音のオン/オフ',
+        rand: 'ランダム', save: '保存', post: 'Xに投稿', saved: '画像を保存しました',
+        share: p => `车牌工坊で「${p}」を作りました`,
+      },
+      en: {
+        title: 'Number Plate Maker', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え', sound: 'Sound on/off',
+        rand: 'Random', save: 'Save', post: 'Post on X', saved: 'Image saved',
+        share: p => `I made the plate "${p}" with Number Plate Maker`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+
+    // ---- 音 ----
+    let soundOn = store.get('sound', true);
+    const SPK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#333"/>';
+    const updateSoundBtn = () => {
+      $('sound').innerHTML = SPK + (soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>' : '<path d="M16 9l5 6M21 9l-5 6"/></svg>');
+    };
+    $('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+    let ac;
+    function pi(f = 880) {
+      if (!soundOn) return;
+      try {
+        ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
+        o.type = 'square'; o.frequency.setValueAtTime(f, n);
+        g.gain.setValueAtTime(0.08, n); g.gain.exponentialRampToValueAtTime(0.001, n + 0.08);
+        o.connect(g).connect(ac.destination); o.start(n); o.stop(n + 0.09);
+      } catch {}
+    }
+
+    // ---- プレート ----
+    // 色: [地の色, 文字とふちの色]（白=自家用, 緑=事業用, 黄=軽, 黒=軽の事業用）
+    const COLORS = [['#f7f7f2', '#1f6b3a'], ['#1f6b3a', '#f7f7f2'], ['#f2c400', '#1a1a1a'], ['#1a1a1a', '#f2c400']];
+    let color = 0;
+    const FONT = '"Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif';
+
+    const digits = s => s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, '');
+    // 本物と同じ並べ方: 1→「・・・1」, 12→「・・12」, 1234→「12-34」
+    function numCells() {
+      const d = digits($('num').value).slice(0, 4);
+      const c = ('・・・・' + d).slice(-4).split('');
+      return { c, sep: d.length === 4 ? '-' : '' };
+    }
+    function plateText() {
+      const { c, sep } = numCells();
+      return `${$('place').value} ${digits($('cls').value)} ${$('kana').value} ${c[0]}${c[1]}${sep || ' '}${c[2]}${c[3]}`.replace(/  +/g, ' ').trim();
+    }
+
+    // 幅 w に収まるよう横だけ縮めて文字を書く
+    function fitText(ctx, s, x, y, w, size, weight = 'bold') {
+      ctx.font = `${weight} ${size}px ${FONT}`;
+      const m = ctx.measureText(s).width;
+      ctx.save(); ctx.translate(x, y);
+      if (m > w) ctx.scale(w / m, 1);
+      ctx.fillText(s, 0, 0); ctx.restore();
+    }
+
+    function drawPlate(ctx, X, Y, W) {
+      const k = W / 1100, [bg, fg] = COLORS[color];
+      ctx.save(); ctx.translate(X, Y); ctx.scale(k, k);
+      const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+      rr(0, 0, 1100, 550, 40); ctx.fillStyle = bg; ctx.fill();
+      rr(14, 14, 1072, 522, 30); ctx.lineWidth = 8; ctx.strokeStyle = fg; ctx.stroke();
+      // ボルト
+      for (const bx of [190, 910]) {
+        ctx.beginPath(); ctx.arc(bx, 70, 26, 0, Math.PI * 2);
+        ctx.fillStyle = '#c9ccce'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#8a8d90'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx - 14, 70); ctx.lineTo(bx + 14, 70); ctx.stroke();
+      }
+      ctx.fillStyle = fg; ctx.textBaseline = 'alphabetic';
+      // 上段: 地名 + 分類番号
+      const place = $('place').value, cls = digits($('cls').value);
+      ctx.textAlign = 'left';
+      ctx.font = `bold 110px ${FONT}`;
+      const pm = place ? Math.min(ctx.measureText(place).width, 300) : 0;
+      ctx.font = `bold 120px ${FONT}`;
+      const cm = cls ? Math.min(ctx.measureText(cls).width, 300) : 0;
+      const gap = place && cls ? 30 : 0, left = 550 - (pm + gap + cm) / 2;
+      if (place) fitText(ctx, place, left, 175, 300, 110);
+      if (cls) fitText(ctx, cls, left + pm + gap, 178, 300, 120);
+      // 下段: ひらがな
+      ctx.textAlign = 'center';
+      const kana = $('kana').value;
+      if (kana) fitText(ctx, kana, 110, 430, 130, 120);
+      // 下段: 4ケタ番号（1マスずつ縦長に描く）
+      const { c, sep } = numCells();
+      const cellW = 190, x0 = 215, sepW = 70;
+      const xs = [x0, x0 + cellW, x0 + cellW * 2 + sepW, x0 + cellW * 3 + sepW];
+      c.forEach((ch, i) => {
+        const cx = xs[i] + cellW / 2;
+        if (ch === '・') { ctx.beginPath(); ctx.arc(cx, 375, 18, 0, Math.PI * 2); ctx.fill(); return; }
+        ctx.save(); ctx.translate(cx, 500); ctx.scale(0.78, 1.25);
+        ctx.font = `bold 260px ${FONT}`; ctx.fillText(ch, 0, 0); ctx.restore();
+      });
+      if (sep) ctx.fillRect(x0 + cellW * 2 + 12, 362, sepW - 24, 22);
+      ctx.restore();
+    }
+
+    const cv = $('cv'), cx = cv.getContext('2d');
+    function draw() {
+      cx.clearRect(0, 0, 1100, 550);
+      drawPlate(cx, 0, 0, 1100);
+      updatePost();
+    }
+
+    // ---- 入力 ----
+    for (const id of ['place', 'cls', 'kana', 'num']) $(id).addEventListener('input', draw);
+    document.querySelectorAll('.color').forEach(b => b.onclick = () => {
+      color = +b.dataset.c; pi(660);
+      document.querySelectorAll('.color').forEach(x => x.classList.toggle('on', x === b));
+      draw();
+    });
+
+    const PLACES = ['品川', '練馬', '足立', '横浜', 'なにわ', '名古屋', '札幌', '福岡', '富士山', '尾張小牧', '湘南', '那覇', '冷蔵庫', 'こたつ', '布団', '月面', '実家', '宇宙', '風呂場', '台所'];
+    const KANA = 'あいうえかきくけこさすせそたちつてとなにぬねのはひふほまみむめもやゆよらりるろれわを';
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    $('rand').onclick = () => {
+      pi(990);
+      $('place').value = pick(PLACES);
+      $('cls').value = pick(['300', '500', '330', '580', '800', '1', '50', '88', '999']);
+      $('kana').value = pick(KANA);
+      $('num').value = Math.random() < 0.4 ? pick(['1111', '8', '88', '777', '1234', '4649', '2525', '1', '1122', '8888']) : String(1 + Math.floor(Math.random() * 9999));
+      const r = Math.random();
+      color = r < 0.55 ? 0 : r < 0.7 ? 1 : r < 0.92 ? 2 : 3;
+      document.querySelectorAll('.color').forEach(x => x.classList.toggle('on', +x.dataset.c === color));
+      draw();
+    };
+
+    // ---- 画像・共有 ----
+    function shareImage() {
+      const c = document.createElement('canvas'); c.width = 1200; c.height = 700;
+      const g = c.getContext('2d');
+      g.fillStyle = '#dfe3e6'; g.fillRect(0, 0, 1200, 700);
+      g.shadowColor = 'rgba(0,0,0,.3)'; g.shadowBlur = 24; g.shadowOffsetY = 8;
+      drawPlate(g, 50, 50, 1100);
+      g.shadowColor = 'transparent';
+      g.fillStyle = '#555'; g.font = `20px ${FONT}`; g.textAlign = 'center';
+      g.fillText(t('title') + '  keifurukawafunnych.com', 600, 670);
+      return c;
+    }
+    const download = () => {
+      const a = document.createElement('a'); a.href = shareImage().toDataURL('image/png'); a.download = 'number-plate-maker.png'; a.click();
+      $('saved').textContent = t('saved');
+    };
+    $('save').onclick = () => { pi(); download(); };
+
+    let shareFile = null, shareKey = '', shareTimer = 0;
+    function updatePost() {
+      const coarse = matchMedia('(pointer: coarse)').matches;
+      $('post').href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(plateText()))}&url=${encodeURIComponent(SHARE_URL)}`;
+      if (coarse) $('post').removeAttribute('target'); else { $('post').target = '_blank'; $('post').rel = 'noopener'; }
+      // 共有用の画像は少し待ってから作る（タップした瞬間に用意できているように）
+      clearTimeout(shareTimer);
+      shareTimer = setTimeout(() => {
+        const key = lang + color + plateText();
+        if (key === shareKey) return;
+        shareKey = key; shareFile = null;
+        shareImage().toBlob(b => { if (b && shareKey === key) shareFile = new File([b], 'number-plate-maker.png', { type: 'image/png' }); }, 'image/png');
+      }, 200);
+    }
+    // スマホは共有シートに画像と文を渡す。PCは画像を保存してから x.com を新しいタブで開く（Webの投稿画面には画像を添付できない）
+    $('post').onclick = e => {
+      const text = t('share')(plateText()), coarse = matchMedia('(pointer: coarse)').matches;
+      if (coarse && typeof navigator.share === 'function' && shareFile && navigator.canShare?.({ files: [shareFile] })) {
+        e.preventDefault();
+        navigator.share({ files: [shareFile], text: `${text}\n${SHARE_URL}` }).catch(err => { if (err.name !== 'AbortError') location.href = $('post').href; });
+        return;
+      }
+      if (!coarse) download();
+    };
+
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+      $('sound').setAttribute('aria-label', t('sound'));
+      $('rand').textContent = t('rand'); $('save').textContent = t('save'); $('post').textContent = t('post');
+      if ($('saved').textContent) $('saved').textContent = t('saved');
+      draw();
+    }
+    $('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+    updateSoundBtn(); applyLang();
+    document.fonts?.ready.then(draw);
+  </script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>不倒翁机器人 · LiteGame</title>
+  <meta name="description" content="点哪扔哪，把球砸向机器人，看它晃来晃去就是不倒。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="不倒翁机器人 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/robot-stand/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/robot-stand/icon.png">
+  <meta name="twitter:card" content="summary">
+  <script type="importmap">
+  { "imports": {
+    "three": "../lib/three/build/three.module.js",
+    "three/addons/": "../lib/three/examples/jsm/"
+  } }
+  </script>
+  <style>
+    * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    html, body { margin: 0; height: 100%; background: #23262d; color: #e9ecef; font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif; }
+    body { overflow: hidden; touch-action: none; }
+    header { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; pointer-events: none; }
+    header > * { pointer-events: auto; }
+    header a { color: #e9ecef; text-decoration: none; font-size: 15px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 6px 12px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill { height: 34px; min-width: 34px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; background: rgba(255,255,255,.08); color: #e9ecef; font-size: 15px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+    select.pill { appearance: none; -webkit-appearance: none; }
+    select.pill option { color: #000; }
+    canvas#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+    #msg { position: fixed; left: 0; right: 0; top: 40%; text-align: center; padding: 0 16px; font-size: 16px; pointer-events: none; }
+    /* 最初だけ: ロボットの胸のあたりで指の輪が広がる（タップできる場所の合図） */
+    #hint { position: fixed; width: 76px; height: 76px; margin: -38px 0 0 -38px; pointer-events: none; z-index: 2; transition: opacity .5s; }
+    #hint.off { opacity: 0; }
+    /* 長押しのため: 指のまわりの輪が満ちていき、色が白→オレンジ→赤に変わる */
+    #charge { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; pointer-events: none; z-index: 2; opacity: 0; transition: opacity .12s; }
+    #charge.on { opacity: 1; }
+    /* Xに投稿: 右下（下の80pxはXの投稿文がかぶるので空ける） */
+    #share { position: fixed; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 3; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 999px; background: #000; color: #fff; border: 1px solid rgba(255,255,255,.35); text-decoration: none; font-size: 15px; font-weight: 600; }
+    #share:active { transform: translateY(1px); }
+    /* 広告: ヘッダーのすぐ下にずっと出す（ad.js が中に入れる）。高さは先に空けておき、ゲームはその下に描く */
+    #adSlot { position: fixed; top: 50px; left: 0; right: 0; z-index: 3; padding: 0 12px; pointer-events: none; display: none; }
+    #adSlot > * { pointer-events: auto; }
+    #result-ad.inline { background: rgba(255,255,255,.92); }
+    @media (min-height: 600px) { #adSlot { display: block; height: 82px; } }
+    @media (min-height: 800px) { #adSlot { height: 132px; } }
+    #hint circle.r { transform-origin: 38px 38px; animation: ring 1.4s ease-out infinite; }
+    #hint circle.r2 { animation-delay: .7s; }
+    @keyframes ring { from { transform: scale(.3); opacity: .9; } to { transform: scale(1); opacity: 0; } }
+  </style>
+</head>
+<body>
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">不倒翁机器人</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="sound" class="pill" aria-label="sound">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e9ecef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#e9ecef"/><path id="wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" style="display:none"/></svg>
+      </button>
+      <select id="lang" class="pill" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+    </div>
+  </header>
+  <main style="display:contents">
+    <canvas id="cv"></canvas>
+    <svg id="hint" viewBox="0 0 76 76"><circle class="r" cx="38" cy="38" r="34" fill="none" stroke="#fff" stroke-width="3"/><circle class="r r2" cx="38" cy="38" r="34" fill="none" stroke="#fff" stroke-width="3"/><circle cx="38" cy="38" r="7" fill="#fff"/></svg>
+    <svg id="charge" viewBox="0 0 96 96"><circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="6"/><circle id="chargeArc" cx="48" cy="48" r="40" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3" transform="rotate(-90 48 48)"/><circle id="chargeDot" cx="48" cy="48" r="9" fill="#fff"/></svg>
+    <a id="share" href="#"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M18.2 2.3h3.4l-7.4 8.4 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9L.9 2.3h7l4.8 6.4 5.5-6.4zm-1.2 17.9h1.9L7.1 4.2H5.1l11.9 16z"/></svg><span id="shareLabel"></span></a>
+    <div id="msg"></div>
+  </main>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 不倒翁机器人 · 中文文案
+window.__KF_ZH__ = {
+  title: '不倒翁机器人',
+  back: '← 大厅',
+  share: '分享',
+  loadErr: '加载失败，请检查网络后刷新重试。'
+};
+</script>
+<script type="module">
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('robot-stand:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('robot-stand:' + k, JSON.stringify(v)); } catch {} },
+};
+
+// ===== 言語 =====
+const L = {
+  ja: { title: '不倒翁机器人', back: '← トップへ戻る', share: 'ポスト', loadErr: '読み込みに失敗しました。通信状況を確かめて再読み込みしてください。' },
+  ko: { title: '오뚝이 로봇', back: '← 처음으로', share: '게시', loadErr: '불러오지 못했습니다. 연결을 확인하고 새로고침해 주세요.' },
+  en: { title: 'Get-Up Robot', back: '← Top', share: 'Post', loadErr: 'Failed to load. Check your connection and reload.' },
+  th: { title: 'หุ่นยนต์ลุกขึ้น', back: '← กลับหน้าแรก', share: 'โพสต์', loadErr: 'โหลดไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วโหลดใหม่' },
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (L[c]) return c; } return 'en'; };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'en';
+const t = k => L[lang][k];
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('lang').value = lang;
+  $('back').textContent = t('back');
+  if ($('msg').dataset.err) $('msg').textContent = t('loadErr');
+  $('shareLabel').textContent = t('share');
+  if (window.updateShare) window.updateShare();
+}
+$('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+if (window.__KF_ZH__) lang = 'zh';
+applyLang();
+
+// 長押しの拡大鏡・メニューを出さない
+document.addEventListener('touchstart', e => { if (!e.target.closest('a, button, select, input')) e.preventDefault(); }, { passive: false });
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('selectstart', e => e.preventDefault());
+
+// ===== 音 =====
+const CHARGE_T = 1.2; // 長押しで最大の威力になるまでの秒数
+let soundOn = store.get('sound', true), ac = null, master = null, noiseBuf = null;
+function updSound() { $('wave').style.display = soundOn ? '' : 'none'; $('mute').style.display = soundOn ? 'none' : ''; }
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+updSound();
+function unmuteIOS() {
+  try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch {}
+  try {
+    const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    const a = document.createElement('audio');
+    a.src = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.loop = true; a.setAttribute('playsinline', '');
+    a.play().catch(() => {});
+  } catch {}
+}
+function initAudio() {
+  if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+  unmuteIOS();
+  try {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createDynamicsCompressor(); master.connect(ac.destination);
+    const g = ac.createGain(); g.gain.value = 0; g.connect(ac.destination);
+    const o = ac.createOscillator(); o.connect(g); o.start(); o.stop(ac.currentTime + 0.05);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  } catch { ac = null; }
+}
+addEventListener('pointerdown', initAudio, true);
+addEventListener('keydown', initAudio, true);
+const on = () => soundOn && ac;
+let voiceEnds = [];
+function slot(dur) { const n = ac.currentTime; voiceEnds = voiceEnds.filter(x => x > n); if (voiceEnds.length >= 24) return false; voiceEnds.push(n + dur); return true; }
+const gate = {};
+function every(key, ms) { const n = performance.now(); if (n - (gate[key] || 0) < ms) return false; gate[key] = n; return true; }
+const unplug = nodes => () => { for (const x of nodes) { try { x.disconnect(); } catch {} } };
+function noiseSrc(n, dur) { const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.start(n, Math.random() * 0.5); s.stop(n + dur + 0.05); return s; }
+// 金属を叩いた音: ノイズを金属の共鳴（高いQの帯域）にいくつも通す ＋ 胴鳴り
+function clank(v, pitch = 1, delay = 0) {
+  if (!on() || !slot(0.9)) return;
+  const n = ac.currentTime + delay, dur = 0.25 + 0.5 * v;
+  const src = noiseSrc(n, 0.03), env = ac.createGain(), out = ac.createGain(), nodes = [src, env, out];
+  env.gain.setValueAtTime(1, n); env.gain.exponentialRampToValueAtTime(0.001, n + 0.025);
+  out.gain.value = 0.5 * v;
+  src.connect(env);
+  for (const [f, q, g] of [[640, 30, 1], [1410, 45, 0.8], [2380, 60, 0.6], [3570, 70, 0.45], [5200, 60, 0.25]]) {
+    const bp = ac.createBiquadFilter(), gg = ac.createGain();
+    bp.type = 'bandpass'; bp.frequency.value = f * pitch * (0.97 + Math.random() * 0.06); bp.Q.value = q;
+    gg.gain.setValueAtTime(g * 6, n); gg.gain.exponentialRampToValueAtTime(0.001, n + dur * (1.2 - f / 6000));
+    env.connect(bp).connect(gg).connect(out); nodes.push(bp, gg);
+  }
+  // 当たった瞬間のコツッ
+  const hp = ac.createBiquadFilter(), hg = ac.createGain();
+  hp.type = 'highpass'; hp.frequency.value = 1800; hg.gain.value = 0.6;
+  env.connect(hp).connect(hg).connect(out); nodes.push(hp, hg);
+  // 胴鳴り
+  const o = ac.createOscillator(), og = ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(150 * pitch, n); o.frequency.exponentialRampToValueAtTime(70 * pitch, n + 0.2);
+  og.gain.setValueAtTime(0.0001, n); og.gain.linearRampToValueAtTime(0.7 * v, n + 0.005); og.gain.exponentialRampToValueAtTime(0.001, n + 0.22);
+  o.connect(og).connect(master); o.start(n); o.stop(n + 0.25); nodes.push(o, og);
+  out.connect(master);
+  o.onended = unplug(nodes);
+}
+// ボールが床で弾む: ゴムのボフッ
+function thump(v) {
+  if (!on() || !slot(0.2)) return;
+  const n = ac.currentTime, src = noiseSrc(n, 0.12), lp = ac.createBiquadFilter(), g = ac.createGain();
+  lp.type = 'lowpass'; lp.frequency.value = 500;
+  g.gain.setValueAtTime(0.0001, n); g.gain.linearRampToValueAtTime(0.5 * v, n + 0.004); g.gain.exponentialRampToValueAtTime(0.001, n + 0.1);
+  const o = ac.createOscillator(), og = ac.createGain();
+  o.frequency.setValueAtTime(120, n); o.frequency.exponentialRampToValueAtTime(60, n + 0.1);
+  og.gain.setValueAtTime(0.0001, n); og.gain.linearRampToValueAtTime(0.5 * v, n + 0.004); og.gain.exponentialRampToValueAtTime(0.001, n + 0.12);
+  src.connect(lp).connect(g).connect(master); o.connect(og).connect(master); o.start(n); o.stop(n + 0.14);
+  o.onended = unplug([src, lp, g, o, og]);
+}
+// 投げた時の風切り音
+function whoosh(v = 0) {
+  if (!on() || !slot(0.3)) return;
+  const n = ac.currentTime, src = noiseSrc(n, 0.25), bp = ac.createBiquadFilter(), g = ac.createGain();
+  bp.type = 'bandpass'; bp.Q.value = 1.4; bp.frequency.setValueAtTime(600, n); bp.frequency.exponentialRampToValueAtTime(2200, n + 0.2);
+  g.gain.setValueAtTime(0.0001, n); g.gain.linearRampToValueAtTime(0.16 + 0.14 * v, n + 0.06); g.gain.exponentialRampToValueAtTime(0.001, n + 0.24);
+  src.connect(bp).connect(g).connect(master);
+  src.onended = unplug([src, bp, g]);
+}
+// 関節のモーター音（ウィーン）
+function servo(dur, f0, f1, vol = 0.05, delay = 0) {
+  if (!on() || !slot(dur + delay)) return;
+  const n = ac.currentTime + delay, o = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+  o.type = 'sawtooth'; o2.type = 'square';
+  o.frequency.setValueAtTime(f0, n); o.frequency.linearRampToValueAtTime(f1, n + dur * 0.7); o.frequency.linearRampToValueAtTime(f1 * 0.9, n + dur);
+  o2.frequency.setValueAtTime(f0 * 2.01, n); o2.frequency.linearRampToValueAtTime(f1 * 2.01, n + dur * 0.7);
+  lp.type = 'lowpass'; lp.frequency.value = 1400; lp.Q.value = 4;
+  g.gain.setValueAtTime(0.0001, n); g.gain.linearRampToValueAtTime(vol, n + 0.05); g.gain.setValueAtTime(vol, n + dur - 0.08); g.gain.exponentialRampToValueAtTime(0.001, n + dur);
+  const g2 = ac.createGain(); g2.gain.value = 0.3;
+  o.connect(lp); o2.connect(g2).connect(lp); lp.connect(g).connect(master);
+  o.start(n); o2.start(n); o.stop(n + dur + 0.02); o2.stop(n + dur + 0.02);
+  o.onended = unplug([o, o2, lp, g, g2]);
+}
+function beep(f, dur, delay = 0, vol = 0.08) {
+  if (!on() || !slot(dur + delay)) return;
+  const n = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'square'; o.frequency.value = f;
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2500;
+  g.gain.setValueAtTime(0.0001, n); g.gain.linearRampToValueAtTime(vol, n + 0.008); g.gain.setValueAtTime(vol, n + dur - 0.02); g.gain.exponentialRampToValueAtTime(0.001, n + dur);
+  o.connect(lp).connect(g).connect(master); o.start(n); o.stop(n + dur + 0.02);
+  o.onended = unplug([o, g, lp]);
+}
+// ロボットの声: 矩形波（声帯の代わり）を母音の共鳴に通し、さらに細かく音量を刻んでロボットらしくする
+const VOW = { a: [800, 1200, 2500], i: [300, 2300, 3000], u: [350, 1250, 2200], e: [500, 1900, 2500], o: [500, 850, 2400] };
+function voice(vowels, dur, f0, f1, vol = 0.22, delay = 0) {
+  if (!on() || !slot(dur + delay)) return;
+  const n = ac.currentTime + delay, o = ac.createOscillator(), src = ac.createGain(), out = ac.createGain(), nodes = [o, src, out];
+  o.type = 'square';
+  // 音程は階段状に動かす（機械っぽく）
+  const steps = Math.max(2, Math.round(dur / 0.06));
+  for (let i = 0; i <= steps; i++) { const u = i / steps; o.frequency.setValueAtTime(f0 * Math.pow(f1 / f0, u), n + u * dur); }
+  o.connect(src);
+  const fs = [0, 1, 2].map(i => { const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 9; const g = ac.createGain(); g.gain.value = [1, 0.6, 0.3][i]; src.connect(bp).connect(g).connect(out); nodes.push(bp, g); return bp; });
+  vowels.forEach((v, k) => { const tt = n + dur * k / vowels.length; fs.forEach((bp, i) => { if (k === 0) bp.frequency.setValueAtTime(VOW[v][i], tt); else bp.frequency.linearRampToValueAtTime(VOW[v][i], tt + 0.04); }); });
+  // リングモジュレーション
+  const rm = ac.createOscillator(), rg = ac.createGain();
+  rm.type = 'sine'; rm.frequency.value = 55; rg.gain.value = 0.5;
+  const mod = ac.createGain(); mod.gain.value = 0.5;
+  rm.connect(rg).connect(mod.gain); out.connect(mod); nodes.push(rm, rg, mod);
+  const env = ac.createGain(); nodes.push(env);
+  env.gain.setValueAtTime(0.0001, n); env.gain.linearRampToValueAtTime(vol * 3, n + 0.02); env.gain.setValueAtTime(vol * 3, n + dur * 0.7); env.gain.exponentialRampToValueAtTime(0.001, n + dur);
+  mod.connect(env).connect(master);
+  o.start(n); rm.start(n); o.stop(n + dur + 0.03); rm.stop(n + dur + 0.03);
+  o.onended = unplug(nodes);
+}
+// ためている間のウィーン（だんだん高く）
+let chargeSnd = null;
+function chargeStart() {
+  if (!on() || chargeSnd) return;
+  const n = ac.currentTime, o = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+  o.type = 'sawtooth'; o2.type = 'sine';
+  o.frequency.setValueAtTime(140, n); o.frequency.linearRampToValueAtTime(520, n + CHARGE_T);
+  o2.frequency.setValueAtTime(280, n); o2.frequency.linearRampToValueAtTime(1040, n + CHARGE_T);
+  lp.type = 'lowpass'; lp.frequency.setValueAtTime(500, n); lp.frequency.linearRampToValueAtTime(2200, n + CHARGE_T); lp.Q.value = 3;
+  g.gain.setValueAtTime(0.0001, n); g.gain.linearRampToValueAtTime(0.045, n + 0.15);
+  o.connect(lp); o2.connect(lp); lp.connect(g).connect(master); o.start(n); o2.start(n);
+  chargeSnd = { o, o2, lp, g };
+}
+function chargeStop() {
+  if (!chargeSnd) return;
+  const { o, o2, lp, g } = chargeSnd, n = ac.currentTime; chargeSnd = null;
+  g.gain.cancelScheduledValues(n); g.gain.setValueAtTime(g.gain.value, n); g.gain.linearRampToValueAtTime(0.0001, n + 0.06);
+  o.stop(n + 0.08); o2.stop(n + 0.08); o.onended = unplug([o, o2, lp, g]);
+}
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function ouch(v) {
+  const f = 190 + Math.random() * 40;
+  voice(pick([['u'], ['o', 'u'], ['u', 'o']]), 0.16 + 0.12 * v, f * 1.3, f * 0.95, 0.18 + 0.1 * v);
+}
+function wail() { const f = 230 + Math.random() * 30; voice(pick([['a', 'a', 'o'], ['a', 'u'], ['o', 'a', 'u']]), 0.7, f * 1.4, f * 0.6, 0.25); }
+function hum() { voice(pick([['u', 'o'], ['o', 'i']]), 0.32, 160, 210, 0.16); }
+
+// ===== 読み込み =====
+let THREE, RAPIER, RoundedBoxGeometry, createSim;
+try {
+  [THREE, RAPIER, { RoundedBoxGeometry }, { createSim }] = await Promise.all([
+    import('three'),
+    import('../lib/rapier/rapier.es.js').then(async m => { await m.default.init(); return m.default; }),
+    import('three/addons/geometries/RoundedBoxGeometry.js'),
+    import('./robot.js'),
+  ]);
+} catch (e) {
+  console.error(e);
+  $('msg').dataset.err = '1'; $('msg').textContent = t('loadErr');
+  throw e;
+}
+const sim = createSim(RAPIER);
+
+// ===== 描画の準備 =====
+const BG = 0x23262d;
+const canvas = $('cv');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(BG);
+scene.fog = new THREE.Fog(BG, 7, 22);
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 60);
+
+scene.add(new THREE.HemisphereLight(0xa9c2e6, 0x2b2f36, 0.9));
+const sun = new THREE.DirectionalLight(0xffe2bf, 2.6);
+sun.position.set(2.5, 5, 3.5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -2.5, right: 2.5, top: 2.5, bottom: -2.5, near: 0.5, far: 14 });
+sun.shadow.normalBias = 0.02;
+scene.add(sun, sun.target);
+// 後ろからの青い光（暗い背景でも形の輪郭が見えるように）
+const rim = new THREE.DirectionalLight(0x8fb4ff, 1.2);
+rim.position.set(-3, 3, -4);
+scene.add(rim, rim.target);
+
+// 地面: 暗い色に薄い市松模様（50cmのマス。遠近感がわかるように）。遠くは霧で背景にとけこむ
+const checkTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  x.fillStyle = '#2c3039'; x.fillRect(0, 0, 128, 128);
+  x.fillStyle = '#343944'; x.fillRect(0, 0, 64, 64); x.fillRect(64, 64, 64, 64);
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+  tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(80, 80);
+  tx.magFilter = THREE.NearestFilter; tx.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tx;
+})();
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ map: checkTex, roughness: 0.95 }));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ===== ロボットの見た目 =====
+const M = {
+  white: new THREE.MeshStandardMaterial({ color: 0xeef0f2, roughness: 0.32, metalness: 0.05 }),
+  dark: new THREE.MeshStandardMaterial({ color: 0x5a606b, roughness: 0.4, metalness: 0.5 }),
+  glass: new THREE.MeshStandardMaterial({ color: 0x0b0e12, roughness: 0.15, metalness: 0.3 }),
+};
+const geoCache = new Map();
+const geo = (key, make) => { if (!geoCache.has(key)) geoCache.set(key, make()); return geoCache.get(key); };
+const rbox = (w, h, d, r) => geo(`rb${w},${h},${d},${r}`, () => new RoundedBoxGeometry(w, h, d, 4, r));
+const cap = (r, len) => geo(`cap${r},${len}`, () => new THREE.CapsuleGeometry(r, len, 6, 16));
+const sph = r => geo(`sp${r}`, () => new THREE.SphereGeometry(r, 24, 16));
+const cyl = (r1, r2, h) => geo(`cy${r1},${r2},${h}`, () => new THREE.CylinderGeometry(r1, r2, h, 24));
+const pickables = [];
+function mesh(g, m, parent, x = 0, y = 0, z = 0, opts = {}) {
+  const o = new THREE.Mesh(g, m);
+  o.position.set(x, y, z);
+  if (opts.rx) o.rotation.x = opts.rx;
+  if (opts.rz) o.rotation.z = opts.rz;
+  o.castShadow = opts.shadow !== false; o.receiveShadow = true;
+  parent.add(o); pickables.push(o);
+  return o;
+}
+
+// 顔のモニター: いつもの猫を映す
+const faceCv = document.createElement('canvas'); faceCv.width = 256; faceCv.height = 184;
+const fctx = faceCv.getContext('2d');
+const faceTex = new THREE.CanvasTexture(faceCv); faceTex.colorSpace = THREE.SRGBColorSpace;
+const catImg = new Image(); catImg.src = 'cat.png';
+let faceMode = 'normal', faceSpin = 0;
+function drawFace() {
+  const W = 256, H = 184;
+  const g = fctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0d2633'); g.addColorStop(1, '#06131b');
+  fctx.fillStyle = g; fctx.fillRect(0, 0, W, H);
+  // 走査線
+  fctx.fillStyle = 'rgba(120,220,255,0.06)';
+  for (let y = 0; y < H; y += 4) fctx.fillRect(0, y, W, 2);
+  if (catImg.complete && catImg.naturalWidth) {
+    const s = 0.78, cw = 320 * s, cx = (W - cw) / 2, cy = (H - cw) / 2 - 4;
+    fctx.save();
+    if (faceMode === 'hit') { fctx.translate(W / 2, H / 2); fctx.scale(1.08, 0.9); fctx.translate(-W / 2, -H / 2); }
+    fctx.drawImage(catImg, cx, cy, cw, cw);
+    // 目の位置（cat.png 上で 108,152 / 205,163）
+    const eyes = [[108, 152], [205, 163]].map(([x, y]) => [cx + x * s, cy + y * s]);
+    if (faceMode === 'hit') {
+      // ぎゅっとつぶった目（> <）
+      eyes.forEach(([x, y], i) => {
+        fctx.fillStyle = '#6b5a4a'; fctx.beginPath(); fctx.arc(x, y, 14, 0, Math.PI * 2); fctx.fill();
+        fctx.strokeStyle = '#111'; fctx.lineWidth = 5; fctx.lineCap = 'round'; fctx.lineJoin = 'round';
+        const d = i === 0 ? 1 : -1;
+        fctx.beginPath(); fctx.moveTo(x - 9 * d, y - 8); fctx.lineTo(x + 7 * d, y); fctx.lineTo(x - 9 * d, y + 8); fctx.stroke();
+      });
+    } else if (faceMode === 'dizzy') {
+      // 目を回す（ぐるぐる）
+      eyes.forEach(([x, y], i) => {
+        fctx.fillStyle = '#f4f1ea'; fctx.beginPath(); fctx.arc(x, y, 15, 0, Math.PI * 2); fctx.fill();
+        fctx.strokeStyle = '#1a1a1a'; fctx.lineWidth = 2.6; fctx.beginPath();
+        const dir = i === 0 ? 1 : -1;
+        for (let a = 0; a < Math.PI * 5; a += 0.2) { const r = a * 0.85, px = x + Math.cos(a * dir + faceSpin) * r, py = y + Math.sin(a * dir + faceSpin) * r; a ? fctx.lineTo(px, py) : fctx.moveTo(px, py); }
+        fctx.stroke();
+      });
+    }
+    fctx.restore();
+  }
+  // 画面のつや
+  const gl = fctx.createLinearGradient(0, 0, W, H); gl.addColorStop(0, 'rgba(255,255,255,0.12)'); gl.addColorStop(0.4, 'rgba(255,255,255,0)');
+  fctx.fillStyle = gl; fctx.fillRect(0, 0, W, H);
+  faceTex.needsUpdate = true;
+}
+catImg.onload = drawFace;
+drawFace();
+function setFace(m) { if (faceMode !== m) { faceMode = m; drawFace(); } }
+
+const visuals = []; // { part, group, prevP, prevQ }
+function addVisual(name, build) {
+  const p = sim.parts[name], g = new THREE.Group();
+  build(g);
+  scene.add(g);
+  g.traverse(o => { o.userData.part = p; });
+  visuals.push({ part: p, group: g, pp: new THREE.Vector3(), pq: new THREE.Quaternion(), cp: new THREE.Vector3(), cq: new THREE.Quaternion() });
+}
+// シンプルな見た目: 白い外装＋グレーの関節＋顔のモニター
+addVisual('pelvis', g => { mesh(rbox(0.3, 0.14, 0.2, 0.06), M.dark, g); });
+addVisual('torso', g => {
+  mesh(rbox(0.38, 0.42, 0.24, 0.1), M.white, g, 0, 0.01, 0);
+  mesh(cyl(0.12, 0.13, 0.08), M.dark, g, 0, -0.22, 0); // 腰
+  mesh(cyl(0.045, 0.05, 0.06), M.dark, g, 0, 0.24, 0); // 首
+});
+addVisual('head', g => {
+  mesh(rbox(0.3, 0.24, 0.26, 0.09), M.white, g);
+  mesh(rbox(0.25, 0.18, 0.02, 0.03), M.glass, g, 0, -0.005, 0.125);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.225, 0.162), new THREE.MeshBasicMaterial({ map: faceTex, toneMapped: false }));
+  scr.position.set(0, -0.005, 0.1365); g.add(scr); pickables.push(scr);
+});
+for (const k of ['L', 'R']) {
+  addVisual('thigh' + k, g => { mesh(cap(0.068, 0.25), M.white, g); mesh(sph(0.072), M.dark, g, 0, 0.17, 0); });
+  addVisual('shin' + k, g => { mesh(cap(0.062, 0.24), M.white, g); mesh(sph(0.07), M.dark, g, 0, 0.19, 0); });
+  addVisual('foot' + k, g => { mesh(rbox(0.14, 0.08, 0.25, 0.035), M.dark, g, 0, 0, 0); });
+  addVisual('upper' + k, g => { mesh(cap(0.052, 0.2), M.white, g); mesh(sph(0.068), M.dark, g, 0, 0.14, 0); });
+  addVisual('fore' + k, g => { mesh(cap(0.047, 0.19), M.white, g); mesh(sph(0.055), M.dark, g, 0, 0.15, 0); mesh(sph(0.06), M.dark, g, 0, -0.18, 0); });
+}
+function readPose(v, to) { const t = v.part.body.translation(), q = v.part.body.rotation(); to.p.set(t.x, t.y, t.z); to.q.set(q.x, q.y, q.z, q.w); }
+for (const v of visuals) { readPose(v, { p: v.cp, q: v.cq }); v.pp.copy(v.cp); v.pq.copy(v.cq); }
+
+// ===== ボール =====
+const BALL_R = 0.11, MAX_BALLS = 12;
+const ballTex = (() => { // 縫い目のあるゴムボール
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d');
+  x.fillStyle = '#ffd43b'; x.fillRect(0, 0, 256, 128);
+  x.strokeStyle = '#e8590c'; x.lineWidth = 7;
+  for (const o of [0, 128]) { x.beginPath(); for (let i = 0; i <= 128; i++) { const px = o + i, py = 64 + Math.sin(i / 128 * Math.PI * 2) * 34; i ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); }
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx;
+})();
+const ballMat = new THREE.MeshStandardMaterial({ map: ballTex, roughness: 0.55 });
+const ballGeo = new THREE.SphereGeometry(BALL_R, 28, 18);
+const ballPool = [];
+for (let i = 0; i < MAX_BALLS; i++) {
+  const m = new THREE.Mesh(ballGeo, ballMat); m.castShadow = true; m.position.set(0, -5, 0); scene.add(m);
+  ballPool.push({ mesh: m, ball: null, pp: new THREE.Vector3(), pq: new THREE.Quaternion(), cp: new THREE.Vector3(), cq: new THREE.Quaternion() });
+}
+
+// ===== 粒（火花・土ぼこり）=====
+const sparkTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,220,140,0.9)'); g.addColorStop(1, 'rgba(255,140,40,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+// 土ぼこり: ぼかした塊を重ねた雲の模様を4種類
+const dustTex = [0, 1, 2, 3].map(k => {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  let seed = 7 + k * 31; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 14; i++) {
+    const px = 64 + (rnd() - 0.5) * 60, py = 64 + (rnd() - 0.5) * 50, r = 14 + rnd() * 26;
+    const g = x.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, 'rgba(200,205,215,0.55)'); g.addColorStop(1, 'rgba(200,205,215,0)');
+    x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill();
+  }
+  x.globalCompositeOperation = 'destination-in';
+  const m = x.createRadialGradient(64, 64, 20, 64, 64, 64); m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = m; x.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+});
+const particles = [];
+function spawnSpark(p, n, power) {
+  for (let i = 0; i < n; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: sparkTex, color: 0xffd9a0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: false }));
+    s.position.copy(p); const sc = 0.03 + Math.random() * 0.04; s.scale.set(sc, sc, sc);
+    const v = new THREE.Vector3(Math.random() - 0.5, Math.random() * 0.8, Math.random() - 0.5).normalize().multiplyScalar((1.5 + Math.random() * 3) * power);
+    scene.add(s); particles.push({ s, v, life: 0.25 + Math.random() * 0.25, age: 0, kind: 'spark', sc });
+  }
+}
+function spawnDust(p, n, size = 1) {
+  for (let i = 0; i < n; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: dustTex[i % 4], transparent: true, depthWrite: false, depthTest: false, toneMapped: false, fog: false, opacity: 0 }));
+    s.material.rotation = Math.random() * Math.PI * 2;
+    const a = Math.random() * Math.PI * 2, r = Math.random() * 0.3 * size;
+    s.position.set(p.x + Math.cos(a) * r, 0.06 + Math.random() * 0.08, p.z + Math.sin(a) * r);
+    const v = new THREE.Vector3(Math.cos(a), 0.25 + Math.random() * 0.3, Math.sin(a)).multiplyScalar(0.5 + Math.random() * 0.9);
+    scene.add(s); particles.push({ s, v, life: 1.2 + Math.random() * 0.8, age: 0, kind: 'dust', sc: (0.25 + Math.random() * 0.25) * size, spin: (Math.random() - 0.5) * 0.8, peak: 0.35 + Math.random() * 0.3 });
+  }
+}
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const q = particles[i]; q.age += dt; const u = q.age / q.life;
+    if (u >= 1) { scene.remove(q.s); q.s.material.dispose(); particles.splice(i, 1); continue; }
+    if (q.kind === 'spark') {
+      q.v.y -= 9.8 * dt; q.s.position.addScaledVector(q.v, dt);
+      if (q.s.position.y < 0.01) { q.s.position.y = 0.01; q.v.y *= -0.3; q.v.x *= 0.6; q.v.z *= 0.6; }
+      const k = q.sc * (1 - u * 0.6); q.s.scale.set(k, k, k); q.s.material.opacity = 1 - u;
+    } else {
+      q.v.multiplyScalar(Math.pow(0.25, dt)); q.s.position.addScaledVector(q.v, dt);
+      const k = q.sc * (0.5 + 1.5 * Math.sqrt(u)); q.s.scale.set(k, k, k);
+      q.s.material.rotation += q.spin * dt;
+      q.s.material.opacity = q.peak * (u < 0.15 ? u / 0.15 : Math.pow((1 - u) / 0.85, 1.5));
+    }
+  }
+}
+
+// ===== 画面の大きさ =====
+const camT = new THREE.Vector3(0, 0.9, 0); // カメラが見る点（ロボットにゆっくりついていく）
+let camYaw = 0, camPitch = 0.1, camDist = 5, topPad = 52;
+function resize() {
+  const w = innerWidth, H = innerHeight;
+  renderer.setSize(w, H, false);
+  // 上のヘッダーと下の80px（Xの投稿文がかぶる所）を除いた範囲にロボットを収める
+  const bottom = 80;
+  // 広告の枠（高さ600px以上の画面）の下からロボットを描く
+  topPad = 52 + (H >= 800 ? 136 : H >= 600 ? 86 : 0);
+  const h = Math.max(160, H - topPad - bottom);
+  camera.aspect = w / h;
+  camera.setViewOffset(w, h, 0, -topPad, w, H);
+  const vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+  // 縦は足元から頭の上まで、横はよろけて動ける幅
+  const halfH = 1.0, halfW = w / h < 0.8 ? 0.85 : 1.25;
+  camDist = Math.min(Math.max(halfW / Math.tan(hf / 2), halfH / Math.tan(vf / 2)) + 1.0, 14);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+function placeCamera() {
+  const cp = Math.cos(camPitch);
+  camera.position.set(camT.x + Math.sin(camYaw) * cp * camDist, camT.y + Math.sin(camPitch) * camDist, camT.z + Math.cos(camYaw) * cp * camDist);
+  camera.lookAt(camT);
+  camera.updateMatrixWorld();
+  sun.target.position.copy(camT); sun.position.copy(camT).add(new THREE.Vector3(2.5, 5, 3.5));
+  rim.target.position.copy(camT); rim.position.copy(camT).add(new THREE.Vector3(-3, 3, -4));
+}
+placeCamera();
+
+// ===== 操作: 1本指タップで投げる・2本指（マウスはドラッグ／トラックパッドはスクロール）でまわりこむ =====
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+let lastThrow = 0, thrown = 0;
+const ptrs = new Map(); // 押している指
+let tap = null, orbit = null;
+const center = () => { let x = 0, y = 0; for (const p of ptrs.values()) { x += p.x; y += p.y; } return { x: x / ptrs.size, y: y / ptrs.size }; };
+function startOrbit() { const c = center(); orbit = { x: c.x, y: c.y, yaw: camYaw, pitch: camPitch }; }
+function rotateBy(dx, dy) { camYaw -= dx * 0.008; camPitch = Math.max(-0.05, Math.min(0.9, camPitch + dy * 0.005)); }
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 1) tap = { id: e.pointerId, x: e.clientX, y: e.clientY, mouse: e.pointerType === 'mouse', moved: false, t0: performance.now() };
+  else { tap = null; endCharge(); startOrbit(); } // 2本目の指が来たら投げずに回す
+});
+canvas.addEventListener('pointermove', e => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  p.x = e.clientX; p.y = e.clientY;
+  if (tap && tap.id === e.pointerId && !tap.moved) {
+    const d = Math.hypot(e.clientX - tap.x, e.clientY - tap.y);
+    // 1本指は動かしてもキャンセルしない（ねらいは離した所）。マウスはためる前に動かした時だけドラッグで回す
+    if (tap.mouse && d > 10 && !tap.charging) { tap.moved = true; endCharge(); if (!orbit) startOrbit(); }
+  }
+  if (orbit && (ptrs.size >= 2 || (tap && tap.mouse))) {
+    const c = center();
+    camYaw = orbit.yaw; camPitch = orbit.pitch; rotateBy(c.x - orbit.x, c.y - orbit.y);
+  }
+});
+const endPtr = e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if (tap && tap.id === e.pointerId && !tap.moved && e.type === 'pointerup') throwAt(e.clientX, e.clientY, chargePower());
+  if (tap && tap.id === e.pointerId) { tap = null; endCharge(); }
+  if (ptrs.size >= 2) startOrbit(); else orbit = null;
+};
+canvas.addEventListener('pointerup', endPtr);
+canvas.addEventListener('pointercancel', endPtr);
+// 長押しの威力（0〜1）
+const chargePower = () => tap ? Math.min(1, Math.max(0, (performance.now() - tap.t0 - 120) / 1000 / CHARGE_T)) : 0;
+function endCharge() { $('charge').classList.remove('on'); chargeStop(); if (tap) tap.charging = false; }
+const chargeCol = p => { const c1 = [255, 255, 255], c2 = [255, 150, 60], c3 = [255, 70, 50]; const [a, b, u] = p < 0.5 ? [c1, c2, p * 2] : [c2, c3, p * 2 - 1]; return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * u)).join(',')})`; };
+function updateCharge() {
+  if (!tap || tap.moved || ptrs.size !== 1) return;
+  const held = performance.now() - tap.t0;
+  if (held < 120) return; // すぐ離すタップでは出さない
+  if (!tap.charging) { tap.charging = true; $('charge').classList.add('on'); chargeStart(); }
+  const p = chargePower(), pp = ptrs.get(tap.id), col = chargeCol(p);
+  const el = $('charge'); el.style.left = pp.x + 'px'; el.style.top = pp.y + 'px';
+  $('chargeArc').setAttribute('stroke-dashoffset', (251.3 * (1 - p)).toFixed(1)); $('chargeArc').setAttribute('stroke', col);
+  $('chargeDot').setAttribute('fill', col); $('chargeDot').setAttribute('r', (9 + 6 * p).toFixed(1));
+}
+// トラックパッドの2本指スクロール
+canvas.addEventListener('wheel', e => { e.preventDefault(); rotateBy(e.deltaX * 0.6, e.deltaY * 0.6); }, { passive: false });
+
+const aimRing = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.065, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthTest: false, toneMapped: false, fog: false }));
+aimRing.renderOrder = 10; scene.add(aimRing);
+let aimT = 1;
+
+function throwAt(cx, cy, power = 0) {
+  const now = performance.now();
+  if (now - lastThrow < 110) return;
+  lastThrow = now;
+  ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(pickables, false)[0];
+  let target = new THREE.Vector3(), normal = null;
+  if (hit) { target.copy(hit.point); normal = hit.face ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld) : null; }
+  else if (!ray.ray.intersectPlane(groundPlane, target) || target.distanceTo(camera.position) > camDist * 2.5) {
+    target.copy(ray.ray.origin).addScaledVector(ray.ray.direction, camDist);
+  }
+  // 投げる位置: カメラの右下
+  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+  const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+  const from = camera.position.clone().addScaledVector(right, 0.35).addScaledVector(up, -0.35).addScaledVector(fwd, 0.8);
+  const d = target.clone().sub(from), dist = d.length(), speed = 13 + 15 * power, T = dist / speed; // 長押しで 13〜28 m/s
+  const vel = d.divideScalar(T); vel.y += 0.5 * 9.81 * T;
+  // 古いボールから片付ける
+  if (sim.balls.length >= MAX_BALLS) removeBall(ballPool.find(b => b.ball === sim.balls[0]));
+  // 長押しで重く・大きく（2.5〜9kg、半径11〜16cm。重さは押し始めはゆっくり増える）
+  const r = BALL_R * (1 + 0.45 * power), ball = sim.throwBall(from, vel, r, 2.5 + 6.5 * power * power);
+  ball.prevVel = { x: vel.x, y: vel.y, z: vel.z };
+  const slotB = ballPool.find(b => !b.ball);
+  slotB.ball = ball; ball.view = slotB;
+  slotB.cp.copy(from); slotB.pp.copy(from); slotB.cq.identity(); slotB.pq.identity(); slotB.mesh.scale.setScalar(r / BALL_R); slotB.base = r / BALL_R;
+  whoosh(power);
+  aimRing.position.copy(target); if (normal) aimRing.lookAt(target.clone().add(normal)); else aimRing.lookAt(camera.position);
+  aimT = 0;
+  thrown++;
+  if (thrown === 1) $('hint').classList.add('off');
+}
+function removeBall(v) {
+  if (!v || !v.ball) return;
+  sim.removeBall(v.ball); v.ball = null; v.mesh.position.set(0, -5, 0);
+}
+
+// ===== 当たった時の反応 =====
+let faceT = 0, voiceCool = 0, crashCool = 0, lastState = sim.state;
+sim.onStep = () => { if (every('step', 120)) servo(0.16, 260, 330, 0.025); };
+sim.onLand = () => { if (every('land', 90)) clank(0.18, 0.55); };
+sim.onFall = () => { wail(); setFace('dizzy'); faceT = 99; snapAt = performance.now() + 550; };
+sim.onGetup = () => {};
+// 起き上がりの段取りごとにモーター音
+sim.onPhase = ph => {
+  if (ph === 'roll') servo(0.9, 120, 220, 0.05);
+  else if (ph === 'push') servo(0.8, 150, 280, 0.055);
+  else if (ph === 'knees') servo(0.6, 180, 260, 0.045);
+  else if (ph === 'squat') { servo(0.8, 160, 300, 0.055); clank(0.15, 0.6, 0.5); }
+  else if (ph === 'rise') servo(1.0, 140, 360, 0.06);
+};
+const tmpV = new THREE.Vector3();
+function handleHits() {
+  for (const h of sim.hits) {
+    if (h.ball) {
+      const b = h.ball, pv = b.prevVel || { x: 0, y: 0, z: 0 };
+      const bp = b.body.translation();
+      if (h.part) {
+        const v = h.part.body.linvel();
+        const rel = Math.hypot(pv.x - v.x, pv.y - v.y, pv.z - v.z);
+        if (rel < 1.5) continue;
+        const k = Math.min(1, rel / 15);
+        const pp = h.part.body.translation();
+        tmpV.set(bp.x, bp.y, bp.z).lerp(new THREE.Vector3(pp.x, pp.y, pp.z), 0.35);
+        spawnSpark(tmpV, Math.round(4 + 10 * k), 0.4 + k);
+        // 重いボールほど低く重い音
+        clank(0.25 + 0.75 * k, (h.part.name === 'head' ? 1.25 : h.part.name.startsWith('fore') || h.part.name.startsWith('upper') ? 1.4 : 1) * Math.pow(2.5 / b.mass, 0.25));
+        if (sim.state === 'stand' && k > 0.45) {
+          if (voiceCool <= 0) { ouch(k); voiceCool = 0.5; }
+          setFace('hit'); faceT = 0.55;
+        }
+      } else {
+        const sp = Math.abs(pv.y);
+        if (sp > 1.2 && every('thump' + b.collider.handle, 150)) thump(Math.min(1, sp / 8));
+      }
+    } else if (h.part && sim.state === 'fallen') {
+      // 倒れて床にぶつかった
+      const n = h.part.name;
+      if ((n === 'torso' || n === 'head' || n === 'pelvis') && crashCool <= 0) {
+        const v = h.part.body.linvel(), sp = Math.hypot(v.x, v.y, v.z);
+        if (sp > 0.8) {
+          const p = h.part.body.translation();
+          clank(Math.min(1, 0.4 + sp / 4), 0.7); clank(0.5, 0.9, 0.06); clank(0.35, 1.2, 0.13);
+          spawnDust(p, 10, 1);
+          crashCool = 0.35;
+        }
+      }
+    }
+  }
+}
+
+// ===== ループ（物理は 1/120 秒きざみ・描画は補間）=====
+let acc = 0, last = performance.now(), faceTimer = 0;
+const hintPos = new THREE.Vector3();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  acc += dt;
+  while (acc >= sim.DT) {
+    for (const v of visuals) { v.pp.copy(v.cp); v.pq.copy(v.cq); }
+    for (const b of ballPool) if (b.ball) { b.pp.copy(b.cp); b.pq.copy(b.cq); const lv = b.ball.body.linvel(); b.ball.prevVel = { x: lv.x, y: lv.y, z: lv.z }; }
+    sim.step();
+    handleHits();
+    for (const v of visuals) readPose(v, { p: v.cp, q: v.cq });
+    for (const b of ballPool) if (b.ball) { readPose({ part: b.ball }, { p: b.cp, q: b.cq }); b.ball.age += sim.DT; }
+    acc -= sim.DT;
+  }
+  const a = acc / sim.DT;
+  for (const v of visuals) { v.group.position.lerpVectors(v.pp, v.cp, a); v.group.quaternion.slerpQuaternions(v.pq, v.cq, a); }
+  for (const b of ballPool) {
+    if (!b.ball) continue;
+    b.mesh.position.lerpVectors(b.pp, b.cp, a); b.mesh.quaternion.slerpQuaternions(b.pq, b.cq, a);
+    // 古いボールは小さくなって消える
+    const age = b.ball.age;
+    if (age > 7) b.mesh.scale.setScalar(b.base * Math.max(0.01, 1 - (age - 7) / 0.5));
+    if (age > 7.5 || b.cp.y < -3) removeBall(b);
+  }
+  // 顔
+  voiceCool -= dt; crashCool -= dt;
+  if (sim.state !== lastState) {
+    if (sim.state === 'stand' && lastState === 'getup') { setFace('normal'); beep(880, 0.07, 0); beep(1320, 0.1, 0.09); }
+    if (sim.state === 'getup') hum();
+    lastState = sim.state;
+  }
+  if (faceMode === 'hit') { faceT -= dt; if (faceT <= 0) setFace('normal'); }
+  if (faceMode === 'dizzy') { faceTimer += dt; faceSpin += dt * 5; if (faceTimer > 1 / 15) { faceTimer = 0; drawFace(); } if (sim.state === 'stand') setFace('normal'); }
+  // カメラはロボットにゆっくりついていく
+  const pt = sim.parts.pelvis.body.translation();
+  const kf = 1 - Math.exp(-dt * 1.5);
+  camT.x += (pt.x - camT.x) * kf; camT.z += (pt.z - camT.z) * kf;
+  placeCamera();
+  updateParticles(dt);
+  if (aimT < 1) { aimT += dt / 0.4; aimRing.material.opacity = 0.8 * (1 - aimT); aimRing.scale.setScalar(1 + aimT * 1.5); }
+  // 最初の合図は胸の位置に
+  if (!$('hint').classList.contains('off')) {
+    const tp = sim.parts.torso.body.translation(); hintPos.set(tp.x, tp.y + 0.05, tp.z).project(camera);
+    $('hint').style.left = ((hintPos.x + 1) / 2 * innerWidth) + 'px'; $('hint').style.top = ((1 - hintPos.y) / 2 * innerHeight) + 'px';
+  }
+  updateCharge();
+  renderer.render(scene, camera);
+  if (snapAt && now >= snapAt) { snapAt = 0; snapShot(); }
+  requestAnimationFrame(frame);
+}
+// ===== Xに投稿（倒れた瞬間の画面を画像にして付ける）=====
+const SHARE_URL = 'https://keifurukawafunnych.com/games/robot-stand/', TAG = '#不倒翁机器人ゲーム';
+let snapAt = 0, shareFile = null;
+const snapCv = document.createElement('canvas'); snapCv.width = snapCv.height = 1080;
+const rawCv = document.createElement('canvas'); rawCv.width = rawCv.height = 1080; // 文字なしの切り抜き
+function snapShot() {
+  // ロボットを中心に正方形で切り抜く（描画した直後なので canvas から読める）
+  const src = renderer.domElement, W = src.width, H = src.height;
+  const tp = sim.parts.pelvis.body.translation(), v = new THREE.Vector3(tp.x, tp.y + 0.2, tp.z).project(camera);
+  const side = Math.min(W, H) * 0.92;
+  let sx = (v.x + 1) / 2 * W - side / 2, sy = (1 - v.y) / 2 * H - side / 2;
+  sx = Math.max(0, Math.min(W - side, sx)); sy = Math.max(0, Math.min(H - side, sy));
+  const r = rawCv.getContext('2d'); r.fillStyle = '#23262d'; r.fillRect(0, 0, 1080, 1080);
+  r.drawImage(src, sx, sy, side, side, 0, 0, 1080, 1080);
+  updateShare();
+}
+window.updateShare = function updateShare() {
+  const text = `${t('title')}\n${TAG}`;
+  const a = $('share');
+  a.href = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(SHARE_URL);
+  if (matchMedia('(pointer: coarse)').matches) a.removeAttribute('target'); else { a.target = '_blank'; a.rel = 'noopener'; }
+  a.dataset.text = text;
+  // 画像: 切り抜き＋タイトル
+  const x = snapCv.getContext('2d');
+  x.drawImage(rawCv, 0, 0);
+  const g = x.createLinearGradient(0, 860, 0, 1080); g.addColorStop(0, 'rgba(20,22,27,0)'); g.addColorStop(1, 'rgba(20,22,27,0.85)');
+  x.fillStyle = g; x.fillRect(0, 860, 1080, 220);
+  x.fillStyle = '#fff'; x.textBaseline = 'alphabetic';
+  x.font = '800 120px system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif';
+  x.font = '700 56px system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif'; x.globalAlpha = 0.85;
+  x.fillText(t('title'), 64, 1030); x.globalAlpha = 1;
+  // 共有用ファイルは先に作っておく（押した時に作ると Safari で共有が止まる）
+  snapCv.toBlob(b => { if (b) shareFile = new File([b], 'robot-stand.png', { type: 'image/png' }); }, 'image/png');
+};
+$('share').addEventListener('click', e => {
+  const text = $('share').dataset.text;
+  if (matchMedia('(pointer: coarse)').matches) {
+    // スマホ: 画像つきで共有シートを開く（使えなければそのまま X の投稿画面へ）
+    if (navigator.share && shareFile && navigator.canShare?.({ files: [shareFile] })) {
+      e.preventDefault();
+      navigator.share({ files: [shareFile], text: `${text}\n${SHARE_URL}` }).catch(() => {});
+    }
+  } else if (shareFile) {
+    // PC: 画像を保存してから投稿画面を開く（画像は自分で添付する）
+    const u = URL.createObjectURL(shareFile), d = document.createElement('a');
+    d.href = u; d.download = 'robot-stand.png'; document.body.appendChild(d); d.click(); d.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+  }
+});
+
+renderer.compile(scene, camera);
+renderer.render(scene, camera);
+snapShot(); // 倒す前でも投稿できるよう、立っている姿を用意しておく
+// 広告は、開いて少したってから読み込む（最初の表示を重くしないため）
+setTimeout(() => window.resultAd?.(true), 1500);
+requestAnimationFrame(t0 => { last = t0; frame(t0); });
+</script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

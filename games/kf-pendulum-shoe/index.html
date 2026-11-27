@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>甩鞋 · LiteGame</title>
+  <meta name="description" content="摆腿、起脚，把鞋甩得越远越好。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="甩鞋 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/pendulum-shoe/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/pendulum-shoe/icon.png">
+  <meta name="twitter:card" content="summary">
+  <script src="../lib/vendor/mp4-muxer@5.1.3/build/mp4-muxer.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #bfe6ff; font-family: system-ui, sans-serif; color: #223; }
+    body { display: flex; flex-direction: column; overflow: hidden; }
+    header { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; }
+    header a { color: #223; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill { height: 34px; min-width: 34px; border: none; border-radius: 17px; background: #fff; color: #223; font-size: 14px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    select.pill { appearance: none; -webkit-appearance: none; }
+    #wrap { position: relative; flex: 1; min-height: 0; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+    #dist { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-size: 34px; font-weight: 800; pointer-events: none; text-shadow: 0 2px 0 #fff; }
+    #dist.neg, #rDist.neg { color: #e03131; }
+    .panel { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: rgba(191,230,255,.8); padding: 16px 16px calc(100px + env(safe-area-inset-bottom)); }
+    .panel[hidden] { display: none; }
+    .big { font-size: 56px; font-weight: 800; margin: 0; }
+    .sub { margin: 0; font-size: 16px; }
+    .btn { border: none; border-radius: 28px; background: #2b8a3e; color: #fff; font-size: 20px; font-weight: 700; padding: 14px 36px; cursor: pointer; text-decoration: none; }
+    .btn.x { background: #111; font-size: 16px; padding: 10px 24px; }
+    .btn.x.wait { opacity: .55; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">甩鞋</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="sound" class="pill" aria-label="sound">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#223" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#223"/><path id="wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" style="display:none"/></svg>
+      </button>
+      <select id="lang" class="pill" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+    </div>
+  </header>
+  <main style="display:contents">
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div id="dist"></div>
+    <div id="result" class="panel" hidden>
+      <p class="big" id="rDist"></p>
+      <p class="sub" id="rBest"></p>
+      <button id="again" class="btn"></button>
+      <a id="share" class="btn x"></a>
+    </div>
+  </div>
+  </main>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 甩鞋 · 中文文案
+window.__KF_ZH__ = {
+  title: '甩鞋',
+  back: '← 大厅',
+  again: '再来一次',
+  share: '分享到 X',
+  best: '最佳',
+  post: (d) => `把鞋甩出了 ${d}m #LiteGame`
+};
+</script>
+<script>
+const KEY = 'pendulum-shoe:';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(KEY + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch {} },
+};
+const URL_ = new URL('./', location.href).href;
+const POST_URL = 'https://x.com/furukawakeigame/status/2111771909738442795'; // announcement post, linked from shares too
+const TAG = '#甩鞋ゲーム';
+const L = {
+  ja: { title: '甩鞋', back: '← トップへ戻る', again: 'もう一度', share: 'Xでポスト', best: '自己ベスト',
+        post: d => `甩鞋で靴を ${d}m 飛ばした\n${TAG}` },
+  ko: { title: '진자 신발 날리기', back: '← 처음으로', again: '다시 하기', share: 'X에 게시', best: '최고 기록',
+        post: d => `진자 신발 날리기에서 신발을 ${d}m 날렸다\n${TAG}` },
+  en: { title: 'Pendulum Shoe Kick', back: '← Top', again: 'Retry', share: 'Post on X', best: 'Best',
+        post: d => `I kicked my shoe ${d}m in Pendulum Shoe Kick\n${TAG}` },
+  th: { title: 'เตะรองเท้าลูกตุ้ม', back: '← กลับหน้าแรก', again: 'เล่นอีกครั้ง', share: 'โพสต์บน X', best: 'สถิติสูงสุด',
+        post: d => `เตะรองเท้าไปได้ไกล ${d}m ในเกมเตะรองเท้าลูกตุ้ม\n${TAG}` },
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (L[c]) return c; } return 'en'; };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'en';
+const t = k => L[lang][k];
+const $ = id => document.getElementById(id);
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('lang').value = lang;
+  $('back').textContent = t('back');
+  $('again').textContent = t('again'); $('share').textContent = t('share');
+  if (!$('result').hidden) showResult();
+}
+$('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+
+// ---- sound ----
+let soundOn = store.get('sound', true), ac = null;
+function updSound() { $('wave').style.display = soundOn ? '' : 'none'; $('mute').style.display = soundOn ? 'none' : ''; }
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+updSound();
+function beep(freq, dur, type = 'square', vol = .2, slide = 0) {
+  if (!soundOn) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
+    o.type = type; o.frequency.setValueAtTime(freq, n);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, n + dur);
+    g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+    o.connect(g).connect(ac.destination); o.start(n); o.stop(n + dur);
+  } catch {}
+}
+
+// ---- world (meters) ----
+// the kicking leg is a double pendulum: hip (fixed) -> knee -> ankle, solved in joint angles
+// angles are measured from straight down, positive = swinging forward (+x)
+const catImg = new Image(); catImg.src = 'cat.png';
+const cv = $('cv'), mainCtx = cv.getContext('2d');
+const PLAT = 0.6;                          // height of the step the kicker stands on
+const HIP = { x: 0, y: PLAT + 0.92 };
+const L1 = 0.46, L2 = 0.46, M1 = 1, M2 = 0.8; // thigh / shin (mass at knee / ankle)
+const G = 9.8, DT = 1 / 480;
+const HIP_T = 6, KNEE_T = 12, MUS_W = 25; // muscle torques and the joint speed where they give out
+const KICK_T = 0.6, FRICTION = 0.8;        // the muscles fire once, for this long after the tap; joints lose speed to friction after that
+const SHOE_R = 0.13;
+// states: ready (drag to pose) -> set (posed: drag again, or tap to start) -> swing (tap to kick off the shoe) -> done
+const posing = () => state === 'ready' || state === 'set' || state === 'kick'; // kick: tapped, waiting for the tap's moment in the physics
+let leg, pts, shoe, state, grab, camX = 0, camY = 0, best = store.get('best', null), finalDist = 0, wait = 0, swishT = 0;
+
+function reset() {
+  leg = { a1: 0, a2: 0, w1: 0, w2: 0, t: 0 };
+  updPts();
+  shoe = { x: pts[1].x, y: pts[1].y, ang: 0, vx: 0, vy: 0, va: 0, free: false, land: null, stopped: false };
+  camX = 0; camY = 0; grab = null; down = null; letGo = false; state = 'ready'; inputs.length = 0; finalDist = 0; wait = 0;
+  rec = []; recT = 0; gameId++; shareFile = null; videoJob = null;
+}
+function updPts() {
+  const k = { x: HIP.x + L1 * Math.sin(leg.a1), y: HIP.y - L1 * Math.cos(leg.a1) };
+  pts = [k, { x: k.x + L2 * Math.sin(leg.a2), y: k.y - L2 * Math.cos(leg.a2) }];
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// pose the leg so the ankle points at the target, keeping the joint limits
+function aim(tx, ty) {
+  const dx = tx - HIP.x, dy = ty - HIP.y, d = clamp(Math.hypot(dx, dy), 0.05, L1 + L2 - 1e-4);
+  const dir = Math.atan2(dx, -dy);
+  const bend = Math.acos(clamp((L1 * L1 + L2 * L2 - d * d) / (2 * L1 * L2), -1, 1)); // inner knee angle
+  const knee = -(Math.PI - bend);                                                  // shin folds back
+  const off = Math.asin(clamp(L2 * Math.sin(-knee) / d, -1, 1));
+  leg.a1 = dir + off;
+  leg.a2 = leg.a1 + knee;
+  leg.w1 = leg.w2 = 0; leg.t = 0;
+}
+
+function step(dt) {
+  if (grab) aim(grab.x, grab.y);
+  if (!posing()) {
+    const { a1, a2, w1, w2 } = leg, d = a1 - a2, sd = Math.sin(d), cd = Math.cos(d);
+    // muscles: hip pulls the thigh forward, knee straightens the shin; weaker the faster the joint already turns
+    leg.t += dt;
+    const on = leg.t < KICK_T ? 1 : 0;
+    const th = on * HIP_T * Math.max(0, 1 - w1 / MUS_W), tk = on * KNEE_T * clamp(Math.atan2(Math.sin(a1 - a2), Math.cos(a1 - a2)) / 0.5, -1, 1) * Math.max(0, 1 - Math.abs(w2 - w1) / MUS_W); // knee drives toward straight
+    // M qdd = Q - coriolis - gravity
+    const m11 = (M1 + M2) * L1 * L1, m12 = M2 * L1 * L2 * cd, m22 = M2 * L2 * L2;
+    const q1 = th - tk - M2 * L1 * L2 * sd * w2 * w2 - (M1 + M2) * G * L1 * Math.sin(a1);
+    const q2 = tk + M2 * L1 * L2 * sd * w1 * w1 - M2 * G * L2 * Math.sin(a2);
+    const det = m11 * m22 - m12 * m12, al1 = (m22 * q1 - m12 * q2) / det, al2 = (m11 * q2 - m12 * q1) / det;
+    const fr = 1 - FRICTION * dt;
+    leg.w1 = (w1 + al1 * dt) * fr; leg.w2 = w1 * (1 - fr) + (w2 + al2 * dt) * fr; // knee friction acts on the relative spin
+    leg.a1 += leg.w1 * dt; leg.a2 += leg.w2 * dt;
+  }
+  updPts();
+  const ft = pts[1];
+  if (!shoe.free) {
+    shoe.x = ft.x; shoe.y = ft.y; shoe.ang = leg.a2;
+    if (letGo && !posing()) {
+      letGo = false; shoe.free = true;
+      // ankle velocity from the joint speeds
+      shoe.vx = L1 * Math.cos(leg.a1) * leg.w1 + L2 * Math.cos(leg.a2) * leg.w2;
+      shoe.vy = L1 * Math.sin(leg.a1) * leg.w1 + L2 * Math.sin(leg.a2) * leg.w2;
+      shoe.va = leg.w2;
+      beep(400, .25, 'sine', .2, 1100);
+    }
+    if (state === 'swing') {
+      const sp = Math.hypot(L1 * leg.w1, L2 * leg.w2);
+      swishT -= dt;
+      if (sp > 5 && swishT <= 0) { beep(200 + sp * 20, .12, 'sine', .06, 120); swishT = 0.35; }
+    }
+  } else if (!shoe.stopped) {
+    shoe.vy -= G * dt;
+    const drag = 1 - 0.01 * dt; shoe.vx *= drag; shoe.vy *= drag;
+    shoe.x += shoe.vx * dt; shoe.y += shoe.vy * dt; shoe.ang += shoe.va * dt;
+    // the step the kicker stands on
+    const floor = shoe.x < -0.1 && shoe.x > -2 ? PLAT : 0;
+    if (shoe.y < floor + SHOE_R * 0.5) {
+      shoe.y = floor + SHOE_R * 0.5;
+      if (shoe.land === null) { shoe.land = shoe.x; beep(90, .25, 'triangle', .45); }
+      if (shoe.vy < -2) { shoe.vy = -shoe.vy * 0.3; shoe.vx *= 0.6; shoe.va *= 0.5; beep(140, .08, 'triangle', .25); }
+      else { shoe.vy = 0; shoe.vx *= (1 - 4 * dt); shoe.va *= (1 - 6 * dt); }
+      if (Math.abs(shoe.vx) < 0.1 && shoe.vy === 0) shoe.stopped = true;
+    }
+  }
+}
+
+// ---- input ----
+let scale = 100, originX = 0, groundY = 0;
+function toWorld(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - originX) / scale + camX, y: (groundY - (e.clientY - r.top)) / scale + camY }; }
+var letGo = false, down = null;
+cv.addEventListener('pointerdown', e => {
+  if (ac && ac.state === 'suspended') ac.resume();
+  if (state === 'swing' && !shoe.free) { e.preventDefault(); at(e, () => { letGo = true; }); return; }
+  if (!posing()) return;
+  e.preventDefault(); cv.setPointerCapture(e.pointerId);
+  down = { x: e.clientX, y: e.clientY, moved: state === 'ready' };
+});
+cv.addEventListener('pointermove', e => {
+  if (!down) return;
+  if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
+  if (down.moved) grab = toWorld(e);
+});
+const up = e => {
+  if (!down) return;
+  const moved = down.moved; down = null;
+  if (moved) { if (grab) { grab = null; state = 'set'; beep(500, .06, 'sine', .1); } return; }
+  // a tap on a posed pendulum starts the swing
+  state = 'kick'; beep(300, .2, 'sine', .15, 700);
+  at(e, () => { state = 'swing'; });
+};
+// inputs are applied to the physics at the moment they happened, not at the next frame
+const inputs = [];
+function at(e, fn) { inputs.push({ t: e.timeStamp || performance.now(), fn }); }
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+$('again').onclick = () => { $('result').hidden = true; reset(); beep(600, .1); };
+
+const fmt = d => d.toFixed(2) + 'm';
+const coarse = matchMedia('(pointer: coarse)').matches;
+let postText = '';
+function showResult() {
+  $('rDist').textContent = fmt(finalDist);
+  $('rDist').className = 'big' + (finalDist < 0 ? ' neg' : '');
+  $('rBest').textContent = `${t('best')} ${fmt(best)}`;
+  const a = $('share');
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(L[lang].post(finalDist.toFixed(2)) + "\n" + POST_URL)}&url=${encodeURIComponent(URL_)}`;
+  if (coarse) { a.removeAttribute('target'); a.removeAttribute('rel'); }
+  else { a.target = '_blank'; a.rel = 'noopener'; }
+  a.classList.toggle('wait', !shareFile && 'VideoEncoder' in window);
+  postText = `${L[lang].post(finalDist.toFixed(2))}\n${POST_URL}\n${URL_}`;
+}
+// phones: always open the share sheet (with the video when it's ready). PC: save the video, then open the X post page
+$('share').addEventListener('click', e => {
+  if (coarse && navigator.share) {
+    e.preventDefault();
+    const data = shareFile && navigator.canShare?.({ files: [shareFile] }) ? { files: [shareFile], text: postText } : { text: postText };
+    navigator.share(data).catch(() => {});
+    return;
+  }
+  if (!coarse && shareFile) {
+    const d = document.createElement('a');
+    d.href = URL.createObjectURL(shareFile); d.download = shareFile.name; d.click();
+    setTimeout(() => URL.revokeObjectURL(d.href), 10000);
+  }
+});
+function finish() {
+  state = 'done'; finalDist = shoe.x; // the record is where the shoe comes to rest
+  if (best === null || finalDist > best) { best = finalDist; store.set('best', best); }
+  setTimeout(() => makeVideo().catch(() => {}), 400);
+  setTimeout(() => { showResult(); $('result').hidden = false; beep(500, .15); setTimeout(() => beep(800, .25), 150); }, 300);
+}
+
+// ---- render ----
+function resize() {
+  const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = r.width * dpr; cv.height = r.height * dpr; mainCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  layout(r.width, r.height, 80);
+}
+function layout(W, H, pad) {
+  groundY = Math.min(H - pad, Math.max(H * 0.82, 4.0 * Math.min(W / 5, 170)));
+  scale = Math.min((groundY - 30) / 2.4, W / 2.6);
+  originX = W * 0.45;
+}
+addEventListener('resize', resize);
+
+function draw(ctx = mainCtx, W = cv.clientWidth, H = cv.clientHeight) {
+  const X = x => originX + (x - camX) * scale, Y = y => groundY - (y - camY) * scale, GY = Y(0);
+  const gr = ctx.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, '#8fd0ff'); gr.addColorStop(1, '#e3f4ff');
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+  // clouds
+  ctx.fillStyle = '#fff';
+  for (let i = -40; i < 60; i++) {
+    const cx = ((i * 9) - camX * 0.3) * scale * 0.4 + originX, cy = H * (0.12 + 0.07 * (((i * 7) % 3 + 3) % 3)) + camY * scale * 0.5;
+    if (cx < -100 || cx > W + 100) continue;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 40, 14, 0, 0, 7); ctx.ellipse(cx + 25, cy - 8, 26, 14, 0, 0, 7); ctx.fill();
+  }
+  // hills (parallax)
+  const hill = (par, base, amp, wl, col, seed) => {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+    for (let sx = 0; sx <= W + 10; sx += 10) {
+      const wx = (sx - originX) / scale + camX * par;
+      const h = amp * (0.6 + 0.4 * Math.sin(wx / wl + seed) * Math.sin(wx / (wl * 2.7) + seed * 3));
+      ctx.lineTo(sx, Y(camY * (1 - par)) - (base + h) * scale * 0.5);
+    }
+    ctx.lineTo(W, H); ctx.fill();
+  };
+  hill(0.1, 1.5, 5, 3, '#a5c8e4', 1);
+  hill(0.3, 0.5, 2.5, 1.6, '#8fcf8f', 4);
+  // ground
+  if (GY < H) {
+    ctx.fillStyle = '#6b4423'; ctx.fillRect(0, GY, W, H - GY);
+    ctx.fillStyle = '#5cb85c'; ctx.fillRect(0, GY, W, Math.max(8, scale * 0.2));
+  }
+  // markers
+  const stepM = scale < 40 ? 10 : 5;
+  ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+  for (let m = Math.floor((camX - originX / scale) / stepM) * stepM; X(m) < W + 40; m += stepM) {
+    if (m === 0) continue;
+    const x = X(m);
+    ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(x - 1, GY - 14, 2, 14);
+    ctx.fillStyle = m < 0 ? '#ffc9c9' : '#fff'; ctx.fillText(m + 'm', x, GY + 22);
+  }
+  // best line
+  if (best !== null) { const x = X(best); if (x > -20 && x < W + 20) { ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(x, GY - 60); ctx.lineTo(x, GY); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#e8b500'; ctx.fillText(t('best'), x, GY - 66); } }
+  // landing flag
+  if (shoe.stopped) { const x = X(shoe.x); ctx.fillStyle = '#fff'; ctx.fillRect(x - 1, GY - 30, 3, 30); ctx.fillStyle = '#e03131'; ctx.beginPath(); ctx.moveTo(x + 2, GY - 30); ctx.lineTo(x + 18, GY - 25); ctx.lineTo(x + 2, GY - 20); ctx.fill(); }
+  // step
+  ctx.fillStyle = '#adb5bd'; ctx.fillRect(X(-2), Y(PLAT), (2 - 0.1) * scale, PLAT * scale);
+  ctx.fillStyle = '#868e96'; ctx.fillRect(X(-2), Y(PLAT), (2 - 0.1) * scale, Math.max(3, scale * 0.05));
+  // kicker (cat head), standing leg on the step
+  ctx.strokeStyle = '#334'; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(4, scale * 0.08);
+  const sh = { x: -0.05, y: HIP.y + 0.55 };
+  ctx.beginPath(); ctx.moveTo(X(-0.28), Y(PLAT)); ctx.lineTo(X(-0.22), Y(PLAT + 0.46)); ctx.lineTo(X(HIP.x), Y(HIP.y)); ctx.lineTo(X(sh.x), Y(sh.y));
+  ctx.moveTo(X(sh.x), Y(sh.y - 0.05)); ctx.lineTo(X(-0.3), Y(sh.y - 0.35)); ctx.lineTo(X(-0.45), Y(sh.y - 0.15));
+  ctx.moveTo(X(sh.x), Y(sh.y - 0.05)); ctx.lineTo(X(0.2), Y(sh.y - 0.3)); ctx.lineTo(X(0.4), Y(sh.y - 0.2)); ctx.stroke();
+  { const hr = scale * 0.2, hx = X(sh.x), hy = Y(sh.y + 0.18);
+    if (catImg.complete && catImg.naturalWidth) ctx.drawImage(catImg, hx - hr, hy - hr, hr * 2, hr * 2);
+    else { ctx.fillStyle = '#334'; ctx.beginPath(); ctx.arc(hx, hy, hr, 0, 7); ctx.fill(); } }
+  // kicking leg
+  ctx.strokeStyle = '#1971c2'; ctx.lineWidth = Math.max(5, scale * 0.1);
+  ctx.beginPath(); ctx.moveTo(X(HIP.x), Y(HIP.y)); ctx.lineTo(X(pts[0].x), Y(pts[0].y)); ctx.stroke();
+  ctx.strokeStyle = '#f1c9a5'; ctx.lineWidth = Math.max(4, scale * 0.08);
+  ctx.beginPath(); ctx.moveTo(X(pts[0].x), Y(pts[0].y)); ctx.lineTo(X(pts[1].x), Y(pts[1].y)); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(X(pts[1].x), Y(pts[1].y), Math.max(3, scale * 0.045), 0, 7); ctx.fill(); // sock
+  // shoe
+  if (shoe.free) { ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(X(shoe.x), GY + 2, SHOE_R * scale * 1.3, SHOE_R * scale * 0.3, 0, 0, 7); ctx.fill(); }
+  { const r = Math.max(6, SHOE_R * scale);
+    ctx.save(); ctx.translate(X(shoe.x), Y(shoe.y)); ctx.rotate(-shoe.ang);
+    ctx.fillStyle = '#e03131'; ctx.beginPath(); ctx.moveTo(-r * 0.45, -r * 0.5); ctx.lineTo(r * 0.15, -r * 0.5); ctx.quadraticCurveTo(r * 0.25, 0, r * 1.15, r * 0.05); ctx.quadraticCurveTo(r * 1.3, r * 0.45, r * 0.9, r * 0.45); ctx.lineTo(-r * 0.5, r * 0.45); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillRect(-r * 0.55, r * 0.35, r * 1.75, r * 0.18);
+    ctx.restore(); }
+  // drag line / hint ring
+  const h = pts[1];
+  if (grab) { ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(h.x), Y(h.y)); ctx.lineTo(X(grab.x), Y(grab.y)); ctx.stroke(); ctx.setLineDash([]); }
+  else if (posing() || (state === 'swing' && !shoe.free)) { const k = (performance.now() / 900) % 1, h = state === 'swing' ? shoe : pts[1]; ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X(h.x), Y(h.y), 15 + k * 30, 0, 7); ctx.stroke(); }
+}
+function readout() {
+  if (!shoe.free) return null;
+  const d = shoe.x;
+  return [fmt(d), d < 0];
+}
+function follow(fdt, W, H) {
+  const k = Math.min(1, fdt * 6);
+  camX += (shoe.x - camX) * k;
+  camY += (Math.max(0, shoe.y - (groundY - H * 0.35) / scale) - camY) * k;
+}
+
+// ---- replay recording & result video ----
+let rec = [], recT = 0;
+const snap = () => ({ t: recT, pts: pts.map(p => ({ x: p.x, y: p.y })), shoe: { ...shoe } });
+const VW = 720, VH = 1280, VFPS = 30;
+let shareFile = null, videoJob = null, gameId = 0;
+async function makeVideo() {
+  shareFile = null; videoJob = null;
+  if (!('VideoEncoder' in window) || !window.Mp4Muxer) return;
+  const frames = rec; if (!frames.length) return;
+  const id = gameId;
+  let cfg = null;
+  for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42001f']) {
+    const c = { codec, width: VW, height: VH, bitrate: 5e6, framerate: VFPS };
+    try { if ((await VideoEncoder.isConfigSupported(c)).supported) { cfg = c; break; } } catch {}
+  }
+  if (!cfg || id !== gameId) return;
+  // start a little before the shoe leaves the cup (whole swing if short)
+  const out = frames.findIndex(f => f.shoe.free), t0 = Math.max(frames[0].t, frames[out].t - 4), t1 = frames[frames.length - 1].t;
+  const cnv = document.createElement('canvas'); cnv.width = VW; cnv.height = VH;
+  const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: 'avc', width: VW, height: VH, frameRate: VFPS }, fastStart: 'in-memory' });
+  const job = { id, frames, t0, n: Math.ceil((t1 - t0) * VFPS) + 1, i: 0, fi: 0, out: cnv, c: cnv.getContext('2d'), muxer, failed: false, cam: [0, 0] };
+  job.enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: () => { job.failed = true; } });
+  job.enc.configure(cfg);
+  videoJob = job;
+}
+// called from the loop: draws a few frames per tick by swapping in the recorded state
+function videoFrames() {
+  const job = videoJob;
+  if (job.id !== gameId || job.failed) { try { job.enc.close(); } catch {} videoJob = null; return; }
+  const keep = [pts, shoe, camX, camY, state, scale, originX, groundY];
+  for (let k = 0; k < 4 && job.i < job.n; k++, job.i++) {
+    const tt = job.t0 + job.i / VFPS;
+    while (job.fi < job.frames.length - 1 && job.frames[job.fi + 1].t <= tt) job.fi++;
+    const f = job.frames[job.fi];
+    pts = f.pts; shoe = f.shoe; state = 'swing';
+    layout(VW, VH, 120);
+    [camX, camY] = job.cam;
+    if (shoe.free) follow(1 / VFPS, VW, VH);
+    job.cam = [camX, camY];
+    draw(job.c, VW, VH);
+    const r = readout();
+    if (r) { job.c.font = '800 72px system-ui'; job.c.textAlign = 'center'; job.c.lineWidth = 8; job.c.strokeStyle = '#fff'; job.c.strokeText(r[0], VW / 2, 150); job.c.fillStyle = r[1] ? '#e03131' : '#223'; job.c.fillText(r[0], VW / 2, 150); }
+    const frame = new VideoFrame(job.out, { timestamp: Math.round(job.i * 1e6 / VFPS), duration: Math.round(1e6 / VFPS) });
+    job.enc.encode(frame, { keyFrame: job.i % 60 === 0 }); frame.close();
+  }
+  [pts, shoe, camX, camY, state, scale, originX, groundY] = keep;
+  if (job.i < job.n) return;
+  videoJob = null;
+  (async () => {
+    await job.enc.flush(); job.enc.close(); job.muxer.finalize();
+    if (job.id !== gameId || job.failed) return;
+    shareFile = new File([job.muxer.target.buffer], 'pendulum-shoe.mp4', { type: 'video/mp4' });
+    $('share').classList.remove('wait');
+  })().catch(() => {});
+}
+
+let last = performance.now(), simT = performance.now();
+function loop(now) {
+  const fdt = Math.min(0.25, (now - last) / 1000); last = now;
+  // fixed-step physics in real time, whatever the frame rate or screen size
+  if (now - simT > 250) simT = now - 250;
+  while (simT + DT * 1000 <= now) {
+    while (inputs.length && inputs[0].t <= simT) inputs.shift().fn();
+    step(DT); simT += DT * 1000;
+  }
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (state === 'swing') {
+    recT += fdt; rec.push(snap());
+    if (!shoe.free) while (rec.length && rec[0].t < recT - 4) rec.shift();
+    if (shoe.free) follow(fdt, W, H);
+    if (shoe.stopped) { wait += fdt; if (wait > 0.6) finish(); }
+  }
+  draw();
+  const r = state === 'swing' && readout();
+  $('dist').textContent = r ? r[0] : ''; $('dist').className = r && r[1] ? 'neg' : '';
+  if (videoJob) videoFrames();
+  requestAnimationFrame(loop);
+}
+reset(); resize(); applyLang(); requestAnimationFrame(loop);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>图片增殖 · LiteGame</title>
+  <meta name="description" content="剪下图里的形状，一碰就翻倍地长。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="图片增殖 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/image-zoushoku/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/image-zoushoku/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #f3e4cf; color: #5b3d28; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh; box-sizing: border-box;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; }
+    header a { color: #5b3d28; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill {
+      height: 34px; min-width: 34px; border: 2px solid #5b3d28; border-radius: 17px;
+      background: #fff8ee; color: #5b3d28; font: inherit; font-size: 15px; font-weight: bold;
+      padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .pill svg { width: 20px; height: 20px; }
+    #sound { padding: 0 6px; }
+    #stage { flex: 1; position: relative; min-height: 0; }
+    #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #count { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font-size: 22px; font-weight: bold; pointer-events: none; }
+    .bar { display: flex; justify-content: center; gap: 10px; padding: 8px; }
+    .bar .pill { height: 44px; border-radius: 22px; padding: 0 20px; font-size: 16px; }
+    .main { background: #5b3d28 !important; color: #fff8ee !important; }
+    #crop {
+      position: fixed; inset: 0; background: rgba(40,25,15,.85); display: none;
+      flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom)); box-sizing: border-box;
+    }
+    #crop.on { display: flex; }
+    #cropcv { touch-action: none; cursor: crosshair; }
+    #crop .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 0 8px; }
+    #crop .pill { height: 44px; border-radius: 22px; padding: 0 16px; font-size: 16px; }
+    #crop .pill.on { background: #e8763c; border-color: #e8763c; color: #fff; }
+    #crop .pill:disabled { opacity: .4; }
+    .dot { display: block; border-radius: 50%; background: currentColor; }
+    #file { display: none; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">图片增殖</h1>
+  <header>
+    <a href="../../index.html#/category/premium" id="back">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill"></button>
+    </div>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><canvas id="cv"></canvas><div id="count"></div></div>
+  <div class="bar">
+    <button id="pick" class="pill main"></button>
+    <button id="reset" class="pill"></button>
+  </div>
+  <input type="file" id="file" accept="image/*">
+  <div id="crop">
+    <canvas id="cropcv"></canvas>
+    <div class="row">
+      <button id="brush" class="pill" aria-label="brush"><span class="dot"></span></button>
+      <button id="erase" class="pill"></button>
+      <button id="undo" class="pill"></button>
+    </div>
+    <div class="row"><button id="cancel" class="pill"></button><button id="ok" class="pill main" disabled></button></div>
+  </div>
+  </main>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 图片增殖 · 中文文案
+window.__KF_ZH__ = {
+  title: '图片增殖',
+  back: '← 大厅',
+  pick: '选一张图',
+  reset: '重置',
+  ok: '好了',
+  cancel: '取消',
+  erase: '擦除',
+  undo: '撤销',
+  unit: '个'
+};
+</script>
+<script>
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('tz-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('tz-' + k, JSON.stringify(v)); } catch {} }
+};
+
+// ---- 言語 ----
+const L = {
+  ja: { title: '图片增殖', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        pick: '画像をえらぶ', reset: 'リセット', ok: 'できた', cancel: 'やめる', erase: '消す', undo: '戻す', unit: '個', sound: '音のオン/オフ' },
+  en: { title: 'Image Multiplier', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        pick: 'Pick image', reset: 'Reset', ok: 'Done', cancel: 'Cancel', erase: 'Erase', undo: 'Undo', unit: '', sound: 'Sound on/off' }
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'ja';
+const t = k => L[lang][k];
+const $ = id => document.getElementById(id);
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('back').textContent = t('back');
+  $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+  $('sound').setAttribute('aria-label', t('sound'));
+  $('pick').textContent = t('pick'); $('reset').textContent = t('reset');
+  $('ok').textContent = t('ok'); $('cancel').textContent = t('cancel');
+  $('erase').textContent = t('erase'); $('undo').textContent = t('undo');
+  updateCount();
+}
+$('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+// ---- 音 ----
+let soundOn = store.get('sound', true);
+const SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
+const updateSoundBtn = () => {
+  $('sound').innerHTML = SPK + (soundOn
+    ? '<path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>'
+    : '<path d="M16 9l5 6M21 9l-5 6"/></svg>');
+};
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+let ac = null, lastPop = 0;
+function pop() {
+  if (!soundOn) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const now = ac.currentTime;
+    if (now - lastPop < 0.05) return;
+    lastPop = now;
+    const o = ac.createOscillator(), g = ac.createGain();
+    const f = 500 + Math.random() * 500;
+    o.frequency.setValueAtTime(f, now);
+    o.frequency.exponentialRampToValueAtTime(f * 2.2, now + 0.07);
+    g.gain.setValueAtTime(0.15, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    o.connect(g).connect(ac.destination); o.start(now); o.stop(now + 0.13);
+  } catch {}
+}
+
+// ---- 粒の絵 ----
+const SPR = 160;
+const sprite = document.createElement('canvas'); sprite.width = sprite.height = SPR;
+function makeSprite(img) {
+  const c = sprite.getContext('2d');
+  c.clearRect(0, 0, SPR, SPR);
+  if (img) {
+    // 切り抜いた形のまま、縦横比を保って枠に収める
+    const k = SPR / Math.max(img.width, img.height), w = img.width * k, h = img.height * k;
+    c.drawImage(img, (SPR - w) / 2, (SPR - h) / 2, w, h);
+    buildShape();
+    return;
+  }
+  SH = { cx: 0, cy: 0, circles: [{ x: 0, y: 0, r: 1 }], I: 0.5, area: Math.PI, bound: 1 };
+  c.save(); c.beginPath(); c.arc(SPR/2, SPR/2, SPR/2 - 1, 0, Math.PI*2); c.clip();
+  c.fillStyle = '#2a1810'; c.fillRect(0, 0, SPR, SPR);
+  // つやつやのハイライト
+  const g = c.createRadialGradient(SPR*0.35, SPR*0.3, 2, SPR*0.35, SPR*0.3, SPR*0.45);
+  g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = g; c.fillRect(0, 0, SPR, SPR);
+  c.restore();
+  c.strokeStyle = 'rgba(40,20,10,.35)'; c.lineWidth = 3;
+  c.beginPath(); c.arc(SPR/2, SPR/2, SPR/2 - 2, 0, Math.PI*2); c.stroke();
+}
+// 当たり判定の形: 絵の形を小さな円の集まりで近似する（単位は粒の半径=1、原点は重心）
+let SH = null;
+function buildShape() {
+  const G = 48, u = 2 / G, c = document.createElement('canvas'); c.width = c.height = G;
+  const g = c.getContext('2d'); g.drawImage(sprite, 0, 0, G, G);
+  const d = g.getImageData(0, 0, G, G).data, inside = new Uint8Array(G * G);
+  let n = 0, sx = 0, sy = 0;
+  for (let i = 0; i < G * G; i++) if (d[i * 4 + 3] > 100) { inside[i] = 1; n++; sx += i % G; sy += (i / G) | 0; }
+  if (n < 3) { SH = { cx: 0, cy: 0, circles: [{ x: 0, y: 0, r: 1 }], I: 0.5, area: Math.PI, bound: 1 }; return; }
+  const mx = sx / n, my = sy / n, cx = (mx + 0.5) * u - 1, cy = (my + 0.5) * u - 1;
+  // 外側との境目のピクセル
+  const edge = [];
+  for (let y = -1; y <= G; y++) for (let x = -1; x <= G; x++) {
+    const inn = x >= 0 && y >= 0 && x < G && y < G && inside[y * G + x];
+    if (inn) continue;
+    let near = false;
+    for (let oy = -1; oy <= 1 && !near; oy++) for (let ox = -1; ox <= 1; ox++) {
+      const X = x + ox, Y = y + oy;
+      if (X >= 0 && Y >= 0 && X < G && Y < G && inside[Y * G + X]) { near = true; break; }
+    }
+    if (near) edge.push(x, y);
+  }
+  // 各ピクセルから外側までの距離
+  const dt = new Float32Array(G * G);
+  let I = 0;
+  for (let i = 0; i < G * G; i++) {
+    if (!inside[i]) continue;
+    const x = i % G, y = (i / G) | 0;
+    let best = 1e9;
+    for (let k = 0; k < edge.length; k += 2) { const dx = edge[k] - x, dy = edge[k + 1] - y, q = dx * dx + dy * dy; if (q < best) best = q; }
+    dt[i] = Math.sqrt(best) - 0.5;
+    I += ((x - mx) * (x - mx) + (y - my) * (y - my)) * u * u;
+  }
+  // 大きい円から順に置いていく
+  const covered = new Uint8Array(G * G), circles = [];
+  let left = n;
+  while (circles.length < 12 && left > n * 0.03) {
+    let bi = -1, bv = 0;
+    for (let i = 0; i < G * G; i++) if (inside[i] && !covered[i] && dt[i] > bv) { bv = dt[i]; bi = i; }
+    if (bi < 0) break;
+    const x = bi % G, y = (bi / G) | 0, r = Math.max(0.7, bv);
+    for (let i = 0; i < G * G; i++) {
+      if (!inside[i] || covered[i]) continue;
+      const dx = i % G - x, dy = ((i / G) | 0) - y;
+      if (dx * dx + dy * dy <= r * r * 1.44) { covered[i] = 1; left--; }
+    }
+    circles.push({ x: (x - mx) * u, y: (y - my) * u, r: r * u });
+  }
+  let bound = 0;
+  for (const q of circles) bound = Math.max(bound, Math.hypot(q.x, q.y) + q.r);
+  SH = { cx, cy, circles, I: I / n, area: n * u * u, bound };
+}
+const saved = store.get('cut', null);
+if (saved) { const im = new Image(); im.onload = () => makeSprite(im); im.src = saved; makeSprite(null); }
+else makeSprite(null);
+
+// ---- 物理 ----
+const cv = $('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, CX = 0, CY = 0, R = 100;
+function resize() {
+  const r = $('stage').getBoundingClientRect();
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = r.width; H = r.height;
+  cv.width = W * DPR; cv.height = H * DPR;
+  CX = W / 2; CY = H / 2 + 14; R = Math.max(40, Math.min(W / 2 - 16, H / 2 - 30));
+}
+window.addEventListener('resize', resize);
+
+const COOL = 1.0;
+let balls = [];
+const targetR = () => R * 0.045;
+// 粒の面積の合計が円と同じになったら「いっぱい」
+// （とても細い形だと数が増えすぎて重くなるので、最大600個）
+const FULL = () => Math.min(600, Math.floor(Math.PI / (SH.area * 0.045 * 0.045)));
+// 重力なし。粒はランダムな向きに飛び出す
+function addBall(x, y) {
+  const ang = Math.random() * Math.PI * 2, sp = R * (1.5 + Math.random() * 0.5);
+  const vx = Math.cos(ang) * sp, vy = Math.sin(ang) * sp;
+  const b = { x, y, vx, vy, cool: COOL, a: Math.random() * 6.28, va: (Math.random() - 0.5) * 6, wc: [] };
+  balls.push(b); return b;
+}
+function updateCount() { $('count').textContent = balls.length + t('unit'); }
+
+cv.addEventListener('pointerdown', e => {
+  const r = cv.getBoundingClientRect();
+  let x = e.clientX - r.left, y = e.clientY - r.top;
+  const dx = x - CX, dy = y - CY, d = Math.hypot(dx, dy), lim = R * 0.85;
+  if (d > lim) { x = CX + dx / d * lim; y = CY + dy / d * lim; }
+  addBall(x, y).cool = 0.3;
+  pop(); updateCount();
+});
+$('reset').onclick = () => { balls = []; updateCount(); };
+
+// 粒の当たり判定の円を、いまの位置と向きで計算する
+function place(b, sc) {
+  const co = Math.cos(b.a), si = Math.sin(b.a), cs = SH.circles;
+  if (b.wc.length !== cs.length * 3) b.wc = new Array(cs.length * 3);
+  for (let k = 0; k < cs.length; k++) {
+    const q = cs[k];
+    b.wc[k * 3] = b.x + (q.x * co - q.y * si) * sc;
+    b.wc[k * 3 + 1] = b.y + (q.x * si + q.y * co) * sc;
+    b.wc[k * 3 + 2] = q.r * sc;
+  }
+}
+// 点 (px,py) に力積 (jx,jy) を加える（質量1）
+function push(b, px, py, jx, jy, I) {
+  b.vx += jx; b.vy += jy;
+  b.va += ((px - b.x) * jy - (py - b.y) * jx) / I;
+}
+function step(dt) {
+  const sc = targetR(), I = SH.I * sc * sc, full = FULL();
+  for (const b of balls) {
+    b.x += b.vx * dt; b.y += b.vy * dt; b.a += b.va * dt;
+    b.cool -= dt;
+  }
+  const born = [];
+  for (let it = 0; it < 2; it++) {
+    for (const b of balls) place(b, sc);
+    const cell = SH.bound * sc * 2, grid = new Map();
+    for (let i = 0; i < balls.length; i++) {
+      const b = balls[i], k = Math.floor(b.x / cell) * 65536 + Math.floor(b.y / cell);
+      (grid.get(k) || grid.set(k, []).get(k)).push(i);
+    }
+    for (let i = 0; i < balls.length; i++) {
+      const A = balls[i], gx = Math.floor(A.x / cell), gy = Math.floor(A.y / cell);
+      for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) {
+      const list = grid.get((gx + ox) * 65536 + gy + oy); if (!list) continue;
+      for (const j of list) {
+        if (j <= i) continue;
+        const B = balls[j];
+        { const dx = B.x - A.x, dy = B.y - A.y; if (dx * dx + dy * dy > cell * cell) continue; }
+        // いちばん深くめり込んでいる円の組を探す
+        let best = 0, nx = 0, ny = 0, px = 0, py = 0;
+        const wa = A.wc, wb = B.wc;
+        const bnd = SH.bound * sc;
+        for (let p = 0; p < wa.length; p += 3) {
+          // 相手の粒の外枠に届かない円は飛ばす
+          const ex = wa[p] - B.x, ey = wa[p + 1] - B.y, er = wa[p + 2] + bnd;
+          if (ex * ex + ey * ey >= er * er) continue;
+          for (let q = 0; q < wb.length; q += 3) {
+          const dx = wb[q] - wa[p], dy = wb[q + 1] - wa[p + 1], rr = wa[p + 2] + wb[q + 2];
+          if (Math.abs(dx) >= rr || Math.abs(dy) >= rr) continue;
+          const d2 = dx * dx + dy * dy;
+          if (d2 >= rr * rr) continue;
+          const d = Math.sqrt(d2) || 1e-6, ov = rr - d;
+          if (ov > best) {
+            best = ov; nx = dx / d; ny = dy / d;
+            px = wa[p] + nx * (wa[p + 2] - ov / 2); py = wa[p + 1] + ny * (wa[p + 2] - ov / 2);
+          }
+          }
+        }
+        if (!best) continue;
+        const h = best / 2;
+        A.x -= nx * h; A.y -= ny * h; B.x += nx * h; B.y += ny * h;
+        for (let p = 0; p < wa.length; p += 3) { wa[p] -= nx * h; wa[p + 1] -= ny * h; }
+        for (let q = 0; q < wb.length; q += 3) { wb[q] += nx * h; wb[q + 1] += ny * h; }
+        // 回転も含めた完全弾性衝突（反発係数1）
+        const rax = px - A.x, ray = py - A.y, rbx = px - B.x, rby = py - B.y;
+        const vax = A.vx - A.va * ray, vay = A.vy + A.va * rax;
+        const vbx = B.vx - B.va * rby, vby = B.vy + B.va * rbx;
+        const vn = (vbx - vax) * nx + (vby - vay) * ny;
+        if (vn < 0) {
+          const ca = rax * ny - ray * nx, cb = rbx * ny - rby * nx;
+          const jn = -2 * vn / (2 + ca * ca / I + cb * cb / I);
+          push(A, px, py, -nx * jn, -ny * jn, I);
+          push(B, px, py, nx * jn, ny * jn, I);
+        }
+        // 増殖
+        if (it === 0 && A.cool <= 0 && B.cool <= 0 && balls.length + born.length < full) {
+          A.cool = B.cool = COOL;
+          const o = SH.bound * sc;
+          born.push([px - ny * o, py + nx * o]);
+        }
+      }
+      }
+    }
+    // 器の壁
+    for (const b of balls) {
+      const w = b.wc;
+      let best = 0, nx = 0, ny = 0, px = 0, py = 0;
+      for (let p = 0; p < w.length; p += 3) {
+        const dx = w[p] - CX, dy = w[p + 1] - CY, d = Math.hypot(dx, dy) || 1e-6, ov = d + w[p + 2] - R;
+        if (ov > best) { best = ov; nx = dx / d; ny = dy / d; px = CX + nx * R; py = CY + ny * R; }
+      }
+      if (!best) continue;
+      b.x -= nx * best; b.y -= ny * best;
+      for (let p = 0; p < w.length; p += 3) { w[p] -= nx * best; w[p + 1] -= ny * best; }
+      const rx = px - b.x, ry = py - b.y;
+      const vn = (b.vx - b.va * ry) * nx + (b.vy + b.va * rx) * ny;
+      if (vn > 0) {
+        const c = rx * ny - ry * nx, jn = -2 * vn / (1 + c * c / I);
+        push(b, px, py, nx * jn, ny * jn, I);
+      }
+    }
+  }
+  for (const [x, y] of born) addBall(x, y);
+  if (born.length) { pop(); updateCount(); }
+}
+
+function draw() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  // 器
+  ctx.fillStyle = '#e6c9a3';
+  ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI*2); ctx.fill();
+  const sc = targetR();
+  for (const b of balls) {
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a);
+    ctx.drawImage(sprite, (-1 - SH.cx) * sc, (-1 - SH.cy) * sc, sc * 2, sc * 2);
+    ctx.restore();
+  }
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  for (let i = 0; i < 4; i++) step(dt / 4);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ---- 切り抜き（指でなぞった所だけ残す） ----
+const cc = $('cropcv'), cx2 = cc.getContext('2d');
+let src = null, mask = null, mctx = null, tmpC = null, view = null, CW = 300, CH = 300;
+let brushIdx = 1, erasing = false, undoStack = [];
+const BRUSH = [8, 22, 50];
+$('pick').onclick = () => { $('file').value = ''; $('file').click(); };
+$('file').onchange = () => {
+  const f = $('file').files[0]; if (!f) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    URL.revokeObjectURL(url);
+    const k = Math.min(1, 1600 / Math.max(im.width, im.height));
+    src = document.createElement('canvas');
+    src.width = Math.max(1, Math.round(im.width * k)); src.height = Math.max(1, Math.round(im.height * k));
+    src.getContext('2d').drawImage(im, 0, 0, src.width, src.height);
+    mask = document.createElement('canvas'); mask.width = src.width; mask.height = src.height;
+    mctx = mask.getContext('2d');
+    tmpC = document.createElement('canvas'); tmpC.width = src.width; tmpC.height = src.height;
+    undoStack = []; erasing = false; ptrs.clear(); pinch = null;
+    $('crop').classList.add('on');
+    CW = Math.min(560, innerWidth - 24); CH = Math.max(160, innerHeight - 260);
+    const d = Math.min(2, devicePixelRatio || 1);
+    cc.width = CW * d; cc.height = CH * d; cc.style.width = CW + 'px'; cc.style.height = CH + 'px';
+    const fit = Math.min(CW / src.width, CH / src.height);
+    view = { k: fit, fit, x: (CW - src.width * fit) / 2, y: (CH - src.height * fit) / 2 };
+    updateTools(); drawCrop();
+  };
+  im.onerror = () => URL.revokeObjectURL(url);
+  im.src = url;
+};
+function drawCrop() {
+  const d = cc.width / CW, { k, x, y } = view, w = src.width * k, h = src.height * k;
+  cx2.setTransform(d, 0, 0, d, 0, 0);
+  cx2.clearRect(0, 0, CW, CH);
+  cx2.fillStyle = '#3b2a20'; cx2.fillRect(x, y, w, h);
+  cx2.globalAlpha = 0.35; cx2.drawImage(src, x, y, w, h); cx2.globalAlpha = 1;
+  const g = tmpC.getContext('2d');
+  g.globalCompositeOperation = 'source-over';
+  g.clearRect(0, 0, tmpC.width, tmpC.height);
+  g.drawImage(mask, 0, 0);
+  g.globalCompositeOperation = 'source-in'; g.drawImage(src, 0, 0);
+  g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(60,220,110,.45)'; g.fillRect(0, 0, tmpC.width, tmpC.height);
+  cx2.drawImage(tmpC, x, y, w, h);
+}
+function maskBox() {
+  const dd = mctx.getImageData(0, 0, mask.width, mask.height).data;
+  let x0 = mask.width, y0 = mask.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) {
+    if (dd[(y * mask.width + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
+function updateTools() {
+  const sz = [8, 13, 20][brushIdx];
+  $('brush').firstChild.style.width = $('brush').firstChild.style.height = sz + 'px';
+  $('erase').classList.toggle('on', erasing);
+  $('undo').disabled = !undoStack.length;
+  $('ok').disabled = !undoStack.length || !maskBox();
+}
+$('brush').onclick = () => { brushIdx = (brushIdx + 1) % BRUSH.length; updateTools(); };
+$('erase').onclick = () => { erasing = !erasing; updateTools(); };
+$('undo').onclick = () => { const dd = undoStack.pop(); if (dd) mctx.putImageData(dd, 0, 0); updateTools(); drawCrop(); };
+const toImg = e => { const r = cc.getBoundingClientRect(); return { x: (e.clientX - r.left - view.x) / view.k, y: (e.clientY - r.top - view.y) / view.k }; };
+function stroke(a, b) {
+  const lw = BRUSH[brushIdx] / view.k;
+  mctx.save();
+  mctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
+  mctx.strokeStyle = mctx.fillStyle = '#000';
+  mctx.lineCap = mctx.lineJoin = 'round'; mctx.lineWidth = lw;
+  mctx.beginPath(); mctx.moveTo(a.x, a.y); mctx.lineTo(b.x, b.y); mctx.stroke();
+  mctx.beginPath(); mctx.arc(b.x, b.y, lw / 2, 0, Math.PI * 2); mctx.fill();
+  mctx.restore();
+}
+const ptrs = new Map(); let pinch = null, lastPt = null;
+const mid = (a, b) => { const r = cc.getBoundingClientRect(); return { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top }; };
+cc.addEventListener('pointerdown', e => {
+  e.preventDefault(); cc.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 1) {
+    undoStack.push(mctx.getImageData(0, 0, mask.width, mask.height));
+    if (undoStack.length > 20) undoStack.shift();
+    lastPt = toImg(e); stroke(lastPt, lastPt); drawCrop();
+  } else if (ptrs.size === 2) {
+    // 2本目の指: 描きかけを取り消して拡大縮小に切り替える
+    if (lastPt) { const dd = undoStack.pop(); if (dd) mctx.putImageData(dd, 0, 0); lastPt = null; }
+    const [a, b] = [...ptrs.values()];
+    pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: mid(a, b), k0: view.k, x0: view.x, y0: view.y };
+    drawCrop();
+  }
+});
+cc.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && ptrs.size >= 2) {
+    const [a, b] = [...ptrs.values()], m = mid(a, b);
+    const k = Math.max(view.fit, Math.min(view.fit * 12, pinch.k0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+    view.x = m.x - (pinch.m0.x - pinch.x0) / pinch.k0 * k;
+    view.y = m.y - (pinch.m0.y - pinch.y0) / pinch.k0 * k;
+    view.k = k; drawCrop();
+  } else if (lastPt) { const p = toImg(e); stroke(lastPt, p); lastPt = p; drawCrop(); }
+});
+const up = e => {
+  ptrs.delete(e.pointerId);
+  if (!ptrs.size) { pinch = null; lastPt = null; updateTools(); }
+};
+cc.addEventListener('pointerup', up); cc.addEventListener('pointercancel', up);
+cc.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = cc.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k = Math.max(view.fit, Math.min(view.fit * 12, view.k * Math.exp(-e.deltaY * 0.0015)));
+  view.x = mx - (mx - view.x) / view.k * k; view.y = my - (my - view.y) / view.k * k; view.k = k;
+  if (k <= view.fit * 1.001) { view.x = (CW - src.width * k) / 2; view.y = (CH - src.height * k) / 2; }
+  drawCrop();
+}, { passive: false });
+$('cancel').onclick = () => $('crop').classList.remove('on');
+$('ok').onclick = () => {
+  const b = maskBox(); if (!b) return;
+  const k = SPR / Math.max(b.w, b.h);
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(b.w * k)); out.height = Math.max(1, Math.round(b.h * k));
+  const o = out.getContext('2d');
+  o.drawImage(src, b.x, b.y, b.w, b.h, 0, 0, out.width, out.height);
+  o.globalCompositeOperation = 'destination-in';
+  o.drawImage(mask, b.x, b.y, b.w, b.h, 0, 0, out.width, out.height);
+  makeSprite(out);
+  store.set('cut', out.toDataURL('image/png'));
+  $('crop').classList.remove('on');
+};
+
+resize(); updateSoundBtn(); applyLang();
+addBall(CX, CY - R * 0.4);
+updateCount();
+requestAnimationFrame(loop);
+</script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

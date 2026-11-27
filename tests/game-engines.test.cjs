@@ -14,6 +14,9 @@ test('Every catalog HTML/JS parses and every exported game engine initializes', 
   for (const g of window.GAME_DATA.games) {
     const file = path.join(root, g.url.split('?')[0]), html = fs.readFileSync(file, 'utf8');
     for (const m of html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)) {
+      // importmap 是 JSON、module 脚本不能用 vm.Script 当普通脚本编译，交给浏览器审计覆盖。
+      const type = (/type=["']([^"']+)/.exec(m[1]) || [])[1] || '';
+      if (type === 'importmap' || type === 'application/ld+json' || type === 'module') continue;
       const src = /src=["']([^"']+)/.exec(m[1]);
       if (src) {
         const js = path.resolve(path.dirname(file), src[1]);

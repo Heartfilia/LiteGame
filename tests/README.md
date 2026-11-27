@@ -18,6 +18,8 @@
 node --test tests/*.test.cjs
 ```
 
+- `idiom-chain.test.cjs`：成语词库连通性与去重、开局牌桌不变量、抢牌合法性、长局无死解、计时判胜与电脑选牌。
+- `premium-games.test.cjs`：π 常数前 50 位与掉命判定、猫猫牌桌唯一目标与换桌、饺子取子规则／Grundy 必败位／超时替手。
 - `card-engines.test.cjs`：9 款纸牌游戏的牌数守恒、合法出牌、撤销、AI 对局和计分。
 - `game-engines.test.cjs`：全部游戏脚本语法与引擎加载；谜题可解性、棋类规则、体育计分、物理状态和存档往返等。
 - `new-games.test.cjs`：2048、贪吃蛇、节拍音符及目录资源检查。

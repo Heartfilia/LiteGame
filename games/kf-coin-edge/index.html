@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>贴脸硬币 · LiteGame</title>
+  <meta name="description" content="弹一枚硬币停在桌沿，多一毫米就掉下去，脸也跟着遭殃。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="贴脸硬币 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/coin-edge/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/coin-edge/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #3b2a20; font-family: system-ui, sans-serif; color: #223; overflow: hidden; }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; }
+    header a { color: #223; text-decoration: none; font-size: 14px; background: rgba(255,255,255,.8); border-radius: 14px; padding: 6px 10px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill { height: 34px; min-width: 34px; border: none; border-radius: 17px; background: #fff; color: #223; font-size: 14px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    select.pill { appearance: none; -webkit-appearance: none; }
+    #stage { position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+    #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    #fx { pointer-events: none; }
+    #msg { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; padding: 20px; text-align: center; z-index: 4; }
+    #msg[hidden] { display: none; }
+    .panel { position: fixed; left: 0; right: 0; top: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: calc(54px + 2vh) 16px 0; pointer-events: none; }
+    .panel > * { pointer-events: auto; }
+    .panel[hidden] { display: none; }
+    .big { font-size: clamp(44px, 9vmin, 120px); font-weight: 900; margin: 0; color: #fff; text-shadow: 0 3px 0 #223, 0 0 18px rgba(0,0,0,.4); }
+    .big.dead { color: #ff4040; }
+    .sub { margin: 0; font-size: clamp(15px, 2.2vmin, 24px); background: rgba(255,255,255,.85); border-radius: 12px; padding: 4px 12px; }
+    /* the buttons sit at the bottom, just above the 80px X's in-app browser covers; the result stays up top */
+    .row { position: fixed; left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom)); display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding: 0 16px; }
+    .btn { border: none; border-radius: 28px; background: #2b8a3e; color: #fff; font-size: clamp(18px, 2.6vmin, 28px); font-weight: 700; padding: 12px 32px; cursor: pointer; text-decoration: none; }
+    .btn.x { background: #111; }
+    @media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+      .panel { flex-direction: row; flex-wrap: wrap; justify-content: center; padding-top: 50px; gap: 8px 14px; }
+      .big { font-size: 40px; }
+      .btn { font-size: 16px; padding: 9px 22px; }
+    }
+  </style>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js", "three/addons/": "../lib/three/examples/jsm/" } }</script>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">贴脸硬币</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="sound" class="pill" aria-label="sound">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#223" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#223"/><path id="wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" style="display:none"/></svg>
+      </button>
+      <select id="lang" class="pill" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+    </div>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><canvas id="cv"></canvas><canvas id="fx"></canvas></div>
+  <div id="result" class="panel" hidden>
+    <p class="big" id="rVal"></p>
+    <p class="sub" id="rBest"></p>
+    <div class="row"><button id="again" class="btn"></button><a id="share" class="btn x"></a></div>
+  </div>
+  <div id="msg" hidden></div>
+  </main>
+<script>
+  // if three.js can't be loaded from the CDN, say so instead of a blank screen
+  setTimeout(() => { if (!window.__ok) { const m = document.getElementById('msg'); m.textContent = '読み込みに失敗しました / Failed to load. Please reload.'; m.hidden = false; } }, 10000);
+</script>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 贴脸硬币 · 中文文案
+window.__KF_ZH__ = {
+  title: '贴脸硬币',
+  back: '← 大厅',
+  again: '再来一次',
+  share: '分享到 X',
+  best: '最佳纪录',
+  dead: '死亡',
+  mm: (d) => `${d}mm`,
+  post: (d) => `贴脸硬币：停在桌沿 ${d}mm\n#LiteGame`,
+  postDead: () => `贴脸硬币：硬币掉了下去，人没了\n#LiteGame`,
+  postKill: () => `贴脸硬币：硬币砸到人脸上了\n#LiteGame`
+};
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+window.__ok = true;
+
+const KEY = 'coin-edge:';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(KEY + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch {} },
+};
+const URL_ = new URL('./', location.href).href;
+const TAG = '#贴脸硬币ゲーム';
+const L = {
+  ja: { title: '贴脸硬币', back: '← トップへ戻る', again: 'もう一度', share: 'Xでポスト', best: '自己ベスト', dead: '死亡',
+        mm: d => `${d}mm`, post: d => `贴脸硬币で 端まで ${d}mm\n${TAG}`, postDead: () => `贴脸硬币で コインを落として死んだ\n${TAG}`, postKill: () => `贴脸硬币で 人の顔にコインを当てた\n${TAG}` },
+  ko: { title: '얼굴 아슬아슬', back: '← 처음으로', again: '다시 하기', share: 'X에 게시', best: '최고 기록', dead: '사망',
+        mm: d => `${d}mm`, post: d => `얼굴 아슬아슬에서 끝까지 ${d}mm\n${TAG}`, postDead: () => `얼굴 아슬아슬에서 동전을 떨어뜨려 죽었다\n${TAG}`, postKill: () => `얼굴 아슬아슬에서 사람 얼굴에 동전을 맞혔다\n${TAG}` },
+  en: { title: 'Face Close Call', back: '← Top', again: 'Retry', share: 'Post on X', best: 'Best', dead: 'DEAD',
+        mm: d => `${d}mm`, post: d => `${d}mm from the edge in Face Close Call\n${TAG}`, postDead: () => `I dropped the coin and died in Face Close Call\n${TAG}`, postKill: () => `I hit someone in the face with the coin in Face Close Call\n${TAG}` },
+  th: { title: 'เฉียดหน้า', back: '← กลับหน้าแรก', again: 'เล่นอีกครั้ง', share: 'โพสต์บน X', best: 'สถิติสูงสุด', dead: 'ตาย',
+        mm: d => `${d} มม.`, post: d => `ห่างขอบโต๊ะ ${d} มม. ในเกมเฉียดหน้า\n${TAG}`, postDead: () => `ทำเหรียญตกโต๊ะแล้วตาย ในเกมเฉียดหน้า\n${TAG}`, postKill: () => `ดีดเหรียญโดนหน้าคน ในเกมเฉียดหน้า\n${TAG}` },
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (L[c]) return c; } return 'en'; };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'en';
+const t = k => L[lang][k];
+const $ = id => document.getElementById(id);
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('lang').value = lang;
+  $('back').textContent = t('back');
+  $('again').textContent = t('again'); $('share').textContent = t('share');
+  if (!$('result').hidden) showResult();
+}
+$('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+
+// ---------- sound ----------
+let soundOn = store.get('sound', true), ac = null, noise = null;
+function updSound() { $('wave').style.display = soundOn ? '' : 'none'; $('mute').style.display = soundOn ? 'none' : ''; if (!soundOn) slideStop(); }
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+updSound();
+// made on the first touch with a silent sound, so the first real sound doesn't stutter
+function initAudio() {
+  if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+  try {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    const g = ac.createGain(); g.gain.value = 0; g.connect(ac.destination);
+    const o = ac.createOscillator(); o.connect(g); o.start(); o.stop(ac.currentTime + 0.05);
+    noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  } catch { ac = null; }
+}
+addEventListener('pointerdown', initAudio, true);
+addEventListener('keydown', initAudio, true);
+const ok = () => soundOn && ac && noise;
+// a short noise burst through a resonance: the finger flicking the coin
+function burst(freq, q, dur, vol, at = 0) {
+  if (!ok()) return;
+  const n = ac.currentTime + at, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = noise; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(0.001, n + dur);
+  s.connect(f).connect(g).connect(ac.destination); s.start(n, Math.random()); s.stop(n + dur + 0.02);
+}
+// metal ring: inharmonic partials of a disc, each dying away at its own rate
+function ring(f0, vol, dur, at = 0) {
+  if (!ok()) return;
+  const n = ac.currentTime + at;
+  [[1, 1], [2.31, 0.6], [3.9, 0.45], [5.7, 0.3], [8.1, 0.15]].forEach(([r, a], i) => {
+    if (f0 * r > 16000) return; // above hearing, and past what the oscillator allows
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.value = f0 * r * (1 + (Math.random() - 0.5) * 0.01);
+    g.gain.setValueAtTime(vol * a, n); g.gain.exponentialRampToValueAtTime(0.0005, n + dur / (1 + i * 0.5));
+    o.connect(g).connect(ac.destination); o.start(n); o.stop(n + dur);
+  });
+  burst(6000, 1.5, 0.02, vol * 0.8, at);
+}
+function stretchSound(p) { ring(500 + p * 900, 0.02, 0.06); burst(300 + p * 500, 6, 0.05, 0.12); }
+// the band snapping forward
+function flickSound(p) { burst(180, 2, 0.12, 0.6 + p * 0.3); burst(1800, 2, 0.04, 0.5 + p * 0.4); burst(400, 3, 0.06, 0.4); ring(2400, 0.05, 0.25); }
+// the coin rubbing on wood: filtered noise that follows the speed
+let slide = null;
+function slideStart() {
+  if (!ok() || slide) return;
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = noise; s.loop = true; f.type = 'bandpass'; f.frequency.value = 2500; f.Q.value = 0.7; g.gain.value = 0;
+  s.connect(f).connect(g).connect(ac.destination); s.start();
+  slide = { s, f, g };
+}
+function slideSet(v) { if (slide) { slide.g.gain.setTargetAtTime(Math.min(0.25, v * 0.35), ac.currentTime, 0.03); slide.f.frequency.setTargetAtTime(1500 + v * 2500, ac.currentTime, 0.05); } }
+function slideStop() { if (slide) { try { slide.g.gain.setTargetAtTime(0, ac.currentTime, 0.03); slide.s.stop(ac.currentTime + 0.2); } catch {} slide = null; } }
+// the wobble as a coin settles: clicks closer and closer together, higher and higher
+function rattle() { let at = 0; for (let i = 0; i < 9; i++) { const gap = 0.11 * Math.pow(0.78, i); ring(3000 + i * 120, 0.05 * (1 - i / 11), 0.12, at); at += gap; } }
+// formant voice: saw (vocal folds) + breath noise through three vowel resonances
+const VOWEL = { a: [800, 1200, 2600], i: [300, 2300, 3000], u: [350, 1250, 2500], e: [500, 1900, 2600], o: [500, 850, 2500], g: [450, 1100, 2400] };
+function voice(f0, seq, dur, vol = 0.5, shake = 0.05, breath = 0.18) {
+  if (!ok()) return;
+  const now = ac.currentTime;
+  const o = ac.createOscillator(); o.type = 'sawtooth';
+  o.frequency.setValueAtTime(f0 * 1.2, now);
+  o.frequency.linearRampToValueAtTime(f0 * 1.45, now + dur * 0.15);
+  o.frequency.exponentialRampToValueAtTime(f0 * 0.65, now + dur);
+  const vib = ac.createOscillator(); vib.frequency.value = 6 + Math.random() * 3;
+  const vg = ac.createGain(); vg.gain.value = f0 * shake; vib.connect(vg).connect(o.frequency);
+  const ns = ac.createBufferSource(); ns.buffer = noise; ns.loop = true;
+  const ng = ac.createGain(); ng.gain.value = breath;
+  const src = ac.createGain(); o.connect(src); ns.connect(ng).connect(src);
+  const out = ac.createGain();
+  out.gain.setValueAtTime(0, now); out.gain.linearRampToValueAtTime(vol, now + 0.03);
+  out.gain.setValueAtTime(vol, now + dur * 0.6); out.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  [1, 0.6, 0.25].forEach((amp, fi) => {
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = fi === 0 ? 6 : 9;
+    seq.forEach((v, si) => { const tt = now + dur * si / Math.max(1, seq.length - 1) * 0.7; bp.frequency[si ? 'linearRampToValueAtTime' : 'setValueAtTime'](VOWEL[v][fi] * 1.15, tt); });
+    const g = ac.createGain(); g.gain.value = amp * 3;
+    src.connect(bp).connect(g).connect(out);
+  });
+  out.connect(ac.destination);
+  o.start(now); vib.start(now); ns.start(now, Math.random());
+  o.stop(now + dur); vib.stop(now + dur); ns.stop(now + dur);
+}
+const SCREAMS = [['i', 'a'], ['a', 'u'], ['e', 'a', 'o'], ['g', 'a', 'u'], ['i', 'e']];
+const scream = () => voice(520 + Math.random() * 160, SCREAMS[Math.random() * SCREAMS.length | 0], 1.0 + Math.random() * 0.5, 0.55);
+const sigh = () => voice(330 + Math.random() * 60, Math.random() < 0.5 ? ['o', 'u'] : ['a', 'o'], 0.5 + Math.random() * 0.2, 0.25, 0.02);
+
+// ---------- scene ----------
+const stage = $('stage'), cv = $('cv');
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xe9d8c0, 2.5, 6);
+const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 30);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+
+const canvasTex = (w, h, paint, rep = [1, 1]) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  paint(c.getContext('2d'), w, h);
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+  tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(rep[0], rep[1]); tx.anisotropy = 4;
+  return tx;
+};
+// wood grain: long wavy streaks over a warm base
+const woodPaint = (base, dark) => (g, w, h) => {
+  g.fillStyle = base; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 140; i++) {
+    const y0 = Math.random() * h, a = 2 + Math.random() * 6, ph = Math.random() * 7;
+    g.strokeStyle = `rgba(${dark},${0.05 + Math.random() * 0.18})`; g.lineWidth = 0.6 + Math.random() * 2.2;
+    g.beginPath();
+    for (let x = 0; x <= w; x += 8) { const y = y0 + Math.sin(x / 90 + ph) * a + Math.sin(x / 23 + ph * 2) * a * 0.3; x ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke();
+  }
+  for (let i = 0; i < 3; i++) { // knots
+    const x = Math.random() * w, y = Math.random() * h;
+    for (let r = 14; r > 2; r -= 3) { g.strokeStyle = `rgba(${dark},.25)`; g.lineWidth = 1.5; g.beginPath(); g.ellipse(x, y, r * 2.2, r, 0, 0, 7); g.stroke(); }
+  }
+};
+const tableTex = canvasTex(2048, 1024, woodPaint('#b9804a', '70,35,10'));
+const floorTex = canvasTex(512, 512, (g, w, h) => {
+  woodPaint('#8a5a36', '40,20,5')(g, w, h);
+  g.fillStyle = 'rgba(30,15,5,.6)'; for (let y = 0; y < h; y += 64) g.fillRect(0, y, w, 3);
+  for (let y = 0; y < h; y += 64) { const x = ((y / 64) % 2) * 256 + 120; g.fillRect(x, y, 3, 64); }
+}, [6, 6]);
+const wallTex = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#efe1c6'; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(190,150,100,.25)'; for (let x = 0; x < w; x += 32) g.fillRect(x, 0, 10, h);
+  g.fillStyle = 'rgba(200,120,90,.25)';
+  for (let y = 16; y < h; y += 64) for (let x = 21; x < w; x += 64) { g.beginPath(); g.arc(x + (y / 64 % 2) * 32, y, 5, 0, 7); g.fill(); }
+}, [16, 6]);
+
+// table: top edge at x = EDGE, top surface at y = 0
+const EDGE = 0.5, START_X = EDGE - 0.8, // the coin starts in the middle of the table
+  TH = 0.035, TABLE_Y = 0.75;
+const wood = new THREE.MeshStandardMaterial({ map: tableTex, roughness: 0.55 });
+const shade = o => { o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; };
+const box = (w, h, d, mat, x, y, z, parent = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return shade(m); };
+box(1.6, TH, 0.7, wood, EDGE - 0.8, -TH / 2, 0);
+const legMat = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 0.6 });
+for (const x of [EDGE - 0.06, EDGE - 1.54]) for (const z of [0.3, -0.3]) box(0.05, TABLE_Y - TH, 0.05, legMat, x, -TABLE_Y / 2 - TH / 2, z);
+box(1.5, 0.06, 0.02, legMat, EDGE - 0.8, -TH - 0.03, 0.33);
+// floor and wall
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7 }));
+floor.rotation.x = -Math.PI / 2; floor.position.y = -TABLE_Y; floor.receiveShadow = true; scene.add(floor);
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(14, 5), new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.9 }));
+wall.position.set(0, -TABLE_Y + 2.5, -1.4); wall.receiveShadow = true; scene.add(wall);
+box(14, 0.1, 0.02, new THREE.MeshStandardMaterial({ color: 0x8a5a36, roughness: 0.6 }), 0, -TABLE_Y + 0.05, -1.39);
+// window with a gradient sky and a far hill
+const skyTex = canvasTex(256, 256, (g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#6fb6ff'); gr.addColorStop(0.7, '#d4ecff'); gr.addColorStop(1, '#fff3d8');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,.9)'; for (const [x, y] of [[60, 70], [170, 50], [200, 110]]) { for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(x + k * 14 - 20, y + Math.sin(k) * 4, 14, 0, 7); g.fill(); } }
+  g.fillStyle = '#7fb77e'; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 8) g.lineTo(x, h * 0.82 - Math.sin(x / 40) * 14); g.lineTo(w, h); g.fill();
+});
+const win = new THREE.Group(); win.position.set(0.15, 0.55, -1.38); scene.add(win);
+win.add(new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.8), new THREE.MeshBasicMaterial({ map: skyTex, fog: false })));
+const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+for (const [w, h, x, y] of [[1.08, 0.05, 0, 0.42], [1.08, 0.05, 0, -0.42], [0.05, 0.88, -0.52, 0], [0.05, 0.88, 0.52, 0], [0.03, 0.8, 0, 0], [1.0, 0.03, 0, 0]]) box(w, h, 0.03, frameMat, x, y, 0.01, win);
+// a person kneeling past the edge, sitting on their heels and leaning in, face just under the tabletop.
+// the body is a ragdoll: joints are points held together by sticks. it stays posed until the coin hits,
+// then the joints fly free under gravity (Verlet) and the meshes follow them
+const F = -TABLE_Y;
+const skin = new THREE.MeshStandardMaterial({ color: 0xe8b894, roughness: 0.55 });
+const hairMat = new THREE.MeshStandardMaterial({ color: 0x1e140e, roughness: 0.85 });
+const shirt = new THREE.MeshStandardMaterial({ color: 0xdfe4ea, roughness: 0.85 });
+const jeans = new THREE.MeshStandardMaterial({ color: 0x2f4a6d, roughness: 0.9 });
+const shoeMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.5 });
+const white = new THREE.MeshStandardMaterial({ color: 0xf8f8f4, roughness: 0.15 });
+const iris = new THREE.MeshStandardMaterial({ color: 0x3a2412, roughness: 0.2 });
+const black = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1 });
+const lipMat = new THREE.MeshStandardMaterial({ color: 0xb86a62, roughness: 0.45 });
+const SPH = new THREE.SphereGeometry(1, 28, 18);
+const part = (geo, mat, x, y, z, sx, sy, sz, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); parent.add(m); return m; };
+// joints (x from the edge, y from the floor), mirrored on z for the left/right ones
+const J = {};
+const POSE = {
+  head: [0.15, 0.66, 0], neck: [0.2, 0.555, 0], chest: [0.31, 0.44, 0], pelvis: [0.42, 0.22, 0],
+  shL: [0.27, 0.525, -0.18], shR: [0.27, 0.525, 0.18], elL: [0.26, 0.27, -0.22], elR: [0.26, 0.27, 0.22],
+  haL: [0.09, 0.15, -0.14], haR: [0.09, 0.15, 0.14], hiL: [0.42, 0.22, -0.095], hiR: [0.42, 0.22, 0.095],
+  knL: [0.02, 0.07, -0.11], knR: [0.02, 0.07, 0.11], anL: [0.44, 0.05, -0.1], anR: [0.44, 0.05, 0.1],
+  toL: [0.58, 0.03, -0.11], toR: [0.58, 0.03, 0.11],
+};
+const NAMES = Object.keys(POSE);
+for (const n of NAMES) J[n] = { p: new THREE.Vector3(), o: new THREE.Vector3(), r: 0.04 };
+J.head.r = 0.1; J.chest.r = 0.12; J.pelvis.r = 0.1;
+const HEAD = new THREE.Vector3(EDGE + POSE.head[0], F + POSE.head[1], 0), HEAD_R = 0.1;
+function pose() {
+  for (const n of NAMES) { const [x, y, z] = POSE[n]; J[n].p.set(EDGE + x, F + y, z); J[n].o.copy(J[n].p); }
+}
+pose();
+// sticks: the bones, plus cross braces so the chest and hips stay one rigid piece
+const STICKS = [
+  ['head', 'neck'], ['neck', 'chest'], ['chest', 'pelvis'], ['neck', 'shL'], ['neck', 'shR'], ['shL', 'shR'],
+  ['shL', 'elL'], ['elL', 'haL'], ['shR', 'elR'], ['elR', 'haR'], ['pelvis', 'hiL'], ['pelvis', 'hiR'], ['hiL', 'hiR'],
+  ['hiL', 'knL'], ['knL', 'anL'], ['hiR', 'knR'], ['knR', 'anR'], ['anL', 'toL'], ['anR', 'toR'],
+  ['shL', 'chest'], ['shR', 'chest'], ['shL', 'hiL'], ['shR', 'hiR'], ['shL', 'hiR'], ['shR', 'hiL'], ['head', 'chest'],
+  ['head', 'shL'], ['head', 'shR'], ['neck', 'pelvis'], ['chest', 'hiL'], ['chest', 'hiR'],
+].map(([a, b]) => [J[a], J[b], J[a].p.distanceTo(J[b].p)]);
+// soft limits so knees and elbows don't pass through the body: keep hands and feet from the chest/pelvis
+const MINS = [['haL', 'chest', 0.12], ['haR', 'chest', 0.12], ['anL', 'pelvis', 0.12], ['anR', 'pelvis', 0.12], ['knL', 'chest', 0.2], ['knR', 'chest', 0.2], ['elL', 'pelvis', 0.08], ['elR', 'pelvis', 0.08]].map(([a, b, d]) => [J[a], J[b], d]);
+let ragdoll = false;
+const tmp = new THREE.Vector3();
+function ragStep(dt) {
+  for (const n of NAMES) {
+    const j = J[n]; tmp.copy(j.p).sub(j.o).multiplyScalar(0.995);
+    j.o.copy(j.p); j.p.add(tmp); j.p.y -= 9.8 * dt * dt;
+  }
+  for (let it = 0; it < 12; it++) {
+    for (const [a, b, len] of STICKS) {
+      tmp.copy(b.p).sub(a.p); const d = tmp.length() || 1e-6, k = (d - len) / d * 0.5;
+      a.p.addScaledVector(tmp, k); b.p.addScaledVector(tmp, -k);
+    }
+    for (const [a, b, mn] of MINS) {
+      tmp.copy(b.p).sub(a.p); const d = tmp.length() || 1e-6; if (d >= mn) continue;
+      const k = (d - mn) / d * 0.5; a.p.addScaledVector(tmp, k); b.p.addScaledVector(tmp, -k);
+    }
+    for (const n of NAMES) {
+      const j = J[n];
+      if (j.p.y < F + j.r) { // floor, with friction
+        j.p.y = F + j.r; const vx = j.p.x - j.o.x, vz = j.p.z - j.o.z; j.o.x = j.p.x - vx * 0.85; j.o.z = j.p.z - vz * 0.85;
+        if (j.o.y < j.p.y - 0.02 && n === 'head' && !thud) { thud = true; burst(150, 1.5, 0.25, 0.9); burst(90, 2, 0.35, 0.7); catShake = 0.4; }
+      }
+      if (j.p.z < -1.38 + j.r) j.p.z = -1.38 + j.r; // the back wall
+      // the table top: push anything inside it back out over the edge
+      if (j.p.x < EDGE + j.r && j.p.y > -TH - j.r && j.p.y < j.r && j.p.z > -0.35 && j.p.z < 0.35) j.p.x = EDGE + j.r;
+    }
+  }
+}
+function fling() {
+  ragdoll = true;
+  const kick = (n, vx, vy, vz) => { J[n].o.copy(J[n].p).sub(tmp.set(vx, vy, vz).multiplyScalar(DT)); };
+  const s = 1 + Math.random() * 0.3, side = (Math.random() - 0.3) * 1.2;
+  kick('head', 5.5 * s, 3.2 * s, side); kick('neck', 4.2 * s, 2.6 * s, side * 0.8); kick('chest', 3.2 * s, 2.2 * s, side * 0.6);
+  for (const n of ['shL', 'shR']) kick(n, 3.4 * s, 2.3 * s, side * 0.6);
+  for (const n of ['elL', 'elR', 'haL', 'haR']) kick(n, 2.4 * s, 2.6 * s, side * 0.4 + (Math.random() - 0.5) * 2);
+  kick('pelvis', 1.8 * s, 1.9 * s, side * 0.3); for (const n of ['hiL', 'hiR']) kick(n, 1.8 * s, 1.9 * s, side * 0.3);
+  for (const n of ['knL', 'knR', 'anL', 'anR', 'toL', 'toR']) kick(n, 0.6 * s, 1.4 * s, (Math.random() - 0.5));
+}
+// meshes: each limb is a capsule stretched between two joints
+const human = new THREE.Group(); scene.add(human);
+const limbs = [];
+const limb = (a, b, r, mat, ext = 0) => {
+  const len = J[a].p.distanceTo(J[b].p) + ext, m = new THREE.Mesh(new THREE.CapsuleGeometry(r, Math.max(0.001, len - r * 2 + r * 0.6), 6, 14), mat);
+  human.add(m); limbs.push({ m, a: J[a], b: J[b] }); return m;
+};
+limb('shL', 'elL', 0.045, shirt); limb('shR', 'elR', 0.045, shirt);
+limb('elL', 'haL', 0.037, shirt); limb('elR', 'haR', 0.037, shirt);
+limb('hiL', 'knL', 0.068, jeans); limb('hiR', 'knR', 0.068, jeans);
+limb('knL', 'anL', 0.052, jeans); limb('knR', 'anR', 0.052, jeans);
+limb('neck', 'head', 0.045, skin);
+// hands and shoes as small shapes at the joint ends
+const hands = ['haL', 'haR'].map(n => { const g = new THREE.Group(); human.add(g); part(SPH, skin, 0, -0.035, 0, 0.032, 0.05, 0.018, g); part(SPH, skin, 0.012, -0.03, 0.02, 0.01, 0.028, 0.01, g); return { g, j: J[n], e: J[n === 'haL' ? 'elL' : 'elR'] }; });
+const shoes = [['anL', 'toL'], ['anR', 'toR']].map(([a, b]) => { const g = new THREE.Group(); human.add(g); part(SPH, shoeMat, 0, 0.06, 0, 0.045, 0.09, 0.04, g); return { g, j: J[a], e: J[b] }; });
+// chest and hips: shaped blobs oriented by their joints
+const torso = new THREE.Group(); human.add(torso);
+part(SPH, shirt, 0, 0.12, 0, 0.1, 0.16, 0.17, torso); // ribcage
+part(SPH, shirt, 0, -0.02, 0, 0.09, 0.15, 0.145, torso); // belly
+for (const s of [-1, 1]) part(SPH, shirt, 0, 0.19, s * 0.15, 0.05, 0.05, 0.055, torso); // shoulders
+const hips = new THREE.Group(); human.add(hips);
+part(SPH, jeans, 0, 0.02, 0, 0.1, 0.1, 0.17, hips);
+// the head, face toward local -x
+const headOuter = new THREE.Group(); human.add(headOuter);
+const head = new THREE.Group(); headOuter.add(head); head.rotation.z = -0.45; // chin up, looking at the coin
+part(SPH, skin, 0, 0.005, 0, 0.088, 0.108, 0.078, head); // skull
+part(SPH, skin, -0.03, -0.05, 0, 0.06, 0.05, 0.058, head); // jaw
+part(SPH, skin, -0.075, -0.075, 0, 0.022, 0.018, 0.026, head); // chin
+part(SPH, hairMat, 0.012, 0.035, 0, 0.088, 0.092, 0.084, head); // hair over the top and back
+part(SPH, hairMat, -0.05, 0.075, 0, 0.04, 0.03, 0.07, head); // fringe
+for (const s of [-1, 1]) {
+  part(SPH, skin, 0.008, -0.005, s * 0.078, 0.017, 0.03, 0.01, head); // ears
+  part(SPH, hairMat, 0.02, 0.02, s * 0.08, 0.04, 0.05, 0.012, head); // sideburns
+  part(SPH, white, -0.072, 0.012, s * 0.03, 0.01, 0.009, 0.014, head); // eyes looking at the coin
+  part(SPH, iris, -0.079, 0.012, s * 0.03, 0.006, 0.0075, 0.0075, head);
+  part(SPH, black, -0.083, 0.012, s * 0.03, 0.003, 0.0038, 0.0038, head);
+  part(SPH, white, -0.085, 0.015, s * 0.03 - 0.002, 0.0013, 0.0013, 0.0013, head);
+  part(SPH, skin, -0.07, 0.02, s * 0.03, 0.011, 0.004, 0.016, head); // upper lids
+  part(SPH, hairMat, -0.078, 0.034, s * 0.032, 0.006, 0.004, 0.019, head).rotation.x = s * 0.15; // brows
+  part(SPH, skin, -0.062, -0.022, s * 0.04, 0.02, 0.02, 0.02, head); // cheeks
+}
+part(SPH, skin, -0.088, -0.006, 0, 0.012, 0.024, 0.01, head).rotation.z = -0.25; // nose
+part(SPH, skin, -0.094, -0.022, 0, 0.012, 0.009, 0.013, head);
+const lipU = part(SPH, lipMat, -0.082, -0.044, 0, 0.007, 0.004, 0.02, head);
+const lipD = part(SPH, lipMat, -0.08, -0.052, 0, 0.007, 0.0045, 0.018, head);
+const mouthIn = part(SPH, new THREE.MeshStandardMaterial({ color: 0x3a0d0d, roughness: 0.7 }), -0.077, -0.048, 0, 0.005, 0.0001, 0.015, head);
+shade(human);
+const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3(), mtx = new THREE.Matrix4();
+// orient a group: local y along "up", local z along "side" (made perpendicular)
+function orient(g, up, side) {
+  vB.copy(up).normalize(); vC.copy(side).addScaledVector(vB, -side.dot(vB)).normalize(); vA.crossVectors(vB, vC);
+  mtx.makeBasis(vA, vB, vC); g.quaternion.setFromRotationMatrix(mtx);
+}
+const side = new THREE.Vector3(), up = new THREE.Vector3();
+function drawHuman() {
+  for (const { m, a, b } of limbs) { m.position.copy(a.p).lerp(b.p, 0.5); m.quaternion.setFromUnitVectors(UP_, up.copy(b.p).sub(a.p).normalize()); }
+  side.copy(J.shR.p).sub(J.shL.p);
+  torso.position.copy(J.chest.p); orient(torso, up.copy(J.neck.p).sub(J.pelvis.p), side);
+  hips.position.copy(J.pelvis.p); orient(hips, up.copy(J.chest.p).sub(J.pelvis.p), side.copy(J.hiR.p).sub(J.hiL.p));
+  headOuter.position.copy(J.head.p); orient(headOuter, up.copy(J.head.p).sub(J.neck.p), side.copy(J.shR.p).sub(J.shL.p));
+  for (const h of hands) { h.g.position.copy(h.j.p); orient(h.g, up.copy(h.e.p).sub(h.j.p), side.set(0, 0, 1)); }
+  for (const s of shoes) { s.g.position.copy(s.j.p); orient(s.g, up.copy(s.e.p).sub(s.j.p), side.set(0, 0, 1)); }
+}
+const UP_ = new THREE.Vector3(0, 1, 0);
+function mouthOpen(k) { lipD.position.y = -0.052 - k * 0.012; mouthIn.scale.y = 0.0001 + k * 0.009; }
+
+// lights: sky + warm sun from the window side
+scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x7a5236, 0.9));
+const sun = new THREE.DirectionalLight(0xffe2b8, 2.2);
+sun.position.set(-0.6, 1.6, 1.0); sun.target.position.set(0.2, -0.3, 0); scene.add(sun, sun.target);
+sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.01;
+Object.assign(sun.shadow.camera, { left: -1.2, right: 1.2, top: 1.2, bottom: -1.2, near: 0.1, far: 5 });
+
+// coin: gold disc with rings on its face
+const R = 0.065, CT = 0.009, SPIN0 = Math.PI / 2; // SPIN0 turns the cat upright toward the camera
+// the coin's face is the usual cat, stamped in a gold rim
+const paintFace = (g, w, img) => {
+  const c = w / 2, gr = g.createRadialGradient(c * 0.8, c * 0.8, 10, c, c, c);
+  gr.addColorStop(0, '#ffe9a0'); gr.addColorStop(1, '#c8902a'); g.fillStyle = gr; g.fillRect(0, 0, w, w);
+  if (img) {
+    g.save(); g.beginPath(); g.arc(c, c, c - 20, 0, 7); g.clip();
+    g.fillStyle = '#fff3d0'; g.fillRect(0, 0, w, w);
+    g.drawImage(img, c - (c - 24), c - (c - 24) * 0.95, (c - 24) * 2, (c - 24) * 2);
+    g.globalCompositeOperation = 'multiply'; g.fillStyle = 'rgba(255,214,120,.35)'; g.fillRect(0, 0, w, w);
+    g.restore();
+  }
+  g.strokeStyle = 'rgba(110,70,10,.7)'; g.lineWidth = 8; g.beginPath(); g.arc(c, c, c - 18, 0, 7); g.stroke();
+  g.lineWidth = 2; for (let a = 0; a < 64; a++) { const r = c - 4; g.beginPath(); g.moveTo(c + Math.cos(a / 64 * 7) * r, c + Math.sin(a / 64 * 7) * r); g.lineTo(c + Math.cos(a / 64 * 7) * (r - 8), c + Math.sin(a / 64 * 7) * (r - 8)); g.stroke(); }
+};
+const faceTex = canvasTex(512, 512, (g, w) => paintFace(g, w, null));
+{ const img = new Image(); img.onload = () => { paintFace(faceTex.image.getContext('2d'), 512, img); faceTex.needsUpdate = true; }; img.src = 'cat.png'; }
+const gold = new THREE.MeshStandardMaterial({ color: 0xffd36a, metalness: 0.85, roughness: 0.25, envMapIntensity: 2.2 });
+const goldFace = new THREE.MeshStandardMaterial({ map: faceTex, metalness: 0.35, roughness: 0.35, envMapIntensity: 1.2 });
+const coin = shade(new THREE.Mesh(new THREE.CylinderGeometry(R, R, CT, 48), [gold, goldFace, goldFace]));
+const coinPivot = new THREE.Group(); coinPivot.add(coin); scene.add(coinPivot);
+// slingshot: two wooden posts behind the coin with a rubber band between them
+const POST_X = START_X - R - 0.004, POST_Z = R + 0.03, BAND_Y = 0.012;
+const postMat = new THREE.MeshStandardMaterial({ color: 0x7a4a26, roughness: 0.6 });
+for (const sz of [-1, 1]) {
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.013, 0.05, 14), postMat);
+  post.position.set(POST_X, 0.025, sz * POST_Z); scene.add(shade(post));
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.013, 14, 10), postMat); knob.position.set(POST_X, 0.05, sz * POST_Z); scene.add(shade(knob));
+}
+const bandMat = new THREE.MeshStandardMaterial({ color: 0xe03131, roughness: 0.5 });
+const bandGeo = new THREE.CylinderGeometry(0.004, 0.004, 1, 8);
+const bands = [new THREE.Mesh(bandGeo, bandMat), new THREE.Mesh(bandGeo, bandMat)]; bands.forEach(b => scene.add(shade(b)));
+const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.009, 0.012, 0.05), bandMat); scene.add(shade(pocket));
+const UP = new THREE.Vector3(0, 1, 0), bA = new THREE.Vector3(), bB = new THREE.Vector3();
+function updateBand(x) {
+  // the band holds the coin's back while loaded; once it's shot, it snaps back straight between the posts
+  const loaded = state === 'ready' || state === 'charge';
+  const px = loaded ? Math.min(POST_X, x - R - 0.003) : POST_X;
+  pocket.position.set(px, BAND_Y, 0);
+  bands.forEach((b, i) => {
+    bA.set(POST_X, BAND_Y, (i ? 1 : -1) * POST_Z); bB.set(px, BAND_Y, (i ? 1 : -1) * 0.024);
+    b.position.copy(bA).lerp(bB, 0.5); b.scale.y = bA.distanceTo(bB);
+    b.quaternion.setFromUnitVectors(UP, bB.clone().sub(bA).normalize());
+  });
+}
+
+// a red ruler line from the coin's front to the edge, after it stops
+const gapLine = new THREE.Mesh(new THREE.BoxGeometry(1, 0.0015, 0.004), new THREE.MeshBasicMaterial({ color: 0xff2a2a }));
+gapLine.visible = false; scene.add(gapLine);
+const edgeMark = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.012, 0.004), gapLine.material); edgeMark.visible = false; scene.add(edgeMark);
+
+// little sparks / dust that fade over time
+const sparkGeo = new THREE.SphereGeometry(1, 6, 4), sparks = [];
+function puff(x, y, z, n, color, sp) {
+  for (let i = 0; i < n; i++) {
+    const m = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ color, transparent: true }));
+    m.position.set(x, y, z); m.scale.setScalar(0.002 + Math.random() * 0.003); scene.add(m);
+    const a = Math.random() * 7, u = Math.random();
+    sparks.push({ m, v: new THREE.Vector3(Math.cos(a) * sp, (0.3 + u) * sp, Math.sin(a) * sp), life: 0.5 + Math.random() * 0.4 });
+  }
+}
+function tickSparks(dt) {
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const p = sparks[i]; p.life -= dt;
+    if (p.life <= 0) { scene.remove(p.m); p.m.material.dispose(); sparks.splice(i, 1); continue; }
+    p.v.y -= 2 * dt; p.m.position.addScaledVector(p.v, dt); p.m.material.opacity = Math.min(1, p.life * 2);
+  }
+}
+
+// ---------- game ----------
+// the coin slides along +x, slowing by friction; the slingshot picks how hard
+const PULL = 0.25; // how far back the slingshot stretches at full power
+const DT = 1 / 120, DEC = 1.5, DMAX = EDGE - START_X + 0.25, VMAX = Math.sqrt(2 * DEC * (DMAX + PULL)), FLOOR = -TABLE_Y + CT / 2;
+let state = 'ready', power = 0, chargeT = 0, best = store.get('best', null), result = null, endT = 0;
+const c = { x: START_X, y: CT / 2, v: 0, vy: 0, rz: 0, wz: 0, spin: 0, wob: 0, wobT: 0, bounces: 0 }, cp = { ...c };
+let dec = DEC;
+function reset() {
+  Object.assign(c, { x: START_X, y: CT / 2, v: 0, vy: 0, rz: 0, wz: 0, spin: SPIN0, wob: 0, wobT: 0, bounces: 0 });
+  Object.assign(cp, c);
+  state = 'ready'; power = 0; chargeT = 0; result = null; endT = 0;
+  gapLine.visible = edgeMark.visible = false;
+  ragdoll = false; pose(); hitT = -1; flashK = 0; shake = 0; mouthOpen(0); crack = null; catShake = 0; dropT = 0;
+  fxCtx.clearRect(0, 0, fx.width, fx.height); fxOn = false; redK = 0;
+}
+// slingshot: drag away from the edge to stretch the band, let go to shoot. the pull is measured on screen
+// along the table's "back" direction, so it feels the same at any camera angle or screen size
+let drag = null, keyHold = false;
+function backDir() {
+  const a = toScreen(START_X, 0, 0), b = toScreen(START_X - 0.1, 0, 0), W = stage.clientWidth, H = stage.clientHeight;
+  const dx = (b.x - a.x) * W, dy = (b.y - a.y) * H, l = Math.hypot(dx, dy) || 1;
+  return [dx / l, dy / l];
+}
+function press(e) {
+  if (state !== 'ready') return;
+  state = 'charge'; chargeT = 0; power = 0;
+  drag = e ? { x: e.clientX, y: e.clientY, dir: backDir(), full: Math.max(180, Math.min(stage.clientWidth, stage.clientHeight) * 0.6) } : null;
+  keyHold = !e;
+}
+function aim(e) {
+  if (state !== 'charge' || !drag) return;
+  const along = (e.clientX - drag.x) * drag.dir[0] + (e.clientY - drag.y) * drag.dir[1];
+  const p = Math.max(0, Math.min(1, along / drag.full));
+  if (Math.floor(p * 12) !== Math.floor(power * 12) && p > power) stretchSound(p); // the band creaks as it stretches
+  power = p;
+}
+function release() {
+  if (state !== 'charge') return;
+  drag = null; keyHold = false;
+  if (power < 0.02) { state = 'ready'; power = 0; c.x = START_X; return; } // barely pulled: nothing happens
+  state = 'slide'; c.x = START_X - power * PULL;
+  c.v = power * VMAX; dec = DEC * (1 + (Math.random() - 0.5) * 0.03); // the table isn't perfectly even
+  flickSound(power); slideStart();
+  puff(c.x - R, 0.002, 0, 5, 0xffffff, 0.08);
+}
+stage.addEventListener('pointerdown', e => { e.preventDefault(); stage.setPointerCapture?.(e.pointerId); press(e); });
+stage.addEventListener('pointermove', aim);
+stage.addEventListener('pointerup', release);
+stage.addEventListener('pointercancel', release);
+addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'Enter') { if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'SELECT') return; e.preventDefault(); if (!e.repeat) press(); } });
+addEventListener('keyup', e => { if (e.code === 'Space' || e.code === 'Enter') release(); });
+$('again').onclick = () => { $('result').hidden = true; reset(); };
+
+let catShake = 0, dropT = 0;
+function step(dt) {
+  Object.assign(cp, c);
+  if (state === 'charge') {
+    chargeT += dt;
+    if (keyHold) power = Math.min(1, chargeT / 1.6); // keyboard: the longer you hold, the further back
+    c.x = START_X - power * PULL;
+  }
+  if (state === 'slide') {
+    c.v = Math.max(0, c.v - dec * dt); c.x += c.v * dt;
+    slideSet(c.v);
+    if (c.x > EDGE) { state = 'fall'; slideStop(); c.wz = -c.v * 25 - 3; c.vy = 0; burst(3500, 3, 0.03, 0.2); }
+    else if (c.v === 0) { state = 'settle'; slideStop(); rattle(); c.wob = 0.08; c.wobT = 0; sigh(); }
+  } else if (state === 'settle') {
+    c.wobT += dt; c.wob *= Math.exp(-dt * 4);
+    if (c.wobT > 0.9) { c.wob = 0; finish(false); }
+  } else if (state === 'fall' || state === 'dead' || state === 'kill') {
+    c.vy -= 9.8 * dt; c.x += c.v * dt; c.y += c.vy * dt; c.rz += c.wz * dt;
+    // tipping over the edge: still touching the corner, so it pivots before it drops free
+    if (c.y > 0 && c.x - EDGE < R) c.vy = Math.min(c.vy, 0);
+    if (state === 'fall' && c.y < 0.01 && Math.hypot(c.x - HEAD.x, c.y - HEAD.y) < HEAD_R + R * 0.6) hit();
+    if (c.y <= FLOOR) {
+      c.y = FLOOR;
+      if (Math.abs(c.vy) > 0.4) {
+        ring(3200 + Math.random() * 400, Math.min(0.25, Math.abs(c.vy) * 0.06), 0.9);
+        puff(c.x, FLOOR, 0, 8, 0xffe08a, 0.25);
+        c.vy = -c.vy * 0.32; c.v *= 0.55; c.wz *= -0.5; c.bounces++;
+        if (state === 'fall') die();
+        else if (state === 'kill' && c.bounces === 1) ring(3000, 0.08, 0.5);
+      } else { c.vy = 0; c.v *= Math.exp(-dt * 6); c.wz = 0; const flat = Math.round(c.rz / Math.PI) * Math.PI; c.rz += (flat - c.rz) * Math.min(1, dt * 12); }
+    }
+  }
+  if (ragdoll) ragStep(dt);
+  if (state === 'kill') {
+    dropT += dt;
+    mouthOpen(Math.min(1, dropT * 4));
+    catShake = Math.max(0, catShake - dt);
+    if (dropT > 3 && endT === 0) { endT = 1; finish('kill'); }
+  }
+  if (state === 'dead') {
+    dropT += dt; catShake = Math.max(0, catShake - dt);
+    if (dropT > 1.6 && endT === 0) { endT = 1; finish(true); }
+  }
+}
+let thud = false;
+// "guehhh": a low, long, strangled voice
+const gue = () => { voice(120 + Math.random() * 25, ['g', 'u', 'e', 'e', 'e'], 1.6, 0.6, 0.09, 0.35); voice(240 + Math.random() * 30, ['u', 'e', 'e'], 1.5, 0.12, 0.12, 0.5); };
+function hit() {
+  state = 'kill'; dropT = 0; thud = false; catShake = 0.5;
+  burst(900, 1.2, 0.08, 0.9); burst(250, 2, 0.12, 0.8); // smack on the face
+  c.v = -Math.abs(c.v) * 0.4 - 0.1; c.vy = 0.6; c.wz = 14;
+  puff(c.x, c.y, 0, 10, 0xffffff, 0.3);
+  fling(); hitT = 0; flashK = 1; burst(70, 0.8, 0.7, 1); // a deep thump under the smack
+  setTimeout(gue, FREEZE * 1000);
+  fxOn = true; crack = null;
+}
+function die() {
+  state = 'dead'; dropT = 0; catShake = 0.8;
+  setTimeout(scream, 120);
+  drawCrack(); fxOn = true;
+}
+function finish(dead) {
+  if (!dead) {
+    const gap = Math.max(0, EDGE - (c.x + R)) * 1000;
+    result = { dead: false, mm: gap };
+    if (best === null || gap < best) { best = gap; store.set('best', best); }
+    const from = Math.min(EDGE, c.x + R);
+    gapLine.scale.x = Math.max(0.0005, EDGE - from); gapLine.position.set((from + EDGE) / 2, 0.0012, 0.03); gapLine.visible = gap > 0.05;
+    edgeMark.position.set(EDGE, 0.004, 0.03); edgeMark.visible = true;
+    ring(1800, 0.06, 0.4); ring(2700, 0.05, 0.5, 0.12);
+  } else result = { dead: true, kill: dead === 'kill' };
+  state = 'done';
+  needSnap = true;
+}
+
+// ---------- red flash + crack overlay ----------
+const fx = $('fx'), fxCtx = fx.getContext('2d');
+let fxOn = false, redK = 0, crack = null, flashK = 0, shake = 0, hitT = -1;
+function drawCrack() {
+  // a crack from a random point near the coin's fall, branching outward
+  const W = fx.width, H = fx.height, o = { x: 0.4 + Math.random() * 0.2, y: 0.5 + Math.random() * 0.15 };
+  crack = [];
+  for (let b = 0; b < 9; b++) {
+    let x = o.x * W, y = o.y * H, a = Math.random() * 7, pts = [[x, y]];
+    const len = (0.15 + Math.random() * 0.35) * Math.max(W, H);
+    for (let s = 0; s < 14; s++) { a += (Math.random() - 0.5) * 0.9; x += Math.cos(a) * len / 14; y += Math.sin(a) * len / 14; pts.push([x, y]); }
+    crack.push(pts);
+  }
+}
+function paintFx() {
+  const W = fx.width, H = fx.height;
+  fxCtx.clearRect(0, 0, W, H);
+  if (!fxOn) return;
+  if (flashK > 0) { fxCtx.fillStyle = `rgba(255,255,255,${flashK * 0.7})`; fxCtx.fillRect(0, 0, W, H); }
+  const g = fxCtx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.75);
+  g.addColorStop(0, `rgba(200,0,0,${0.15 * redK})`); g.addColorStop(1, `rgba(120,0,0,${0.75 * redK})`);
+  fxCtx.fillStyle = g; fxCtx.fillRect(0, 0, W, H);
+  if (crack) {
+    fxCtx.lineJoin = 'round'; fxCtx.lineCap = 'round';
+    for (const [lw, col] of [[5, 'rgba(255,255,255,.55)'], [2, 'rgba(20,0,0,.9)']]) {
+      fxCtx.lineWidth = lw * (W / fx.clientWidth || 1); fxCtx.strokeStyle = col;
+      for (const pts of crack) { fxCtx.beginPath(); pts.forEach(([x, y], i) => i ? fxCtx.lineTo(x, y) : fxCtx.moveTo(x, y)); fxCtx.stroke(); }
+    }
+  }
+}
+
+// ---------- layout ----------
+// the tabletop from the start to just past the edge must fit above the bottom 80px
+const TOP = 52, BOTTOM = 130, FOCUS = new THREE.Vector3(0.05, -0.02, 0), SPAN_W = 1.35, SPAN_H = 0.5;
+const camDir = new THREE.Vector3(-0.15, 1.0, 0.8).normalize(); // from high up in front
+let camDist = 1, viewH = 1, follow = 0, killF = 0, tv = 0.3, camX = FOCUS.x, camD = 1;
+function resize() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  renderer.setSize(W, H, false);
+  const dpr = renderer.getPixelRatio(); fx.width = W * dpr; fx.height = H * dpr;
+  viewH = Math.max(120, H - TOP - BOTTOM);
+  camera.aspect = W / viewH;
+  camera.setViewOffset(W, viewH, 0, -TOP, W, H);
+  tv = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+  // the whole table and the person: used as the widest shot
+  camDist = Math.min(4, Math.max(SPAN_H / (2 * tv), SPAN_W / (2 * tv * camera.aspect)));
+  camera.updateProjectionMatrix();
+  if (crack) drawCrack();
+  paintFx();
+}
+addEventListener('resize', resize);
+const bodyC = new THREE.Vector3(), camTarget = new THREE.Vector3(), tmpV = new THREE.Vector3();
+function placeCamera(dt) {
+  // after falling, look down to the floor where the coin lies
+  const want = state === 'dead' || (state === 'fall' && c.y < -0.25) || (state === 'done' && result?.dead && !result.kill) ? 1 : 0;
+  follow += (want - follow) * Math.min(1, dt * 3);
+  // after a hit, pull back to show the person lying on the floor
+  const wantK = state === 'kill' && dropT > 0.1 || (state === 'done' && result?.kill) ? 1 : 0;
+  killF += (wantK - killF) * Math.min(1, dt * 6);
+  // frame just the coin and the face: the closer the coin gets, the tighter the shot
+  const l = Math.min(c.x, EDGE) - R - 0.12, r = HEAD.x + 0.16, sw = r - l, sh = Math.max(0.32, sw * 0.45);
+  const d = Math.min(camDist, Math.max(sh / (2 * tv), sw / (2 * tv * camera.aspect)));
+  const k = Math.min(1, dt * 3); camX += ((l + r) / 2 - camX) * k; camD += (d - camD) * k;
+  // tall screens: the spare height goes to the wall above, not to the floor below
+  const slackUp = Math.max(0, 2 * tv * camD - sh) * 0.3;
+  camTarget.set(camX, FOCUS.y + slackUp, 0); camTarget.x += follow * (Math.min(c.x, 1.2) - camX); camTarget.y += follow * (-TABLE_Y * 0.7);
+  // follow the flying body closely: aim at the middle of the chest and hips
+  bodyC.copy(J.chest.p).add(J.pelvis.p).multiplyScalar(0.5);
+  camTarget.lerp(bodyC, killF);
+  // a hit pulls back wider than the whole table
+  const dist = camD * (1 + follow * 0.25) * (1 - killF) + Math.max(1.5, camDist * 0.8) * killF;
+  camera.position.copy(camTarget).addScaledVector(camDir, dist);
+  scene.fog.near = dist + 0.8; scene.fog.far = dist + 4; // haze only far behind what we look at
+  if (catShake > 0) camera.position.x += Math.sin(performance.now() / 18) * catShake * 0.01;
+  // the hit shakes the camera hard, rattling while frozen and dying away in the slow motion
+  if (shake > 0.002) camera.position.add(tmpV.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(shake * dist * 0.06));
+  camera.lookAt(camTarget);
+  if (shake > 0.002) camera.rotateZ((Math.random() - 0.5) * shake * 0.12);
+}
+function toScreen(x, y, z) { tmpV.set(x, y, z).project(camera); return { x: (tmpV.x + 1) / 2, y: (1 - tmpV.y) / 2 }; }
+
+// ---------- result ----------
+const coarse = matchMedia('(pointer: coarse)').matches;
+const fmt = v => v.toFixed(1);
+function showResult() {
+  const r = $('rVal');
+  r.textContent = result.dead ? t('dead') : L[lang].mm(fmt(result.mm));
+  r.classList.toggle('dead', result.dead);
+  $('rBest').textContent = best === null ? '' : `${t('best')} ${L[lang].mm(fmt(best))}`;
+  $('rBest').hidden = best === null;
+  const a = $('share');
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(postText())}&url=${encodeURIComponent(URL_)}`;
+  if (coarse) { a.removeAttribute('target'); a.removeAttribute('rel'); } else { a.target = '_blank'; a.rel = 'noopener'; }
+  prepareShare();
+}
+const postText = () => result.kill ? L[lang].postKill() : result.dead ? L[lang].postDead() : L[lang].post(fmt(result.mm));
+$('share').addEventListener('click', e => {
+  const text = `${postText()}\n${URL_}`;
+  if (coarse && navigator.share) {
+    e.preventDefault();
+    const file = shareFile();
+    navigator.share(file && navigator.canShare?.({ files: [file] }) ? { files: [file], text } : { text }).catch(() => {});
+    return;
+  }
+  const img = resultImage();
+  if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'coin-edge.png'; d.click(); }
+});
+// result image: the scene squared around the coin, with the result big and the title small
+let snap = null, shareCache = null, needSnap = false;
+function takeSnap() {
+  const W = cv.width, H = cv.height, side = Math.min(W, H);
+  const p = result.kill ? toScreen(J.pelvis.p.x, J.pelvis.p.y, J.pelvis.p.z) : toScreen(result.dead ? c.x : EDGE - 0.03, result.dead ? -TABLE_Y + 0.15 : 0, 0);
+  const sx = Math.max(0, Math.min(W - side, p.x * W - side / 2)), sy = Math.max(0, Math.min(H - side, p.y * H - side * 0.6));
+  snap = document.createElement('canvas'); snap.width = snap.height = 1080;
+  const g = snap.getContext('2d');
+  g.drawImage(cv, sx, sy, side, side, 0, 0, 1080, 1080);
+  if (fxOn) g.drawImage(fx, sx, sy, side, side, 0, 0, 1080, 1080);
+  shareCache = null;
+}
+function resultImage() {
+  if (!snap) return null;
+  const cc = document.createElement('canvas'); cc.width = cc.height = 1080;
+  const g = cc.getContext('2d');
+  g.drawImage(snap, 0, 0);
+  g.textAlign = 'center'; g.lineJoin = 'round';
+  const font = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+  const text = (str, y, px, max, fill, line) => {
+    g.font = font(px);
+    const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = font(px); }
+    g.lineWidth = px * .16; g.strokeStyle = line; g.strokeText(str, 540, y); g.fillStyle = fill; g.fillText(str, 540, y);
+  };
+  text(result.dead ? t('dead') : L[lang].mm(fmt(result.mm)), 250, 210, 960, result.dead ? '#ff4040' : '#fff', '#223');
+  text(t('title'), 1030, 56, 900, '#fff', '#223');
+  return cc;
+}
+function prepareShare() {
+  if (!snap) return;
+  const key = lang;
+  if (shareCache?.key === key) return;
+  shareCache = { key, file: null };
+  resultImage().toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'coin-edge.png', { type: 'image/png' }); }, 'image/png');
+}
+const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+
+// ---------- loop ----------
+function draw(k) {
+  const x = cp.x + (c.x - cp.x) * k, y = cp.y + (c.y - cp.y) * k, rz = cp.rz + (c.rz - cp.rz) * k;
+  // pivot around the coin's back edge while it tips over the table edge, else around its centre
+  coinPivot.position.set(x, y, 0); coinPivot.rotation.set(0, 0, rz);
+  coin.rotation.set(Math.sin(c.wobT * (10 + c.wobT * 30)) * c.wob, c.spin, 0);
+  updateBand(x); drawHuman();
+  renderer.render(scene, camera);
+}
+// hit stop: on the hit the world freezes for a moment, then carries on at full speed
+const FREEZE = 0.45;
+const timeScale = () => hitT >= 0 && hitT < FREEZE ? 0 : 1;
+let last = performance.now(), acc = 0, lastFx = -1;
+function loop(now) {
+  const fdt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (hitT >= 0) hitT += fdt;
+  const ts = timeScale();
+  acc = Math.min(acc + fdt * ts, 0.25);
+  while (acc >= DT) { step(DT); acc -= DT; }
+  tickSparks(fdt * ts);
+  if (fxOn && redK < 1 && ts > 0) redK = Math.min(1, redK + fdt * 3);
+  flashK = Math.max(0, flashK - fdt * (hitT >= 0 && hitT < FREEZE ? 0.6 : 4));
+  shake = hitT >= 0 && hitT < FREEZE ? 1 : shake * Math.exp(-fdt * 2.2);
+  const fk = fxOn ? Math.round(redK * 100) * 1000 + Math.round(flashK * 100) : -1;
+  if (fk !== lastFx) { lastFx = fk; paintFx(); }
+  placeCamera(fdt);
+  draw(acc / DT);
+  if (needSnap) { needSnap = false; takeSnap(); showResult(); $('result').hidden = false; }
+  requestAnimationFrame(loop);
+}
+reset(); resize(); applyLang(); placeCamera(1); draw(1);
+renderer.compileAsync?.(scene, camera).catch(() => {});
+requestAnimationFrame(loop);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

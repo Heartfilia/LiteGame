@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>伏特加表面张力 · LiteGame</title>
+  <meta name="description" content="手一稳，酒面拱成弧；手一抖，全洒了。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="伏特加表面张力 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/vodka-brim/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/vodka-brim/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #17131c; color: #eef4fb; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 480px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #9fd8ff; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    #lang { font-size: 15px; padding: 0 10px; }
+    .pill {
+      font-size: 20px; background: #2a2333; border: 2px solid #4a3f58; border-radius: 999px;
+      min-width: 44px; height: 36px; cursor: pointer; font-weight: bold; color: #cfe9ff;
+    }
+    main {
+      flex: 1; min-height: 0; width: 100%; max-width: 480px; margin: 0 auto;
+      display: flex; flex-direction: column; box-sizing: border-box; gap: 6px;
+      padding: 0 12px calc(80px + env(safe-area-inset-bottom));
+    }
+    #hud { text-align: center; font-weight: bold; min-height: 64px; display: flex; flex-direction: column; justify-content: center; }
+    #lv { font-size: min(40px, 9vw); line-height: 1.15; font-variant-numeric: tabular-nums; }
+    #msg { font-size: 19px; color: #9fd8ff; min-height: 1.3em; }
+    #stage { position: relative; flex: 1; min-height: 0; touch-action: none; cursor: pointer; }
+    #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    #warn { position: absolute; right: 4px; bottom: 2px; font-size: 11px; color: #a89bb5; pointer-events: none; }
+    #warn[hidden] { display: none; }
+    #panel {
+      position: absolute; inset: 8px; display: flex; flex-direction: column; justify-content: center; gap: 10px;
+      background: rgba(23, 19, 28, .9); border-radius: 18px; padding: 16px; box-sizing: border-box; cursor: default;
+    }
+    #panel[hidden] { display: none; }
+    #panel .row { display: flex; gap: 8px; }
+    #panel input {
+      flex: 1; min-width: 0; font: inherit; font-size: 17px; padding: 12px; border-radius: 12px;
+      border: 2px solid #4a3f58; background: #221c2a; color: #eef4fb; -webkit-user-select: text; user-select: text;
+    }
+    #panel hr { width: 100%; border: none; border-top: 1px solid #3a3146; margin: 4px 0; }
+    #panel .err { color: #ff8a8a; font-size: 14px; text-align: center; min-height: 1.2em; }
+    #ctrl { min-height: 72px; display: flex; gap: 8px; align-items: center; }
+    #ctrl > * { flex: 1; }
+    #ctrl.col { flex-direction: column; align-items: stretch; gap: 8px; }
+    .big {
+      font: inherit; font-size: clamp(14px, 4.4vw, 19px); font-weight: bold; padding: 15px 4px; border-radius: 16px;
+      border: none; cursor: pointer; color: #10202c; background: #9fd8ff;
+      box-shadow: 0 4px 0 #4f8fb8; touch-action: manipulation;
+      display: block; text-align: center; text-decoration: none; line-height: 1.15;
+    }
+    .big:active { transform: translateY(3px); box-shadow: 0 1px 0 #4f8fb8; }
+    button.big:disabled { opacity: .35; cursor: default; }
+    .big.sub { background: #2a2333; color: #cfe9ff; box-shadow: 0 4px 0 #4a3f58; }
+    .big.x { background: #000; color: #fff; box-shadow: 0 4px 0 #444; }
+    #panel .big { flex: none; }
+    #panel .row .big { padding: 12px 14px; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">伏特加表面张力</h1>
+  <header>
+    <a href="../../index.html#/category/premium" id="back">← トップへ戻る</a>
+    <div class="hbtns"><button id="lang" class="pill">EN</button><button id="sound" class="pill" aria-label="音のオン/オフ">🔊</button></div>
+  </header>
+  <main>
+    <div id="hud"><div id="lv"></div><div id="msg"></div></div>
+    <div id="stage"><canvas id="cv"></canvas><div id="warn" hidden></div><div id="panel" hidden></div></div>
+    <div id="ctrl"></div>
+  </main>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 伏特加表面张力 · 中文文案
+window.__KF_ZH__ = {
+  title: '伏特加表面张力',
+  back: '← 大厅',
+  lang: 'EN',
+  langLabel: 'Switch to English',
+  solo: '单人',
+  cpu: '对战电脑',
+  friend: '好友对战',
+  retry: '再来一次',
+  menu: '回到标题',
+  share: '分享到 X',
+  newGame: '新开一局',
+  resume: '继续',
+  go: '开始',
+  namePh: '你的名字',
+  codePh: '粘贴好友发来的链接',
+  send: '发送',
+  sendResult: '发送结果',
+  saveImg: '保存图片',
+  copyUrl: '复制链接',
+  copied: '链接已复制',
+  saved: '图片已保存，连链接一起发',
+  savedX: '图片已保存，发帖时附上',
+  badCode: '链接读不出来',
+  you: '你',
+  rival: '对手',
+  p1: '玩家 1',
+  p2: '玩家 2',
+  turn: (n) => `${n} 的回合`,
+  next: (n) => `接下来是 ${n}`,
+  died: (n) => `${n} 出局`,
+  win: '你赢了',
+  lose: '你输了',
+  sentHint: '发给对方吧',
+  deadBig: '死亡',
+  killBig: '拿下',
+  warn: '别硬灌，真的别。',
+  now: '现在',
+  chicken: '太怂了',
+  meh: '还能再来点',
+  good: '不错',
+  god: '神之手',
+  edge: '极限边缘',
+  dead: '死亡',
+  shareSoloDead: '贪了一口，伏特加漫出来了 #LiteGame',
+  shareCpuWin: (n) => `让 ${n} 先把酒洒了，赢了 #LiteGame`,
+  shareCpuLose: (n) => `和 ${n} 比表面张力，我先洒了 #LiteGame`,
+  shareFriend: (n) => `表面张力对决，${n} 洒了 #LiteGame`,
+  sendText: (n) => `🍸伏特加表面张力\n轮到 ${n} 了`,
+  sendTextEnd: (n) => `🍸伏特加表面张力\n${n} 把酒洒了`
+};
+</script>
+<script>
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/vodka-brim/';
+    const MAX_RATE = 1.8;       // 注ぐ速さ（mm/秒）
+    const RAMP = 0.35;          // 瓶を傾けきるまでの秒数
+    const MIN_POUR = 0.2;       // 1回の番で必ず入る量（mm）
+
+    // ---------- 保存・音 ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('vodka-brim:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('vodka-brim:' + k, JSON.stringify(v)); } catch {} },
+    };
+    let soundOn = store.get('sound', true);
+    const soundBtn = document.getElementById('sound');
+    const updateSoundBtn = () => { soundBtn.textContent = soundOn ? '🔊' : '🔇'; };
+    soundBtn.onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); if (!soundOn) pourSound(false); };
+    updateSoundBtn();
+    let actx;
+    const ac = () => (actx = actx || new (window.AudioContext || window.webkitAudioContext)());
+    function beep(freq, dur, type = 'sine', vol = 0.15, slide = 0, delay = 0) {
+      if (!soundOn) return;
+      try {
+        const a = ac(), o = a.createOscillator(), g = a.createGain(), t = a.currentTime + delay;
+        o.type = type; o.frequency.setValueAtTime(freq, t);
+        if (slide) o.frequency.linearRampToValueAtTime(Math.max(20, freq + slide), t + dur);
+        g.gain.setValueAtTime(0.0001, a.currentTime); g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+      } catch {}
+    }
+    // 注ぐ音：ノイズを帯域で絞って流す
+    let pourNode = null;
+    function pourSound(on, strength = 1) {
+      try {
+        if (on && soundOn) {
+          const a = ac();
+          if (!pourNode) {
+            const buf = a.createBuffer(1, a.sampleRate, a.sampleRate), d = buf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+            const src = a.createBufferSource(); src.buffer = buf; src.loop = true;
+            const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 1.2;
+            const g = a.createGain(); g.gain.value = 0;
+            src.connect(bp).connect(g).connect(a.destination); src.start();
+            pourNode = { src, g, bp };
+          }
+          pourNode.g.gain.setTargetAtTime(0.09 * strength, a.currentTime, 0.04);
+          pourNode.bp.frequency.setTargetAtTime(900 + 500 * Math.random(), a.currentTime, 0.1);
+        } else if (pourNode) {
+          const n = pourNode; pourNode = null;
+          n.g.gain.setTargetAtTime(0, actx.currentTime, 0.05);
+          setTimeout(() => { try { n.src.stop(); } catch {} }, 300);
+        }
+      } catch {}
+    }
+    const sndDrip = () => beep(1400 + Math.random() * 500, 0.06, 'sine', 0.06, -500);
+    const sndJiggle = a => beep(700 + a * 500, 0.05, 'sine', 0.03 + a * 0.04, 200);
+    const sndSpill = () => { beep(300, 0.5, 'sawtooth', 0.07, -200); beep(180, 0.6, 'square', 0.05, -100, 0.1); };
+    const sndDead = () => { beep(110, 0.6, 'square', 0.12, -60); beep(70, 0.8, 'sine', 0.22, -30, 0.05); };
+    const sndGood = fs => fs.forEach((f, i) => beep(f, 0.22, 'sine', 0.14, 0, i * 0.12));
+
+    // ---------- 文言（日本語／英語） ----------
+    const L = {
+      ja: {
+        title: '伏特加表面张力', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        solo: 'ひとりで', cpu: 'CPUと対戦', friend: '友達と対戦',
+        retry: 'もう一回', menu: 'タイトルへ', share: 'Xに投稿',
+        newGame: '新しく始める', resume: '続きから', go: 'はじめる',
+        namePh: 'あなたの名前', codePh: '友達から届いたURLを貼り付け',
+        send: '送る', sendResult: '結果を送る', saveImg: '画像を保存', copyUrl: 'URLをコピー',
+        copied: 'URLをコピーしました', saved: '画像を保存しました。URLと一緒に送ってね', savedX: '画像を保存しました。投稿に添付してね',
+        badCode: 'URLが読めませんでした',
+        you: 'あなた',
+        // CPUの名前（大学生っぽく。毎回ランダム）
+        cpuNames: ['たっくん', 'ゆうと', 'りょうすけ', 'しゅんや', 'けんた', 'だいき', 'みさき', 'あやか', 'ゆい', 'まなみ', 'りな', 'さくら'], rival: '相手', p1: 'プレイヤー1', p2: 'プレイヤー2',
+        turn: n => `${n} の番`, next: n => `次は ${n} の番`, died: n => `${n} 死んだ`,
+        win: 'あなたの勝ち', lose: 'あなたの負け', sentHint: '相手に送ってね',
+        deadBig: '死んだ', killBig: '殺した', warn: 'イッキ、ダメ。ゼッタイ。', now: 'いま',
+        msgs: { chicken: 'ビビりすぎ', meh: 'まだいけた', good: 'なかなか', god: '神の手', edge: 'ギリギリの極み', dead: '死んだ' },
+        shareSolo: (mm, m) => `ウォッカを表面張力で ${mm} 盛り上げた「${m}」\n#伏特加表面张力`,
+        shareSoloDead: '欲張ってウォッカをあふれさせ、死にました\n#伏特加表面张力',
+        shareCpuWin: n => `${n}にウォッカをあふれさせて勝ちました\n#伏特加表面张力`,
+        shareCpuLose: n => `${n}との表面張力勝負であふれさせ、死にました\n#伏特加表面张力`,
+        shareFriend: n => `表面張力勝負で ${n} があふれさせて死にました\n#伏特加表面张力`,
+        sendText: n => `🍸伏特加表面张力\n次は ${n} の番`,
+        sendTextEnd: n => `🍸伏特加表面张力\n${n} があふれさせて死にました`,
+      },
+      en: {
+        title: 'Vodka Surface Tension', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        solo: 'Solo', cpu: 'vs CPU', friend: 'vs Friend',
+        retry: 'Retry', menu: 'Menu', share: 'Post on X',
+        newGame: 'New game', resume: 'Continue', go: 'Start',
+        namePh: 'Your name', codePh: 'Paste the URL from your friend',
+        send: 'Send', sendResult: 'Send result', saveImg: 'Save image', copyUrl: 'Copy URL',
+        copied: 'URL copied', saved: 'Image saved. Send it with the URL', savedX: 'Image saved. Attach it to your post',
+        badCode: "Couldn't read that URL",
+        you: 'You',
+        cpuNames: ['Takkun', 'Yuto', 'Ryosuke', 'Shunya', 'Kenta', 'Daiki', 'Misaki', 'Ayaka', 'Yui', 'Manami', 'Rina', 'Sakura'], rival: 'Friend', p1: 'Player 1', p2: 'Player 2',
+        turn: n => `${n}'s turn`, next: n => `Next: ${n}`, died: n => `${n} died`,
+        win: 'You win', lose: 'You lose', sentHint: 'Send it to your friend',
+        deadBig: 'DEAD', killBig: 'KILLED', warn: 'Never force anyone to chug.', now: 'Now',
+        msgs: { chicken: 'Too scared', meh: 'Could go more', good: 'Not bad', god: 'Hand of God', edge: 'On the very edge', dead: 'Dead' },
+        shareSolo: (mm, m) => `Bulged vodka ${mm} over the rim: "${m}"\n#VodkaSurfaceTension`,
+        shareSoloDead: 'Got greedy, spilled the vodka and died\n#VodkaSurfaceTension',
+        shareCpuWin: n => `Made ${n} spill the vodka and won\n#VodkaSurfaceTension`,
+        shareCpuLose: n => `Spilled the vodka against ${n} and died\n#VodkaSurfaceTension`,
+        shareFriend: n => `${n} spilled the vodka and died\n#VodkaSurfaceTension`,
+        sendText: n => `🍸Vodka Surface Tension\nNext: ${n}`,
+        sendTextEnd: n => `🍸Vodka Surface Tension\n${n} spilled it and died`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const langBtn = document.getElementById('lang');
+    langBtn.onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+    const lvEl = document.getElementById('lv'), msgEl = document.getElementById('msg');
+    const ctrl = document.getElementById('ctrl'), panel = document.getElementById('panel'), warnEl = document.getElementById('warn');
+    const stage = document.getElementById('stage'), cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+
+    // ---------- 乱数・数値 ----------
+    function rng(seed) { // mulberry32
+      let a = seed >>> 0;
+      return () => { a = (a + 0x6D2B79F5) >>> 0; let x = a; x = Math.imul(x ^ x >>> 15, x | 1); x ^= x + Math.imul(x ^ x >>> 7, x | 61); return ((x ^ x >>> 14) >>> 0) / 4294967296; };
+    }
+    function setup(seed, solo) {
+      const r = rng(seed);
+      const start = solo ? -(5.5 + r()) : -(2.6 + r() * 0.8);
+      const limit = 1.8 + r() * 1.4;
+      const sens = 0.85 + r() * 0.4; // 震え始めの早さ（毎回少し違う）
+      return { start: Math.round(start * 100) / 100, limit: Math.round(limit * 100) / 100, sens };
+    }
+    const fmt = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1) + 'mm';
+    const fmtPour = v => '+' + v.toFixed(1);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    // ---------- 対戦コード（URLの #m= に入れる） ----------
+    const b64e = s => btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const b64d = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
+    const cleanName = s => (s || '').replace(/[|\n\r]/g, '').trim().slice(0, 12);
+    function encodeGame(g) {
+      return b64e(['1', g.seed.toString(36), g.names[0], g.names[1], g.pours.map(p => Math.round(p * 100).toString(36)).join('.')].join('|'));
+    }
+    function decodeGame(code) {
+      const parts = b64d(code).split('|');
+      if (parts[0] !== '1' || parts.length !== 5) throw new Error('bad');
+      const seed = parseInt(parts[1], 36);
+      if (!Number.isFinite(seed)) throw new Error('bad');
+      const pours = parts[4] ? parts[4].split('.').map(x => parseInt(x, 36) / 100) : [];
+      if (pours.some(p => !(p > 0))) throw new Error('bad');
+      return { seed, names: [cleanName(parts[2]), cleanName(parts[3])], pours };
+    }
+    function codeFrom(text) {
+      const m = String(text).match(/[#&?]m=([A-Za-z0-9_-]+)/);
+      if (m) return m[1];
+      const s = String(text).trim();
+      return /^[A-Za-z0-9_-]{8,}$/.test(s) ? s : null;
+    }
+    const baseUrl = () => location.href.split('#')[0].split('?')[0];
+    const gameUrl = () => baseUrl() + '#m=' + encodeGame(game);
+
+    // ---------- 状態 ----------
+    // mode: solo / cpu / friend
+    // phase: title / menu / name / ready / pour / drip / settle / cpu / send / spill / result
+    let mode = 'solo', phase = 'title';
+    let game = null;        // { seed, names, pours, start, limit, sens }
+    let level = 0;          // 今の水面（縁=0, mm）
+    let turnStart = 0, holdT = 0, poured = 0, dripLeft = 0, settleT = 0;
+    let tilt = 0, cpuT = 0, cpuHold = 0, cpuHolding = false;
+    let loser = -1, deathT = 0, now = 0, lastJiggle = 0, lastDrip = 0;
+    let drops = [];
+    let soloResult = null;
+    const turnIdx = () => game.pours.length % 2;
+    const nameOf = i => mode === 'cpu' ? (i === 0 ? t('you') : t('cpuNames')[game.cpuPick % t('cpuNames').length]) : game.names[i] || (mode === 'friend' && i === 1 ? t('rival') : i === 0 ? t('p1') : t('p2'));
+    const isHumanTurn = () => mode !== 'cpu' || turnIdx() === 0;
+    const levelOf = g => Math.round((g.start + g.pours.reduce((a, b) => a + b, 0)) * 100) / 100;
+    function wobble(lv = level) {
+      if (!game || lv <= 0) return 0;
+      const c = clamp(1 - (game.limit - lv) / (1.3 * game.sens), 0, 1);
+      return c * c;
+    }
+
+    function newGame(m, names) {
+      mode = m;
+      const seed = (Math.random() * 2 ** 31) | 0;
+      game = { seed, names, pours: [], cpuPick: (Math.random() * 1000) | 0, ...setup(seed, m === 'solo') };
+      level = game.start; loser = -1; soloResult = null; drops = [];
+      phase = 'ready';
+      refresh();
+    }
+    function loadGame(g) {
+      mode = 'friend';
+      game = { ...g, ...setup(g.seed, false) };
+      level = levelOf(game); loser = -1; drops = [];
+      if (level > game.limit) { // 決着済み：あふれる場面から見せる
+        loser = (game.pours.length - 1) % 2;
+        startDeath();
+        return;
+      }
+      if (!game.names[turnIdx()]) { phase = 'name'; refresh(); return; }
+      phase = 'ready';
+      refresh();
+    }
+
+    // ---------- 注ぐ ----------
+    function pressStart() {
+      if (phase !== 'ready' || !isHumanTurn()) return;
+      beginPour();
+    }
+    function pressEnd() { if (phase === 'pour' && !cpuHolding) release(); }
+    function beginPour() {
+      turnStart = level; holdT = 0; poured = 0; phase = 'pour';
+      refresh();
+    }
+    function release() {
+      phase = 'drip';
+      pourSound(false);
+      // 離したあとに垂れる量。合計で最低 MIN_POUR は入る
+      dripLeft = 0.1 + Math.random() * 0.22;
+      if (poured + dripLeft < MIN_POUR) dripLeft = MIN_POUR - poured + Math.random() * 0.05;
+    }
+    function overflow() {
+      pourSound(false);
+      const p = Math.max(Math.ceil((game.limit - turnStart) * 100 + 1) / 100, Math.round((level - turnStart) * 100) / 100);
+      loser = mode === 'solo' ? 0 : turnIdx();
+      game.pours.push(p);
+      level = turnStart + p;
+      if (mode === 'friend') saveHash();
+      startDeath();
+    }
+    function finishTurn() {
+      let p = Math.round((level - turnStart) * 100) / 100;
+      p = Math.min(Math.max(p, MIN_POUR), Math.floor((game.limit - turnStart) * 100) / 100);
+      game.pours.push(p);
+      level = levelOf(game);
+      if (mode === 'solo') {
+        soloResult = { level, msg: soloMsg(level) };
+        phase = 'result';
+        prepareShare();
+        const k = soloResult.msg;
+        if (k === 'god' || k === 'edge') sndGood([660, 880, 1320]); else if (k === 'good') sndGood([660, 880]); else beep(330, 0.3, 'triangle', 0.1);
+      } else if (mode === 'friend') {
+        saveHash();
+        phase = 'send';
+        prepareShare();
+      } else {
+        phase = isHumanTurn() ? 'ready' : 'cpu';
+        cpuT = 0;
+      }
+      refresh();
+    }
+    function soloMsg(v) {
+      if (game.limit - v <= 0.1) return 'edge';
+      if (v < 0) return 'chicken';
+      if (v < 1) return 'meh';
+      if (v < 2) return 'good';
+      return 'god';
+    }
+    function saveHash() {
+      try { history.replaceState(null, '', '#m=' + encodeGame(game)); } catch {}
+    }
+
+    // CPU：震え具合を見て、注ぐ時間を決める
+    function cpuDecide() {
+      const w = wobble();
+      let hold;
+      if (level < -1.2) hold = 0.35 + Math.random() * 0.6;
+      else if (w < 0.08) hold = 0.15 + Math.random() * 0.4;
+      else if (w < 0.3) hold = 0.05 + Math.random() * 0.15;
+      else hold = 0.03;
+      if (Math.random() < 0.1) hold += 0.5; // たまに欲張る
+      return hold;
+    }
+
+    // ---------- あふれた ----------
+    function startDeath() {
+      phase = 'spill'; deathT = 0;
+      sndSpill();
+      refresh();
+    }
+
+    // ---------- 毎フレーム ----------
+    let last = performance.now();
+    function frame(ts) {
+      const dt = Math.min(0.05, (ts - last) / 1000); last = ts; now = ts / 1000;
+      update(dt);
+      draw();
+      requestAnimationFrame(frame);
+    }
+    function update(dt) {
+      const pouring = phase === 'pour';
+      tilt += ((pouring ? 1 : 0) - tilt) * Math.min(1, dt * 10);
+      if (phase === 'cpu') {
+        cpuT += dt;
+        if (cpuT > 0.7 && !cpuHolding) { cpuHold = cpuDecide(); cpuHolding = true; beginPour(); }
+      }
+      if (phase === 'pour') {
+        holdT += dt;
+        const rate = MAX_RATE * Math.min(1, holdT / RAMP);
+        poured += rate * dt;
+        level = turnStart + poured;
+        pourSound(true, 0.4 + 0.6 * Math.min(1, holdT / RAMP));
+        if (cpuHolding && holdT >= cpuHold) { cpuHolding = false; release(); }
+      } else if (phase === 'drip') {
+        const d = Math.min(dripLeft, dt * 0.8);
+        dripLeft -= d; level += d;
+        if (now - lastDrip > 0.12 && dripLeft > 0) { lastDrip = now; drops.push({ y: 0, v: 0 }); sndDrip(); }
+        if (dripLeft <= 0) { phase = 'settle'; settleT = 0; }
+      } else if (phase === 'settle') {
+        settleT += dt;
+        if (settleT > 0.5) { cpuHolding = false; finishTurn(); }
+      }
+      if ((phase === 'pour' || phase === 'drip' || phase === 'settle') && level > game.limit) { cpuHolding = false; overflow(); }
+      for (const d of drops) { d.v += dt * 900; d.y += d.v * dt; }
+      drops = drops.filter(d => d.y < 400);
+      // 震えの音
+      const w = wobble();
+      if (game && w > 0.15 && ['ready', 'pour', 'drip', 'settle', 'cpu', 'send'].includes(phase) && now - lastJiggle > 0.9 - w * 0.6) { lastJiggle = now; sndJiggle(w); }
+      // あふれた → 「死んだ」
+      if (phase === 'spill') {
+        const prev = deathT; deathT += dt;
+        if (prev < 0.9 && deathT >= 0.9) { if (mode === 'cpu' && loser === 1) sndGood([523, 659, 784, 1047, 1319]); else sndDead(); }
+        if (deathT > 1.8) { phase = 'result'; prepareShare(); refresh(); }
+      }
+    }
+
+    // ---------- 描画 ----------
+    const VW = 400, VH = 520;   // 仮想座標
+    const RIM = 230, BASE = 430, K = 6, K2 = 19; // 縁のy、底のy、縁より下/上の 1mm の大きさ
+    function sizeCanvas() {
+      const r = stage.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+      cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr));
+    }
+    function draw() {
+      const W = cv.width, H = cv.height;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const s = Math.min(W / VW, H / VH);
+      ctx.setTransform(s, 0, 0, s, (W - VW * s) / 2, (H - VH * s) / 2);
+      drawScene(ctx, now, (W / s - VW) / 2, (H / s - VH) / 2);
+    }
+    // padX/padY：仮想座標の外側にはみ出して塗る量
+    function drawScene(g, time, padX = 0, padY = 0) {
+      // 背景
+      const bg = g.createLinearGradient(0, -padY, 0, VH + padY);
+      bg.addColorStop(0, '#1d1726'); bg.addColorStop(1, '#2b2035');
+      g.fillStyle = bg; g.fillRect(-padX, -padY, VW + padX * 2, VH + padY * 2);
+      const glow = g.createRadialGradient(200, 260, 10, 200, 260, 230);
+      glow.addColorStop(0, 'rgba(120,190,255,.18)'); glow.addColorStop(1, 'rgba(120,190,255,0)');
+      g.fillStyle = glow; g.fillRect(-padX, -padY, VW + padX * 2, VH + padY * 2);
+      // カウンター
+      g.fillStyle = '#4a2f22'; g.fillRect(-padX, BASE, VW + padX * 2, VH - BASE + padY);
+      g.fillStyle = '#6b4632'; g.fillRect(-padX, BASE, VW + padX * 2, 8);
+
+      const dying = phase === 'spill' || (phase === 'result' && loser >= 0);
+      // あふれたら盛り上がりがしぼんで縁の高さに戻る
+      drawGlassWithLiquid(g, time, dying ? { level: Math.max(0, level * (1 - deathT / 0.45)), noWobble: true } : {});
+      if (dying) drawSpill(g, deathT);
+      drawBottle(g);
+      if (dying) drawDead(g, deathT);
+      // 自分の番：押す場所を指で示す（文字の説明は置かない）
+      if (phase === 'ready' && game && isHumanTurn() && g === ctx) {
+        const k = 1 + Math.sin(time * 6) * 0.08;
+        g.save(); g.translate(330, 300); g.scale(k, k);
+        g.globalAlpha = 0.6 + Math.sin(time * 6) * 0.3;
+        g.font = '46px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillText('👆', 0, 0);
+        g.restore();
+      }
+    }
+
+    // ---------- グラスと液体（横から見た形） ----------
+    const OUT_T = 80, OUT_B = 60;            // 外側の半幅（縁・底）
+    const IN_T = 72, IN_B = 54, IN_Y = 404;  // 内側の半幅（縁・底）と内底のy
+    const innerHalf = y => IN_B + (IN_T - IN_B) * (IN_Y - y) / (IN_Y - RIM);
+    const MENISCUS = 4;      // 縁より下での凹み（壁ぎわが中央より上がる量）
+    const FLAT_AT = 0.8;     // 縁の何mm下から凹みが浅くなり始めるか
+    const SPREAD = 0.3;      // 縁を越えてから、液が縁の上面を外側まで広がるのに要する高さ（mm）
+    const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+    // 液面の形を1つの式で表す（凹み → 平ら → 盛り上がりが途切れずにつながる）
+    //   y(u) = yEdge − A·f(u)　 u: −1(左端)〜1(右端)、f: 中央1・端0 の山形
+    //   A < 0 なら凹み（壁ぎわが高い）、A > 0 なら盛り上がり
+    function surfaceShape(lv) {
+      if (lv < 0) {
+        const yc = RIM - lv * K;                                   // 中央の高さ
+        const A = -MENISCUS * smooth(-lv / FLAT_AT);               // 縁に近づくと凹みが浅くなり、0mmで平ら
+        const yEdge = yc + A;                                      // 壁ぎわ（中央より上）
+        return { A, yEdge, half: innerHalf(yEdge) };
+      }
+      // 縁より上：端は縁に張りつき、液は縁の上面を外側へ広がってから盛り上がる
+      return { A: lv * K2, yEdge: RIM, half: IN_T + (OUT_T - 1 - IN_T) * smooth(lv / SPREAD) };
+    }
+    const bump = (u, p) => Math.pow(Math.max(0, 1 - Math.pow(Math.abs(u), p)), 1 / p);
+    function drawGlassWithLiquid(g, time, opt = {}) {
+      const cx = opt.cx ?? 200, lv = opt.level ?? level;
+      const hasLiquid = !!game || opt.level !== undefined;
+      g.save(); g.translate(cx - 200, 0);
+      const w = opt.noWobble ? 0 : wobble(lv);
+      if (hasLiquid) {
+        const s = surfaceShape(lv);
+        if (s.yEdge < IN_Y - 1) {
+          // 凹みは壁ぎわで急に上がる（p 小）、盛り上がりは肩が丸い（p 大）
+          const p = s.A < 0 ? 2.2 : 2.4;
+          const jig = x => (s.A > 4 ? w * (Math.sin(time * 23 + x * 0.09) * 2.2 + Math.sin(time * 37 - x * 0.05) * 1.4) : 0);
+          const amp = s.A * (1 + w * 0.04 * Math.sin(time * 19));
+          const pts = [];
+          for (let i = 0; i <= 48; i++) {
+            const u = -1 + i / 24, x = 200 + u * s.half;
+            const f = bump(u, p);
+            pts.push([x, s.yEdge - (amp + jig(x)) * f]);
+          }
+          // 液体：内壁の底 → 左の液面の端 → 液面 → 右の端 → 内壁の底
+          g.fillStyle = 'rgba(190,225,255,.38)';
+          g.beginPath();
+          g.moveTo(200 - IN_B, IN_Y);
+          if (s.yEdge >= RIM) g.lineTo(200 - innerHalf(s.yEdge), s.yEdge);
+          else { g.lineTo(200 - IN_T, RIM); }
+          for (const [x, y] of pts) g.lineTo(x, y);
+          if (s.yEdge < RIM || s.half > IN_T) g.lineTo(200 + IN_T, RIM);
+          g.lineTo(200 + IN_B, IN_Y); g.closePath(); g.fill();
+          // 液面の線
+          g.strokeStyle = 'rgba(235,248,255,.9)'; g.lineWidth = 2; g.lineJoin = 'round';
+          g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke();
+          // 盛り上がりのハイライト
+          if (s.A > 2) { // 盛り上がるにつれて、ふわっと現れる
+            g.strokeStyle = `rgba(255,255,255,${0.55 * clamp((s.A - 2) / 8, 0, 1)})`; g.lineWidth = 3; g.lineCap = 'round';
+            g.beginPath(); g.ellipse(200 - 30, RIM - s.A * 0.62, 18, Math.max(2, s.A * 0.15), -0.25, Math.PI * 1.1, Math.PI * 1.7); g.stroke();
+          }
+        }
+      }
+      // グラス
+      g.lineJoin = 'round';
+      g.fillStyle = 'rgba(255,255,255,.10)';
+      g.beginPath(); g.moveTo(200 - OUT_T, RIM); g.lineTo(200 - OUT_B, BASE); g.lineTo(200 + OUT_B, BASE); g.lineTo(200 + OUT_T, RIM);
+      g.lineTo(200 + IN_T, RIM); g.lineTo(200 + IN_B, IN_Y); g.lineTo(200 - IN_B, IN_Y); g.lineTo(200 - IN_T, RIM); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(230,242,255,.75)'; g.lineWidth = 2.5;
+      g.beginPath(); g.moveTo(200 - OUT_T, RIM); g.lineTo(200 - OUT_B, BASE); g.lineTo(200 + OUT_B, BASE); g.lineTo(200 + OUT_T, RIM); g.stroke();
+      g.lineWidth = 1.5; g.strokeStyle = 'rgba(230,242,255,.45)';
+      g.beginPath(); g.moveTo(200 - IN_T, RIM); g.lineTo(200 - IN_B, IN_Y); g.lineTo(200 + IN_B, IN_Y); g.lineTo(200 + IN_T, RIM); g.stroke();
+      g.strokeStyle = 'rgba(230,242,255,.9)'; g.lineWidth = 3; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(200 - OUT_T, RIM); g.lineTo(200 - IN_T, RIM); g.moveTo(200 + IN_T, RIM); g.lineTo(200 + OUT_T, RIM); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 5;
+      g.beginPath(); g.moveTo(200 - 62, RIM + 22); g.lineTo(200 - 50, BASE - 40); g.stroke();
+      // 縁の線（0mm の目印）
+      if (!opt.noRuler) {
+        g.setLineDash([5, 6]); g.strokeStyle = 'rgba(255,200,120,.55)'; g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(200 - 130, RIM); g.lineTo(200 - 86, RIM); g.moveTo(200 + 86, RIM); g.lineTo(200 + 130, RIM); g.stroke();
+        g.setLineDash([]);
+      }
+      g.restore();
+    }
+    function surfaceY() { const sh = surfaceShape(level); return sh.yEdge - sh.A; }
+
+    // 瓶（右上から傾けて注ぐ）
+    function drawBottle(g) {
+      const tl = tilt;
+      g.save();
+      // 首の先が、傾けるとグラスの真上に来る
+      const px = 300 - 70 * tl, py = 110 - 20 * tl;
+      g.translate(px, py); g.rotate(-0.25 - tl * 1.75);
+      // 胴
+      g.fillStyle = 'rgba(210,235,255,.22)'; g.strokeStyle = 'rgba(230,245,255,.8)'; g.lineWidth = 2.5;
+      g.beginPath(); g.roundRect(-30, 30, 60, 130, 10); g.fill(); g.stroke();
+      // 肩と首
+      g.beginPath(); g.moveTo(-30, 46); g.quadraticCurveTo(-30, 12, -10, 4); g.lineTo(-10, -30); g.lineTo(10, -30); g.lineTo(10, 4); g.quadraticCurveTo(30, 12, 30, 46); g.fill(); g.stroke();
+      g.fillStyle = '#c8d4e0'; g.fillRect(-11, -38, 22, 10);
+      // ラベル
+      g.fillStyle = '#e8eef5'; g.fillRect(-28, 70, 56, 52);
+      g.fillStyle = '#b3262f'; g.fillRect(-28, 70, 56, 9);
+      g.fillStyle = '#20324a'; g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('VODKA', 0, 98); g.font = '8px system-ui, sans-serif'; g.fillText('40%', 0, 112);
+      g.restore();
+      // 注ぎ口から落ちる流れ
+      const ang = -0.25 - tl * 1.75;
+      const tipX = px + 38 * Math.sin(ang), tipY = py - 38 * Math.cos(ang);
+      if (phase === 'pour' && tl > 0.6) {
+        const rate = Math.min(1, holdT / RAMP);
+        g.strokeStyle = 'rgba(200,232,255,.75)'; g.lineWidth = 2 + rate * 4; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(tipX, tipY);
+        g.quadraticCurveTo(tipX - 6, tipY + 40, 200, surfaceY() - 2); g.stroke();
+      }
+      for (const d of drops) {
+        g.fillStyle = 'rgba(210,238,255,.9)';
+        const y = Math.min(tipY + d.y, surfaceY());
+        g.beginPath(); g.ellipse(200, y, 3, 4.5, 0, 0, 7); g.fill();
+      }
+      drops = drops.filter(d => tipY + d.y < surfaceY());
+    }
+
+    // あふれる：左の縁から一気に流れ落ち、盛り上がりがしぼむ
+    function drawSpill(g, tt) {
+      const p = clamp(tt / 0.55, 0, 1), q = clamp((tt - 0.3) / 0.8, 0, 1);
+      const yEnd = RIM + (BASE - RIM) * p;
+      const wx = y => 200 - OUT_T + (OUT_T - OUT_B) * (y - RIM) / (BASE - RIM); // 外壁の x
+      g.fillStyle = 'rgba(175,215,250,.55)';
+      g.beginPath();
+      g.moveTo(wx(RIM) + 12, RIM - 2);
+      g.quadraticCurveTo(wx(RIM) - 10, RIM - 4, wx(RIM) - 6, RIM + 12);
+      g.lineTo(wx(yEnd) - 5, yEnd);
+      g.lineTo(wx(yEnd) + 3, yEnd);
+      g.lineTo(wx(RIM + 14) + 4, RIM + 14);
+      g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(wx(RIM) - 5, RIM + 10); g.lineTo(wx(yEnd) - 4, yEnd); g.stroke();
+      if (q > 0) {
+        g.fillStyle = 'rgba(175,215,250,.42)';
+        g.beginPath(); g.ellipse(170 - q * 20, BASE + 5, 24 + q * 120, 3 + q * 7, 0, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1;
+        g.beginPath(); g.ellipse(170 - q * 20, BASE + 5, 24 + q * 120, 3 + q * 7, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+      }
+    }
+
+    // 「死んだ」を大きく出す
+    function drawDead(g, tt) {
+      const p = clamp((tt - 0.9) / 0.25, 0, 1);
+      if (p <= 0) return;
+      const happy = mode === 'cpu' && loser === 1; // CPU対戦で自分が勝った
+      if (happy) { drawKilled(g, tt, p); return; }
+      g.fillStyle = `rgba(20,0,0,${0.55 * p})`; g.fillRect(-1000, -1000, 3000, 3000);
+      const k = 1.6 - 0.6 * (1 - Math.pow(1 - p, 3));
+      g.save(); g.translate(200, 200); g.rotate(-0.08); g.scale(k, k);
+      g.globalAlpha = p;
+      bigWord(g, t('deadBig'));
+      g.lineWidth = 10; g.strokeStyle = '#fff'; g.strokeText(t('deadBig'), 0, 0);
+      g.fillStyle = '#e0242f'; g.fillText(t('deadBig'), 0, 0);
+      g.restore();
+    }
+    function bigWord(g, word) {
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+      const base = lang === 'ja' ? 96 : 84;
+      g.font = `900 ${base}px system-ui, sans-serif`;
+      const w = g.measureText(word).width;
+      if (w > 340) g.font = `900 ${Math.floor(base * 340 / w)}px system-ui, sans-serif`;
+    }
+    // 「殺した」：明るい光と紙ふぶきで、ぴょんぴょん跳ねる
+    const CONFETTI = Array.from({ length: 46 }, (_, i) => ({
+      x: (i * 89) % 400, d: (i * 37) % 100 / 100, s: 0.6 + (i * 53) % 10 / 12,
+      c: ['#ffd34d', '#ff7eb6', '#7ee0ff', '#9dff7e', '#ffffff', '#ffa94d'][i % 6],
+    }));
+    function drawKilled(g, tt, p) {
+      const time = now;
+      // ピンクから黄色のあたたかい光
+      const bg = g.createRadialGradient(200, 200, 10, 200, 200, 320);
+      bg.addColorStop(0, `rgba(255,230,120,${0.55 * p})`); bg.addColorStop(1, `rgba(255,110,180,${0.35 * p})`);
+      g.fillStyle = bg; g.fillRect(-1000, -1000, 3000, 3000);
+      // 回る光線
+      g.save(); g.translate(200, 200); g.rotate(time * 0.4);
+      g.fillStyle = `rgba(255,255,255,${0.16 * p})`;
+      for (let i = 0; i < 12; i++) { g.rotate(Math.PI / 6); g.beginPath(); g.moveTo(0, 0); g.lineTo(-30, -420); g.lineTo(30, -420); g.closePath(); g.fill(); }
+      g.restore();
+      // 紙ふぶき
+      for (const c of CONFETTI) {
+        const y = ((time * 70 * c.s + c.d * 600) % 620) - 60;
+        const x = c.x + Math.sin(time * 2 + c.d * 9) * 14;
+        g.save(); g.translate(x, y); g.rotate(time * 3 * c.s + c.d * 6);
+        g.globalAlpha = p; g.fillStyle = c.c; g.fillRect(-5, -3, 10, 6);
+        g.restore();
+      }
+      // 文字：ぴょんぴょん跳ねる
+      const pop = 1.6 - 0.6 * (1 - Math.pow(1 - p, 3));
+      const hop = Math.abs(Math.sin(time * 5)) * 12;
+      g.save(); g.translate(200, 200 - hop); g.rotate(Math.sin(time * 2.5) * 0.06);
+      g.scale(pop * (1 + Math.sin(time * 10) * 0.02), pop);
+      g.globalAlpha = p;
+      bigWord(g, t('killBig'));
+      g.lineWidth = 14; g.strokeStyle = '#ff4fa3'; g.strokeText(t('killBig'), 0, 0);
+      g.lineWidth = 6; g.strokeStyle = '#fff'; g.strokeText(t('killBig'), 0, 0);
+      const fg = g.createLinearGradient(0, -50, 0, 50);
+      fg.addColorStop(0, '#fff27a'); fg.addColorStop(1, '#ffb52e');
+      g.fillStyle = fg; g.fillText(t('killBig'), 0, 0);
+      g.restore();
+      // きらきら
+      g.globalAlpha = p; g.fillStyle = '#fff';
+      for (const [sx, sy, ph] of [[70, 120, 0], [335, 135, 1.7], [90, 290, 3.1], [320, 280, 4.4], [200, 95, 2.3]]) {
+        const r = 6 + Math.max(0, Math.sin(time * 4 + ph)) * 9;
+        g.beginPath(); g.moveTo(sx, sy - r); g.lineTo(sx + r * 0.25, sy - r * 0.25); g.lineTo(sx + r, sy); g.lineTo(sx + r * 0.25, sy + r * 0.25);
+        g.lineTo(sx, sy + r); g.lineTo(sx - r * 0.25, sy + r * 0.25); g.lineTo(sx - r, sy); g.lineTo(sx - r * 0.25, sy - r * 0.25); g.closePath(); g.fill();
+      }
+      g.globalAlpha = 1;
+    }
+
+    // ---------- 画面の文字とボタン ----------
+    function btn(label, cls, fn, parent = ctrl) {
+      const b = document.createElement('button');
+      b.className = 'big ' + (cls || ''); b.textContent = label; b.onclick = fn;
+      parent.appendChild(b); return b;
+    }
+    const mobile = () => matchMedia('(pointer: coarse)').matches;
+    function refresh() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.getElementById('back').textContent = t('back');
+      langBtn.textContent = t('lang'); langBtn.setAttribute('aria-label', t('langLabel'));
+      warnEl.textContent = t('warn');
+      warnEl.hidden = phase !== 'result';
+      ctrl.innerHTML = ''; ctrl.className = '';
+      panel.hidden = true; panel.innerHTML = '';
+      lvEl.textContent = ''; msgEl.textContent = '';
+      stage.style.cursor = phase === 'ready' ? 'pointer' : 'default';
+
+      if (phase === 'title') {
+        lvEl.textContent = t('title');
+        ctrl.className = 'col';
+        btn(t('solo'), '', () => newGame('solo', ['', '']));
+        btn(t('cpu'), '', () => newGame('cpu', ['', '']));
+        btn(t('friend'), 'sub', () => { phase = 'menu'; refresh(); });
+        return;
+      }
+      if (phase === 'menu') {
+        lvEl.textContent = t('friend');
+        panel.hidden = false;
+        const err = document.createElement('div'); err.className = 'err';
+        const r1 = document.createElement('div'); r1.className = 'row';
+        const nm = document.createElement('input'); nm.placeholder = t('namePh'); nm.maxLength = 12; nm.value = store.get('name', '');
+        r1.appendChild(nm);
+        panel.appendChild(r1);
+        btn(t('newGame'), '', () => {
+          const n = cleanName(nm.value) || t('p1'); store.set('name', n);
+          newGame('friend', [n, '']);
+        }, panel);
+        panel.appendChild(document.createElement('hr'));
+        const r2 = document.createElement('div'); r2.className = 'row';
+        const cd = document.createElement('input'); cd.placeholder = t('codePh');
+        r2.appendChild(cd);
+        btn(t('resume'), 'sub', () => {
+          const c = codeFrom(cd.value);
+          try { if (!c) throw 0; const g = decodeGame(c); history.replaceState(null, '', '#m=' + c); loadGame(g); }
+          catch { err.textContent = t('badCode'); }
+        }, r2);
+        panel.appendChild(r2);
+        panel.appendChild(err);
+        btn(t('menu'), 'sub', () => { phase = 'title'; refresh(); });
+        return;
+      }
+      if (phase === 'name') {
+        panel.hidden = false;
+        const r1 = document.createElement('div'); r1.className = 'row';
+        const nm = document.createElement('input'); nm.placeholder = t('namePh'); nm.maxLength = 12; nm.value = store.get('name', '');
+        r1.appendChild(nm); panel.appendChild(r1);
+        btn(t('go'), '', () => {
+          const n = cleanName(nm.value) || t('p2'); store.set('name', n);
+          game.names[turnIdx()] = n; saveHash(); phase = 'ready'; refresh();
+        }, panel);
+        return;
+      }
+      if (['ready', 'pour', 'drip', 'settle', 'cpu'].includes(phase)) {
+        // 高さの数字は出さない。グラスの見た目で判断する
+        if (mode !== 'solo') lvEl.textContent = t('turn')(nameOf(turnIdx()));
+        return;
+      }
+      if (phase === 'send') {
+        lvEl.textContent = t('next')(nameOf(turnIdx()));
+        msgEl.textContent = t('sentHint');
+        sendButtons(false);
+        return;
+      }
+      if (phase === 'spill') {
+        if (mode !== 'solo') lvEl.textContent = t('turn')(nameOf(loser));
+        return;
+      }
+      if (phase === 'result') {
+        if (loser >= 0) {
+          lvEl.textContent = mode === 'solo' ? t('msgs').dead : t('died')(nameOf(loser));
+          msgEl.textContent = mode === 'cpu' ? (loser === 0 ? t('lose') : t('win')) : '';
+        } else {
+          lvEl.textContent = fmt(soloResult.level);
+          msgEl.textContent = t('msgs')[soloResult.msg];
+        }
+        if (mode === 'friend') { sendButtons(true); return; }
+        btn(t('retry'), '', () => newGame(mode, ['', '']));
+        xLink();
+        btn(t('menu'), 'sub', toTitle);
+      }
+    }
+    function toTitle() {
+      phase = 'title'; game = null; loser = -1; level = 0;
+      try { history.replaceState(null, '', baseUrl()); } catch {}
+      refresh();
+    }
+    function applyLang() { shareKey = ''; refresh(); if (phase === 'send' || phase === 'result') prepareShare(); }
+
+    // ---------- 共有 ----------
+    function shareImage() {
+      const W = 1080, H = 1350, c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const g = c.getContext('2d'), font = 'system-ui, sans-serif';
+      // 下半分にゲーム画面
+      const sc = 1.95, ox = (W - VW * sc) / 2, oy = H - VH * sc;
+      g.fillStyle = '#1d1726'; g.fillRect(0, 0, W, H);
+      g.save(); g.translate(ox, oy); g.scale(sc, sc);
+      drawScene(g, now, ox / sc, oy / sc);
+      g.restore();
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillStyle = '#9fd8ff'; g.font = `bold 42px ${font}`; g.fillText('🍸 ' + t('title'), W / 2, 64);
+      let big, sub;
+      if (phase === 'result' && loser >= 0) { big = mode === 'solo' ? t('msgs').dead : t('died')(nameOf(loser)); sub = mode === 'cpu' ? (loser === 0 ? t('lose') : t('win')) : ''; }
+      else if (phase === 'result') { big = fmt(soloResult.level); sub = t('msgs')[soloResult.msg]; }
+      else { big = t('next')(nameOf(turnIdx())); sub = ''; }
+      g.fillStyle = '#ffffff'; g.font = `bold 100px ${font}`;
+      const bw = g.measureText(big).width; if (bw > W - 100) g.font = `bold ${Math.floor(100 * (W - 100) / bw)}px ${font}`;
+      g.fillText(big, W / 2, 160);
+      g.fillStyle = '#9fd8ff'; g.font = `bold 50px ${font}`; g.fillText(sub, W / 2, 250);
+      if (loser >= 0 || phase === 'result') { g.fillStyle = '#a89bb5'; g.font = `24px ${font}`; g.textAlign = 'right'; g.fillText(t('warn'), W - 24, H - 20); }
+      return c;
+    }
+    let shareFile = null, shareKey = '';
+    function prepareShare() {
+      const key = lang + phase + (game ? encodeGame(game) : '');
+      if (key === shareKey) return;
+      shareKey = key; shareFile = null;
+      setTimeout(() => shareKey === key && game && shareImage().toBlob(b => { if (b && shareKey === key) shareFile = new File([b], 'vodka-brim.png', { type: 'image/png' }); }, 'image/png'), 50);
+    }
+    // 画像ファイルをその場で作る（共有シートはタップ直後に開く必要があるので、待たずに作る）
+    function imageFileNow() {
+      if (shareFile) return shareFile;
+      const bin = atob(shareImage().toDataURL('image/png').split(',')[1]);
+      const u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return (shareFile = new File([u8], 'vodka-brim.png', { type: 'image/png' }));
+    }
+    function sendText() {
+      return loser >= 0 ? t('sendTextEnd')(nameOf(loser)) : t('sendText')(nameOf(turnIdx()));
+    }
+    function saveImage() {
+      const d = document.createElement('a');
+      d.href = shareImage().toDataURL('image/png'); d.download = 'vodka-brim.png'; d.click();
+    }
+    async function copyUrl() {
+      const url = gameUrl();
+      try { await navigator.clipboard.writeText(url); }
+      catch {
+        const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch {} ta.remove();
+      }
+      msgEl.textContent = t('copied');
+    }
+    // 友達対戦：画像とURLを送る
+    function sendButtons(done) {
+      if (mobile()) {
+        btn(done ? t('sendResult') : t('send'), '', async () => {
+          const url = gameUrl(), text = sendText() + '\n' + url;
+          const file = imageFileNow();
+          try {
+            if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text });
+            else if (navigator.share) await navigator.share({ text });
+            else copyUrl();
+          } catch (e) { if (e.name !== 'AbortError') copyUrl(); }
+        });
+      } else {
+        btn(t('saveImg'), '', () => { saveImage(); msgEl.textContent = t('saved'); });
+      }
+      btn(t('copyUrl'), 'sub', copyUrl);
+      if (done) xLink(); else btn(t('menu'), 'sub', toTitle);
+    }
+    // X投稿は本物のリンク。スマホは共有シートで画像ごと、PCは画像を保存してから投稿画面を開く
+    function shareBody() {
+      if (mode === 'solo') return loser >= 0 ? t('shareSoloDead') : t('shareSolo')(fmt(soloResult.level), t('msgs')[soloResult.msg]);
+      if (mode === 'cpu') return loser === 1 ? t('shareCpuWin')(nameOf(1)) : t('shareCpuLose')(nameOf(1));
+      return t('shareFriend')(nameOf(loser));
+    }
+    function xLink() {
+      const a = document.createElement('a');
+      a.className = 'big x'; a.textContent = t('share');
+      a.href = `https://x.com/intent/post?text=${encodeURIComponent(shareBody())}&url=${encodeURIComponent(SHARE_URL)}`;
+      const mob = mobile();
+      if (!mob) { a.target = '_blank'; a.rel = 'noopener'; }
+      a.onclick = e => {
+        if (mob) {
+          const file = navigator.canShare ? imageFileNow() : null;
+          if (file && navigator.canShare({ files: [file] })) {
+            e.preventDefault();
+            navigator.share({ files: [file], text: `${shareBody()}\n${SHARE_URL}` })
+              .catch(err => { if (err.name !== 'AbortError') location.href = a.href; });
+          }
+          return;
+        }
+        saveImage(); msgEl.textContent = t('savedX');
+      };
+      ctrl.appendChild(a);
+    }
+
+    // ---------- 入力 ----------
+    stage.addEventListener('pointerdown', e => {
+      if (e.target.closest('#panel')) return;
+      e.preventDefault();
+      try { ac().resume(); } catch {}
+      pressStart();
+    });
+    window.addEventListener('pointerup', pressEnd);
+    window.addEventListener('pointercancel', pressEnd);
+    window.addEventListener('keydown', e => {
+      if (e.code !== 'Space' || e.target.closest('input, button, a')) return;
+      e.preventDefault();
+      if (!e.repeat) { try { ac().resume(); } catch {} pressStart(); }
+    });
+    window.addEventListener('keyup', e => { if (e.code === 'Space') pressEnd(); });
+    stage.addEventListener('contextmenu', e => e.preventDefault());
+
+    // ---------- 起動 ----------
+    window.addEventListener('resize', sizeCanvas);
+    new ResizeObserver(sizeCanvas).observe(stage);
+    sizeCanvas();
+    function boot() {
+      const c = codeFrom(location.hash);
+      if (c) { try { loadGame(decodeGame(c)); return; } catch {} }
+      phase = 'title'; refresh();
+    }
+    window.addEventListener('hashchange', boot);
+    boot();
+    requestAnimationFrame(frame);
+  </script>
+<footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

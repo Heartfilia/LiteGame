@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#141210"/>
+  <rect x="6" y="4" width="16" height="20" rx="3" fill="#f2e6cc" stroke="#c1a874" stroke-width="1.4" transform="rotate(-6 14 14)"/>
+  <rect x="11" y="8" width="16" height="20" rx="3" fill="#e8d9b8" stroke="#ab8f5c" stroke-width="1.4" transform="rotate(5 19 18)"/>
+  <rect x="21" y="5" width="9" height="9" rx="2" fill="#b0402f" transform="rotate(8 25 9)"/>
+  <text x="25.4" y="12.2" font-family="Songti SC, serif" font-size="6.4" fill="#fbeedd" text-anchor="middle" transform="rotate(8 25 9)">接</text>
+</svg>

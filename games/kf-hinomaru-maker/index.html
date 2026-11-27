@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>日之丸 · LiteGame</title>
+  <meta name="description" content="把红圆贴到旗帜的正确位置，越准分越高。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="日之丸 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/hinomaru-maker/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/hinomaru-maker/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #e9e4dc; color: #333; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom)); box-sizing: border-box;
+    }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; }
+    header a { color: #333; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 8px; }
+    .pill {
+      height: 36px; min-width: 36px; border: 1px solid #bbb; border-radius: 18px; background: #fff;
+      color: #333; font-size: 15px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    #stage { flex: 1; position: relative; min-height: 0; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #result {
+      position: fixed; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; align-items: center; gap: 10px;
+      padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.95);
+      box-shadow: 0 -2px 12px rgba(0,0,0,.12); text-align: center;
+    }
+    #result.show { display: flex; }
+    #score { font-size: 34px; font-weight: bold; color: #bc002d; }
+    #gap { font-size: 15px; }
+    #saved { font-size: 13px; color: #777; }
+    #saved:empty { display: none; }
+    .btns { display: flex; gap: 10px; }
+    .btn {
+      font-size: 16px; padding: 10px 20px; border-radius: 24px; border: none; cursor: pointer;
+      background: #bc002d; color: #fff; text-decoration: none; font-family: inherit;
+    }
+    .btn.x { background: #111; }
+    #ctrl { display: flex; align-items: center; gap: 10px; padding: 8px 16px; max-width: 520px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+    #ctrl.hide, #ctrl.hide + #stickRow { visibility: hidden; }
+    #stickRow { display: flex; justify-content: center; padding: 4px 16px 8px; }
+    #stick { font-size: 18px; padding: 12px 48px; }
+    /* 指でつかみやすいよう、つまみと当たり判定を大きくする */
+    #size { -webkit-appearance: none; appearance: none; flex: 1; min-width: 0; height: 48px; margin: 0; background: transparent; touch-action: none; cursor: pointer; }
+    #size::-webkit-slider-runnable-track { height: 10px; border-radius: 5px; background: #cfc8bd; }
+    #size::-moz-range-track { height: 10px; border-radius: 5px; background: #cfc8bd; }
+    #size::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; margin-top: -12px; border-radius: 50%; background: #bc002d; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+    #size::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: #bc002d; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">日之丸</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill" aria-label="音のオン/オフ"></button>
+    </div>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="ctrl">
+    <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="4" fill="#bc002d"/></svg>
+    <input id="size" type="range" step="1">
+    <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#bc002d"/></svg>
+  </div>
+  <div id="stickRow"><button id="stick" class="btn"></button></div>
+  <div id="result">
+    <div id="score"></div>
+    <div id="gap"></div>
+    <div id="saved"></div>
+    <div class="btns">
+      <button id="again" class="btn"></button>
+      <a id="post" class="btn x" href="#"></a>
+    </div>
+  </div>
+  </main>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 日之丸 · 中文文案
+window.__KF_ZH__ = {
+  title: '日之丸',
+  back: '← 大厅',
+  lang: 'EN',
+  langLabel: 'Switch to English',
+  sound: '音效开关',
+  again: '再来一次',
+  post: '分享到 X',
+  stick: '贴上去',
+  sizeLabel: '圆的大小',
+  saved: '图片已保存，发帖时附上',
+  score: (s) => `${s} 分`,
+  gap: (mm, sz) => `位置差 ${mm}mm・大小差 ${sz}mm`,
+  out: '投降',
+  palau: '帕劳',
+  laos: '老挝',
+  jp: '日本',
+  niger: '尼日尔',
+  bangladesh: '孟加拉国',
+  greenland: '格陵兰',
+  tunisia: '突尼斯',
+  share: (r) => '日之丸：' + (r.out ? '我举白旗了' : '把红圆贴上去了') + ' #LiteGame'
+};
+</script>
+<script>
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('hinomaru-maker-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('hinomaru-maker-' + k, JSON.stringify(v)); } catch {} },
+    };
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/hinomaru-maker/';
+
+    // ---- 文言 ----
+    const L = {
+      ja: {
+        title: '日之丸', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English', sound: '音のオン/オフ',
+        again: 'もう一度', post: 'Xにポスト',
+        stick: '貼る', sizeLabel: '丸の大きさ', saved: '画像を保存しました。ポストに添付してください',
+        score: s => `${s}点`, gap: (mm, sz) => `位置 ${mm}mm・大きさ ${sz}mm ずれ`, out: '降参',
+        palau: 'パラオ', laos: 'ラオス', jp: '日本', niger: 'ニジェール', bangladesh: 'バングラデシュ', greenland: 'グリーンランド', tunisia: 'チュニジア',
+        share: r => '日之丸：' + (r.out ? '白旗をあげました' : r.country && r.country !== 'jp' ? `${L.ja[r.country]}の国旗ができました` : (r.country === 'jp' ? '日本の国旗ができました' : `${r.score}点`) + `（位置${r.mm}mm・大きさ${r.sz}mmずれ）`),
+      },
+      en: {
+        title: 'Hinomaru Maker', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え', sound: 'Sound on/off',
+        again: 'Again', post: 'Post on X',
+        stick: 'Stick', sizeLabel: 'Circle size', saved: 'Image saved. Attach it to your post',
+        score: s => `${s} pts`, gap: (mm, sz) => `Position ${mm}mm, size ${sz}mm off`, out: 'Surrender',
+        palau: 'Palau', laos: 'Laos', jp: 'Japan', niger: 'Niger', bangladesh: 'Bangladesh', greenland: 'Greenland', tunisia: 'Tunisia',
+        share: r => 'Hinomaru Maker: ' + (r.out ? 'I raised the white flag' : r.country && r.country !== 'jp' ? `I made the flag of ${L.en[r.country]}` : (r.country === 'jp' ? 'I made the flag of Japan' : `${r.score} pts`) + ` (position ${r.mm}mm, size ${r.sz}mm off)`),
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const $ = id => document.getElementById(id);
+
+    // ---- 音 ----
+    let soundOn = store.get('sound', true);
+    const SPK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#333"/>';
+    const updateSoundBtn = () => {
+      $('sound').innerHTML = SPK + (soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>' : '<path d="M16 9l5 6M21 9l-5 6"/></svg>');
+    };
+    $('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+    let ac;
+    function pita() {
+      if (!soundOn) return;
+      try {
+        ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
+        o.type = 'triangle'; o.frequency.setValueAtTime(520, n); o.frequency.exponentialRampToValueAtTime(120, n + 0.12);
+        g.gain.setValueAtTime(0.4, n); g.gain.exponentialRampToValueAtTime(0.001, n + 0.15);
+        o.connect(g).connect(ac.destination); o.start(n); o.stop(n + 0.16);
+      } catch {}
+    }
+
+    // ---- 盤面 ----
+    // 旗は横 900mm × 縦 600mm（3:2）。日本の丸は直径 360mm（縦の 3/5）。
+    // 丸の位置と大きさは mm で持ち、描くときに画面の大きさへ直す。
+    const cv = $('cv');
+    let ctx = cv.getContext('2d');
+    const FW = 900, FH = 600, JP = 360, DMIN = 100, DMAX = 540;
+    let W, H, dpr, flag, k, disc, state = 'ready', drag = null, result = null;
+    const size = $('size');
+    size.min = DMIN; size.max = DMAX;
+
+    function newDisc() {
+      const d = Math.round(200 + Math.random() * 300);
+      disc = { x: 0, y: 0, d }; size.value = d;
+    }
+    // 旗の中心からの mm ⇔ 画面の px
+    const sx = x => flag.x + flag.w / 2 + x * k, sy = y => flag.y + flag.h / 2 + y * k;
+
+    function layout() {
+      dpr = devicePixelRatio || 1;
+      const r = cv.getBoundingClientRect(); W = r.width; H = r.height;
+      cv.width = W * dpr; cv.height = H * dpr;
+      const fw = Math.max(60, Math.min(W - 32, H * 0.55 * 1.5, 600)), fh = fw / 1.5;
+      flag = { x: (W - fw) / 2, y: Math.max(12, H * 0.06), w: fw, h: fh };
+      k = fw / FW;
+      if (state === 'ready' && !disc.placed) { // 最初は旗の下に置いておく
+        disc.x = 0;
+        disc.y = Math.min((H - flag.y - fh / 2 - DMAX / 2 * k - 8) / k, FH / 2 + DMAX / 2 + 20);
+      }
+      draw();
+    }
+
+    const STYLE = {
+      jp: { bg: [['#fff', 1]], disc: '#bc002d' },
+      bangladesh: { bg: [['#006a4e', 1]], disc: '#f42a41' },
+      greenland: { bg: [['#fff', .5], ['#c8102e', .5]], disc: '#c8102e', paint: (cx, cy, r) => { // 丸の下半分は白
+        ctx.fillStyle = '#c8102e'; ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI); ctx.fill();
+      } },
+      tunisia: { bg: [['#e70013', 1]], disc: '#fff', paint: (cx, cy, r) => { // 白い丸に赤い三日月と星
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e70013'; ctx.beginPath(); ctx.arc(cx, cy, r * .75, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + r * .2, cy, r * .6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e70013'; ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * .16 : r * .4;
+          ctx.lineTo(cx + r * .2 + Math.cos(a) * q, cy + Math.sin(a) * q);
+        }
+        ctx.fill();
+      } },
+      palau: { bg: [['#4aadd6', 1]], disc: '#ffde00' },
+      laos: { bg: [['#ce1126', .25], ['#002868', .5], ['#ce1126', .25]], disc: '#fff' },
+      niger: { bg: [['#e05206', 1 / 3], ['#fff', 1 / 3], ['#0db02b', 1 / 3]], disc: '#e05206' },
+    };
+    function draw() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const f = flag, st = STYLE[(state === 'done' && result.country) || 'jp'];
+      ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fillRect(f.x + 3, f.y + 4, f.w, f.h);
+      let y = f.y;
+      for (const [c, h] of st.bg) { ctx.fillStyle = c; ctx.fillRect(f.x, y, f.w, f.h * h + 1); y += f.h * h; }
+      ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.strokeRect(f.x + .5, f.y + .5, f.w - 1, f.h - 1);
+      if (state === 'done' && result.out) { /* 丸は消して、ただの白旗にする */ }
+      else if (st.paint) st.paint(sx(disc.x), sy(disc.y), disc.d / 2 * k);
+      else {
+        ctx.fillStyle = st.disc;
+        ctx.beginPath(); ctx.arc(sx(disc.x), sy(disc.y), disc.d / 2 * k, 0, Math.PI * 2); ctx.fill();
+      }
+      if (state === 'done' && (!result.country || result.country === 'jp') && !result.out) { // 正解の位置と大きさ
+        ctx.setLineDash([6, 5]); ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(sx(0), sy(0), JP / 2 * k, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    function pos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    cv.addEventListener('pointerdown', e => {
+      if (state !== 'ready') return;
+      const p = pos(e);
+      if (Math.hypot(p.x - sx(disc.x), p.y - sy(disc.y)) > disc.d / 2 * k + 20) return;
+      cv.setPointerCapture(e.pointerId);
+      drag = { dx: sx(disc.x) - p.x, dy: sy(disc.y) - p.y };
+      state = 'drag';
+    });
+    cv.addEventListener('pointermove', e => {
+      if (state !== 'drag') return;
+      const p = pos(e);
+      disc.x = (p.x + drag.dx - flag.x - flag.w / 2) / k;
+      disc.y = (p.y + drag.dy - flag.y - flag.h / 2) / k;
+      draw();
+    });
+    const drop = () => { if (state === 'drag') { state = 'ready'; disc.placed = true; draw(); } };
+    cv.addEventListener('pointerup', drop);
+    cv.addEventListener('pointercancel', drop);
+    size.addEventListener('input', () => { disc.d = +size.value; draw(); });
+
+    // 中心から近く、丸の大きさが合っていれば別の国旗になる
+    function judge() {
+      const { x, y, d } = disc;
+      if (Math.abs(x) > FW / 2 || Math.abs(y) > FH / 2) return { out: true };
+      const mm = Math.round(Math.hypot(x, y)), sz = Math.round(Math.abs(d - JP));
+      const center = mm <= 25;
+      const country =
+        center && Math.abs(d - 150) <= 30 ? 'niger' :
+        center && Math.abs(d - 240) <= 30 ? 'laos' :
+        center && Math.abs(d - 300) <= 20 ? 'tunisia' :
+        // ここから下は丸が左（旗竿側）に寄った国旗
+        x <= -80 && x >= -130 && Math.abs(y) <= 20 && Math.abs(d - 400) <= 30 ? 'greenland' :
+        x <= -20 && x > -80 && Math.abs(y) <= 20 && Math.abs(d - 400) <= 30 ? 'bangladesh' :
+        x <= -30 && x >= -110 && Math.abs(y) <= 20 && d >= 320 && d < 370 ? 'palau' :
+        mm <= 15 && sz <= 15 ? 'jp' : null; // 日本は厳しめ。外れたら点数を出す
+      const score = Math.max(0, Math.round(100 - Math.max(0, mm + sz - 5) * 0.35));
+      return { mm, sz, country, score };
+    }
+    $('stick').onclick = () => {
+      if (state !== 'ready') return;
+      state = 'done'; pita();
+      result = judge();
+      $('ctrl').classList.add('hide');
+      draw(); showResult();
+    };
+
+    function showResult() {
+      if (!result) return;
+      const { out, mm, sz } = result;
+      // 点数ではなく、できた国旗の国名を出す
+      const c = result.country;
+      $('score').textContent = out ? t('out') : c ? t(c) : t('score')(result.score);
+      $('gap').textContent = out || (c && c !== 'jp') ? '' : t('gap')(mm, sz);
+      const post = $('post');
+      post.href = `https://x.com/intent/post?text=${encodeURIComponent(t('share')(result))}&url=${encodeURIComponent(SHARE_URL)}`;
+      if (matchMedia('(pointer: coarse)').matches) { post.removeAttribute('target'); post.removeAttribute('rel'); }
+      else { post.target = '_blank'; post.rel = 'noopener'; }
+      $('saved').textContent = '';
+      $('result').classList.add('show');
+      prepareShare();
+    }
+
+    // ---- 結果画像（X投稿用） ----
+    // 画面と同じ draw() を、描き先だけ差し替えて 1080×1080 の画像に描く
+    function resultImage() {
+      const c = document.createElement('canvas'); c.width = c.height = 1080;
+      const keep = { ctx, W, H, dpr, flag, k };
+      ctx = c.getContext('2d'); W = H = 1080; dpr = 1;
+      flag = { x: 90, y: 120, w: 900, h: 600 }; k = 1;
+      ctx.fillStyle = '#e9e4dc'; ctx.fillRect(0, 0, 1080, 1080);
+      const clear = ctx.clearRect; ctx.clearRect = () => {}; // 背景を消さない
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, 1080, 760); ctx.clip(); draw(); ctx.restore();
+      ctx.clearRect = clear;
+      ctx.textAlign = 'center'; ctx.fillStyle = '#bc002d';
+      ctx.font = 'bold 96px "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif';
+      ctx.fillText($('score').textContent, 540, 870);
+      ctx.fillStyle = '#333'; ctx.font = '40px "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif';
+      ctx.fillText($('gap').textContent, 540, 940);
+      ctx.fillStyle = '#888'; ctx.font = '32px "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif';
+      ctx.fillText(t('title') + '  keifurukawafunnych.com', 540, 1030);
+      ({ ctx, W, H, dpr, flag, k } = keep);
+      return c;
+    }
+    let shareFile = null, shareKey = '';
+    function prepareShare() {
+      const key = lang + JSON.stringify(disc) + JSON.stringify(result);
+      if (key === shareKey) return;
+      shareKey = key; shareFile = null;
+      resultImage().toBlob(b => { if (b && shareKey === key) shareFile = new File([b], 'hinomaru-maker.png', { type: 'image/png' }); }, 'image/png');
+    }
+    // スマホは共有シートに画像と文を渡す。PCは画像を保存してから x.com を新しいタブで開く（Webの投稿画面には画像を添付できない）
+    $('post').onclick = e => {
+      const text = t('share')(result), coarse = matchMedia('(pointer: coarse)').matches;
+      if (coarse && typeof navigator.share === 'function' && shareFile && navigator.canShare?.({ files: [shareFile] })) {
+        e.preventDefault();
+        navigator.share({ files: [shareFile], text: `${text}\n${SHARE_URL}` }).catch(err => { if (err.name !== 'AbortError') location.href = $('post').href; });
+        return;
+      }
+      if (coarse) return;
+      const a = document.createElement('a'); a.href = resultImage().toDataURL('image/png'); a.download = 'hinomaru-maker.png'; a.click();
+      $('saved').textContent = t('saved');
+    };
+
+    $('again').onclick = () => {
+      state = 'ready'; result = null; // 丸の位置と大きさはそのまま残す
+      $('result').classList.remove('show'); $('ctrl').classList.remove('hide'); layout();
+    };
+
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+      $('sound').setAttribute('aria-label', t('sound'));
+      $('again').textContent = t('again'); $('stick').textContent = t('stick'); size.setAttribute('aria-label', t('sizeLabel')); $('post').textContent = t('post');
+      if (state === 'done') showResult();
+    }
+    $('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+    addEventListener('resize', layout);
+    newDisc(); updateSoundBtn(); applyLang(); layout();
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

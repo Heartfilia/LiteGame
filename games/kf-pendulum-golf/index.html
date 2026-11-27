@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>钟摆高尔夫 · LiteGame</title>
+  <meta name="description" content="三重钟摆当球杆，一杆能打多远全看角度。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="钟摆高尔夫 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/pendulum-golf/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/pendulum-golf/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #bfe6ff; font-family: system-ui, sans-serif; color: #223; }
+    body { display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; }
+    header a { color: #223; text-decoration: none; font-size: 14px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill { height: 34px; min-width: 34px; border: none; border-radius: 17px; background: #fff; color: #223; font-size: 14px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    #wrap { position: relative; flex: 1; min-height: 0; }
+    header { position: relative; z-index: 1; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+    #dist { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-size: 34px; font-weight: 800; pointer-events: none; text-shadow: 0 2px 0 #fff; }
+    .panel { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: rgba(191,230,255,.75); padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+    .panel[hidden] { display: none; }
+    .panel h1 { margin: 0; font-size: 34px; }
+    .big { font-size: 56px; font-weight: 800; margin: 0; }
+    .sub { margin: 0; font-size: 16px; }
+    .btn { border: none; border-radius: 28px; background: #2b8a3e; color: #fff; font-size: 20px; font-weight: 700; padding: 14px 36px; cursor: pointer; text-decoration: none; }
+    .btn.x { background: #111; font-size: 16px; padding: 10px 24px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="lang" class="pill">EN</button>
+      <button id="sound" class="pill" aria-label="sound">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#223" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#223"/><path id="wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" style="display:none"/></svg>
+      </button>
+    </div>
+  </header>
+  <main style="display:contents">
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div id="dist"></div>
+    <div id="title" class="panel">
+      <h1 id="tTitle"></h1>
+      <button id="start" class="btn"></button>
+    </div>
+    <div id="result" class="panel" hidden>
+      <p class="big" id="rDist"></p>
+      <p class="sub" id="rBest"></p>
+      <button id="again" class="btn"></button>
+      <a id="share" class="btn x"></a>
+    </div>
+  </div>
+  </main>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 钟摆高尔夫 · 中文文案
+window.__KF_ZH__ = {
+  title: '钟摆高尔夫',
+  back: '← 大厅',
+  start: '开始',
+  again: '再来一次',
+  share: '分享到 X',
+  best: '最佳',
+  m: 'm',
+  post: (d) => `一杆打出 ${d}m #LiteGame`
+};
+</script>
+<script>
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('pendulum-golf:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('pendulum-golf:' + k, JSON.stringify(v)); } catch {} },
+};
+const L = {
+  ja: { title: '钟摆高尔夫', back: '← トップへ戻る', lang: 'EN', start: 'スタート', again: 'もう一度', share: 'Xでポスト', best: '自己ベスト', m: 'm',
+        post: d => `钟摆高尔夫で ${d}m 飛ばした` },
+  en: { title: 'Triple Pendulum Golf', back: '← Top', lang: '日本語', start: 'Start', again: 'Retry', share: 'Post on X', best: 'Best', m: 'm',
+        post: d => `I drove ${d}m in Triple Pendulum Golf` },
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'ja';
+const t = k => L[lang][k];
+const $ = id => document.getElementById(id);
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('back').textContent = t('back'); $('lang').textContent = t('lang');
+  $('tTitle').textContent = t('title'); $('start').textContent = t('start');
+  $('again').textContent = t('again'); $('share').textContent = t('share');
+  if (!$('result').hidden) showResult();
+}
+$('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+// ---- sound ----
+let soundOn = store.get('sound', true), ac = null;
+function updSound() { $('wave').style.display = soundOn ? '' : 'none'; $('mute').style.display = soundOn ? 'none' : ''; }
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+updSound();
+function beep(freq, dur, type = 'square', vol = .2, slide = 0) {
+  if (!soundOn) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
+    o.type = type; o.frequency.setValueAtTime(freq, n);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, n + dur);
+    g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+    o.connect(g).connect(ac.destination); o.start(n); o.stop(n + dur);
+  } catch {}
+}
+
+// ---- world (meters) ----
+const catImg = new Image(); catImg.src = 'cat.png';
+const cv = $('cv'), ctx = cv.getContext('2d');
+const SH = { x: 0, y: 2.3 };
+const LEN = [0.8, 0.75, 0.7];
+const G = 9.8, BALL_R = 0.06, BALL_X = 0.25, TEE_H = 0.14;
+let pts, ball, state = 'title', grab = null, releaseT = 0, camX = 0, camY = 0, best = store.get('best', null), finalDist = 0, hitFlash = 0, hitStop = 0, hitStopMax = 0, hitPow = 0, zoom = 1;
+
+function reset() {
+  // hang slightly bent so it's alive
+  pts = []; let x = SH.x, y = SH.y;
+  for (let i = 0; i < 3; i++) { x += 0; y -= LEN[i]; pts.push({ x, y, px: x, py: y }); }
+  ball = { x: BALL_X, y: TEE_H + BALL_R, vx: 0, vy: 0, flying: false, stopped: false, maxX: BALL_X };
+  camX = 0; camY = 0; releaseT = 0; grab = null; finalDist = 0;
+}
+reset();
+
+function step(dt) {
+  for (const p of pts) {
+    const vx = (p.x - p.px) * 0.9995, vy = (p.y - p.py) * 0.9995;
+    p.px = p.x; p.py = p.y; p.x += vx; p.y += vy - G * dt * dt;
+  }
+  if (grab) { const p = pts[2]; p.x += (grab.x - p.x) * 0.15; p.y += (grab.y - p.y) * 0.15; }
+  for (let it = 0; it < 12; it++) {
+    let prev = SH;
+    for (let i = 0; i < 3; i++) {
+      const p = pts[i], dx = p.x - prev.x, dy = p.y - prev.y, d = Math.hypot(dx, dy) || 1e-6, diff = (d - LEN[i]) / d;
+      if (i === 0) { p.x -= dx * diff; p.y -= dy * diff; }
+      else { prev.x += dx * diff * .5; prev.y += dy * diff * .5; p.x -= dx * diff * .5; p.y -= dy * diff * .5; }
+      prev = p;
+    }
+    for (const p of pts) if (p.y < 0.03) { p.y = 0.03; p.px += (p.x - p.px) * 0.3; }
+  }
+  // hit
+  if (state === 'swing' && !ball.flying && !grab) {
+    const h = pts[2];
+    if (Math.hypot(h.x - ball.x, h.y - ball.y) < BALL_R + 0.07) {
+      const hvx = (h.x - h.px) / dt, hvy = (h.y - h.py) / dt;
+      const sp = Math.hypot(hvx, hvy);
+      if (sp > 0.5) {
+        ball.vx = hvx * 2.2; ball.vy = Math.max(hvy * 2.2, Math.abs(hvx) * 0.5);
+        ball.flying = true; state = 'fly'; hitFlash = 1;
+        hitPow = Math.min(1, sp / 25); hitStop = hitStopMax = 0.04 + hitPow * 0.45;
+        beep(1200, .15, 'square', .25, 300);
+      }
+    }
+  }
+  if (ball.flying && !ball.stopped) {
+    ball.vy -= G * dt;
+    const drag = 1 - 0.02 * dt; ball.vx *= drag; ball.vy *= drag;
+    ball.x += ball.vx * dt; ball.y += ball.vy * dt;
+    if (ball.y < BALL_R) {
+      ball.y = BALL_R;
+      if (ball.vy < -1.5) { beep(160 + Math.min(300, -ball.vy * 20), .08, 'triangle', .3); ball.vy = -ball.vy * 0.4; ball.vx *= 0.75; }
+      else { ball.vy = 0; ball.vx *= (1 - 1.8 * dt); }
+      if (Math.abs(ball.vx) < 0.15 && ball.vy === 0) ball.stopped = true;
+    }
+  }
+}
+
+function dist() { return ball.x - BALL_X; }
+
+// ---- input ----
+let scale = 100, originX = 0, groundY = 0;
+function toWorld(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - originX) / scale + camX, y: Math.max(SH.y, (groundY - (e.clientY - r.top)) / scale + camY) }; }
+cv.addEventListener('pointerdown', e => {
+  if (state !== 'ready' && state !== 'swing') return;
+  e.preventDefault(); cv.setPointerCapture(e.pointerId); grab = toWorld(e);
+});
+cv.addEventListener('pointermove', e => { if (grab) grab = toWorld(e); });
+const up = () => { if (!grab) return; grab = null; state = 'swing'; for (const p of pts) { p.px = p.x; p.py = p.y; } releaseT = 0.0001; beep(300, .2, 'sine', .15, 700); };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+
+$('start').onclick = () => { $('title').hidden = true; reset(); state = 'ready'; beep(600, .1); };
+$('again').onclick = () => { $('result').hidden = true; reset(); state = 'ready'; beep(600, .1); };
+
+function showResult() {
+  const d = finalDist.toFixed(1);
+  $('rDist').textContent = d + t('m');
+  $('rBest').textContent = `${t('best')} ${(best ?? 0).toFixed(1)}${t('m')}`;
+  const a = $('share');
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(L[lang].post(d))}&url=${encodeURIComponent('https://keifurukawafunnych.com/games/pendulum-golf/')}`;
+  if (matchMedia('(pointer: coarse)').matches) { a.removeAttribute('target'); a.removeAttribute('rel'); }
+  else { a.target = '_blank'; a.rel = 'noopener'; }
+}
+function finish() {
+  state = 'done'; finalDist = dist();
+  if (best === null || finalDist > best) { best = finalDist; store.set('best', best); }
+  beep(500, .15, 'square', .2); setTimeout(() => beep(800, .25, 'square', .2), 150);
+  setTimeout(() => { showResult(); $('result').hidden = false; }, 700);
+}
+
+// ---- render ----
+function resize() {
+  const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  groundY = r.height - 80 - Math.max(40, r.height * 0.1);
+  scale = Math.min((groundY - 20) / 2.9, r.width / 5);
+  originX = Math.max(r.width * 0.3, 2.3 * scale);
+}
+addEventListener('resize', resize);
+
+function draw() {
+  const W = cv.clientWidth, H = cv.clientHeight;
+  const X = x => originX + (x - camX) * scale, Y = y => groundY - (y - camY) * scale, GY = Y(0);
+  const Y0 = y => groundY - (y - camY) * scale;
+  // sky -> space gradient by altitude
+  const SPACE = 60, sky = [191, 230, 255], mid = [40, 70, 160], space = [5, 5, 25];
+  const col = y => { const k = Math.max(0, Math.min(1, y / SPACE)); const a = k < .5 ? sky : mid, b = k < .5 ? mid : space, u = k < .5 ? k * 2 : (k - .5) * 2; return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * u)).join(',')})`; };
+  const yTop = camY + groundY / scale, yBot = camY - (H - groundY) / scale;
+  const gr = ctx.createLinearGradient(0, 0, 0, H);
+  for (let i = 0; i <= 6; i++) gr.addColorStop(i / 6, col(yTop + (yBot - yTop) * i / 6));
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+  // stars
+  const starA = Math.max(0, Math.min(1, (yTop - 20) / 25));
+  if (starA > 0) {
+    ctx.fillStyle = `rgba(255,255,255,${starA})`;
+    for (let i = 0; i < 300; i++) {
+      const wx = ((i * 7919) % 1000) / 1000 * 40, wy = 18 + ((i * 104729) % 997) / 997 * 200;
+      const sx = (((wx - camX * 0.05) * scale * 0.5) % (W + 40) + W + 40) % (W + 40) - 20;
+      const sy = Y0(camY * 0.7 + wy * 0.3 + 14) ;
+      if (sy < -5 || sy > H) continue;
+      const z = 1 + (i % 3) * 0.6; ctx.fillRect(sx, sy, z, z);
+    }
+  }
+  // hit-stop shake
+  ctx.save();
+  if (hitStop > 0) { const m = 3 + hitPow * 8; ctx.translate((Math.random() - .5) * m, (Math.random() - .5) * m); }
+  if (zoom > 1.001) { const bx = originX + (ball.x - camX) * scale, by = Y0(ball.y); const a = Math.min(1, zoom - 1); ctx.translate(bx + (W / 2 - bx) * a, by + (H / 2 - by) * a); ctx.scale(zoom, zoom); ctx.translate(-bx, -by); }
+  // clouds (parallax)
+  ctx.fillStyle = '#fff';
+  for (let i = -2; i < 40; i++) {
+    const cx = ((i * 9) - camX * 0.3) * scale * 0.4 + originX, cy = H * (0.15 + 0.08 * ((i * 7) % 3)) + camY * scale * 0.5;
+    if (cx < -100 || cx > W + 100) continue;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 40, 14, 0, 0, 7); ctx.ellipse(cx + 25, cy - 8, 26, 14, 0, 0, 7); ctx.fill();
+  }
+  // mountains (far)
+  const hill = (par, base, amp, wl, col, seed) => {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+    for (let sx = 0; sx <= W + 10; sx += 10) {
+      const wx = (sx - originX) / scale + camX * par;
+      const h = amp * (0.6 + 0.4 * Math.sin(wx / wl + seed) * Math.sin(wx / (wl * 2.7) + seed * 3));
+      ctx.lineTo(sx, Y(camY * (1 - par)) - (base + h) * scale * 0.5);
+    }
+    ctx.lineTo(W, H); ctx.fill();
+  };
+  hill(0.1, 1.5, 5, 3, '#a5c8e4', 1);
+  hill(0.3, 0.5, 2.5, 1.6, '#8fcf8f', 4);
+  // trees (mid)
+  const tp = 0.6;
+  for (let i = Math.floor((camX * tp - originX / scale) / 7) - 1, n = i + Math.ceil(W / scale / 7) + 3; i < n; i++) {
+    if (i % 3 === 1) continue;
+    const wx = i * 7 + ((i * 37) % 5), sx = originX + (wx - camX * tp) * scale * 0.7, by = Y(camY * (1 - tp));
+    const th = (1.6 + ((i * 13) % 4) * 0.3) * scale * 0.7;
+    ctx.fillStyle = '#7a5230'; ctx.fillRect(sx - th * 0.05, by - th * 0.45, th * 0.1, th * 0.45);
+    ctx.fillStyle = i % 2 ? '#2f8a3a' : '#3c9a46'; ctx.beginPath(); ctx.ellipse(sx, by - th * 0.65, th * 0.3, th * 0.38, 0, 0, 7); ctx.fill();
+  }
+  // underground
+  if (GY < H) {
+    const layers = [[0, '#5cb85c'], [0.25, '#8b5a2b'], [1.2, '#6b4423'], [3, '#4a2f1a']];
+    for (const [d, c] of layers) { const y = GY + d * scale; if (y < H) { ctx.fillStyle = c; ctx.fillRect(0, y, W, H - y); } }
+    for (let i = Math.floor(camX - originX / scale) - 1; i < camX + W / scale + 1; i++) {
+      for (let j = 0; j < 2; j++) {
+        const h = Math.abs(Math.sin(i * 12.9898 + j * 78.233) * 43758.5453) % 1;
+        const sx = X(i + h), sy = GY + (0.4 + ((h * 7) % 1) * 2.8) * scale;
+        if (sy > H + 10) continue;
+        ctx.fillStyle = h > 0.5 ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.12)';
+        ctx.beginPath(); ctx.ellipse(sx, sy, (0.05 + h * 0.08) * scale, (0.03 + h * 0.05) * scale, 0, 0, 7); ctx.fill();
+      }
+    }
+  }
+  ctx.fillStyle = '#4aa64a'; ctx.fillRect(0, GY, W, 6);
+  // markers
+  const step10 = scale < 30 ? 50 : 10;
+  ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+  for (let m = Math.floor((camX - originX / scale) / step10) * step10; X(m) < W + 40; m += step10) {
+    if (m === 0) continue;
+    const x = X(m + BALL_X);
+    ctx.fillStyle = '#fff'; ctx.fillRect(x - 1, GY - 26, 3, 26);
+    ctx.fillStyle = '#e03131'; ctx.beginPath(); ctx.moveTo(x + 2, GY - 26); ctx.lineTo(x + 18, GY - 21); ctx.lineTo(x + 2, GY - 16); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(m + 'm', x, GY + 20);
+  }
+  if (best !== null && best !== 0) { const x = X(best + BALL_X); if (x > -20 && x < W + 20) { ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(x, GY - 60); ctx.lineTo(x, GY); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#e8b500'; ctx.fillText(t('best'), x, GY - 66); } }
+  // tee
+  ctx.fillStyle = '#fff'; ctx.fillRect(X(BALL_X) - Math.max(2, scale * 0.015), Y(TEE_H), Math.max(4, scale * 0.03), TEE_H * scale + 6); ctx.fillRect(X(BALL_X) - scale * 0.05, Y(TEE_H), scale * 0.1, Math.max(3, scale * 0.02));
+  // body (golfer stand)
+  ctx.strokeStyle = '#334'; ctx.lineWidth = Math.max(3, scale * 0.06); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(X(-0.15), Y(0)); ctx.lineTo(X(-0.05), Y(1.2)); ctx.lineTo(X(0.05), Y(0)); ctx.moveTo(X(-0.05), Y(1.2)); ctx.lineTo(X(0), Y(SH.y)); ctx.stroke();
+  // pendulum
+  const cols = ['#e8590c', '#1971c2', '#495057'];
+  let prev = SH;
+  for (let i = 0; i < 3; i++) {
+    const p = pts[i];
+    ctx.strokeStyle = cols[i]; ctx.lineWidth = Math.max(3, scale * (i === 2 ? 0.035 : 0.05));
+    ctx.beginPath(); ctx.moveTo(X(prev.x), Y(prev.y)); ctx.lineTo(X(p.x), Y(p.y)); ctx.stroke();
+    ctx.fillStyle = '#223'; ctx.beginPath(); ctx.arc(X(prev.x), Y(prev.y), Math.max(3, scale * 0.04), 0, 7); ctx.fill();
+    prev = p;
+  }
+  { const hr = scale * 0.32, hx = X(-0.02), hy = Y(SH.y + 0.28);
+    if (catImg.complete && catImg.naturalWidth) ctx.drawImage(catImg, hx - hr, hy - hr, hr * 2, hr * 2);
+    else { ctx.fillStyle = '#334'; ctx.beginPath(); ctx.arc(hx, hy, hr, 0, 7); ctx.fill(); } }
+  // head
+  const h = pts[2], h1 = pts[1], ang = Math.atan2(h.y - h1.y, h.x - h1.x);
+  ctx.save(); ctx.translate(X(h.x), Y(h.y)); ctx.rotate(-ang);
+  ctx.fillStyle = '#343a40'; ctx.beginPath(); ctx.roundRect(-scale * 0.05, -scale * 0.09, scale * 0.12, scale * 0.18, scale * 0.04); ctx.fill();
+  ctx.restore();
+  // ball
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(X(ball.x), Y(0) + 2, BALL_R * scale, BALL_R * scale * 0.3, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(X(ball.x), Y(ball.y), Math.max(4, BALL_R * scale), 0, 7); ctx.fill(); ctx.stroke();
+  // grab line
+  if (grab) { ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(h.x), Y(h.y)); ctx.lineTo(X(grab.x), Y(grab.y)); ctx.stroke(); ctx.setLineDash([]); }
+  // hint: pulsing ring on head when ready
+  if ((state === 'ready' || state === 'swing') && !grab) { const k = (performance.now() / 900) % 1; ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X(h.x), Y(h.y), 15 + k * 30, 0, 7); ctx.stroke(); }
+  ctx.restore();
+  $('dist').textContent = (state === 'fly' || state === 'done') ? dist().toFixed(1) + 'm' : '';
+}
+
+let last = performance.now();
+function loop(now) {
+  let fdt = Math.min(0.05, (now - last) / 1000); last = now;
+  const sub = 8, dt = 1 / 480;
+  let n = Math.round(fdt / dt);
+  if (hitStop > 0) hitStop -= fdt;
+  else for (let i = 0; i < n && hitStop <= 0; i++) step(dt);
+  zoom += ((hitStop > 0 ? 1.6 + hitPow * 1.2 : 1) - zoom) * Math.min(1, fdt * (hitStop > 0 ? 18 : 6));
+  if (hitStop <= 0) hitFlash = Math.max(0, hitFlash - fdt * 2);
+  if (state === 'fly') {
+    const W = cv.clientWidth, H = cv.clientHeight, mg = Math.min(W, H) * 0.35, k = Math.min(1, fdt * 25);
+    camX += (ball.x - (W / 2 - originX) / scale - camX) * k;
+    camY += (Math.max(0, ball.y - (groundY - H / 2) / scale) - camY) * k;
+    camX = Math.min(ball.x - (mg - originX) / scale, Math.max(ball.x - (W - mg - originX) / scale, camX));
+    camY = Math.max(0, Math.min(ball.y + (H - mg - groundY) / scale, Math.max(ball.y - (groundY - mg) / scale, camY)));
+    if (ball.stopped) finish();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+resize(); applyLang(); requestAnimationFrame(loop);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

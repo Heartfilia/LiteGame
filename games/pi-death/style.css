@@ -1,0 +1,127 @@
+/* π 死亡游戏 · 页面样式 */
+.pd-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+.pd-hud { display: flex; align-items: center; gap: 8px; padding: 2px 0 10px; }
+.pd-side { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.pd-side.is-right { align-items: flex-end; }
+.pd-who { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+.pd-lives { display: flex; gap: 4px; }
+.pd-life {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  transform: rotate(45deg);
+  border: 1px solid var(--seal);
+  background: var(--seal);
+  opacity: 0.9;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.pd-life.is-lost { opacity: 0.18; transform: rotate(45deg) scale(0.82); }
+.pd-pos {
+  min-width: 78px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.pd-pos b {
+  display: block;
+  font-family: var(--f-serif);
+  font-size: 20px;
+  color: #e9dcc0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 中央：数字流 */
+.pd-stage {
+  position: relative;
+  flex: 1;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(239, 230, 212, 0.1);
+  background:
+    radial-gradient(60% 80% at 50% 40%, rgba(217, 176, 106, 0.1), transparent 70%),
+    linear-gradient(180deg, rgba(245, 236, 216, 0.05), rgba(245, 236, 216, 0.01));
+  overflow: hidden;
+}
+.pd-stage::before {
+  content: "π";
+  position: absolute;
+  right: -6px;
+  bottom: -54px;
+  font-family: var(--f-serif);
+  font-size: 220px;
+  color: rgba(217, 176, 106, 0.07);
+  pointer-events: none;
+}
+.pd-stream {
+  display: flex;
+  gap: 6px;
+  font-family: var(--f-serif);
+  font-size: clamp(24px, 8vw, 40px);
+  color: #efe3c9;
+  font-variant-numeric: tabular-nums;
+  min-height: 52px;
+  align-items: center;
+}
+.pd-stream span { opacity: 0.32; transition: opacity 0.2s, color 0.2s; }
+.pd-stream span.is-last { opacity: 1; color: #f8ecd2; text-shadow: 0 0 22px rgba(217, 176, 106, 0.5); }
+.pd-stream span.is-hit { opacity: 1; color: #ffb4a2; text-shadow: 0 0 24px rgba(176, 64, 47, 0.9); transform: scale(1.15); }
+.pd-status { font-size: 12.5px; color: var(--muted); letter-spacing: 0.06em; min-height: 18px; }
+.pd-status b { color: var(--gold); }
+
+/* 你的数字 */
+.pd-pickbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+}
+.pd-pickbox .pd-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+.pd-pickbox .pd-digit {
+  font-family: var(--f-serif);
+  font-size: 40px;
+  line-height: 1;
+  min-width: 52px;
+  text-align: center;
+  color: #f6eddb;
+}
+.pd-pickbox.is-dead .pd-digit { color: var(--seal); }
+.pd-pickbox .pd-tip { margin-left: auto; font-size: 11.5px; color: #8f8674; max-width: 150px; line-height: 1.5; }
+
+/* 0–9 选择器 */
+.pd-picker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding-top: 4px;
+}
+.pd-picker button {
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  border: 1px solid var(--paper-line);
+  background: linear-gradient(180deg, #f8f0dd, #e6d7b8);
+  color: #2b2016;
+  font-family: var(--f-serif);
+  font-size: clamp(22px, 7vw, 30px);
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+.pd-picker button:active { transform: scale(0.94); }
+.pd-picker button.is-selected {
+  border-color: var(--seal);
+  box-shadow: 0 0 0 2px var(--seal-soft), 0 8px 20px rgba(176, 64, 47, 0.35);
+}
+.pd-picker[hidden] { display: none; }
+
+.pd-legend { display: flex; justify-content: space-between; font-size: 11px; color: #8f8674; padding-top: 8px; }
+.pd-legend .pd-hit { color: #ffb4a2; }

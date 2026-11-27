@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>呼啦圈 · LiteGame</title>
+  <meta name="description" content="扭腰保持节奏，别让圈掉下来。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="呼啦圈 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/hula-hoop/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/hula-hoop/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #fff4e0; color: #4a2b5e; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 480px; margin: 0 auto; box-sizing: border-box;
+      position: relative; z-index: 5;
+    }
+    header a { color: #c2368a; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    #lang { font-size: 15px; padding: 0 10px; }
+    .pill {
+      font-size: 20px; background: #fff; border: 2px solid #f2b8d8; border-radius: 999px;
+      min-width: 44px; height: 36px; cursor: pointer; font-weight: bold; color: #c2368a;
+    }
+    main { flex: 1; min-height: 0; position: relative; }
+    #stage { position: absolute; inset: 0 0 calc(80px + env(safe-area-inset-bottom)); cursor: grab; touch-action: none; }
+    #stage:active { cursor: grabbing; }
+    #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #hud { position: absolute; top: 4px; left: 0; right: 0; text-align: center; pointer-events: none; font-weight: bold; z-index: 2; }
+    #count { font-size: 48px; text-shadow: 0 2px 0 #fff; }
+    #best { font-size: 16px; color: #c2368a; }
+    #msg { pointer-events: none; position: absolute; top: 40%; left: 0; right: 0; text-align: center; color: #fff; font-weight: bold; padding: 0 16px; }
+    .overlay {
+      position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      padding: 12px 12px calc(92px + env(safe-area-inset-bottom)); box-sizing: border-box; gap: 12px;
+    }
+    .overlay[hidden] { display: none; }
+    .panel {
+      background: #fff; border-radius: 24px; padding: 20px 16px; width: 100%; max-width: 360px;
+      box-sizing: border-box; text-align: center; box-shadow: 0 6px 0 #f2b8d8;
+    }
+    #rN { font-size: 64px; font-weight: bold; line-height: 1.1; }
+    .big {
+      font: inherit; font-size: 22px; font-weight: bold; padding: 14px 8px; border-radius: 18px;
+      border: none; cursor: pointer; color: #fff; background: #e0469b; width: 100%; max-width: 360px;
+      box-shadow: 0 4px 0 #9c2468; touch-action: manipulation; margin-top: 10px;
+      display: block; text-align: center; text-decoration: none; box-sizing: border-box;
+    }
+    .big:active { transform: translateY(3px); box-shadow: 0 1px 0 #9c2468; }
+    .big.x { background: #222; box-shadow: 0 4px 0 #000; }
+    /* ドラッグで円を描く見本 */
+    #hint { width: 120px; height: 120px; pointer-events: none; }
+    #hint .dot { animation: spin 0.7s linear infinite; transform-origin: 60px 60px; }
+    @keyframes spin { to { transform: rotate(-360deg); } }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">呼啦圈</h1>
+  <header>
+    <a href="../../index.html#/category/premium" id="back">← トップへ戻る</a>
+    <div class="hbtns"><button id="lang" class="pill">EN</button><button id="sound" class="pill" aria-label="音のオン/オフ"></button></div>
+  </header>
+  <main>
+    <div id="stage"></div>
+    <div id="hud"><div id="count"></div><div id="best"></div></div>
+    <div id="msg"></div>
+    <div id="title" class="overlay" style="pointer-events: none;">
+      <svg id="hint" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="36" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="6 8" opacity="0.9"/>
+        <g class="dot"><circle cx="96" cy="60" r="12" fill="#e0469b" stroke="#fff" stroke-width="4"/></g>
+      </svg>
+    </div>
+    <div id="result" class="overlay" hidden>
+      <div class="panel">
+        <div id="rN"></div>
+        <div id="rBest"></div>
+        <div id="shareBox"></div>
+        <button id="retry" class="big"></button>
+      </div>
+    </div>
+  </main>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 呼啦圈 · 中文文案
+window.__KF_ZH__ = {
+  title: '呼啦圈',
+  back: '← 大厅',
+  n: (n) => `${n} 次`,
+  best: (n) => `最佳 ${n} 次`,
+  newBest: '新纪录',
+  retry: '再来一次',
+  share: '分享到 X',
+  loadErr: '加载失败，请检查网络后刷新',
+  shareText: (n) => `呼啦圈转了 ${n} 次 #LiteGame`
+};
+</script>
+<script type="module">
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/hula-hoop/';
+    const $ = id => document.getElementById(id);
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('hula-hoop:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('hula-hoop:' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    // ---- 言語 ----
+    const L = {
+      ja: {
+        title: '呼啦圈', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        n: n => `${n}回`, best: n => `ベスト ${n}回`, newBest: 'ベスト更新！',
+        retry: 'もう一度', share: 'Xに投稿', loadErr: '読み込みに失敗しました。通信状況を確かめて再読み込みしてください。',
+        shareText: n => `呼啦圈を ${n}回 回した！ #呼啦圈`,
+      },
+      en: {
+        title: 'Hula Hoop', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        n: n => `${n} spins`, best: n => `Best ${n} spins`, newBest: 'New best!',
+        retry: 'Play again', share: 'Post on X', loadErr: 'Failed to load. Check your connection and reload.',
+        shareText: n => `I spun the hula hoop ${n} times! #HulaHoop`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    let state = 'title', count = 0, best = store.get('best', 0), result = null;
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      $('lang').textContent = t('lang'); $('lang').setAttribute('aria-label', t('langLabel'));
+      $('retry').textContent = t('retry');
+      if ($('msg').dataset.err) $('msg').textContent = t('loadErr');
+      hud();
+      if (result) showResult();
+    }
+    $('lang').onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+    function hud() {
+      $('count').textContent = state === 'title' ? '' : t('n')(count);
+      $('best').textContent = best > 0 && state !== 'title' ? t('best')(best) : '';
+    }
+
+    // ---- 音 ----
+    let soundOn = store.get('sound', true);
+    const SPEAKER = '<path d="M4 9h3l4-4v14l-4-4H4z" fill="currentColor"/>';
+    const updateSoundBtn = () => {
+      $('sound').innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:middle">${SPEAKER}${
+        soundOn ? '<path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/>' : '<path d="M16 9l5 6M21 9l-5 6"/>'}</svg>`;
+    };
+    $('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+    updateSoundBtn();
+    let ac = null;
+    function audio() {
+      if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+      if (ac.state === 'suspended') ac.resume();
+      return ac;
+    }
+    function tone(freq, dur, type = 'sine', vol = 0.15, slide = 1) {
+      if (!soundOn) return;
+      const a = audio(); if (!a) return;
+      const o = a.createOscillator(), g = a.createGain(), now = a.currentTime;
+      o.type = type; o.frequency.setValueAtTime(freq, now);
+      o.frequency.exponentialRampToValueAtTime(freq * slide, now + dur);
+      g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.connect(g).connect(a.destination); o.start(now); o.stop(now + dur);
+    }
+
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+
+    let THREE, RAPIER;
+    try {
+      [THREE, RAPIER] = await Promise.all([
+        import('../lib/three/build/three.module.js'),
+        import('../lib/rapier/rapier.es.js').then(async m => { await m.default.init(); return m.default; }),
+      ]);
+    } catch (e) {
+      console.error(e);
+      $('msg').dataset.err = '1'; $('msg').textContent = t('loadErr'); $('msg').style.color = '#4a2b5e';
+      throw e;
+    }
+
+    // ---- 寸法（メートル）----
+    const HR = 0.5;        // フープの半径
+    const HM = 0.4;        // フープの重さ kg
+    const WAIST = 1.0;     // 腰の高さ
+    const KNEE = 0.55;     // ここより下に落ちたら終わり
+    const MU = 0.35;       // 腰とフープの摩擦（フープを持ち上げる力）
+    const REACH = 0.12;    // 腰が動ける範囲
+    // 胴体の形：[下の高さ, 下の半径, 上の高さ, 上の半径]（腰の高さからの相対）
+    const SHAPE = [[-0.45, 0.2, -0.12, 0.2], [-0.12, 0.2, 0, 0.15], [0, 0.15, 0.12, 0.19], [0.12, 0.19, 0.45, 0.19]];
+    const torsoRadiusAt = y => {
+      for (const [y0, r0, y1, r1] of SHAPE) if (y >= y0 && y <= y1) return r0 + (r1 - r0) * (y - y0) / (y1 - y0);
+      return 0;
+    };
+
+    // ---- three.js ----
+    const stage = $('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    stage.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    {
+      const c = document.createElement('canvas'); c.width = 2; c.height = 256;
+      const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
+      gr.addColorStop(0, '#ff9ccf'); gr.addColorStop(1, '#ffe2a8');
+      g.fillStyle = gr; g.fillRect(0, 0, 2, 256);
+      scene.background = new THREE.CanvasTexture(c);
+    }
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xd08aa8, 1.6));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.position.set(2, 4, 3); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -1.5, right: 1.5, top: 2.5, bottom: -0.5 });
+    scene.add(sun);
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(3, 48), new THREE.MeshLambertMaterial({ color: 0xffd3e6 }));
+    floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+    const mat = c => new THREE.MeshLambertMaterial({ color: c });
+    const skin = mat(0xf3c9a2), shirt = mat(0x3db8c8), pants = mat(0x4a3a8a), hairM = mat(0x3a2418);
+    const shadowed = m => { m.castShadow = true; return m; };
+    function limb(r, material) { return shadowed(new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 12), material)); }
+    function placeLimb(m, a, b) {
+      const d = b.clone().sub(a);
+      m.position.copy(a).addScaledVector(d, 0.5);
+      m.scale.set(1, d.length(), 1);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+    }
+    // 上半身（腰の動きに合わせて動く）
+    const upper = new THREE.Group(); scene.add(upper);
+    {
+      const pts = [new THREE.Vector2(0, -0.45)];
+      for (const [y0, r0, y1, r1] of SHAPE) { pts.push(new THREE.Vector2(r0, y0), new THREE.Vector2(r1, y1)); }
+      pts.push(new THREE.Vector2(0.1, 0.5), new THREE.Vector2(0, 0.5));
+      const body = shadowed(new THREE.Mesh(new THREE.LatheGeometry(pts, 32), shirt));
+      upper.add(body);
+      const shorts = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.205, 0.205, 0.2, 32), pants));
+      shorts.position.y = -0.36; upper.add(shorts);
+      const neck = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 12), skin));
+      neck.position.y = 0.52; upper.add(neck);
+      const head = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.12, 24, 16), skin));
+      head.position.y = 0.66; upper.add(head);
+      const hair = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.125, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.55), hairM));
+      hair.position.y = 0.67; hair.rotation.x = -0.25; upper.add(hair);
+      for (const s of [-1, 1]) {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), mat(0x222222));
+        eye.position.set(s * 0.04, 0.68, 0.11); upper.add(eye);
+      }
+    }
+    const arms = [-1, 1].map(s => ({ s, up: limb(0.035, skin), lo: limb(0.03, skin), hand: shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 8), skin)) }));
+    for (const a of arms) scene.add(a.up, a.lo, a.hand);
+    const legs = [-1, 1].map(s => ({ s, th: limb(0.06, pants), sh: limb(0.05, skin), foot: shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.2), mat(0xffffff))) }));
+    for (const l of legs) scene.add(l.th, l.sh, l.foot);
+
+    // フープ（しま模様）
+    const PALETTES = [['#ff3d8b', '#ffd23d', '#3dd6ff', '#7d4dff'], ['#22c55e', '#ffffff'], ['#ff7a1a', '#1a1a1a'], ['#ff4d4d', '#ffe14d', '#4dff88'], ['#4d7cff', '#ff9ccf']];
+    function makeHoopMesh(cols) {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 4;
+      const g = c.getContext('2d');
+      for (let i = 0; i < 16; i++) { g.fillStyle = cols[i % cols.length]; g.fillRect(i * 16, 0, 16, 4); }
+      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+      const m = shadowed(new THREE.Mesh(new THREE.TorusGeometry(HR, 0.016, 10, 96), new THREE.MeshLambertMaterial({ map: tex })));
+      const grp = new THREE.Group(); m.rotation.x = Math.PI / 2; grp.add(m); scene.add(grp);
+      return grp;
+    }
+
+    // ---- 物理（Rapier）----
+    let world, torso, legBodies = [], hoops = [];
+    const DT = 1 / 120;
+    const HOOP_EVERY = 12;  // この秒数ごとにフープが増える
+    const MAX_HOOPS = 5;
+    const MAX_HIP_SPEED = 1.2;   // m/s
+    const MAX_HOOP_SPEED = 6;    // m/s
+    const MAX_HOOP_SPIN = 40;    // rad/s
+    function quatMul(a, b) {
+      return { w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z, x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+        y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x, z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w };
+    }
+    // y軸向きのカプセルを a→b の向きに合わせる回転
+    function quatFromY(dx, dy, dz) {
+      const l = Math.hypot(dx, dy, dz) || 1; dx /= l; dy /= l; dz /= l;
+      const w = 1 + dy;
+      if (w < 1e-6) return { x: 1, y: 0, z: 0, w: 0 };
+      const n = Math.hypot(dz, w, -dx);
+      return { x: dz / n, y: 0, z: -dx / n, w: w / n };
+    }
+    function capsuleBetween(a, b, r) {
+      const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.hypot(dx, dy, dz);
+      return RAPIER.ColliderDesc.capsule(Math.max(len / 2 - r, 0.01), r)
+        .setTranslation((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2).setRotation(quatFromY(dx, dy, dz)).setFriction(0.8);
+    }
+    // 脚の関節（腰の位置 q から）
+    function legJoints(s, q) {
+      const hip = [q.x + s * 0.1, q.y - 0.42, q.z], ankle = [s * 0.14, 0.06, 0];
+      const knee = [(hip[0] + ankle[0]) / 2 + s * 0.02, (hip[1] + ankle[1]) / 2, (hip[2] + ankle[2]) / 2 + 0.04];
+      return [hip, knee, ankle];
+    }
+    function buildWorld() {
+      if (world) world.free();
+      for (const h of hoops) scene.remove(h.mesh);
+      hoops = [];
+      world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
+      world.integrationParameters.dt = DT;
+      world.createCollider(RAPIER.ColliderDesc.cuboid(5, 0.05, 5).setTranslation(0, -0.05, 0).setFriction(0.8));
+      // 胴体・頭・腕：指で動かす（速度で動かすキネマティック）
+      torso = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicVelocityBased().setTranslation(0, WAIST, 0));
+      for (const [y0, r0, y1, r1] of SHAPE) {
+        const p = [];
+        for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2; p.push(r0 * Math.cos(a), y0, r0 * Math.sin(a), r1 * Math.cos(a), y1, r1 * Math.sin(a)); }
+        world.createCollider(RAPIER.ColliderDesc.convexHull(new Float32Array(p)).setFriction(0.8), torso);
+      }
+      world.createCollider(RAPIER.ColliderDesc.ball(0.13).setTranslation(0, 0.66, 0).setFriction(0.8), torso);
+      for (const s of [-1, 1]) {
+        world.createCollider(capsuleBetween([s * 0.21, 0.4, 0], [s * 0.3, 0.75, 0.05], 0.04), torso);
+        world.createCollider(capsuleBetween([s * 0.3, 0.75, 0.05], [s * 0.12, 1.0, 0.06], 0.04), torso);
+      }
+      // 脚：もも・すねを関節の位置に合わせて毎ステップ動かす
+      legBodies = [];
+      for (const s of [-1, 1]) {
+        const [hip, knee, ankle] = legJoints(s, { x: 0, y: WAIST, z: 0 });
+        for (const [a, b, r] of [[hip, knee, 0.065], [knee, ankle, 0.055]]) {
+          const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
+          const len = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+          world.createCollider(RAPIER.ColliderDesc.capsule(len / 2 - r, r).setFriction(0.8), body);
+          legBodies.push({ body, s, seg: a === hip ? 0 : 1 });
+        }
+      }
+      placeLegs(true);
+      addHoop(0, 0, 0);
+    }
+    function placeLegs(now) {
+      const q = torso.translation();
+      for (const l of legBodies) {
+        const j = legJoints(l.s, q), a = j[l.seg], b = j[l.seg + 1];
+        const pos = { x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2, z: (a[2] + b[2]) / 2 }, rot = quatFromY(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+        if (now) { l.body.setTranslation(pos, true); l.body.setRotation(rot, true); }
+        else { l.body.setNextKinematicTranslation(pos); l.body.setNextKinematicRotation(rot); }
+      }
+    }
+    // フープ：細いカプセルを輪に並べる。腰の高さ+dy、角度 phase の側で胴体に当たった状態で、2回転/秒で回し始める
+    function addHoop(dy, phase, idx) {
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setCcdEnabled(true).setLinearDamping(0.3).setAngularDamping(0.3));
+      const N = 48, segL = Math.PI * HR / N * 1.02;
+      for (let i = 0; i < N; i++) {
+        const th = (i + 0.5) / N * Math.PI * 2;
+        const q = quatMul({ x: 0, y: Math.sin(-th / 2), z: 0, w: Math.cos(-th / 2) }, { x: Math.SQRT1_2, y: 0, z: 0, w: Math.SQRT1_2 });
+        world.createCollider(RAPIER.ColliderDesc.capsule(segL, 0.012).setTranslation(HR * Math.cos(th), 0, HR * Math.sin(th))
+          .setRotation(q).setDensity(0).setFriction(0.8).setRestitution(0.05), body);
+      }
+      body.setAdditionalMassProperties(HM, { x: 0, y: 0, z: 0 }, { x: HM * HR * HR / 2, y: HM * HR * HR, z: HM * HR * HR / 2 }, { x: 0, y: 0, z: 0, w: 1 }, true);
+      const t = torso.translation(), d = HR - torsoRadiusAt(dy), w = Math.PI * 4;
+      body.setTranslation({ x: t.x + d * Math.cos(phase), y: t.y + dy, z: t.z + d * Math.sin(phase) }, true);
+      body.setLinvel({ x: d * w * Math.sin(phase), y: 0, z: -d * w * Math.cos(phase) }, true);
+      body.setAngvel({ x: 0, y: w * d / HR, z: 0 }, true);
+      hoops.push({ body, mesh: makeHoopMesh(PALETTES[idx % PALETTES.length]), angPrev: phase, angTot: 0 });
+    }
+    buildWorld();
+
+    function physicsStep(target, alive) {
+      const q = torso.translation();
+      // 速すぎるとフープが体をすり抜けるので、腰とフープの速さに上限をつける
+      let vx = (target.x - q.x) / DT * 0.3, vz = (target.z - q.z) / DT * 0.3;
+      const vs = Math.hypot(vx, vz);
+      if (vs > MAX_HIP_SPEED) { vx *= MAX_HIP_SPEED / vs; vz *= MAX_HIP_SPEED / vs; }
+      torso.setLinvel({ x: vx, y: 0, z: vz }, true);
+      placeLegs(false);
+      for (const { body: hoop } of hoops) {
+        const p = hoop.translation();
+        hoop.resetForces(true); hoop.resetTorques(true);
+        const v = hoop.linvel(), sp = Math.hypot(v.x, v.y, v.z);
+        if (sp > MAX_HOOP_SPEED) hoop.setLinvel({ x: v.x * MAX_HOOP_SPEED / sp, y: v.y * MAX_HOOP_SPEED / sp, z: v.z * MAX_HOOP_SPEED / sp }, true);
+        const w = hoop.angvel(), ws = Math.hypot(w.x, w.y, w.z);
+        if (ws > MAX_HOOP_SPIN) hoop.setAngvel({ x: w.x * MAX_HOOP_SPIN / ws, y: w.y * MAX_HOOP_SPIN / ws, z: w.z * MAX_HOOP_SPIN / ws }, true);
+        if (!alive) continue;
+        // 摩擦で持ち上がる力：腰に押し付けられる力（遠心力）× 摩擦係数。重さの1.15倍まで
+        const lv = hoop.linvel(), tv = torso.linvel();
+        const dx = p.x - q.x, dz = p.z - q.z, d = Math.hypot(dx, dz) || 1e-6;
+        const om = ((lv.x - tv.x) * -dz + (lv.z - tv.z) * dx) / (d * d);
+        const r = torsoRadiusAt(p.y - q.y);
+        if (r > 0 && d > HR - r - 0.06) hoop.addForce({ x: 0, y: Math.min(MU * HM * om * om * d, HM * 9.81 * 1.15), z: 0 }, true);
+        // 体が自然に支えるぶん、輪が水平に戻ろうとする
+        const o = hoop.rotation(), av = hoop.angvel(), I = HM * HR * HR / 2;
+        const ux = 2 * (o.x * o.y - o.w * o.z), uz = 2 * (o.y * o.z + o.w * o.x);
+        hoop.addTorque({ x: I * (-200 * uz - 10 * av.x), y: 0, z: I * (200 * ux - 10 * av.z) }, true);
+      }
+      world.step();
+    }
+
+    // ---- 入力 ----
+    const target = { x: 0, z: 0 };
+    let drag = null;
+    const SCALE = () => REACH / Math.max(40, Math.min(stage.clientWidth, stage.clientHeight) * 0.12);
+    stage.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      audio();
+      if (state === 'title') start();
+      if (state !== 'play') return;
+      stage.setPointerCapture(e.pointerId);
+      drag = { id: e.pointerId, x: e.clientX - target.x / SCALE(), y: e.clientY - target.z / SCALE(), px: e.clientX, py: e.clientY };
+    });
+    stage.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      drag.px = e.clientX; drag.py = e.clientY;
+      updateTarget();
+    });
+    // 腰の位置 = 指と基準点の差。基準点は指のほうへゆっくり寄っていくので、どこで回しても円の中心に合う
+    function updateTarget() {
+      const k = SCALE();
+      let x = (drag.px - drag.x) * k, z = (drag.py - drag.y) * k;
+      const len = Math.hypot(x, z);
+      if (len > REACH) {
+        drag.x += (drag.px - drag.x) * (1 - REACH / len); drag.y += (drag.py - drag.y) * (1 - REACH / len);
+        x *= REACH / len; z *= REACH / len;
+      }
+      target.x = x; target.z = z;
+    }
+    const endDrag = e => { if (drag && e.pointerId === drag.id) drag = null; };
+    stage.addEventListener('pointerup', endDrag);
+    stage.addEventListener('pointercancel', endDrag);
+
+    // ---- 流れ ----
+    let playT = 0, endT = 0, fallT = 0, newBest = false;
+    // 最初は見本として腰が回っていて、画面に触れたらそのまま交代する
+    function start() {
+      state = 'play'; count = 0; result = null; drag = null;
+      playT = 0;
+      const q = torso.translation();
+      for (const h of hoops) { const p = h.body.translation(); h.angPrev = Math.atan2(p.z - q.z, p.x - q.x); h.angTot = 0; }
+      $('title').hidden = true; $('result').hidden = true;
+      hud();
+      tone(660, 0.12, 'triangle', 0.12, 1.5);
+    }
+    $('retry').onclick = () => {
+      state = 'title'; result = null; drag = null;
+      buildWorld();
+      $('result').hidden = true; $('title').hidden = false;
+      hud();
+    };
+    function fail() {
+      state = 'fall'; fallT = 0; drag = null;
+      newBest = count > best;
+      if (newBest) { best = count; store.set('best', best); }
+      tone(200, 0.5, 'sawtooth', 0.12, 0.4);
+    }
+    function showResult() {
+      $('result').hidden = false;
+      $('rN').textContent = t('n')(result.n);
+      $('rBest').textContent = result.newBest && result.n > 0 ? t('newBest') : t('best')(best);
+      const box = $('shareBox'); box.textContent = '';
+      const a = document.createElement('a');
+      a.className = 'big x'; a.textContent = t('share');
+      a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('shareText')(result.n))}&url=${encodeURIComponent(SHARE_URL)}`;
+      if (!matchMedia('(pointer: coarse)').matches) { a.target = '_blank'; a.rel = 'noopener'; }
+      box.appendChild(a);
+    }
+
+    // ---- 描画 ----
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      // 人とフープ（高さ約2.1m、幅約1.4m）が収まる距離
+      const vf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const dist = Math.max(1.2 / vf, 0.85 / (vf * camera.aspect)) + 0.6;
+      camera.position.set(0, 1.55, dist);
+      camera.lookAt(0, 0.95, 0);
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', resize); resize();
+
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    function pose(time) {
+      const q = torso.translation();
+      const slump = state === 'fall' || state === 'result' ? Math.min(fallT / 0.6, 1) : 0;
+      upper.position.set(q.x, q.y - slump * 0.06, q.z);
+      upper.rotation.set(q.z * 1.2 + slump * 0.35, 0, -q.x * 1.2);
+      upper.updateMatrixWorld();
+      for (const a of arms) {
+        const sh = V(a.s * 0.21, 0.4, 0).applyMatrix4(upper.matrixWorld);
+        // 遊んでいるときは両手を頭の上、落としたらだらんと下げる
+        const up = V(a.s * 0.3, 0.75, 0.05).applyMatrix4(upper.matrixWorld);
+        const handUp = V(a.s * 0.12, 1.0 + Math.sin(time * 3 + a.s) * 0.01, 0.06).applyMatrix4(upper.matrixWorld);
+        const elDown = V(a.s * 0.26, 0.12, 0.04).applyMatrix4(upper.matrixWorld);
+        const handDown = V(a.s * 0.25, -0.15, 0.1).applyMatrix4(upper.matrixWorld);
+        const el = up.lerp(elDown, slump), hand = handUp.lerp(handDown, slump);
+        placeLimb(a.up, sh, el); placeLimb(a.lo, el, hand); a.hand.position.copy(hand);
+      }
+      for (const l of legs) {
+        const hip = V(l.s * 0.1, -0.42, 0).applyMatrix4(upper.matrixWorld);
+        const ankle = V(l.s * 0.14, 0.06, 0);
+        const knee = hip.clone().lerp(ankle, 0.5).add(V(l.s * 0.02, 0, 0.04 + slump * 0.08));
+        placeLimb(l.th, hip, knee); placeLimb(l.sh, knee, ankle);
+        l.foot.position.set(l.s * 0.14, 0.03, 0.04);
+      }
+      for (const h of hoops) {
+        const p = h.body.translation(), r = h.body.rotation();
+        h.mesh.position.set(p.x, p.y, p.z); h.mesh.quaternion.set(r.x, r.y, r.z, r.w);
+      }
+    }
+
+    let last = performance.now(), acc = 0;
+    function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.1); last = now;
+      if (state === 'title') {
+        // タイトル：見本としてゆっくり腰を回す
+        const a = now / 1000 * Math.PI * 4;
+        target.x = Math.cos(a) * 0.06; target.z = -Math.sin(a) * 0.06;
+        const p = hoops[0].body.translation();
+        if (p.y < KNEE + 0.1 || p.y > 1.3) buildWorld();
+      } else if (drag && state === 'play') {
+        const f = 1 - Math.exp(-dt * 1.5);
+        drag.x += (drag.px - drag.x) * f; drag.y += (drag.py - drag.y) * f;
+        updateTarget();
+      } else {
+        target.x *= 0.9; target.z *= 0.9;
+      }
+      acc += dt;
+      while (acc >= DT) {
+        acc -= DT;
+        physicsStep(target, state === 'play' || state === 'title');
+        if (state === 'play') {
+          const q = torso.translation();
+          let n = 0, down = false;
+          for (const h of hoops) {
+            const p = h.body.translation();
+            const a = Math.atan2(p.z - q.z, p.x - q.x);
+            let d = a - h.angPrev; d = (d + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+            h.angPrev = a; h.angTot += d;
+            n += Math.floor(Math.abs(h.angTot) / (Math.PI * 2));
+            if (p.y < KNEE || Math.hypot(p.x - q.x, p.z - q.z) > HR + 0.1) down = true;
+          }
+          if (n > count) { count = n; hud(); tone(520 + Math.min(count, 60) * 8, 0.06, 'triangle', 0.06); }
+          if (down) { fail(); continue; }
+          // しばらくするとフープが増える。胸の高さ、いちばん新しいフープの反対側に入れる
+          playT += DT;
+          if (playT >= HOOP_EVERY * hoops.length && hoops.length < MAX_HOOPS) {
+            const last = hoops[hoops.length - 1];
+            addHoop(0.3, last.angPrev + Math.PI, hoops.length);
+            tone(880, 0.25, 'triangle', 0.12, 1.5);
+          }
+        }
+      }
+      if (state === 'fall') {
+        fallT += dt;
+        if (fallT > 1.3) { state = 'result'; result = { n: count, newBest }; showResult(); hud(); }
+      } else if (state === 'result') fallT += dt;
+      pose(now / 1000);
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

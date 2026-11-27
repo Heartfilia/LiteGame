@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>旋转 2048 · LiteGame</title>
+  <meta name="description" content="转盘一歪，数字就滑；合出 2048 才算赢。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="旋转 2048 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/rolling-2048/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/rolling-2048/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #f7f3ee; font-family: system-ui, sans-serif; color: #4a3424; }
+    body { overflow: hidden; -webkit-user-select: none; user-select: none; }
+    header { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; }
+    header a { color: #4a3424; text-decoration: none; font-size: 14px; background: rgba(255,255,255,.75); border-radius: 14px; padding: 6px 10px; }
+    .hbtns { display: flex; gap: 6px; }
+    /* the score: its own row under the header on tall screens, the middle of the header on wide ones */
+    #score { position: absolute; left: 50%; top: 48px; transform: translateX(-50%); height: 44px; line-height: 44px; font-size: clamp(26px, 5vmin, 40px); font-weight: 900; white-space: nowrap; transition: transform .12s; }
+    #score.pop { transform: translateX(-50%) scale(1.18); }
+    #score[hidden] { display: none; }
+    @media (min-aspect-ratio: 11/10) { #score { top: 8px; height: 34px; line-height: 34px; font-size: clamp(20px, 3.4vmin, 30px); } }
+    .pill { height: 34px; min-width: 34px; border: none; border-radius: 17px; background: #fff; color: #4a3424; font-size: 14px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    select.pill { appearance: none; -webkit-appearance: none; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+    /* the result: score at the top, buttons at the bottom, the board stays visible in between */
+    .panel { position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 52px 16px calc(80px + env(safe-area-inset-bottom)); pointer-events: none; }
+    .panel[hidden] { display: none; }
+    .panel > * { pointer-events: auto; }
+    .ptop, .pbtns { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .pbtns { gap: 10px; padding-bottom: 8px; }
+    .big { font-size: clamp(40px, 8vmin, 96px); font-weight: 900; margin: 0; line-height: 1.05; }
+    .sub { margin: 0; font-size: clamp(15px, 2.2vmin, 22px); background: #fff; border-radius: 12px; padding: 4px 12px; }
+    .btn { border: none; border-radius: 28px; background: #e85d4a; color: #fff; font-size: clamp(19px, 2.8vmin, 28px); font-weight: 800; padding: 12px 36px; cursor: pointer; text-decoration: none; }
+    .btn.x { background: #111; font-size: clamp(15px, 2.2vmin, 22px); padding: 10px 24px; }
+    /* wide windows: the board goes left, the result sits on the right */
+    @media (min-aspect-ratio: 11/10) {
+      .panel { left: 50%; justify-content: center; gap: clamp(14px, 4vh, 40px); padding-top: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">旋转 2048</h1>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div id="score"></div>
+    <div class="hbtns">
+      <button id="sound" class="pill" aria-label="sound">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4a3424" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#4a3424"/><path id="wave" d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" style="display:none"/></svg>
+      </button>
+      <select id="lang" class="pill" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+    </div>
+  </header>
+  <main style="display:contents">
+  <canvas id="cv"></canvas>
+  <div id="result" class="panel" hidden>
+    <div class="ptop" id="ptop">
+      <p class="big" id="rScore"></p>
+      <p class="sub" id="rSub"></p>
+    </div>
+    <div class="pbtns" id="pbtns">
+      <button id="again" class="btn"></button>
+      <a id="share" class="btn x"></a>
+    </div>
+  </div>
+  </main>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 旋转 2048 · 中文文案
+window.__KF_ZH__ = {
+  title: '旋转 2048',
+  back: '← 大厅',
+  again: '再来一次',
+  share: '分享到 X',
+  pts: (n) => `${n} 分`,
+  sub: (m, b) => `最大 ${m}　最佳 ${b} 分`
+};
+</script>
+<script>
+const KEY = 'rolling-2048:';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(KEY + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch {} },
+};
+const URL_ = new URL('./', location.href).href;
+const TAG = '#旋转 2048ゲーム';
+const num = n => n.toLocaleString('en-US');
+const L = {
+  ja: { title: '旋转 2048', back: '← トップへ戻る', again: 'もう一度', share: 'Xでポスト',
+        pts: n => `${num(n)}点`, sub: (m, b) => `最大 ${m}　自己ベスト ${num(b)}点`,
+        post: (s, m) => `旋转 2048で ${num(s)}点（最大 ${m}）\n${TAG}` },
+  ko: { title: '회전 2048', back: '← 처음으로', again: '다시 하기', share: 'X에 게시',
+        pts: n => `${num(n)}점`, sub: (m, b) => `최대 ${m}　최고 기록 ${num(b)}점`,
+        post: (s, m) => `회전 2048에서 ${num(s)}점 (최대 ${m})\n${TAG}` },
+  en: { title: 'Rolling 2048', back: '← Top', again: 'Retry', share: 'Post on X',
+        pts: n => `${num(n)} pts`, sub: (m, b) => `Max ${m}　Best ${num(b)} pts`,
+        post: (s, m) => `I scored ${num(s)} pts in Rolling 2048 (max ${m})\n${TAG}` },
+  th: { title: '2048 หมุน', back: '← กลับหน้าแรก', again: 'เล่นอีกครั้ง', share: 'โพสต์บน X',
+        pts: n => `${num(n)} แต้ม`, sub: (m, b) => `สูงสุด ${m}　สถิติ ${num(b)} แต้ม`,
+        post: (s, m) => `ได้ ${num(s)} แต้ม ในเกม 2048 หมุน (สูงสุด ${m})\n${TAG}` },
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (L[c]) return c; } return 'en'; };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'en';
+const t = k => L[lang][k];
+const $ = id => document.getElementById(id);
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  $('lang').value = lang;
+  $('back').textContent = t('back');
+  $('again').textContent = t('again'); $('share').textContent = t('share');
+  if (!$('result').hidden) showResult();
+}
+$('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+
+// ---- sound (all synthesized) ----
+let soundOn = store.get('sound', true), ac = null;
+function updSound() { $('wave').style.display = soundOn ? '' : 'none'; $('mute').style.display = soundOn ? 'none' : ''; }
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updSound(); };
+updSound();
+// play through the iPhone's silent switch
+function unmuteIOS() {
+  try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch {}
+  try {
+    const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    const a = document.createElement('audio');
+    a.src = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.loop = true; a.setAttribute('playsinline', '');
+    a.play().catch(() => {});
+  } catch {}
+}
+// made on the first touch (with a silent sound) so the first real sound doesn't stutter
+function initAudio() {
+  if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+  unmuteIOS();
+  try {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    const g = ac.createGain(); g.gain.value = 0; g.connect(ac.destination);
+    const o = ac.createOscillator(); o.connect(g); o.start(); o.stop(ac.currentTime + 0.05);
+  } catch { ac = null; }
+}
+addEventListener('pointerdown', initAudio, true);
+addEventListener('keydown', initAudio, true);
+const on = () => soundOn && ac;
+function tone(type, f0, f1, dur, vol, delay = 0) {
+  if (!on()) return;
+  try {
+    const n = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, n); o.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    g.gain.setValueAtTime(0.0001, n); g.gain.linearRampToValueAtTime(vol, n + 0.006); g.gain.exponentialRampToValueAtTime(0.001, n + dur);
+    o.connect(g).connect(ac.destination); o.start(n); o.stop(n + dur + 0.02);
+  } catch {}
+}
+// a burst of noise rung through a few resonances: wood, felt, ...
+function hit(len, decay, bands, vol, delay = 0) {
+  if (!on()) return;
+  try {
+    const n = ac.currentTime + delay, buf = ac.createBuffer(1, Math.floor(ac.sampleRate * len), ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * decay));
+    const s = ac.createBufferSource(); s.buffer = buf;
+    for (const [f, q, g0] of bands) {
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * (0.95 + Math.random() * 0.1); bp.Q.value = q;
+      const g = ac.createGain(); g.gain.value = g0 * vol; s.connect(bp).connect(g).connect(ac.destination);
+    }
+    s.start(n);
+  } catch {}
+}
+// the box turning: wood scraping on wood, then a heavy "goto" when it stops
+function sRotate() {
+  if (!on()) return;
+  try {
+    const n = ac.currentTime, dur = 0.26, buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (0.5 + 0.5 * Math.sin(i / 90)) ;
+    const s = ac.createBufferSource(); s.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 3;
+    f.frequency.setValueAtTime(260, n); f.frequency.linearRampToValueAtTime(520, n + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, n); g.gain.linearRampToValueAtTime(0.35, n + dur * 0.4); g.gain.linearRampToValueAtTime(0.0001, n + dur);
+    s.connect(f).connect(g).connect(ac.destination); s.start(n);
+  } catch {}
+}
+function sThud() { hit(0.08, 0.012, [[180, 4, 1.4], [420, 6, 0.6], [1100, 8, 0.2]], 0.9); tone('sine', 110, 55, 0.18, 0.4); }
+// a tile landing: a small wooden "koton", louder the harder it falls
+function sLand(v) { const k = Math.min(1, v / 14); hit(0.05, 0.006, [[900, 9, 1], [2100, 10, 0.5], [3400, 8, 0.2]], 0.25 + k * 0.6); tone('sine', 240, 120, 0.06, 0.12 * k); }
+// merge: a round "pon", higher for bigger numbers, with a chime from 64 up
+// merge: a short bell-like note. Merges in one turn climb the major scale (do re mi ...),
+// and ones that land at the same moment still play one after another so each step is heard
+const SCALE = [0, 2, 4, 5, 7, 9, 11];
+let chain = 0, nextNote = 0;
+function sMerge() {
+  if (!on()) { chain++; return; }
+  const i = chain++, semi = 12 * Math.floor(i / 7) + SCALE[i % 7], f = 523.25 * Math.pow(2, semi / 12); // from C5
+  const delay = Math.max(0, nextNote - ac.currentTime);
+  nextNote = ac.currentTime + delay + 0.1;
+  tone('sine', f, f, 0.35, 0.26, delay);
+  tone('triangle', f * 2, f * 2, 0.18, 0.05, delay);
+  hit(0.03, 0.004, [[f * 3, 14, 0.5]], 0.3, delay);
+}
+// stuck: two falling notes
+function sOver() { tone('triangle', 520, 400, 0.25, 0.15); tone('triangle', 390, 260, 0.5, 0.15, 0.22); }
+function sSpawn() { tone('sine', 520, 900, 0.07, 0.08); }
+
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+// ---- the board ----
+// tiles live in screen space: gravity is always down. y is a float row (0 = top), c the column
+const N = 4, GRAV = 70, DT = 1 / 120, ROT_DUR = 0.28;
+let tiles, ghosts, parts, score, best = store.get('best', 0), maxTile, state, rotDir, rotT, ang, prevAng, spawned, settleT, started, overT, shake, flash;
+let nextId = 1;
+function reset() {
+  tiles = []; ghosts = []; parts = []; score = 0; maxTile = 2; chain = 0;
+  state = 'fall'; rotDir = 0; rotT = 0; ang = prevAng = 0; settleT = 0; started = false; overT = 0;
+  shake = 0; flash = [0, 0];
+  const cols = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+  addTile(cols[0], 2); addTile(cols[1], Math.random() < 0.15 ? 4 : 2);
+  spawned = true;
+}
+function addTile(c, v) { const tl = { id: nextId++, v, c, y: 0, py: 0, vy: 0, pop: 0, sq: 0, born: 1 }; tiles.push(tl); return tl; }
+function spawn() {
+  const free = [0, 1, 2, 3].filter(c => tiles.filter(tl => tl.c === c).length < N);
+  if (!free.length) return false;
+  addTile(pick(free), Math.random() < 0.1 ? 4 : 2); sSpawn();
+  return true;
+}
+const column = c => tiles.filter(tl => tl.c === c).sort((a, b) => b.y - a.y); // bottom first
+function physics(dt) {
+  for (let c = 0; c < N; c++) {
+    const col = column(c);
+    for (let i = 0; i < col.length; i++) {
+      const tl = col[i], below = col[i - 1];
+      tl.vy += GRAV * dt;
+      const ny = tl.y + tl.vy * dt, floor = below ? below.y - 1 : N - 1;
+      if (ny >= floor) {
+        const imp = tl.vy - (below ? below.vy : 0);
+        tl.y = floor; tl.vy = below ? below.vy : 0;
+        if (imp > 4) { sLand(imp); tl.sq = Math.min(1, imp / 16); }
+      } else tl.y = ny;
+    }
+    // equal numbers that touch merge into the lower one; one merge per column per step keeps chains readable
+    for (let i = 1; i < col.length; i++) {
+      const lo = col[i - 1], up = col[i];
+      if (up.v === lo.v && up.y >= lo.y - 1 - 1e-6) { merge(lo, up); break; }
+    }
+  }
+}
+function merge(lo, up) {
+  tiles.splice(tiles.indexOf(up), 1);
+  ghosts.push({ v: up.v, c: up.c, y: up.y, ty: lo.y, life: 1 });
+  lo.v *= 2; lo.pop = 1; score += lo.v;
+  if (lo.v > maxTile) maxTile = lo.v;
+  const lv = Math.log2(lo.v);
+  for (let i = 0; i < 6 + lv * 2; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * (2 + lv * 0.4);
+    parts.push({ x: lo.c - 1.5, y: lo.y - 1.5, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2, life: 1, col: tileColor(lo.v)[0], r: 0.05 + Math.random() * 0.06 });
+  }
+  sMerge();
+  if (lo.v >= 64) shake = Math.max(shake, Math.min(1, (lv - 5) * 0.25));
+}
+const settled = () => tiles.every(tl => tl.vy === 0);
+function step(dt) {
+  for (const tl of tiles) tl.py = tl.y;
+  prevAng = ang;
+  if (state === 'rot') {
+    rotT += dt;
+    const k = Math.min(1, rotT / ROT_DUR);
+    ang = rotDir * Math.PI / 2 * easeBack(k);
+    if (k >= 1) endRotate();
+  } else if (state === 'fall') {
+    physics(dt);
+    if (settled()) {
+      settleT += dt;
+      if (settleT > 0.05) {
+        settleT = 0;
+        if (!spawned) { spawned = true; if (spawn()) return; }
+        state = 'idle';
+        if (tiles.length === N * N && !canMerge()) { state = 'over'; overT = 0; sOver(); }
+      }
+    } else settleT = 0;
+  } else if (state === 'over') {
+    overT += dt;
+    if (overT > 1.1) finish();
+  }
+  for (const tl of tiles) { tl.pop = Math.max(0, tl.pop - dt * 4); tl.sq = Math.max(0, tl.sq - dt * 6); tl.born = Math.max(0, tl.born - dt * 7); }
+  for (let i = ghosts.length - 1; i >= 0; i--) { const g = ghosts[i]; g.life -= dt * 10; if (g.life <= 0) ghosts.splice(i, 1); }
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.vy += 9 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 1.6;
+    if (p.life <= 0) parts.splice(i, 1);
+  }
+  shake = Math.max(0, shake - dt * 3);
+  flash[0] = Math.max(0, flash[0] - dt * 4); flash[1] = Math.max(0, flash[1] - dt * 4);
+}
+const canMerge = () => tiles.some(a => tiles.some(b => b.c === a.c + 1 && Math.round(b.y) === Math.round(a.y) && b.v === a.v));
+const easeBack = k => { const s = 1.4; k -= 1; return k * k * ((s + 1) * k + s) + 1; };
+// dir -1: counterclockwise (things slide to the left), +1: clockwise (to the right)
+function rotate(dir) {
+  state = 'rot'; rotDir = dir; rotT = 0; spawned = false; chain = 0;
+  flash[dir < 0 ? 0 : 1] = 1;
+  sRotate();
+}
+function endRotate() {
+  for (const tl of tiles) {
+    const r = Math.round(tl.y), c = tl.c;
+    if (rotDir > 0) { tl.y = c; tl.c = N - 1 - r; } else { tl.y = N - 1 - c; tl.c = r; }
+    tl.py = tl.y; tl.vy = 0;
+  }
+  ang = prevAng = 0; state = 'fall'; settleT = 0;
+  shake = Math.max(shake, 0.35); sThud();
+}
+function move(dir) {
+  if (state === 'over' || state === 'done') return;
+  started = true;
+  if (state === 'idle') rotate(dir); // presses while the box is still moving are dropped, not stacked
+}
+
+// ---- input ----
+const keyDir = { ArrowLeft: -1, ArrowRight: 1, a: -1, d: 1, A: -1, D: 1 };
+addEventListener('keydown', e => {
+  if (!(e.key in keyDir) || e.target.tagName === 'SELECT') return;
+  e.preventDefault(); if (!e.repeat) move(keyDir[e.key]);
+});
+const cv = $('cv'), ctx = cv.getContext('2d');
+let down = null;
+cv.addEventListener('pointerdown', e => { e.preventDefault(); down = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
+cv.addEventListener('pointerup', e => {
+  if (!down || down.id !== e.pointerId) return;
+  const dx = e.clientX - down.x; down = null;
+  // swipe sideways, or tap the left / right half
+  if (Math.abs(dx) > 30) move(Math.sign(dx));
+  else move(e.clientX < cv.clientWidth / 2 ? -1 : 1);
+});
+cv.addEventListener('pointercancel', () => { down = null; });
+
+// ---- result ----
+$('again').onclick = () => { $('result').hidden = true; resultOn = false; snapFile = null; reset(); tone('sine', 600, 800, 0.1, 0.12); };
+const coarse = matchMedia('(pointer: coarse)').matches;
+let resultOn = false;
+function showResult() {
+  $('rScore').textContent = L[lang].pts(score);
+  $('rSub').textContent = L[lang].sub(maxTile, best);
+  const a = $('share');
+  a.href = `https://x.com/intent/post?text=${encodeURIComponent(L[lang].post(score, maxTile))}&url=${encodeURIComponent(URL_)}`;
+  if (coarse) { a.removeAttribute('target'); a.removeAttribute('rel'); }
+  else { a.target = '_blank'; a.rel = 'noopener'; }
+  prepareShare();
+}
+function finish() {
+  state = 'done';
+  if (score > best) { best = score; store.set('best', best); }
+  resultOn = true;
+  showResult(); $('result').hidden = false;
+}
+// phones: share sheet with the result image. PC: save the image, then open the X post page
+$('share').addEventListener('click', e => {
+  const text = `${L[lang].post(score, maxTile)}\n${URL_}`;
+  if (coarse && navigator.share) {
+    e.preventDefault();
+    const file = snapFile?.key === lang ? snapFile.file : null;
+    navigator.share(file && navigator.canShare?.({ files: [file] }) ? { files: [file], text } : { text }).catch(() => {});
+    return;
+  }
+  const d = document.createElement('a'); d.href = resultImage().toDataURL('image/png'); d.download = 'rolling-2048.png'; d.click();
+});
+// the result image: the final board, the score big on top, the title small below
+function resultImage() {
+  const c = document.createElement('canvas'); c.width = c.height = 1080;
+  const g = c.getContext('2d');
+  drawBg(g, 1080, 1080);
+  const side = 620;
+  drawScene(g, { cx: 540, cy: 620, side, arrows: null }, 1, true);
+  g.textAlign = 'center'; g.lineJoin = 'round';
+  const font = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+  const text = (str, y, px, max, fill, line) => {
+    g.font = font(px);
+    const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = font(px); }
+    g.lineWidth = px * .16; g.strokeStyle = line; g.strokeText(str, 540, y); g.fillStyle = fill; g.fillText(str, 540, y);
+  };
+  text(L[lang].pts(score), 170, 150, 960, '#4a3424', '#fff');
+  text(t('title'), 1050, 50, 900, '#fff', '#4a3424');
+  return c;
+}
+// made ahead per language (waiting on click stops the share in Safari)
+let snapFile = null;
+function prepareShare() {
+  const key = lang;
+  if (snapFile?.key === key) return;
+  snapFile = { key, file: null };
+  resultImage().toBlob(b => { if (b && snapFile?.key === key) snapFile.file = new File([b], 'rolling-2048.png', { type: 'image/png' }); }, 'image/png');
+}
+
+// ---- look ----
+const BG = '#f7f3ee', BOX = '#cdc3b8', SLOT = '#e3dbd2', INK = '#8a7a6b';
+const COLORS = {
+  2: ['#fbf8f4', '#6b5b4e'], 4: ['#f5ead9', '#6b5b4e'], 8: ['#f6b97c', '#fff'], 16: ['#f39a63', '#fff'],
+  32: ['#ee7b5a', '#fff'], 64: ['#e85d4a', '#fff'], 128: ['#efcf6a', '#fff'], 256: ['#e9c04c', '#fff'],
+  512: ['#9ccf73', '#fff'], 1024: ['#5ebfae', '#fff'], 2048: ['#6ba6ee', '#fff'], 4096: ['#9583e8', '#fff'],
+  8192: ['#d873b8', '#fff'], 16384: ['#d6567c', '#fff'], 32768: ['#7a62d6', '#fff'], 65536: ['#3f86c9', '#fff'],
+};
+const tileColor = v => COLORS[v] || ['#4a4038', '#fff'];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+// plain, flat background
+function drawBg(g, W, H) { g.fillStyle = BG; g.fillRect(0, 0, W, H); }
+function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function drawTile(g, x, y, s, v, sx = 1, sy = 1, alpha = 1) {
+  const [bg, fg] = tileColor(v);
+  g.save(); g.globalAlpha = alpha;
+  g.translate(x, y + s / 2); g.scale(sx, sy); g.translate(0, -s / 2); // squash from the bottom
+  const r = s * 0.1;
+  g.fillStyle = bg; rr(g, -s / 2, -s / 2, s, s, r); g.fill();
+  const d = String(v).length, font = px => `900 ${px}px system-ui, -apple-system, sans-serif`;
+  let px = s * [0, 0.52, 0.46, 0.38, 0.3, 0.25][Math.min(5, d)];
+  g.font = font(px);
+  // long numbers past 2048 shrink to fit inside the tile
+  const w = g.measureText(v).width; if (w > s * 0.84) { px *= s * 0.84 / w; g.font = font(px); }
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = fg;
+  g.fillText(v, 0, s * 0.03);
+  g.restore();
+}
+// curved arrow showing which way the box turns
+// the fade is a solid color mixed toward the background (not globalAlpha), so where the line meets the head doesn't show darker
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const fade = (c, k) => { const x = hex(c), y = hex(BG); return `rgb(${x.map((v, i) => Math.round(y[i] + (v - y[i]) * k)).join(',')})`; };
+function drawArrow(g, x, y, r, dir, alpha) {
+  g.save(); g.translate(x, y);
+  const col = fade(INK, alpha);
+  g.lineCap = 'round';
+  const a0 = dir < 0 ? -0.3 : Math.PI + 0.3, a1 = dir < 0 ? -Math.PI * 1.35 : Math.PI * 2.35;
+  g.strokeStyle = col; g.lineWidth = r * 0.22;
+  g.beginPath(); g.arc(0, 0, r, a0, a1, dir < 0); g.stroke();
+  // head at the end of the arc, pointing along it
+  const hx = Math.cos(a1) * r, hy = Math.sin(a1) * r, tang = a1 + (dir < 0 ? -Math.PI / 2 : Math.PI / 2);
+  g.translate(hx, hy); g.rotate(tang);
+  g.fillStyle = col;
+  g.beginPath(); g.moveTo(r * 0.5, 0); g.lineTo(-r * 0.25, -r * 0.42); g.lineTo(-r * 0.25, r * 0.42); g.closePath(); g.fill();
+  g.restore();
+}
+// the whole scene: arrows, then the (rotating) box over them
+function drawScene(g, Ly, k, still) {
+  const { cx, cy, side } = Ly;
+  const a = still ? 0 : prevAng + (ang - prevAng) * k;
+  const sk = still ? 0 : shake * side * 0.02;
+  const ox = sk * (Math.random() * 2 - 1), oy = sk * (Math.random() * 2 - 1);
+  // arrows on both sides (under the box so its corners pass over them while turning)
+  if (Ly.arrows && Ly.arrowA > 0.01) {
+    const pulse = started ? 0 : 0.5 + 0.5 * Math.sin(performance.now() / 260);
+    for (const [i, dir] of [[0, -1], [1, 1]]) {
+      const [x, y] = Ly.arrows[i], r = Ly.arrowR * (1 + flash[i] * 0.25 + pulse * 0.08);
+      drawArrow(g, x, y, r, dir, Ly.arrowA * (started ? 0.55 + flash[i] * 0.45 : 0.75 + pulse * 0.25));
+    }
+  }
+  g.save();
+  g.translate(cx + ox, cy + oy); g.rotate(a);
+  const fr = side * 0.025, inner = side - fr * 2, cs = inner / N, ts = cs * 0.88;
+  // flat box with empty slots
+  g.fillStyle = BOX; rr(g, -side / 2, -side / 2, side, side, side * 0.04); g.fill();
+  g.fillStyle = SLOT;
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { rr(g, -inner / 2 + c * cs + (cs - ts) / 2, -inner / 2 + r * cs + (cs - ts) / 2, ts, ts, ts * 0.1); g.fill(); }
+  g.save(); rr(g, -inner / 2, -inner / 2, inner, inner, side * 0.02); g.clip();
+  const px = c => -inner / 2 + (c + 0.5) * cs, py = y => -inner / 2 + (y + 0.5) * cs; // tile centers
+  for (const gh of ghosts) drawTile(g, px(gh.c), py(lerp(gh.ty, gh.y, gh.life)), ts * (0.6 + 0.4 * gh.life), gh.v, 1, 1, gh.life);
+  for (const tl of tiles) {
+    const y = still ? tl.y : tl.py + (tl.y - tl.py) * k;
+    const pop = still ? 0 : Math.sin(tl.pop * Math.PI) * 0.18, sq = still ? 0 : tl.sq, born = still ? 0 : tl.born;
+    const s = 1 + pop - born * 0.9;
+    drawTile(g, px(tl.c), py(y), ts, tl.v, s * (1 + sq * 0.12), s * (1 - sq * 0.16));
+  }
+  if (!still) for (const p of parts) {
+    g.globalAlpha = Math.max(0, p.life); g.fillStyle = p.col;
+    g.beginPath(); g.arc(p.x * cs, p.y * cs, p.r * cs * (0.5 + p.life * 0.5), 0, 7); g.fill();
+  }
+  g.globalAlpha = 1;
+  g.restore();
+  g.restore();
+}
+
+// ---- layout ----
+// fits the box (with room for its corners while turning) and the arrows in the space between the header
+// and the bottom 80px (X's in-app browser covers that); spare height goes around evenly
+// the box's corners sweep a circle of radius side * 0.71 while turning; the score row and the arrows stay outside it
+const BOT = 80, PAD = 0.22, MAXS = 560;
+function baseLayout(W, H, result) {
+  // tall screens keep the score row under the header clear
+  let top = W / H > 1.1 ? 52 : 94, bot = H - BOT, left = 0, right = W;
+  if (result) {
+    if (W / H > 1.1) right = W * 0.5;
+    else { top = $('ptop').getBoundingClientRect().bottom + 6; bot = $('pbtns').getBoundingClientRect().top - 6; }
+  }
+  const aw = right - left, ah = bot - top;
+  let side, mode = 'none';
+  if (!result) {
+    const sA = Math.min(aw * 0.9, ah / (PAD + 1 + 0.48), MAXS);  // arrows under the box
+    const sB = Math.min(aw / 2.1, ah / (PAD + 1 + 0.22), MAXS);  // arrows beside it
+    mode = sA >= sB ? 'below' : 'side'; side = Math.max(sA, sB);
+  } else side = Math.min(aw * 0.84, ah / (PAD + 1 + 0.1), MAXS);
+  side = Math.max(120, side);
+  const total = side * (PAD + 1 + (mode === 'below' ? 0.48 : 0.22));
+  const cy = top + Math.max(0, ah - total) * 0.5 + side * (PAD + 0.5);
+  const cx = (left + right) / 2;
+  const arrowR = side * (mode === 'below' ? 0.1 : 0.12);
+  const arrows = mode === 'below'
+    ? [[cx - side * 0.32, cy + side * 0.82], [cx + side * 0.32, cy + side * 0.82]]
+    : [[cx - side * 0.9, cy], [cx + side * 0.9, cy]];
+  return { cx, cy, side, arrows, arrowR, arrowA: result ? 0 : 1 };
+}
+let resK = 0, curL = null;
+function layoutNow(W, H) {
+  const a = baseLayout(W, H, false);
+  if (resK <= 0) return a;
+  const b = baseLayout(W, H, true), e = resK * resK * (3 - 2 * resK);
+  return { cx: lerp(a.cx, b.cx, e), cy: lerp(a.cy, b.cy, e), side: lerp(a.side, b.side, e), arrows: a.arrows, arrowR: a.arrowR, arrowA: 1 - e };
+}
+function resize() {
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', resize);
+
+// only touch the DOM when the score or the language changes
+let shownScore = '', popTimer = 0;
+function showScore() {
+  const txt = resultOn ? '' : L[lang].pts(score);
+  if (txt === shownScore) return;
+  const up = shownScore !== '' && txt !== '' && score > 0;
+  shownScore = txt; $('score').textContent = txt; $('score').hidden = !txt;
+  if (up) { $('score').classList.add('pop'); clearTimeout(popTimer); popTimer = setTimeout(() => $('score').classList.remove('pop'), 120); }
+}
+function draw(fdt, k) {
+  const W = innerWidth, H = innerHeight;
+  resK = clamp(resK + (resultOn ? 1 : -1) * fdt * 3, 0, 1);
+  const Ly = layoutNow(W, H);
+  drawBg(ctx, W, H);
+  showScore();
+  drawScene(ctx, Ly, k, false);
+}
+
+let last = performance.now(), simT = last;
+function loop(now) {
+  const fdt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (now - simT > 250) simT = now - 250;
+  while (simT + DT * 1000 <= now) { step(DT); simT += DT * 1000; }
+  draw(fdt, (now - simT) / (DT * 1000));
+  requestAnimationFrame(loop);
+}
+reset(); resize(); applyLang(); draw(0, 1); requestAnimationFrame(loop);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

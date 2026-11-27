@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>图片熨斗 · LiteGame</title>
+  <meta name="description" content="把皱巴巴的图片熨平，像给 T 恤烫一件衣服。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="图片熨斗 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/image-iron/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/image-iron/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #e9e4dc; color: #3d4a5c; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh; box-sizing: border-box;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header { display: flex; align-items: center; gap: 6px; padding: 10px 12px; }
+    header a { color: #3d4a5c; text-decoration: none; font-size: 14px; margin-right: auto; }
+    .pill, header select {
+      height: 34px; min-width: 34px; border: 2px solid #3d4a5c; border-radius: 17px;
+      background: #fbf9f6; color: #3d4a5c; font: inherit; font-size: 14px; font-weight: bold;
+      padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      text-decoration: none; box-sizing: border-box;
+    }
+    .pill svg { width: 20px; height: 20px; }
+    #sound { padding: 0 6px; }
+    #stage { flex: 1; position: relative; min-height: 0; }
+    #gl, #cut { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    #cut { display: none; cursor: crosshair; background: #e9e4dc; }
+    .bar { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 8px; min-height: 56px; }
+    .bar .pill { height: 50px; min-width: 50px; border-radius: 25px; padding: 0 16px; font-size: 15px; }
+    .bar .pill svg { width: 26px; height: 26px; }
+    #barCut { gap: 8px; }
+    #barCut .pill { padding: 0 12px; }
+    .main { background: #3d4a5c !important; color: #fbf9f6 !important; }
+    .pill.on { background: #e8845c; border-color: #e8845c; color: #fff; }
+    .pill:disabled { opacity: .4; cursor: default; }
+    .pill.wait { opacity: .5; }
+    .dot { display: inline-block; background: currentColor; border-radius: 50%; }
+    .hide { display: none !important; }
+    #barColor { min-height: 0; padding: 4px 8px 0; gap: 7px; flex-wrap: wrap; }
+    .sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; padding: 0; cursor: pointer; box-shadow: 0 0 0 2px #c9c1b5; }
+    .sw.on { box-shadow: 0 0 0 3px #3d4a5c; }
+    #file { display: none; }
+    #err { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">图片熨斗</h1>
+  <header>
+    <a href="../../index.html#/category/premium" id="back">← トップへ戻る</a>
+    <button id="sound" class="pill"></button>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+  </header>
+  <main style="display:contents">
+  <div id="stage"><canvas id="gl"></canvas><canvas id="cut"></canvas><div id="err"></div></div>
+  <div id="barColor" class="bar"></div>
+  <div id="barStart" class="bar">
+    <button class="pill pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+    <button id="play" class="pill main"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z" fill="currentColor"/></svg></button>
+  </div>
+  <div id="barCut" class="bar hide">
+    <button id="brush" class="pill"><span class="dot" style="width:11px;height:11px"></span></button>
+    <button id="erase" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20h12"/><path d="M4.5 15.5l9-9a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 19H8z"/><path d="M9 11l5 5"/></svg></button>
+    <button id="undo" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button id="cancel" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button id="cutDone" class="pill main" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+  </div>
+  <div id="barPlay" class="bar hide">
+    <button id="done" class="pill main"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6.5a2 2 0 1 1 2.6 1.9c-.4.1-.6.5-.6.9V10"/><path d="M12 10L3 17.5h18z"/></svg></button>
+  </div>
+  <div id="barResult" class="bar hide">
+    <button class="pill pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+    <button id="again" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button>
+    <a id="post" class="pill main"></a>
+  </div>
+  <input type="file" id="file" accept="image/*">
+
+  </main>
+<script src="../lib/vendor/mp4-muxer@5.1.3/build/mp4-muxer.min.js"></script>
+<script type="importmap">{ "imports": {
+  "three": "../lib/three/build/three.module.js",
+  "three/addons/": "../lib/three/examples/jsm/"
+} }</script>
+<script>
+  window.__t = setTimeout(() => { if (!window.__ok) { const e = document.getElementById('err'); e.style.display = 'flex';
+    e.textContent = (navigator.language || '').startsWith('ja') ? '読み込みに失敗しました。通信状況を確認して再読み込みしてください。' : 'Failed to load. Please check your connection and reload.'; } }, 8000);
+</script>
+<script>/* 中文本地化：LiteGame（经作者授权） */
+// 图片熨斗 · 中文文案
+window.__KF_ZH__ = {
+  title: '图片熨斗',
+  back: '← 大厅',
+  pick: '选一张图',
+  play: '开始熨',
+  done: '收工',
+  again: '再来一次',
+  brush: '笔刷粗细',
+  erase: '擦除',
+  undo: '撤销',
+  cancel: '取消',
+  cutDone: '好了',
+  post: '分享到 X',
+  share: '把一张图熨平在 T 恤上 #LiteGame'
+};
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+window.__ok = true;
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('iron-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('iron-' + k, JSON.stringify(v)); } catch {} }
+};
+const URL_GAME = 'https://keifurukawafunnych.com/games/image-iron/';
+const TAG = '#图片熨斗ゲーム';
+
+// ---- 言語 ----
+const L = {
+  ja: { title: '图片熨斗', back: '← トップへ戻る', post: 'Xに投稿', share: 'Tシャツにアイロンをかけた', sound: '音のオン/オフ',
+        pick: '画像をえらぶ', play: 'はじめる', done: '仕上げ', again: 'もう一度', brush: '筆の太さ', erase: '消す', undo: '戻す', cancel: 'やめる', cutDone: 'できた' },
+  ko: { title: '이미지 다리미', back: '← 처음으로', post: 'X에 게시', share: '티셔츠를 다림질했다', sound: '소리 켜기/끄기',
+        pick: '이미지 선택', play: '시작', done: '완성', again: '다시 하기', brush: '붓 굵기', erase: '지우기', undo: '되돌리기', cancel: '취소', cutDone: '완료' },
+  en: { title: 'Image Iron', back: '← Top', post: 'Post on X', share: 'I ironed my T-shirt', sound: 'Sound on/off',
+        pick: 'Pick image', play: 'Start', done: 'Finish', again: 'Again', brush: 'Brush size', erase: 'Erase', undo: 'Undo', cancel: 'Cancel', cutDone: 'Done' },
+  th: { title: 'เตารีดรูปภาพ', back: '← หน้าแรก', post: 'โพสต์บน X', share: 'รีดเสื้อยืดจนเรียบ', sound: 'เปิด/ปิดเสียง',
+        pick: 'เลือกรูป', play: 'เริ่ม', done: 'เสร็จ', again: 'อีกครั้ง', brush: 'ขนาดแปรง', erase: 'ลบ', undo: 'ย้อนกลับ', cancel: 'ยกเลิก', cutDone: 'เสร็จ' }
+}
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (L[c]) return c; } return 'en'; };
+let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+if (!L[lang]) lang = 'en';
+const t = k => L[lang][k];
+function applyLang() {
+  document.documentElement.lang = lang; document.title = t('title');
+  $('lang').value = lang;
+  $('back').textContent = t('back');
+  $('sound').setAttribute('aria-label', t('sound'));
+  $('post').textContent = t('post');
+  for (const b of document.querySelectorAll('.pick')) { b.setAttribute('aria-label', t('pick')); b.title = t('pick'); }
+  for (const k of ['play', 'done', 'again', 'brush', 'erase', 'undo', 'cancel', 'cutDone']) { $(k).setAttribute('aria-label', t(k)); $(k).title = t(k); }
+  $('post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(t('share') + ' ' + TAG) + '&url=' + encodeURIComponent(URL_GAME);
+  if (matchMedia('(pointer: coarse)').matches) { $('post').removeAttribute('target'); $('post').removeAttribute('rel'); }
+  else { $('post').target = '_blank'; $('post').rel = 'noopener'; }
+}
+$('lang').onchange = e => { lang = e.target.value; store.set('lang', lang); applyLang(); };
+
+// ---- 音（ノイズからスチームと焦げの音を作る） ----
+let soundOn = store.get('sound', true);
+const SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
+const updateSoundBtn = () => {
+  $('sound').innerHTML = SPK + (soundOn
+    ? '<path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>'
+    : '<path d="M16 9l5 6"/><path d="M21 9l-5 6"/></svg>');
+};
+$('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+updateSoundBtn();
+let actx = null, steamG = null, sizzG = null;
+function initAudio() {
+  if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const len = actx.sampleRate * 2, buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = actx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2200; bp.Q.value = 0.6;
+    const hp = actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3500;
+    steamG = actx.createGain(); sizzG = actx.createGain(); steamG.gain.value = 0; sizzG.gain.value = 0;
+    src.connect(bp); bp.connect(steamG); steamG.connect(actx.destination);
+    src.connect(hp); hp.connect(sizzG); sizzG.connect(actx.destination);
+    src.start();
+  } catch { actx = null; }
+}
+function setSound(steam, sizz) {
+  if (!actx || !steamG) return;
+  const now = actx.currentTime;
+  steamG.gain.setTargetAtTime(soundOn ? steam : 0, now, 0.05);
+  sizzG.gain.setTargetAtTime(soundOn ? sizz * (0.4 + Math.random() * 0.9) : 0, now, 0.015);
+}
+
+// ---- 3D ----
+const gl = $('gl');
+const renderer = new THREE.WebGLRenderer({ canvas: gl, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(1.5, devicePixelRatio || 1));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xe9e4dc);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xcbbfae, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 2.3);
+sun.position.set(-3, 7, 4); sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.left = sun.shadow.camera.bottom = -4.5; sun.shadow.camera.right = sun.shadow.camera.top = 4.5;
+sun.shadow.radius = 3; sun.shadow.bias = -0.0015; sun.shadow.normalBias = 0.02;
+scene.add(sun);
+
+// アイロン台
+{
+  const s = new THREE.Shape(), w = 2.5, x0 = -3.6, x1 = 2.4;
+  s.moveTo(x0 + 0.5, -w); s.lineTo(x1, -w);
+  s.bezierCurveTo(x1 + 1.6, -w, x1 + 2.6, -0.9, x1 + 2.7, 0);
+  s.bezierCurveTo(x1 + 2.6, 0.9, x1 + 1.6, w, x1, w);
+  s.lineTo(x0 + 0.5, w); s.quadraticCurveTo(x0, w, x0, w - 0.5); s.lineTo(x0, -w + 0.5); s.quadraticCurveTo(x0, -w, x0 + 0.5, -w);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.18, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.08, bevelSegments: 4, curveSegments: 32 });
+  geo.rotateX(-Math.PI / 2); geo.translate(0.4, -0.24, 0);
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'); g.fillStyle = '#9fb7c9'; g.fillRect(0, 0, 256, 256);
+  g.strokeStyle = 'rgba(255,255,255,0.45)'; g.lineWidth = 10;
+  for (let i = 0; i <= 256; i += 64) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 256); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(256, i); g.stroke(); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(0.35, 0.35); tex.colorSpace = THREE.SRGBColorSpace;
+  const board = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 }));
+  board.receiveShadow = true; scene.add(board);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0xd9d1c4, roughness: 1 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -1.6; floor.receiveShadow = true; scene.add(floor);
+}
+
+// ---- Tシャツ（格子の点ごとにシワ・熱・焦げを持つ。形はテクスチャの透明で抜く） ----
+const N = 96, NV = (N + 1) * (N + 1), CW = 3.9, CH = 3.8, BASE_Y = 0.02, SOLE_Y = 0.025;
+// Tシャツの輪郭（0〜1、左上が原点。'n' は首のくり）
+const SHIRT = [[0.37, 0.03], [0.5, 0.115, 'n'], [0.63, 0.03], [0.82, 0.085], [1.0, 0.31], [0.85, 0.42], [0.77, 0.34], [0.785, 0.985], [0.215, 0.985], [0.23, 0.34], [0.15, 0.42], [0.0, 0.31], [0.18, 0.085]];
+function shirtPath(g, w, h) {
+  g.beginPath(); g.moveTo(SHIRT[0][0] * w, SHIRT[0][1] * h);
+  for (let i = 1; i < SHIRT.length; i++) {
+    const [x, y, k] = SHIRT[i];
+    if (k === 'n') { g.quadraticCurveTo(0.39 * w, 0.115 * h, x * w, y * h); g.quadraticCurveTo(0.61 * w, 0.115 * h, SHIRT[i + 1][0] * w, SHIRT[i + 1][1] * h); i++; }
+    else g.lineTo(x * w, y * h);
+  }
+  g.closePath();
+}
+// 服の形を塗る。縫い目（前後の布がつながる所）まで少し広げて、吊るしたときにすき間が見えないようにする
+function fillShirt(g, w, h, color) {
+  shirtPath(g, w, h); g.fillStyle = color; g.fill();
+  g.strokeStyle = color; g.lineJoin = 'round'; g.lineWidth = w * 3.2 / 40; g.stroke();
+}
+const SHIRT_COLORS = ['#f7f5f1', '#2b2b2e', '#9a9ea6', '#27365e', '#c8342f', '#f2c94c', '#f4a9c0', '#4f8a5b', '#7b4fa8'];
+let SHIRT_COLOR = SHIRT_COLORS[store.get('color', 0)] || SHIRT_COLORS[0];
+const bx = new Float32Array(NV), bz = new Float32Array(NV);
+const ox = new Float32Array(NV), oy = new Float32Array(NV), oz = new Float32Array(NV);
+const wr = new Float32Array(NV), heat = new Float32Array(NV), burn = new Float32Array(NV), cap = new Float32Array(NV).fill(Infinity), inShirt = new Uint8Array(NV);
+const edgeDist = new Float32Array(NV), inCore = new Uint8Array(NV);
+let amp = 0, dirty = true;
+const clothGeo = new THREE.BufferGeometry();
+const cpos = new Float32Array(NV * 3), ccol = new Float32Array(NV * 3).fill(1), cuv = new Float32Array(NV * 2);
+clothGeo.setAttribute('position', new THREE.BufferAttribute(cpos, 3).setUsage(THREE.DynamicDrawUsage));
+clothGeo.setAttribute('color', new THREE.BufferAttribute(ccol, 3).setUsage(THREE.DynamicDrawUsage));
+clothGeo.setAttribute('uv', new THREE.BufferAttribute(cuv, 2));
+const cnrm = new Float32Array(NV * 3); clothGeo.setAttribute('normal', new THREE.BufferAttribute(cnrm, 3).setUsage(THREE.DynamicDrawUsage));
+{
+  const idx = [];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i, b = a + 1, c = a + N + 2, d = a + N + 1; idx.push(a, d, b, b, d, c); }
+  clothGeo.setIndex(idx);
+  for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
+    const v = j * (N + 1) + i;
+    bx[v] = (i / N - 0.5) * CW; bz[v] = (j / N - 0.5) * CH;
+    cuv[v * 2] = i / N; cuv[v * 2 + 1] = 1 - j / N;
+  }
+  // Tシャツの内側かどうかと、ふちからの距離
+  const m = document.createElement('canvas'); m.width = m.height = N + 1;
+  const g = m.getContext('2d');
+  // 縫い目の内側（布として動かす所）
+  shirtPath(g, N + 1, N + 1); g.fillStyle = '#000'; g.fill();
+  const dc = g.getImageData(0, 0, N + 1, N + 1).data; for (let v = 0; v < NV; v++) inCore[v] = dc[v * 4 + 3] > 0 ? 1 : 0;
+  g.clearRect(0, 0, N + 1, N + 1); fillShirt(g, N + 1, N + 1, '#000');
+  const d = g.getImageData(0, 0, N + 1, N + 1).data, q = [];
+  for (let v = 0; v < NV; v++) { inShirt[v] = d[v * 4 + 3] > 0 ? 1 : 0; edgeDist[v] = inShirt[v] ? 1e9 : 0; if (!inShirt[v]) q.push(v); }
+  for (let h = 0; h < q.length; h++) {
+    const v = q[h], i = v % (N + 1), j = (v - i) / (N + 1);
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii > N || jj > N) continue;
+      const u = jj * (N + 1) + ii; if (edgeDist[u] > edgeDist[v] + 1) { edgeDist[u] = edgeDist[v] + 1; q.push(u); }
+    }
+  }
+  for (let v = 0; v < NV; v++) edgeDist[v] *= CW / N;
+}
+const texCanvas = document.createElement('canvas'); texCanvas.width = 1024; texCanvas.height = Math.round(1024 * CH / CW);
+const clothTex = new THREE.CanvasTexture(texCanvas); clothTex.colorSpace = THREE.SRGBColorSpace; clothTex.anisotropy = 4;
+const front = new THREE.Mesh(clothGeo, new THREE.MeshStandardMaterial({ map: clothTex, vertexColors: true, roughness: 0.9, alphaTest: 0.5, side: THREE.FrontSide }));
+const back = new THREE.Mesh(clothGeo, new THREE.MeshStandardMaterial({ map: clothTex, vertexColors: true, color: 0xa8a39d, roughness: 0.95, alphaTest: 0.5, side: THREE.BackSide }));
+const depthMat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: clothTex, alphaTest: 0.5 });
+for (const m of [front, back]) { m.castShadow = m.receiveShadow = true; m.frustumCulled = false; m.customDepthMaterial = depthMat; }
+const cloth = new THREE.Group(); cloth.add(front, back);
+const hang = new THREE.Group(), hangerRot = new THREE.Group(); hangerRot.add(cloth); hang.add(hangerRot); scene.add(hang);
+
+// 胸に画像をプリントしたTシャツのテクスチャ
+let curSprite = null;
+function setPrint(sprite) {
+  curSprite = sprite;
+  const w = texCanvas.width, h = texCanvas.height, g = texCanvas.getContext('2d');
+  g.clearRect(0, 0, w, h);
+  fillShirt(g, w, h, SHIRT_COLOR);
+  g.save(); shirtPath(g, w, h); g.clip();
+  const bw = 0.48 * w, bh = 0.5 * h, k = Math.min(bw / sprite.width, bh / sprite.height);
+  const dw = sprite.width * k, dh = sprite.height * k;
+  g.drawImage(sprite, (w - dw) / 2, 0.19 * h + (bh - dh) / 2, dw, dh);
+  g.restore();
+  clothTex.needsUpdate = true;
+}
+
+// ---- 最後：ハンガーに掛けた服（ここだけクロス物理） ----
+// 吊るしたときの座標（hang の中）：x 右、y 上、z 手前。Tシャツの上の端が Y0
+const hangY = () => CH / 2 + 0.5, Y0 = CH + 0.5;
+const NECK_X = 0.13 * CW, TIP_X = 0.29 * CW, TIP_XC = TIP_X, SL = 0.055 * CH / (0.19 * CW);
+const armY = x => Y0 - 0.03 * CH - 0.045 + SL * (NECK_X - Math.abs(x)); // 肩の線のすぐ下
+const hanger = new THREE.Group();
+{
+  const mat = new THREE.MeshStandardMaterial({ color: 0xc9ccd2, metalness: 1, roughness: 0.25 });
+  const TIP_X = TIP_XC * 0.9, R = 0.035, top = armY(0) - R, tipY = armY(TIP_X) - R;
+  const tube = (pts, r) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 64, r, 10), mat);
+  hanger.add(tube([[-TIP_X, tipY - 0.03, 0], [-TIP_X + 0.03, tipY, 0], [-TIP_X * 0.5, (top + tipY) / 2, 0], [-0.08, top - 0.01, 0], [0, top + 0.02, 0],
+    [0.08, top - 0.01, 0], [TIP_X * 0.5, (top + tipY) / 2, 0], [TIP_X - 0.03, tipY, 0], [TIP_X, tipY - 0.03, 0]], R));
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(R, R, TIP_X * 2, 12), mat); bar.rotation.z = Math.PI / 2; bar.position.y = tipY - 0.03; hanger.add(bar);
+  hanger.add(tube([[0, top, 0], [0, top + 0.3, 0], [0.16, top + 0.5, 0], [0.32, top + 0.36, 0], [0.29, top + 0.22, 0]], 0.03));
+  for (const c of hanger.children) c.castShadow = true;
+  hanger.visible = false; hangerRot.add(hanger);
+}
+// Tシャツは前と後ろの2枚の布。わき・肩・袖の縫い目の点は2枚で共有し、首・すそ・袖口だけ開いている。
+// 格子の点を位置ベースのクロスシミュレーション（伸び・せん断・曲げの拘束）で動かし、ハンガーは2枚の間に入る
+const S = 40, SV = (S + 1) * (S + 1), LIFT = 0.35;
+const P = new Float32Array(SV * 2 * 3), PP = new Float32Array(SV * 2 * 3), E = new Float32Array(SV * 2 * 3), SN = new Float32Array(SV * 3);
+const sAct = new Uint8Array(SV), sSeam = new Uint8Array(SV), sSup = new Uint8Array(SV), bI = new Int32Array(SV), sNear = new Int32Array(SV);
+const srx = new Float32Array(SV), sry = new Float32Array(SV);
+let cons = null, simOn = false, hs = 1;
+// ハンガー（中心線の線分。2枚の布はこの太さより外に押し出される）
+const HR = 0.035 + 0.045; // 布の点の間が管にかからないよう、すき間を多めに
+const HSEG = (() => {
+  const top = armY(0) - 0.035, tipY = armY(TIP_X) - 0.035;
+  return [[-TIP_X, tipY - 0.03, 0, top], [0, top, TIP_X, tipY - 0.03], [-TIP_X, tipY - 0.03, TIP_X, tipY - 0.03], [0, top, 0, top + 0.32]];
+})();
+// 後ろ身ごろ（無地）
+const plainCanvas = document.createElement('canvas'); plainCanvas.width = texCanvas.width; plainCanvas.height = texCanvas.height;
+const plainTex = new THREE.CanvasTexture(plainCanvas); plainTex.colorSpace = THREE.SRGBColorSpace;
+function drawPlain() {
+  const g = plainCanvas.getContext('2d'), w = plainCanvas.width, h = plainCanvas.height;
+  g.clearRect(0, 0, w, h);
+  fillShirt(g, w, h, SHIRT_COLOR);
+
+}
+drawPlain();
+// シャツの色をかえる
+function setShirtColor(i) {
+  SHIRT_COLOR = SHIRT_COLORS[i]; store.set('color', i);
+  if (curSprite) setPrint(curSprite);
+  drawPlain(); plainTex.needsUpdate = true;
+  for (const b of $('barColor').children) b.classList.toggle('on', +b.dataset.i === i);
+}
+SHIRT_COLORS.forEach((c, i) => {
+  const b = document.createElement('button'); b.className = 'sw'; b.style.background = c; b.dataset.i = i;
+  b.onclick = () => setShirtColor(i);
+  $('barColor').appendChild(b);
+});
+for (const b of $('barColor').children) b.classList.toggle('on', SHIRT_COLORS[+b.dataset.i] === SHIRT_COLOR);
+const backGeo = new THREE.BufferGeometry();
+const bpos = new Float32Array(NV * 3);
+backGeo.setAttribute('position', new THREE.BufferAttribute(bpos, 3).setUsage(THREE.DynamicDrawUsage));
+backGeo.setAttribute('uv', new THREE.BufferAttribute(cuv, 2));
+const bnrm = new Float32Array(NV * 3); backGeo.setAttribute('normal', new THREE.BufferAttribute(bnrm, 3).setUsage(THREE.DynamicDrawUsage));
+{
+  const idx = [];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i, b = a + 1, c = a + N + 2, d = a + N + 1; idx.push(a, b, d, b, c, d); } // 外向きが奥
+  backGeo.setIndex(idx);
+}
+const backOut = new THREE.Mesh(backGeo, new THREE.MeshStandardMaterial({ map: plainTex, roughness: 0.9, alphaTest: 0.5, side: THREE.FrontSide }));
+const backIn = new THREE.Mesh(backGeo, new THREE.MeshStandardMaterial({ map: plainTex, color: 0xa8a39d, roughness: 0.95, alphaTest: 0.5, side: THREE.BackSide }));
+const backDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: plainTex, alphaTest: 0.5 });
+for (const m of [backOut, backIn]) { m.castShadow = m.receiveShadow = true; m.frustumCulled = false; m.customDepthMaterial = backDepth; m.visible = false; hangerRot.add(m); }
+
+const segDist = (x, y, z, sg, out) => {
+  const ax = sg[0], ay = sg[1], dx = sg[2] - ax, dy = sg[3] - ay;
+  const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
+  out[0] = x - (ax + dx * t); out[1] = y - (ay + dy * t); out[2] = z;
+  return Math.hypot(out[0], out[1], out[2]);
+};
+function initSim() {
+  sAct.fill(0); sSeam.fill(0);
+  const inside = new Uint8Array(SV);
+  for (let b = 0; b <= S; b++) for (let a = 0; a <= S; a++) inside[b * (S + 1) + a] = inShirt[Math.round(b / S * N) * (N + 1) + Math.round(a / S * N)];
+  // 見えている点を含むマスの四隅を布にする（見た目の縁がちょうど布の縁の内側に入る）
+  for (let v = 0; v < NV; v++) if (inCore[v]) {
+    const i = v % (N + 1), j = (v - i) / (N + 1), a = Math.min(S - 1, Math.floor(i / N * S)), b = Math.min(S - 1, Math.floor(j / N * S)), k = b * (S + 1) + a;
+    sAct[k] = sAct[k + 1] = sAct[k + S + 1] = sAct[k + S + 2] = 1;
+  }
+  const off = (a, b) => a < 0 || b < 0 || a > S || b > S || !sAct[b * (S + 1) + a];
+  const cuffD = (x, y) => { const ax = 0, ay = 0.31, dx = 0.15, dy = 0.11, t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))); return Math.hypot(x - ax - dx * t, y - ay - dy * t); };
+  for (let b = 0; b <= S; b++) for (let a = 0; a <= S; a++) {
+    const k = b * (S + 1) + a; if (!sAct[k]) continue;
+    if (!(off(a + 1, b) || off(a - 1, b) || off(a, b + 1) || off(a, b - 1))) continue;
+    const nx = a / S, ny = b / S, mx = Math.min(nx, 1 - nx);
+    const open = ny > 0.93 || (ny < 0.2 && Math.abs(nx - 0.5) < 0.15) || cuffD(mx, ny) < 0.045;
+    if (!open) sSeam[k] = 1;
+  }
+  for (let k = 0; k < SV; k++) bI[k] = sSeam[k] ? k : SV + k;
+  // 肩（ハンガーの腕より上にある所）は前も後ろも腕に乗る
+  sSup.fill(0);
+  for (let b = 0; b <= S; b++) for (let a = 0; a <= S; a++) { const k = b * (S + 1) + a, x = (a / S - 0.5) * CW; if (sAct[k] && Math.abs(x) <= TIP_X && Y0 - b / S * CH >= armY(x) - 0.03) sSup[k] = 1; }
+  // 布でない点は、いちばん近い布の点について動く（表示用）
+  const q = []; sNear.fill(-1);
+  for (let k = 0; k < SV; k++) if (sAct[k]) { sNear[k] = k; q.push(k); }
+  for (let h = 0; h < q.length; h++) {
+    const k = q[h], a = k % (S + 1), b = (k - a) / (S + 1);
+    for (const [da, db] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const aa = a + da, bb = b + db; if (aa < 0 || bb < 0 || aa > S || bb > S) continue;
+      const u = bb * (S + 1) + aa; if (sNear[u] < 0) { sNear[u] = sNear[k]; q.push(u); }
+    }
+  }
+  // 今のシワで縮んだ大きさのまま、ハンガーの少し上から
+  const shr = 1 - 0.16 * sw;
+  for (let b = 0; b <= S; b++) for (let a = 0; a <= S; a++) {
+    const k = b * (S + 1) + a;
+    srx[k] = (a / S - 0.5) * CW; sry[k] = Y0 - b / S * CH;
+    const x = srx[k] * shr, y = Y0 + LIFT - (Y0 - sry[k]) * shr; sx0[k] = x;
+    for (const [i, z] of [[k, sSeam[k] ? 0 : 0.04], [SV + k, -0.04]]) { P[i * 3] = PP[i * 3] = x; P[i * 3 + 1] = PP[i * 3 + 1] = y; P[i * 3 + 2] = PP[i * 3 + 2] = z; }
+  }
+  const c = [];
+  for (const L of [0, 1]) {
+    const id = k => L ? bI[k] : k;
+    const add = (p, q, st) => { if (sAct[p] && sAct[q] && !(L && sSeam[p] && sSeam[q])) c.push(id(p), id(q), Math.hypot(srx[p] - srx[q], sry[p] - sry[q]), st); };
+    for (let b = 0; b <= S; b++) for (let a = 0; a <= S; a++) {
+      const k = b * (S + 1) + a;
+      if (a < S) add(k, k + 1, 1); if (b < S) add(k, k + S + 1, 1);
+      if (a < S && b < S) { add(k, k + S + 2, 0.8); add(k + 1, k + S + 1, 0.8); }
+      if (a < S - 1) add(k, k + 2, 0.25); if (b < S - 1) add(k, k + 2 * (S + 1), 0.25);
+    }
+  }
+  cons = Float32Array.from(c); prepSim(); simOn = true;
+  backOut.visible = backIn.visible = true;
+}
+let simMove = null, simCol = null, simSep = null;
+// 格子の面の向き（隣の点の差から。computeVertexNormals より軽い）
+function gridNormals(pos, nrm, n, sign) {
+  const W = n + 1;
+  for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) {
+    const ia = (j * W + Math.min(n, i + 1)) * 3, ib = (j * W + Math.max(0, i - 1)) * 3;
+    const ja = (Math.min(n, j + 1) * W + i) * 3, jb = (Math.max(0, j - 1) * W + i) * 3;
+    const ux = pos[ia] - pos[ib], uy = pos[ia + 1] - pos[ib + 1], uz = pos[ia + 2] - pos[ib + 2];
+    const vx = pos[ja] - pos[jb], vy = pos[ja + 1] - pos[jb + 1], vz = pos[ja + 2] - pos[jb + 2];
+    const nx = vy * uz - vz * uy, ny = vz * ux - vx * uz, nz = vx * uy - vy * ux, l = sign / (Math.sqrt(nx * nx + ny * ny + nz * nz) || 1);
+    const o = (j * W + i) * 3; nrm[o] = nx * l; nrm[o + 1] = ny * l; nrm[o + 2] = nz * l;
+  }
+}
+function prepSim() {
+  // 動く粒、ハンガーに当たりうる粒（上の方だけ）、前後の重なりを防ぐ組
+  const mv = [], col = [], sep = [];
+  for (let k = 0; k < SV; k++) {
+    if (!sAct[k]) continue;
+    mv.push(k); if (!sSeam[k]) { mv.push(SV + k); sep.push(k); }
+    col.push(k, sSup[k]); if (!sSeam[k]) col.push(SV + k, sSup[k]);
+  }
+  simMove = Int32Array.from(mv); simCol = Int32Array.from(col); simSep = Int32Array.from(sep);
+}
+// 服はハンガーといっしょに回る座標で動かす（ハンガーが服の間から抜けない）。
+// 回したときの揺れは、回る座標で働く見かけの力（遠心力・コリオリの力・回転を速めたり遅めたりする力）で出す
+let hangAng = 0, simAng = 0, simW = 0;
+const sx0 = new Float32Array(SV);
+function stepSim(dt) {
+  // 手で回せるくらいの速さ・勢いまでにする
+  let w = (hangAng - simAng) / dt; w = Math.max(-4, Math.min(4, w));
+  const al = Math.max(-20, Math.min(20, (w - simW) / dt));
+  simAng = hangAng; simW = w;
+  // 速く回すときは細かく区切って計算する（すり抜け防止）
+  const SUB = 2 + Math.min(3, Math.ceil(Math.abs(w) * 0.8)), h = dt / SUB, G = 22 * h * h, ITER = 7, VM = 0.04;
+  const hyLo = armY(TIP_X) - 0.035 - 0.03 - HR, hyHi = armY(0) + 0.32 + HR;
+  for (let sub = 0; sub < SUB; sub++) {
+    for (let m = 0; m < simMove.length; m++) {
+      const o = simMove[m] * 3;
+      let vx = (P[o] - PP[o]) * 0.993, vy = (P[o + 1] - PP[o + 1]) * 0.993, vz = (P[o + 2] - PP[o + 2]) * 0.993;
+      // 1回で動ける距離はハンガーの太さより小さく
+      const vl = Math.sqrt(vx * vx + vy * vy + vz * vz); if (vl > VM) { vx *= VM / vl; vy *= VM / vl; vz *= VM / vl; }
+      const x = P[o], z = P[o + 2], ux = vx / h, uz = vz / h;
+      // 遠心力 + コリオリの力 + 回転の加減速による力（y 軸まわり）
+      const ax = w * w * x - 2 * w * uz - al * z, az = w * w * z + 2 * w * ux + al * x;
+      PP[o] = P[o]; PP[o + 1] = P[o + 1]; PP[o + 2] = P[o + 2];
+      P[o] += vx + ax * h * h; P[o + 1] += vy - G; P[o + 2] += vz + az * h * h;
+    }
+    for (let it = 0; it < ITER; it++) {
+      for (let n = 0; n < cons.length; n += 4) {
+        const p = cons[n] * 3, q = cons[n + 1] * 3;
+        const dx = P[q] - P[p], dy = P[q + 1] - P[p + 1], dz = P[q + 2] - P[p + 2];
+        const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6, f = (len - cons[n + 2]) / len * 0.5 * cons[n + 3];
+        P[p] += dx * f; P[p + 1] += dy * f; P[p + 2] += dz * f;
+        P[q] -= dx * f; P[q + 1] -= dy * f; P[q + 2] -= dz * f;
+      }
+      // 前と後ろの布はすり抜けない
+      for (let m = 0; m < simSep.length; m++) {
+        const f = simSep[m] * 3 + 2, bk = (SV + simSep[m]) * 3 + 2, gap = P[f] - P[bk];
+        if (gap < 0.02) { const d = (0.02 - gap) / 2; P[f] += d; P[bk] -= d; }
+      }
+      // ハンガーにぶつかったら外へ押し出す。肩は腕の線より下へは抜けず、腕に乗った所は横にすべらない
+      for (let m = 0; m < simCol.length; m += 2) {
+        const o = simCol[m] * 3;
+        if (P[o + 1] < hyLo || P[o + 1] > hyHi) continue;
+        if (simCol[m + 1] && P[o] <= TIP_X && P[o] >= -TIP_X) {
+          const az = Math.abs(P[o + 2]), zz = az < HR * 0.95 ? az : HR * 0.95, ymin = armY(P[o]) - 0.035 + Math.sqrt(HR * HR - zz * zz);
+          if (P[o + 1] < ymin) { P[o + 1] = ymin; P[o] = PP[o]; P[o + 2] = PP[o + 2] + (P[o + 2] - PP[o + 2]) * 0.5; }
+        }
+        // 首にフックが通っているので、肩はハンガーの上を大きく横すべりしない
+        if (simCol[m + 1]) { const k0 = simCol[m] % SV, lo = sx0[k0] - 0.12, hi = sx0[k0] + 0.12; if (P[o] < lo) P[o] = lo; else if (P[o] > hi) P[o] = hi; }
+        for (let g = 0; g < HSEG.length; g++) {
+          const sg = HSEG[g], ax = sg[0], ay = sg[1], ex = sg[2] - ax, ey = sg[3] - ay;
+          let t = ((P[o] - ax) * ex + (P[o + 1] - ay) * ey) / (ex * ex + ey * ey); t = t < 0 ? 0 : t > 1 ? 1 : t;
+          let dx = P[o] - ax - ex * t, dy = P[o + 1] - ay - ey * t, dz = P[o + 2];
+          const d2 = dx * dx + dy * dy + dz * dz;
+          if (d2 >= HR * HR) continue;
+          const d = Math.sqrt(d2);
+          if (d < 1e-5) { dx = 0; dy = 1; dz = 0; } else { dx /= d; dy /= d; dz /= d; }
+          const push = HR - d;
+          P[o] += dx * push; P[o + 1] += dy * push; P[o + 2] += dz * push;
+          P[o] = PP[o] + (P[o] - PP[o]) * 0.6; P[o + 2] = PP[o + 2] + (P[o + 2] - PP[o + 2]) * 0.6;
+        }
+      }
+    }
+  }
+}
+const SE = new Float32Array(SV * 3);
+function drawLayer(L, pos, detail) {
+  for (let k = 0; k < SV; k++) {
+    const nk = sNear[k], src = (L && !sSeam[nk] ? SV + nk : nk) * 3, o = k * 3;
+    if (nk === k) { SE[o] = P[src]; SE[o + 1] = P[src + 1]; SE[o + 2] = P[src + 2]; continue; }
+    // 布の外側（ぬいしろ）は近くの布の点から平らにのばす。前後が重なってちらつかないよう少しずらす
+    SE[o] = P[src] + (srx[k] - srx[nk]); SE[o + 1] = P[src + 1] + (sry[k] - sry[nk]); SE[o + 2] = P[src + 2] + (L ? -0.004 : 0.004);
+  }
+  if (detail) gridNormals(SE, SN, S, 1);
+  for (let j = 0; j <= N; j++) {
+    const fb = j / N * S, b = Math.min(S - 1, Math.floor(fb)), t = fb - b;
+    for (let i = 0; i <= N; i++) {
+      const v = j * (N + 1) + i, fa = i / N * S, a = Math.min(S - 1, Math.floor(fa)), u = fa - a;
+      const k00 = (b * (S + 1) + a) * 3, k10 = k00 + 3, k01 = k00 + (S + 1) * 3, k11 = k01 + 3;
+      const w00 = (1 - u) * (1 - t), w10 = u * (1 - t), w01 = (1 - u) * t, w11 = u * t;
+      // 残ったシワは布の面に沿って少しだけ足す
+      const hgt = detail ? oy[v] * wr[v] * amp * hs : 0;
+      for (let d = 0; d < 3; d++) {
+        const n = detail ? SN[k00 + d] * w00 + SN[k10 + d] * w10 + SN[k01 + d] * w01 + SN[k11 + d] * w11 : 0;
+        pos[v * 3 + d] = SE[k00 + d] * w00 + SE[k10 + d] * w10 + SE[k01 + d] * w01 + SE[k11 + d] * w11 + n * hgt;
+      }
+    }
+  }
+}
+function drawSim() {
+  drawLayer(0, cpos, true); gridNormals(cpos, cnrm, N, 1);
+  clothGeo.attributes.position.needsUpdate = true; clothGeo.attributes.normal.needsUpdate = true;
+  drawLayer(1, bpos, false); gridNormals(bpos, bnrm, N, -1);
+  backGeo.attributes.position.needsUpdate = true; backGeo.attributes.normal.needsUpdate = true;
+}
+
+// くしゃくしゃの形：なめらかなデコボコ（値ノイズ）に、長さも向きもばらばらの折り目を重ね、ふちはめくれ上がらせる
+function valueNoise(cells) {
+  const g = new Float32Array((cells + 2) * (cells + 2)).map(() => Math.random() * 2 - 1);
+  const sm = t => t * t * (3 - 2 * t);
+  return (x, z) => {
+    const fx = (x / CW + 0.5) * cells, fz = (z / CH + 0.5) * cells, i = Math.floor(fx), j = Math.floor(fz), u = sm(fx - i), w = sm(fz - j);
+    const G = (a, b) => g[Math.min(cells + 1, Math.max(0, b)) * (cells + 2) + Math.min(cells + 1, Math.max(0, a))];
+    return (G(i, j) * (1 - u) + G(i + 1, j) * u) * (1 - w) + (G(i, j + 1) * (1 - u) + G(i + 1, j + 1) * u) * w;
+  };
+}
+function makeCrumple() {
+  const n2 = valueNoise(6), n3 = valueNoise(14);
+  const folds = [];
+  for (let k = 0; k < 180; k++) {
+    const a = Math.random() * Math.PI * 2;
+    folds.push({ cx: (Math.random() - 0.5) * CW * 1.05, cz: (Math.random() - 0.5) * CH * 1.05, dx: Math.cos(a), dz: Math.sin(a),
+      len: 0.15 + Math.random() * 0.8, wid: 0.07 + Math.random() * 0.22, a: 0.08 + Math.random() * 0.2 });
+  }
+  for (let v = 0; v < NV; v++) {
+    const x = bx[v], z = bz[v];
+    let h = 0.06 * n2(x, z) + 0.03 * n3(x, z);
+    for (const F of folds) {
+      const ex = x - F.cx, ez = z - F.cz, along = ex * F.dx + ez * F.dz;
+      if (along > F.len * 2.2 || along < -F.len * 2.2) continue;
+      const across = Math.abs(-ex * F.dz + ez * F.dx);
+      if (across > F.wid) continue;
+      // 折り目は台から立ち上がる鋭い山で、両端に向かって消える。重なった所は高い方
+      h = Math.max(h, F.a * (1 - across / F.wid) * Math.exp(-(along * along) / (F.len * F.len)) + 0.4 * h);
+    }
+    oy[v] = h;
+  }
+  // 低い方の35%は台にぴったり付ける。ふちも台に付ける（浮いて見えないように）
+  const hs0 = []; for (let v = 0; v < NV; v++) if (inShirt[v]) hs0.push(oy[v]);
+  hs0.sort((p, q) => p - q); const mn = hs0[Math.floor(hs0.length * 0.25)];
+  for (let v = 0; v < NV; v++) { oy[v] = Math.max(0, oy[v] - mn) * sstep(0.03, 0.3, edgeDist[v]); ox[v] = -bx[v] * 0.16; oz[v] = -bz[v] * 0.16; }
+}
+function resetCloth() {
+  wr.fill(1); heat.fill(0); burn.fill(0); cap.fill(Infinity); amp = 0; ccol.fill(1);
+  clothGeo.attributes.color.needsUpdate = true; dirty = true;
+}
+const rawY = v => BASE_Y + oy[v] * wr[v] * amp;
+let sw = 0; // 服全体の縮み具合（場所ごとに変えると布が重なって裏が見えるので一様にする）
+function updateCloth() {
+  let sum = 0, cnt = 0;
+  for (let v = 0; v < NV; v++) if (inShirt[v]) { sum += wr[v]; cnt++; }
+  sw = sum / cnt * amp;
+  for (let v = 0; v < NV; v++) {
+    cpos[v * 3] = bx[v] + ox[v] * sw; cpos[v * 3 + 1] = Math.min(BASE_Y + oy[v] * wr[v] * amp * hs, cap[v]); cpos[v * 3 + 2] = bz[v] + oz[v] * sw;
+  }
+  gridNormals(cpos, cnrm, N, 1);
+  clothGeo.attributes.position.needsUpdate = true; clothGeo.attributes.normal.needsUpdate = true;
+}
+const BR1 = [0.62, 0.4, 0.2], BR2 = [0.07, 0.045, 0.03];
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+function burnColor(v) {
+  const b = burn[v], k1 = sstep(0, 0.45, b), k2 = sstep(0.4, 1, b);
+  for (let c = 0; c < 3; c++) ccol[v * 3 + c] = (1 + (BR1[c] - 1) * k1) * (1 - k2) + BR2[c] * k2;
+}
+
+// ---- アイロン ----
+const iron = new THREE.Group();
+const IL = 1.2, IW = 0.36; // 長さ、半分の幅
+{
+  const shape = sc => {
+    const s = new THREE.Shape(), l = IL / 2 * sc, w = IW * sc;
+    s.moveTo(-l, -w); s.lineTo(0.05 * sc, -w); s.quadraticCurveTo(l * 0.75, -w * 0.9, l, 0);
+    s.quadraticCurveTo(l * 0.75, w * 0.9, 0.05 * sc, w); s.lineTo(-l, w); s.lineTo(-l, -w);
+    return s;
+  };
+  const sole = new THREE.ExtrudeGeometry(shape(1), { depth: 0.05, bevelEnabled: false, curveSegments: 24 });
+  sole.rotateX(-Math.PI / 2);
+  const body = new THREE.ExtrudeGeometry(shape(0.93), { depth: 0.16, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.06, bevelSegments: 5, curveSegments: 24 });
+  body.rotateX(-Math.PI / 2); body.translate(0, 0.05 + 0.07, 0);
+  const mSole = new THREE.MeshStandardMaterial({ color: 0xdfe3e8, metalness: 1, roughness: 0.2 });
+  const mBody = new THREE.MeshPhysicalMaterial({ color: 0x6fb3d9, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15 });
+  const mWhite = new THREE.MeshPhysicalMaterial({ color: 0xf6f6f4, roughness: 0.35, clearcoat: 0.6 });
+  iron.add(new THREE.Mesh(sole, mSole), new THREE.Mesh(body, mBody));
+  const handle = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.5, 0.3, 0), new THREE.Vector3(-0.46, 0.62, 0), new THREE.Vector3(-0.2, 0.72, 0),
+    new THREE.Vector3(0.12, 0.7, 0), new THREE.Vector3(0.3, 0.32, 0)]), 48, 0.075, 12), mWhite);
+  iron.add(handle);
+  const dial = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05, 24), mWhite);
+  dial.position.set(-0.08, 0.36, 0); iron.add(dial);
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), new THREE.MeshBasicMaterial({ color: 0xff5a3c }));
+  lamp.position.set(0.12, 0.34, 0); iron.add(lamp);
+  iron.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  scene.add(iron);
+}
+// y は底面の高さ
+const ir = { x: 0, z: 0, y: 0.5, yaw: Math.PI / 2, tx: 0, tz: 0, pressing: false, vx: 0, vz: 0, maxUnder: 0 };
+
+// ---- 湯気と煙 ----
+const puffTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+const puffs = [];
+for (let i = 0; i < 60; i++) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, transparent: true, depthWrite: false, opacity: 0 }));
+  s.visible = false; scene.add(s); puffs.push({ s, life: 0, max: 1, vx: 0, vy: 0, vz: 0, o: 0.5 });
+}
+let puffI = 0;
+function puff(x, y, z, smoke) {
+  const P = puffs[puffI++ % puffs.length];
+  P.s.position.set(x, y, z); P.s.visible = true;
+  P.s.material.color.set(smoke ? 0x4a4038 : 0xffffff);
+  P.life = 0; P.max = smoke ? 1.6 : 0.9; P.o = smoke ? 0.55 : 0.6; P.sz = smoke ? 0.35 : 0.25;
+  P.vx = (Math.random() - 0.5) * 0.3; P.vz = (Math.random() - 0.5) * 0.3; P.vy = smoke ? 0.7 : 1.1;
+}
+function stepPuffs(dt) {
+  for (const P of puffs) {
+    if (!P.s.visible) continue;
+    P.life += dt; const k = P.life / P.max;
+    if (k >= 1) { P.s.visible = false; continue; }
+    P.s.position.x += P.vx * dt; P.s.position.y += P.vy * dt; P.s.position.z += P.vz * dt;
+    P.s.scale.setScalar(P.sz * (1 + k * 2.5)); P.s.material.opacity = P.o * Math.sin(Math.PI * Math.min(1, k * 1.4 + 0.1)) * (1 - k);
+  }
+}
+
+// ---- アイロンがけ ----
+const RAMP = 0.4, SLOPE = 1.5;
+function ironStep(dt) {
+  // ねらった所へ滑らせる
+  const k = Math.min(1, dt * 16), px = ir.x, pz = ir.z;
+  ir.x += (ir.tx - ir.x) * k; ir.z += (ir.tz - ir.z) * k;
+  ir.vx = (ir.x - px) / dt; ir.vz = (ir.z - pz) / dt;
+  const sp = Math.hypot(ir.vx, ir.vz);
+  // 動いた向きにそろえる（前後どちら向きでもよい）
+  if (sp > 0.6) {
+    let a = Math.atan2(-ir.vz, ir.vx), d = a - ir.yaw;
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    if (d > Math.PI / 2) d -= Math.PI; else if (d < -Math.PI / 2) d += Math.PI;
+    ir.yaw += d * Math.min(1, dt * 5);
+  }
+  // 浮かせている間はシワの山の上を通る
+  const ty = ir.pressing ? SOLE_Y : Math.max(SOLE_Y + 0.3, ir.maxUnder + 0.18);
+  ir.y += (ty - ir.y) * Math.min(1, dt * (ty > ir.y ? 25 : 12));
+  iron.position.set(ir.x, ir.y, ir.z); iron.rotation.y = ir.yaw;
+
+  cap.fill(Infinity);
+  for (let v = 0; v < NV; v++) heat[v] *= Math.exp(-dt * 0.9);
+  let burning = 0, touched = 0, maxUnder = 0, burnDirty = false;
+  const touching = ir.y < SOLE_Y + 0.03;
+  const c = Math.cos(ir.yaw), s = Math.sin(ir.yaw), R = IL / 2 + RAMP + 0.05;
+  const i0 = Math.max(0, Math.floor(((ir.x - R) / CW + 0.5) * N)), i1 = Math.min(N, Math.ceil(((ir.x + R) / CW + 0.5) * N));
+  const j0 = Math.max(0, Math.floor(((ir.z - R) / CH + 0.5) * N)), j1 = Math.min(N, Math.ceil(((ir.z + R) / CH + 0.5) * N));
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    const v = j * (N + 1) + i, dx = bx[v] - ir.x, dz = bz[v] - ir.z;
+    const u = dx * c - dz * s, w = dx * s + dz * c;
+    const uc = Math.max(-IL / 2, Math.min(IL / 2, u));
+    const hw = uc < 0.05 ? IW : IW * Math.sqrt(Math.max(0, 1 - ((uc - 0.05) / (IL / 2 - 0.05)) ** 2));
+    // 底面の形からの距離（内側が正）
+    const m = Math.min(hw - Math.abs(w), u + IL / 2, IL / 2 - u);
+    if (m < -RAMP) continue;
+    // 布は底面より上に出ない。まわりは坂にして、アイロンにめり込まないようにする
+    cap[v] = ir.y - 0.004 + Math.max(0, -m) * SLOPE;
+    if (m > -0.08) maxUnder = Math.max(maxUnder, rawY(v));
+    if (m <= 0 || !touching) continue;
+    const wt = Math.min(1, m / 0.06);
+    wr[v] = Math.max(0, wr[v] - dt * 2.6 * wt);
+    if (!inShirt[v]) continue;
+    touched++;
+    heat[v] += dt * 2.2 * wt;
+    if (heat[v] > 0.8) { burn[v] = Math.min(1, burn[v] + (heat[v] - 0.8) * dt * 2.5); burnColor(v); burnDirty = true; burning++; }
+  }
+  ir.maxUnder = maxUnder;
+  if (burnDirty) clothGeo.attributes.color.needsUpdate = true;
+  // 湯気・煙・音
+  const on = touched > 0;
+  if (on && Math.random() < dt * (4 + sp * 5)) {
+    const a = Math.random() * Math.PI * 2;
+    puff(ir.x + Math.cos(a) * 0.45, 0.12, ir.z + Math.sin(a) * 0.35, false);
+  }
+  if (burning > 4 && Math.random() < dt * 9) puff(ir.x + (Math.random() - 0.5) * 0.5, 0.15, ir.z + (Math.random() - 0.5) * 0.4, true);
+  setSound(on ? Math.min(0.22, 0.04 + sp * 0.05) : 0, burning > 4 ? Math.min(0.25, burning / 600) : 0);
+  dirty = true;
+}
+
+// ---- カメラ ----
+const cam = { tx: 0, ty: 0, tz: 0.25, el: 1.0, dist: 9, az: 0 };
+const camGoal = { ...cam };
+function fitCam() {
+  const r = $('stage').getBoundingClientRect(), asp = r.width / Math.max(1, r.height);
+  camera.aspect = asp; camera.updateProjectionMatrix();
+  const tf = Math.tan(camera.fov * Math.PI / 360);
+  if (mode === 'result') {
+    Object.assign(camGoal, { tx: 0, ty: hangY(), tz: 0, el: 0.12, az: 0 });
+    camGoal.dist = Math.max((CH + 1.6) / 2 / tf, (CW + 0.8) / 2 / (tf * asp));
+  } else {
+    Object.assign(camGoal, { tx: 0, ty: 0, tz: 0.25, el: 0.98, az: 0 });
+    camGoal.dist = Math.max(CH * 0.62 / tf + 1.4, (CW + 0.3) / 2 / (tf * asp) + 0.6);
+  }
+}
+function placeCam(dt) {
+  const k = dt < 0 ? 1 : Math.min(1, dt * 3);
+  for (const key in cam) cam[key] += (camGoal[key] - cam[key]) * k;
+  camera.position.set(cam.tx + cam.dist * Math.sin(cam.az) * Math.cos(cam.el), cam.ty + cam.dist * Math.sin(cam.el), cam.tz + cam.dist * Math.cos(cam.az) * Math.cos(cam.el));
+  camera.lookAt(cam.tx, cam.ty, cam.tz);
+}
+function resize() {
+  const r = $('stage').getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  fitCam();
+  if (mode === 'cut') resizeCut();
+}
+
+// ---- 画面の流れ ----
+let mode = 'start'; // start | cut | crumple | play | result
+let anim = 0, demo = 0, clothTop = 0;
+const rot = { drag: null, vel: 0, hinted: false, lx: 0, lt: 0 };
+function setMode(m) {
+  mode = m; anim = 0;
+  $('cut').style.display = m === 'cut' ? 'block' : 'none';
+  $('barStart').classList.toggle('hide', m !== 'start');
+  $('barColor').classList.toggle('hide', m !== 'start');
+  $('barCut').classList.toggle('hide', m !== 'cut');
+  $('barPlay').classList.toggle('hide', m !== 'play' && m !== 'crumple');
+  $('barResult').classList.toggle('hide', m !== 'result');
+  iron.visible = m !== 'result';
+  hanger.visible = false;
+  simOn = false; hs = 1; backOut.visible = backIn.visible = false; rot.drag = null; rot.vel = 0; rot.hinted = false;
+  hangAng = simAng = simW = 0; hangerRot.rotation.y = 0;
+  if (m !== 'result') { hang.rotation.set(0, 0, 0); cloth.rotation.set(0, 0, 0); cloth.position.set(0, 0, 0); }
+  if (m === 'result') { ir.pressing = false; setSound(0, 0); for (const P of puffs) P.s.visible = false; }
+  if (m === 'cut') { erasing = false; $('erase').classList.remove('on'); updateCutDone(); }
+  fitCam();
+}
+// 待機中のアイロンは右の袖の下あたりに置く
+function parkIron() { ir.pressing = false; ir.tx = ir.x = CW * 0.38; ir.tz = ir.z = CH * 0.28; ir.y = 0.5; ir.yaw = Math.PI / 2; ir.maxUnder = 0; }
+function startPlay() {
+  initAudio();
+  makeCrumple(); resetCloth(); setMode('crumple'); parkIron();
+}
+$('play').onclick = startPlay;
+$('again').onclick = startPlay;
+$('done').onclick = () => {
+  if (mode !== 'play' && mode !== 'crumple') return;
+  amp = 1; cap.fill(Infinity); updateCloth();
+  // シワで縮んだぶん、ハンガーを肩の高さに合わせる
+  clothTop = 0; for (let v = 0; v < NV; v++) if (inShirt[v]) clothTop = Math.max(clothTop, -cpos[v * 3 + 2]);
+  setMode('result');
+  resultId++; shareFile = null; videoJob = null; videoStarted = false; updatePost();
+};
+
+// ---- 画像選択と切り抜き（塗った所だけ使う。タピオカメーカーと同じ） ----
+let img = null, mask = null, mctx = null;
+for (const b of document.querySelectorAll('.pick')) b.onclick = () => $('file').click();
+$('file').onchange = e => { loadFile(e.target.files[0]); e.target.value = ''; };
+function loadFile(f) {
+  if (!f || !f.type.startsWith('image/')) return;
+  const u = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    URL.revokeObjectURL(u);
+    const k = Math.min(1, 1600 / Math.max(im.width, im.height));
+    img = document.createElement('canvas');
+    img.width = Math.max(1, Math.round(im.width * k)); img.height = Math.max(1, Math.round(im.height * k));
+    img.getContext('2d').drawImage(im, 0, 0, img.width, img.height);
+    mask = document.createElement('canvas'); mask.width = img.width; mask.height = img.height;
+    mctx = mask.getContext('2d');
+    undoStack = []; touches.clear(); pinch = null;
+    setMode('cut'); resizeCut();
+  };
+  im.onerror = () => URL.revokeObjectURL(u);
+  im.src = u;
+}
+const cutC = $('cut'), cx = cutC.getContext('2d');
+let VW = 0, VH = 0, DPR = 1, view = null;
+let brushIdx = 1, erasing = false, undoStack = [], lastPt = null, pinch = null;
+const touches = new Map();
+const BRUSH = [8, 22, 50];
+function resizeCut() {
+  const r = cutC.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2); VW = r.width; VH = r.height;
+  cutC.width = Math.max(1, Math.round(VW * DPR)); cutC.height = Math.max(1, Math.round(VH * DPR));
+  if (img) { const pad = 12, k = Math.min((VW - pad * 2) / img.width, (VH - pad * 2) / img.height); view = { k, fit: k, x: (VW - img.width * k) / 2, y: (VH - img.height * k) / 2 }; }
+  drawCut();
+}
+function snapFit() { if (view.k <= view.fit * 1.001) { view.x = (VW - img.width * view.k) / 2; view.y = (VH - img.height * view.k) / 2; } }
+let tmpC = null;
+function drawCut() {
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0); cx.clearRect(0, 0, VW, VH);
+  if (!img || !view) return;
+  const { k, x, y } = view;
+  cx.fillStyle = '#2b3442'; cx.fillRect(x, y, img.width * k, img.height * k);
+  cx.globalAlpha = 0.35; cx.drawImage(img, x, y, img.width * k, img.height * k); cx.globalAlpha = 1;
+  if (!tmpC || tmpC.width !== img.width || tmpC.height !== img.height) { tmpC = document.createElement('canvas'); tmpC.width = img.width; tmpC.height = img.height; }
+  const g = tmpC.getContext('2d');
+  g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, tmpC.width, tmpC.height); g.drawImage(mask, 0, 0);
+  g.globalCompositeOperation = 'source-in'; g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(60, 220, 110, 0.45)'; g.fillRect(0, 0, tmpC.width, tmpC.height);
+  cx.drawImage(tmpC, x, y, img.width * k, img.height * k);
+}
+const brushPx = () => BRUSH[brushIdx] / view.k;
+function toImg(e) { const r = cutC.getBoundingClientRect(); return { x: (e.clientX - r.left - view.x) / view.k, y: (e.clientY - r.top - view.y) / view.k }; }
+const mid = (a, b) => { const r = cutC.getBoundingClientRect(); return { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top }; };
+function stroke(a, b) {
+  mctx.save();
+  mctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
+  mctx.strokeStyle = '#000'; mctx.fillStyle = '#000';
+  mctx.lineCap = 'round'; mctx.lineJoin = 'round'; mctx.lineWidth = brushPx();
+  mctx.beginPath(); mctx.moveTo(a.x, a.y); mctx.lineTo(b.x, b.y); mctx.stroke();
+  mctx.beginPath(); mctx.arc(b.x, b.y, brushPx() / 2, 0, Math.PI * 2); mctx.fill();
+  mctx.restore();
+}
+function maskBox() {
+  if (!mctx) return null;
+  const d = mctx.getImageData(0, 0, mask.width, mask.height).data;
+  let x0 = mask.width, y0 = mask.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) {
+    if (d[(y * mask.width + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
+function updateCutDone() { $('cutDone').disabled = !maskBox(); }
+function makeSprite() {
+  const b = maskBox(); if (!b) return null;
+  const k = Math.min(1, 900 / Math.max(b.w, b.h));
+  const c = document.createElement('canvas');
+  c.width = Math.max(2, Math.round(b.w * k)); c.height = Math.max(2, Math.round(b.h * k));
+  const g = c.getContext('2d');
+  g.drawImage(img, b.x, b.y, b.w, b.h, 0, 0, c.width, c.height);
+  g.globalCompositeOperation = 'destination-in';
+  g.drawImage(mask, b.x, b.y, b.w, b.h, 0, 0, c.width, c.height);
+  return c;
+}
+cutC.addEventListener('pointerdown', e => {
+  if (mode !== 'cut') return;
+  e.preventDefault(); cutC.setPointerCapture(e.pointerId);
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touches.size === 1 && !pinch) {
+    undoStack.push(mctx.getImageData(0, 0, mask.width, mask.height));
+    if (undoStack.length > 20) undoStack.shift();
+    lastPt = toImg(e); stroke(lastPt, lastPt); drawCut();
+  } else if (touches.size === 2) {
+    // 2本目の指：塗りかけを取り消して拡大縮小
+    if (lastPt) { const d = undoStack.pop(); if (d) mctx.putImageData(d, 0, 0); lastPt = null; }
+    const [a, b] = [...touches.values()];
+    pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: mid(a, b), k0: view.k, x0: view.x, y0: view.y };
+    drawCut();
+  }
+});
+cutC.addEventListener('pointermove', e => {
+  if (mode !== 'cut' || !touches.has(e.pointerId)) return;
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && touches.size >= 2) {
+    const [a, b] = [...touches.values()], m = mid(a, b);
+    const k = Math.max(view.fit, Math.min(view.fit * 12, pinch.k0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+    view.x = m.x - (pinch.m0.x - pinch.x0) / pinch.k0 * k;
+    view.y = m.y - (pinch.m0.y - pinch.y0) / pinch.k0 * k;
+    view.k = k; snapFit(); drawCut();
+  } else if (lastPt) { const p = toImg(e); stroke(lastPt, p); lastPt = p; drawCut(); }
+});
+const cutUp = e => {
+  touches.delete(e.pointerId);
+  if (touches.size === 0) pinch = null;
+  if (lastPt) { lastPt = null; updateCutDone(); }
+};
+cutC.addEventListener('pointerup', cutUp);
+cutC.addEventListener('pointercancel', cutUp);
+cutC.addEventListener('wheel', e => {
+  if (mode !== 'cut') return;
+  e.preventDefault();
+  const r = cutC.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k = Math.max(view.fit, Math.min(view.fit * 12, view.k * Math.exp(-e.deltaY * 0.0015)));
+  view.x = mx - (mx - view.x) / view.k * k; view.y = my - (my - view.y) / view.k * k; view.k = k; snapFit(); drawCut();
+}, { passive: false });
+$('brush').onclick = () => {
+  brushIdx = (brushIdx + 1) % BRUSH.length;
+  const d = $('brush').firstChild; d.style.width = d.style.height = [5, 11, 20][brushIdx] + 'px';
+};
+$('erase').onclick = () => { erasing = !erasing; $('erase').classList.toggle('on', erasing); };
+$('undo').onclick = () => { const d = undoStack.pop(); if (d) { mctx.putImageData(d, 0, 0); drawCut(); updateCutDone(); } };
+$('cancel').onclick = () => setMode('start');
+$('cutDone').onclick = () => {
+  const s = makeSprite(); if (!s) return;
+  setPrint(s); resetCloth(); parkIron(); setMode('start');
+};
+
+// サンプル画像（コードで描く猫。背景は透明）
+function sampleImage() {
+  const c = document.createElement('canvas'); c.width = 440; c.height = 420;
+  const g = c.getContext('2d'); g.translate(-80, -85);
+  g.fillStyle = '#f2a347'; g.strokeStyle = '#5a3a22'; g.lineWidth = 10; g.lineJoin = 'round';
+  for (const s of [-1, 1]) { g.beginPath(); g.moveTo(300 + s * 70, 210); g.lineTo(300 + s * 180, 100); g.lineTo(300 + s * 190, 270); g.closePath(); g.fill(); g.stroke(); }
+  g.beginPath(); g.ellipse(300, 330, 190, 160, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.fillStyle = '#5a3a22';
+  for (const s of [-1, 1]) { g.beginPath(); g.ellipse(300 + s * 75, 310, 20, 30, 0, 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = '#fff'; for (const s of [-1, 1]) { g.beginPath(); g.arc(300 + s * 75 + 6, 298, 8, 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = '#ff7f8f'; g.beginPath(); g.moveTo(285, 360); g.lineTo(315, 360); g.lineTo(300, 378); g.closePath(); g.fill();
+  g.strokeStyle = '#5a3a22'; g.lineWidth = 7; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(300, 378); g.quadraticCurveTo(300, 405, 270, 405); g.moveTo(300, 378); g.quadraticCurveTo(300, 405, 330, 405); g.stroke();
+  for (const s of [-1, 1]) for (const d of [-14, 14]) { g.beginPath(); g.moveTo(300 + s * 140, 375 + d * 0.6); g.lineTo(300 + s * 215, 365 + d * 1.6); g.stroke(); }
+  g.fillStyle = 'rgba(255,120,120,0.35)'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(300 + s * 130, 385, 30, 18, 0, 0, Math.PI * 2); g.fill(); }
+  return c;
+}
+
+// ---- 操作 ----
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -SOLE_Y), hit = new THREE.Vector3();
+const coarse = matchMedia('(pointer: coarse)').matches;
+let ptrId = null;
+function aim(e) {
+  const r = gl.getBoundingClientRect();
+  // 指で隠れないよう、スマホでは少し上をねらう
+  const y = e.clientY - (coarse ? 40 : 0);
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(y - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  if (ray.ray.intersectPlane(floorPlane, hit)) {
+    ir.tx = Math.max(-CW / 2 - 0.4, Math.min(CW / 2 + 0.4, hit.x));
+    ir.tz = Math.max(-CH / 2 - 0.4, Math.min(CH / 2 + 0.4, hit.z));
+  }
+}
+gl.addEventListener('pointerdown', e => {
+  if (mode === 'start') { startPlay(); return; }
+  if (mode === 'result') { gl.setPointerCapture(e.pointerId); rot.drag = e.pointerId; rot.lx = e.clientX; rot.lt = performance.now(); rot.vel = 0; rot.hinted = true; return; }
+  if (mode !== 'play' && mode !== 'crumple') return;
+  if (ptrId !== null) return;
+  e.preventDefault(); initAudio();
+  gl.setPointerCapture(e.pointerId); ptrId = e.pointerId;
+  demo = 0; aim(e); ir.pressing = true;
+});
+gl.addEventListener('pointermove', e => {
+  if (mode === 'result' && e.pointerId === rot.drag) {
+    const now = performance.now(), d = (e.clientX - rot.lx) * 0.012, dt = Math.max(0.008, (now - rot.lt) / 1000);
+    hangAng += d; rot.vel = rot.vel * 0.5 + d / dt * 0.5; rot.lx = e.clientX; rot.lt = now;
+    return;
+  }
+  if (mode !== 'play' && mode !== 'crumple') return;
+  if (ptrId === null && e.pointerType === 'mouse') { aim(e); return; }
+  if (e.pointerId === ptrId) aim(e);
+});
+const up = e => {
+  if (e.pointerId === rot.drag) { rot.drag = null; if (performance.now() - rot.lt > 80) rot.vel = 0; return; }
+  if (e.pointerId !== ptrId) return; ptrId = null; ir.pressing = false; };
+gl.addEventListener('pointerup', up);
+gl.addEventListener('pointercancel', up);
+
+// ---- X投稿用の動画（吊るした服がハンガーごと1回転する。最初と最後がつながるループ） ----
+// 焼きそばパンと同じく、画面と同じ renderer で表示の合間に1コマずつ描いて MP4 にする。
+// 録り始めたときの服の形を写しておき、それを回すので、きれいにループする
+const VFPS = 30, VFRAMES = 150; // 5秒で1回転
+let shareFile = null, videoJob = null, videoStarted = false, resultId = 0;
+async function makeVideo(key) {
+  if (!('VideoEncoder' in window) || !window.Mp4Muxer) return;
+  const size = 720;
+  let cfg = null;
+  for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42001f']) {
+    const c = { codec, width: size, height: size, bitrate: 6e6, framerate: VFPS };
+    try { if ((await VideoEncoder.isConfigSupported(c)).supported) { cfg = c; break; } } catch {}
+  }
+  if (!cfg || key !== resultId || mode !== 'result') return;
+  const cam = new THREE.PerspectiveCamera(camera.fov, 1, 0.1, 100), tf = Math.tan(cam.fov * Math.PI / 360);
+  const dist = Math.max((CH + 1.4) / 2 / tf, (CW + 0.6) / 2 / tf), el = 0.12;
+  cam.position.set(0, hangY() + dist * Math.sin(el), dist * Math.cos(el)); cam.lookAt(0, hangY(), 0);
+  const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: 'avc', width: size, height: size, frameRate: VFPS }, fastStart: 'in-memory' });
+  const out = document.createElement('canvas'); out.width = out.height = size;
+  const job = { key, cam, size, out, ctx: out.getContext('2d'), muxer, i: 0, failed: false, ang: hangAng,
+    snap: [cpos.slice(), cnrm.slice(), bpos.slice(), bnrm.slice()], keep: [new Float32Array(NV * 3), new Float32Array(NV * 3), new Float32Array(NV * 3), new Float32Array(NV * 3)] };
+  job.enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: () => { job.failed = true; } });
+  job.enc.configure(cfg);
+  videoJob = job;
+}
+// ループの中から呼ぶ。1回で1コマ
+function videoFrame() {
+  const job = videoJob;
+  if (job.key !== resultId || job.failed || mode !== 'result') { try { job.enc.close(); } catch {} videoJob = null; return; }
+  const arrs = [cpos, cnrm, bpos, bnrm], attrs = [clothGeo.attributes.position, clothGeo.attributes.normal, backGeo.attributes.position, backGeo.attributes.normal];
+  // 録り始めの服の形に一時的に差しかえて、ハンガーごと回して描く
+  arrs.forEach((a, n) => { job.keep[n].set(a); a.set(job.snap[n]); attrs[n].needsUpdate = true; });
+  const rot = hangerRot.rotation.y;
+  hangerRot.rotation.y = job.ang + job.i / VFRAMES * Math.PI * 2;
+  const cw = renderer.domElement.width, ch = renderer.domElement.height, pr = renderer.getPixelRatio();
+  const src = Math.floor(Math.min(cw, ch, 1440) / 2) * 2;
+  renderer.setScissorTest(true);
+  renderer.setViewport(0, 0, src / pr, src / pr); renderer.setScissor(0, 0, src / pr, src / pr);
+  renderer.render(scene, job.cam);
+  job.ctx.drawImage(renderer.domElement, 0, ch - src, src, src, 0, 0, job.size, job.size);
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, cw / pr, ch / pr);
+  hangerRot.rotation.y = rot;
+  arrs.forEach((a, n) => { a.set(job.keep[n]); attrs[n].needsUpdate = true; });
+  const vf = new VideoFrame(job.out, { timestamp: Math.round(job.i * 1e6 / VFPS), duration: Math.round(1e6 / VFPS) });
+  job.enc.encode(vf, { keyFrame: job.i % 60 === 0 }); vf.close();
+  job.i++;
+  if (job.i < VFRAMES) return;
+  videoJob = null;
+  (async () => {
+    await job.enc.flush(); job.enc.close(); job.muxer.finalize();
+    if (job.key !== resultId || job.failed) return;
+    shareFile = new File([job.muxer.target.buffer], 'image-iron.mp4', { type: 'video/mp4' });
+    updatePost();
+  })().catch(() => {});
+}
+// 動画ができるまでは投稿ボタンを薄くする
+function updatePost() { $('post').classList.toggle('wait', !shareFile && 'VideoEncoder' in window); }
+// 押したら必ず共有メニューを開く（スマホもPCも。動画ができていれば動画つき、まだなら文とURLだけ）。
+// 共有メニューがない環境だけ、動画を保存してから投稿画面を開く
+$('post').addEventListener('click', e => {
+  if (navigator.share) {
+    e.preventDefault();
+    const text = `${t('share')} ${TAG}\n${URL_GAME}`;
+    const data = shareFile && navigator.canShare?.({ files: [shareFile] }) ? { title: t('title'), files: [shareFile], text } : { title: t('title'), text };
+    navigator.share(data).catch(() => {});
+    return;
+  }
+  if (shareFile) {
+    const d = document.createElement('a');
+    d.href = URL.createObjectURL(shareFile); d.download = shareFile.name; d.click();
+    setTimeout(() => URL.revokeObjectURL(d.href), 10000);
+  }
+});
+
+// ---- ループ ----
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(1 / 30, Math.max(1e-3, (now - last) / 1000)); last = now;
+  frame(dt);
+  if (videoJob) videoFrame();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+function frame(dt) {
+  if (mode === 'crumple') {
+    // くしゃっと丸まる → お手本で少しだけかける
+    anim += dt;
+    const k = Math.min(1, anim / 0.7);
+    amp = k < 1 ? 1 - Math.pow(1 - k, 3) * Math.cos(k * 9) : 1; dirty = true;
+    if (anim > 0.9) { setMode('play'); demo = 1.6; ir.pressing = true; ir.tx = -CW * 0.05; ir.tz = CH * 0.1; }
+  }
+  if (mode === 'play' && demo > 0) {
+    demo -= dt;
+    if (demo <= 0) { ir.pressing = false; ir.tx = CW * 0.38; ir.tz = CH * 0.28; }
+  }
+  if (mode === 'play' || mode === 'crumple') ironStep(dt);
+  if (mode === 'start' || mode === 'cut') { iron.position.set(ir.x, ir.y, ir.z); iron.rotation.y = ir.yaw; }
+  if (mode === 'result') {
+    anim += dt;
+    const k = Math.min(1, anim / 1.1), e = k * k * (3 - 2 * k);
+    const dy = CH / 2 - clothTop; // シワで縮んだぶん上げて、肩をハンガーの少し上にそろえる
+    hanger.visible = true;
+    if (!simOn) {
+      cloth.rotation.x = e * Math.PI / 2;
+      cloth.position.y = e * (hangY() + dy + LIFT);
+      hs = 1 - 0.6 * e; dirty = true;
+      if (k >= 1) { cloth.rotation.x = 0; cloth.position.y = 0; dirty = false; initSim(); }
+    }
+    if (simOn) { stepSim(dt); drawSim(); }
+    // ドラッグで回す（離すと惰性で回って止まる）
+    // 掛かったら一度だけ、ゆっくり1回転して正面に戻る（回せることを見せる）
+    if (!rot.hinted && anim > 3) {
+      const k2 = Math.min(1, (anim - 3) / 2.6);
+      hangAng = Math.PI * 2 * k2 * k2 * (3 - 2 * k2);
+      if (k2 >= 1) rot.hinted = true;
+    } else if (!rot.drag) { hangAng += rot.vel * dt; rot.vel *= Math.exp(-dt * 1.5); }
+    hangerRot.rotation.y = hangAng;
+    // 吊るして落ち着いたら、X投稿用の動画を裏で作る
+    if (anim > 6 && !videoStarted) { videoStarted = true; makeVideo(resultId); }
+  }
+  stepPuffs(dt);
+  if (dirty) { updateCloth(); dirty = false; }
+  placeCam(dt);
+}
+
+// テスト・アイコン作成用
+window.__iron = { get mode() { return mode; }, ir, wr, burn, setMode, startPlay, frame, get shareFile() { return shareFile; }, sim: () => ({ P, sAct, sSeam, Y0, arm0: armY(0), HSEG }) };
+if (window.__KF_ZH__) lang = 'zh';
+applyLang();
+setPrint(sampleImage()); makeCrumple(); resetCloth(); parkIron();
+setMode('start');
+resize(); placeCam(-1);
+new ResizeObserver(resize).observe($('stage'));
+requestAnimationFrame(loop);
+</script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

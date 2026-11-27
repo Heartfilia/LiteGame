@@ -182,18 +182,31 @@
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 20000);
     try {
-      const response = await fetch(server + '/api/v1' + path, {
-        method,
-        credentials: 'omit',
-        redirect: 'error',
-        cache: 'no-store',
-        signal: controller.signal,
-        headers: {
-          ...(token ? { Authorization: 'Bearer ' + token } : {}),
-          ...(body === undefined ? {} : { 'Content-Type': 'application/json' })
-        },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) })
-      });
+      let response;
+      try {
+        response = await fetch(server + '/api/v1' + path, {
+          method,
+          credentials: 'omit',
+          redirect: 'error',
+          cache: 'no-store',
+          signal: controller.signal,
+          headers: {
+            ...(token ? { Authorization: 'Bearer ' + token } : {}),
+            ...(body === undefined ? {} : { 'Content-Type': 'application/json' })
+          },
+          ...(body === undefined ? {} : { body: JSON.stringify(body) })
+        });
+      } catch (error) {
+        // 浏览器只在网络层失败（地址不通、证书无效、CORS 被拒）时抛 TypeError，
+        // 这时给一句能指导排查的话，而不是把 "Failed to fetch" 原样丢给用户。
+        const friendly = error.name === 'AbortError'
+          ? '连接服务器超时，请检查地址与网络'
+          : '无法连接服务器：地址不可达、HTTPS 证书无效，或服务器未启动';
+        const err = new Error(friendly);
+        err.status = 0;
+        err.cause = error;
+        throw err;
+      }
       const result = await response.json().catch(() => null);
       if (!response.ok) {
         if (response.status === 404 && !result?.error?.code) {
@@ -716,7 +729,8 @@
         updatePill();
       } catch (e) {
         if (e.status === 401) root?.LiteSync?.markExpired?.();
-        setFeedback('创建房间失败：' + e.message, true);
+        console.warn('[netplay] create room failed', { server: session?.server, origin: location.origin, online: navigator.onLine, error: e });
+        setFeedback('创建房间失败：' + e.message + '（服务器 ' + session.server + '）', true);
       } finally {
         busy = false;
         renderModal();

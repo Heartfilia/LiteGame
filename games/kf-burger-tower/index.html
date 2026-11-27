@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>汉堡塔 · LiteGame</title>
+  <meta name="description" content="一层层往上叠，别让整座塔塌下来。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="汉堡塔 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/burger-tower/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/burger-tower/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #e6f6ff; color: #5a3517; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 480px; margin: 0 auto; box-sizing: border-box;
+      position: relative; z-index: 3;
+    }
+    header a { color: #c4561c; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    #lang { font-size: 15px; padding: 0 10px; }
+    .pill {
+      font-size: 20px; background: #fff; border: 2px solid #f3cf9a; border-radius: 999px;
+      min-width: 44px; height: 36px; cursor: pointer; font-weight: bold; color: #b0501a;
+    }
+    main {
+      flex: 1; min-height: 0; position: relative;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    #stage { position: absolute; inset: 0 0 calc(80px + env(safe-area-inset-bottom)); cursor: pointer; touch-action: none; }
+    #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #hud {
+      position: absolute; top: 4px; left: 0; right: 0; text-align: center; pointer-events: none;
+      font-weight: bold; z-index: 2;
+    }
+    #height { font-size: 44px; text-shadow: 0 2px 0 #fff; }
+    #best { font-size: 16px; font-weight: bold; color: #b0501a; }
+    #finish {
+      position: absolute; left: 50%; transform: translateX(-50%); z-index: 2;
+      bottom: calc(92px + env(safe-area-inset-bottom)); width: min(240px, 70%);
+      margin: 0; font-size: 20px; padding: 12px 8px;
+    }
+    #finish:active { transform: translate(-50%, 3px); }
+    #finish[hidden] { display: none; }
+    /* 横長の画面ではバーガーにかぶらないよう右下へ */
+    @media (min-aspect-ratio: 4/3) {
+      #finish { left: auto; right: 16px; transform: none; width: auto; padding: 12px 20px; }
+      #finish:active { transform: translateY(3px); }
+    }
+    #result {
+      position: absolute; inset: 0; z-index: 4; display: flex; align-items: flex-end; justify-content: center;
+      padding: 12px 12px calc(80px + env(safe-area-inset-bottom)); box-sizing: border-box;
+    }
+    #result[hidden] { display: none; }
+    .panel {
+      background: #fff; border-radius: 24px; padding: 20px 16px; width: 100%; max-width: 360px;
+      box-sizing: border-box; text-align: center; box-shadow: 0 6px 0 #f3cf9a;
+    }
+    #rH { font-size: 64px; margin-bottom: 8px; font-weight: bold; line-height: 1.1; }
+    .big {
+      font: inherit; font-size: 22px; font-weight: bold; padding: 14px 8px; border-radius: 18px;
+      border: none; cursor: pointer; color: #fff; background: #e8742a; width: 100%;
+      box-shadow: 0 4px 0 #a84e14; touch-action: manipulation; margin-top: 10px;
+      display: block; text-align: center; text-decoration: none; box-sizing: border-box;
+    }
+    .big:active { transform: translateY(3px); box-shadow: 0 1px 0 #a84e14; }
+    .big.x { background: #222; box-shadow: 0 4px 0 #000; }
+  </style>
+  <script type="importmap">
+    { "imports": {
+      "three": "../lib/three/build/three.module.js",
+      "cannon-es": "../lib/vendor/cannon-es@0.20.0/dist/cannon-es.js"
+    } }
+  </script>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">汉堡塔</h1>
+  <header>
+    <a href="../../index.html#/category/premium" id="back">← トップへ戻る</a>
+    <div class="hbtns"><button id="lang" class="pill">EN</button><button id="sound" class="pill" aria-label="音のオン/オフ"></button></div>
+  </header>
+  <main>
+    <div id="stage"></div>
+    <div id="hud"><div id="height">0cm</div><div id="best"></div></div>
+    <button id="finish" class="big" hidden></button>
+    <div id="result" hidden>
+      <div class="panel">
+        <div id="rH"></div>
+        <div id="shareBox"></div>
+        <button id="retry" class="big"></button>
+      </div>
+    </div>
+  </main>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 汉堡塔 · 中文文案
+window.__KF_ZH__ = {
+  title: '汉堡塔',
+  back: '← 大厅',
+  best: (h) => `最佳 ${h}cm`,
+  retry: '再来一次',
+  share: '分享到 X',
+  finish: '收尾',
+  shareText: (h) => `在汉堡塔里堆到 ${h}cm #LiteGame`
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import * as CANNON from 'cannon-es';
+
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/burger-tower/';
+    const CM = 5; // 1ユニット = 5cm
+
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('burger-tower:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('burger-tower:' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    // ---- 言語 ----
+    const L = {
+      ja: {
+        title: '汉堡塔', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        best: h => `ベスト ${h}cm`,
+        retry: 'もう一度', share: 'Xに投稿', finish: '完成させる',
+        shareText: h => `汉堡塔で ${h}cm 積み上げた！ #汉堡塔`,
+      },
+      en: {
+        title: 'Burger Tower', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        best: h => `Best ${h}cm`,
+        retry: 'Play again', share: 'Post on X', finish: 'Finish it',
+        shareText: h => `I stacked a ${h}cm burger in Burger Tower! #BurgerTower`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const $ = id => document.getElementById(id);
+    const langBtn = $('lang');
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      langBtn.textContent = t('lang'); langBtn.setAttribute('aria-label', t('langLabel'));
+      $('retry').textContent = t('retry');
+      $('finish').textContent = t('finish');
+      hud();
+      if (result) showResult();
+    }
+    langBtn.onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+
+    // ---- 音 ----
+    let soundOn = store.get('sound', true);
+    const soundBtn = $('sound');
+    // 音ボタンは絵文字を使わず、線で描いたスピーカー
+    const SPEAKER = '<path d="M4 9h3l4-4v14l-4-4H4z" fill="currentColor"/>';
+    const updateSoundBtn = () => {
+      soundBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:middle">${SPEAKER}${
+        soundOn ? '<path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/>' : '<path d="M16 9l5 6M21 9l-5 6"/>'}</svg>`;
+    };
+    soundBtn.onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+    updateSoundBtn();
+    let ac = null;
+    function audio() {
+      if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+      if (ac.state === 'suspended') ac.resume();
+      return ac;
+    }
+    function thump(vol = 0.5, freq = 180) {
+      if (!soundOn) return;
+      const a = audio(); if (!a) return;
+      const o = a.createOscillator(), g = a.createGain(), now = a.currentTime;
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, now); o.frequency.exponentialRampToValueAtTime(freq * 0.4, now + 0.12);
+      g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      o.connect(g).connect(a.destination); o.start(now); o.stop(now + 0.16);
+    }
+    function blip() {
+      if (!soundOn) return;
+      const a = audio(); if (!a) return;
+      const o = a.createOscillator(), g = a.createGain(), now = a.currentTime;
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(500, now); o.frequency.exponentialRampToValueAtTime(900, now + 0.06);
+      g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      o.connect(g).connect(a.destination); o.start(now); o.stop(now + 0.09);
+    }
+    function crash() {
+      if (!soundOn) return;
+      const a = audio(); if (!a) return;
+      const now = a.currentTime, len = 0.6;
+      const buf = a.createBuffer(1, a.sampleRate * len, a.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 2;
+      const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+      s.buffer = buf; f.type = 'lowpass'; f.frequency.value = 900; g.gain.value = 0.6;
+      s.connect(f).connect(g).connect(a.destination); s.start(now);
+      [0, 0.12, 0.25].forEach((dt, i) => setTimeout(() => thump(0.4, 160 - i * 30), dt * 1000));
+    }
+
+    // ---- 3D ----
+    const stage = $('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    // 高解像度スマホでも描く画素数を抑える
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.shadowMap.enabled = true;
+    stage.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    // 空のグラデーション（上ほど濃い青）
+    {
+      const c = document.createElement('canvas'); c.width = 2; c.height = 256;
+      const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
+      gr.addColorStop(0, '#5ab8f5'); gr.addColorStop(0.7, '#a8e0ff'); gr.addColorStop(1, '#e6f6ff');
+      g.fillStyle = gr; g.fillRect(0, 0, 2, 256);
+      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+      scene.background = tex;
+    }
+    scene.fog = new THREE.Fog(0xd6efff, 25, 70);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xd8a870, 1.4));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.bias = -0.002; sun.shadow.normalBias = 0.03;
+    Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 1, far: 40 });
+    scene.add(sun, sun.target);
+
+    // テーブルとお皿
+    // 雲：白い球を寄せ集めて作り、ゆっくり流す（全部の球を1回の描画で描く）
+    const CLOUDS = 9, PUFFS = 5;
+    const clouds = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xbfd8e8 }), CLOUDS * PUFFS);
+    clouds.frustumCulled = false;
+    const cloudData = Array.from({ length: CLOUDS }, (_, i) => ({
+      // 手前に来ないよう、奥と下の方に置く
+      x: (Math.random() - 0.5) * 50, y: -6 - Math.random() * 10 + (i % 3) * 6, z: -14 - Math.random() * 16,
+      v: 0.2 + Math.random() * 0.3,
+      puffs: Array.from({ length: PUFFS }, (_, j) => ({
+        x: (j - 2) * 1.5 + Math.random(), y: Math.random() * 0.6, z: Math.random() * 1.5, s: 1.2 + Math.random() * 1.4,
+      })),
+    }));
+    const cloudM = new THREE.Matrix4();
+    function updateClouds(dt) {
+      cloudData.forEach((c, i) => {
+        c.x += c.v * dt; if (c.x > 26) c.x = -26;
+        c.puffs.forEach((p, j) => {
+          cloudM.makeScale(p.s, p.s * 0.7, p.s).setPosition(c.x + p.x, c.y + p.y, c.z + p.z);
+          clouds.setMatrixAt(i * PUFFS + j, cloudM);
+        });
+      });
+      clouds.instanceMatrix.needsUpdate = true;
+    }
+    updateClouds(0);
+    scene.add(clouds);
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.0, 0.25, 48), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    plate.position.y = -0.125; plate.receiveShadow = true; plate.castShadow = true;
+    scene.add(plate);
+    plate.layers.enable(1);
+
+    const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -20, 0) });
+    world.broadphase = new CANNON.SAPBroadphase(world);
+    world.solver.iterations = 12;
+    world.allowSleep = true;
+    const mat = new CANNON.Material();
+    world.addContactMaterial(new CANNON.ContactMaterial(mat, mat, { friction: 0.6, restitution: 0.02 }));
+    const plateBody = new CANNON.Body({ mass: 0, material: mat, shape: new CANNON.Cylinder(2.6, 2.6, 0.25, 24) });
+    plateBody.position.set(0, -0.125, 0);
+    world.addBody(plateBody);
+
+    // マテリアルは色ごとに1つを使い回す
+    const matCache = {};
+    // 落下地点のデカール：揺れている具材の形を真下に投影し、上向きの面に色を塗る（全マテリアル共通）
+    const decal = {
+      uDecalOn: { value: 0 }, uDecalPos: { value: new THREE.Vector3() },
+      uDecalRot: { value: 0 }, uDecalR: { value: 1 }, uDecalBox: { value: 0 },
+      uHeight: { value: null }, uHMat: { value: new THREE.Matrix4() },
+    };
+    function addDecal(m) {
+      m.onBeforeCompile = sh => {
+        Object.assign(sh.uniforms, decal);
+        sh.vertexShader = 'varying vec3 vWPos;\nvarying vec3 vWN;\n' + sh.vertexShader.replace('#include <project_vertex>',
+          '#include <project_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWN = normalize(mat3(modelMatrix) * objectNormal);');
+        sh.fragmentShader = `varying vec3 vWPos;
+varying vec3 vWN;
+uniform float uDecalOn, uDecalRot, uDecalR, uDecalBox;
+uniform vec3 uDecalPos;
+uniform sampler2D uHeight;
+uniform mat4 uHMat;
+` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+// 上向きの面は、真上から見ていちばん上のときだけ塗る（下に隠れた面には塗らない）
+// 側面はいつも塗る（隠れた側面はカメラからも見えないので問題ない）
+// 揺れている具材そのものには塗らない（具材の底より 0.3 下から）
+vec4 hp = uHMat * vec4(vWPos, 1.0);
+float topY = texture2D(uHeight, hp.xy / hp.w * 0.5 + 0.5).r;
+bool up = vWN.y > 0.4;
+if (uDecalOn > 0.5 && vWPos.y < uDecalPos.y - 0.3 && (up ? vWPos.y > topY - 0.05 : vWN.y > -0.6)) {
+  vec2 d = vWPos.xz - uDecalPos.xz;
+  float c = cos(uDecalRot), s = sin(uDecalRot);
+  vec2 l = vec2(c * d.x - s * d.y, s * d.x + c * d.y);
+  float dist = uDecalBox > 0.5 ? max(abs(l.x), abs(l.y)) : length(l);
+  float aa = fwidth(dist) * 1.5;
+  float inside = 1.0 - smoothstep(uDecalR - aa, uDecalR + aa, dist);
+  float rim = inside * smoothstep(uDecalR - 0.14 - aa, uDecalR - 0.14 + aa, dist);
+  float k = max(inside * 0.35, rim * 0.95);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), k);
+}`);
+      };
+      m.customProgramCacheKey = () => 'decal';
+      return m;
+    }
+    const lam = c => matCache[c] ||= addDecal(new THREE.MeshLambertMaterial({ color: c, side: THREE.DoubleSide }));
+    plate.material = lam(0xd4d8dc);
+    // 具材の種類：見た目・物理の形・重さ
+    function bunTop(r, h) {
+      // 底を閉じたドーム（回転体）
+      const pts = [new THREE.Vector2(0, -h / 2)];
+      for (let i = 0; i <= 16; i++) {
+        const a = (i / 16) * Math.PI / 2;
+        pts.push(new THREE.Vector2(Math.max(0.001, r * Math.cos(a)), -h / 2 + h * Math.sin(a)));
+      }
+      return new THREE.LatheGeometry(pts, 32);
+    }
+    function wavyDisk(r, h, waves, amp) {
+      const g = new THREE.CylinderGeometry(r, r, h, 64, 1);
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i), z = p.getZ(i), a = Math.atan2(z, x), d = Math.hypot(x, z);
+        if (d > r * 0.9) {
+          const k = 1 + amp * Math.sin(a * waves);
+          p.setX(i, x * k); p.setZ(i, z * k);
+          p.setY(i, p.getY(i) + amp * 1.5 * Math.cos(a * waves * 1.3));
+        }
+      }
+      g.computeVertexNormals();
+      return g;
+    }
+    const KINDS = {
+      bunBottom: { r: 1.5, h: 0.5, mass: 2, geo: () => new THREE.CylinderGeometry(1.5, 1.4, 0.5, 32), color: 0xd98a3a },
+      patty:     { r: 1.55, h: 0.4, mass: 3, geo: () => wavyDisk(1.55, 0.4, 9, 0.03), color: 0x6b3a1e },
+      cheese:    { box: 2.7, h: 0.1, mass: 0.6, geo: () => new THREE.BoxGeometry(2.7, 0.1, 2.7), color: 0xffc928 },
+      lettuce:   { r: 1.75, h: 0.16, mass: 0.4, geo: () => wavyDisk(1.75, 0.16, 11, 0.07), color: 0x7cc84a },
+      tomato:    { r: 1.2, h: 0.28, mass: 1, geo: () => new THREE.CylinderGeometry(1.2, 1.2, 0.28, 32), color: 0xe5402f },
+      pickle:    { r: 0.65, h: 0.14, mass: 0.2, geo: () => new THREE.CylinderGeometry(0.65, 0.65, 0.14, 20), color: 0x5f8f2a },
+      bunMid:    { r: 1.5, h: 0.45, mass: 1.5, geo: () => new THREE.CylinderGeometry(1.5, 1.5, 0.45, 32), color: 0xe39a48 },
+      bunTop:    { r: 1.55, h: 0.9, mass: 1.5, geo: () => bunTop(1.55, 0.9), color: 0xe39a48, seeds: true },
+    };
+    const BAG = ['patty', 'patty', 'cheese', 'lettuce', 'tomato', 'pickle', 'bunMid'];
+    const geoCache = {};
+    function makeMesh(kind) {
+      const k = KINDS[kind];
+      const geo = geoCache[kind] ||= k.geo();
+      const m = new THREE.Mesh(geo, lam(k.color));
+      m.castShadow = true; m.receiveShadow = true; m.layers.enable(1);
+      if (k.seeds) {
+        const sg = geoCache.seed ||= new THREE.SphereGeometry(0.06, 6, 4).scale(1.6, 0.6, 1);
+        const sm = lam(0xfff6dc);
+        for (let i = 0; i < 18; i++) {
+          const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * 1.15;
+          const y = k.h * Math.sqrt(Math.max(0, 1 - (d / k.r) ** 2)) - k.h / 2;
+          const s = new THREE.Mesh(sg, sm);
+          s.position.set(Math.cos(a) * d, y, Math.sin(a) * d); s.rotation.y = a;
+          m.add(s);
+        }
+      }
+      if (kind === 'tomato' || kind === 'pickle') {
+        const inner = new THREE.Mesh(geoCache[kind + 'In'] ||= new THREE.CylinderGeometry(k.r * 0.75, k.r * 0.75, k.h + 0.01, 20), lam(kind === 'tomato' ? 0xff7a5c : 0xa6c95a));
+        m.add(inner);
+      }
+      return m;
+    }
+    function makeBody(kind) {
+      const k = KINDS[kind];
+      const shape = k.box ? new CANNON.Box(new CANNON.Vec3(k.box / 2, k.h / 2, k.box / 2)) : new CANNON.Cylinder(k.r, k.r, k.h, 10);
+      const b = new CANNON.Body({ mass: k.mass, material: mat, shape, linearDamping: 0.05, angularDamping: 0.2 });
+      b.sleepSpeedLimit = 0.15; b.sleepTimeLimit = 0.5;
+      return b;
+    }
+
+    // ---- ゲーム状態 ----
+    let pieces = [];      // {kind, mesh, body}
+    let holder = null;    // 揺れている次の具材 {kind, mesh}
+    let state = 'play';  // play / final（最後のバンズ） / settle（完成待ち） / result
+    let swingT = 0, nextAt = 0, settleAt = 0;
+    let curH = 0, stackTop = 0, camY = 0, holderY = 2.9;
+    let best = store.get('best', 0);
+    let result = null;
+    let bag = [];
+    const nextKind = () => { if (!bag.length) bag = BAG.slice().sort(() => Math.random() - 0.5); return bag.pop(); };
+
+    function addPiece(kind, x, y, z, rotY = 0) {
+      const mesh = makeMesh(kind), body = makeBody(kind);
+      body.position.set(x, y, z);
+      body.quaternion.setFromEuler(0, rotY, 0);
+      body.addEventListener('collide', e => {
+        const v = Math.abs(e.contact.getImpactVelocityAlongNormal());
+        if (v > 1.2 && performance.now() - (body.lastHit || 0) > 120) { body.lastHit = performance.now(); thump(Math.min(0.5, v * 0.06), 140 + Math.random() * 60); }
+      });
+      world.addBody(body); scene.add(mesh);
+      const p = { kind, mesh, body };
+      pieces.push(p); sync(p);
+      return p;
+    }
+    const sync = p => { p.mesh.position.copy(p.body.position); p.mesh.quaternion.copy(p.body.quaternion); };
+    const topOf = p => p.body.position.y + (KINDS[p.kind].h / 2);
+
+    function reset() {
+      for (const p of pieces) { world.removeBody(p.body); scene.remove(p.mesh); }
+      pieces = [];
+      if (holder) scene.remove(holder.mesh);
+      holder = null; bag = [];
+      addPiece('bunBottom', 0, 0.25, 0);
+      curH = 0.5; stackTop = 0.5; holderY = 2.9; camY = 0.5; swingT = 0; result = null;
+      $('result').hidden = true; $('hud').hidden = false;
+    }
+    function spawnHolder(kind = nextKind()) {
+      holder = { kind, mesh: makeMesh(kind), rot: Math.random() * Math.PI };
+      scene.add(holder.mesh);
+      swingT = Math.random() * 10;
+      holder.speed = Math.min(1.4 + pieces.length * 0.07, 3.4);
+    }
+    function holderPos() {
+      // swingT は揺れの位相。速さは出てきたときに決めて、途中では変えない
+      // （具材の数で速さを変えると、落ちた具材が消えた瞬間に位置が飛んで震えて見える）
+      const amp = 2.2;
+      return {
+        x: amp * Math.sin(swingT),
+        z: amp * 0.45 * Math.sin(swingT * 0.73 + 1),
+        y: holderY,
+      };
+    }
+    function drop() {
+      if ((state !== 'play' && state !== 'final') || !holder) return;
+      const p = holderPos();
+      scene.remove(holder.mesh);
+      addPiece(holder.kind, p.x, p.y, p.z, holder.rot);
+      holder = null; blip();
+      nextAt = performance.now() + 650;
+      if (state === 'final') { state = 'settle'; settleAt = performance.now(); }
+    }
+    // 完成ボタン：揺れている具材を上のバンズに替える
+    function finishBurger() {
+      if (state !== 'play') return;
+      state = 'final'; $('finish').hidden = true;
+      if (holder) scene.remove(holder.mesh);
+      spawnHolder('bunTop');
+    }
+    $('finish').onclick = finishBurger;
+
+    // ---- 入力 ----
+    stage.addEventListener('pointerdown', e => { e.preventDefault(); drop(); });
+    addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        if (state === 'result' && e.code === 'Enter') return;
+        e.preventDefault();
+        if (state === 'result') { start(); return; }
+        drop();
+      }
+    });
+    $('retry').onclick = () => start();
+
+    // ---- HUD・結果 ----
+    const cm = h => Math.round(h * CM);
+    function hud() {
+      $('height').textContent = `${cm(curH)}cm`;
+      $('best').textContent = best > 0 ? t('best')(best) : '';
+    }
+    function showResult() {
+      const r = result;
+      $('rH').textContent = `${r.h}cm`;
+      const box = $('shareBox'); box.textContent = '';
+      const a = document.createElement('a');
+      a.className = 'big x'; a.textContent = t('share');
+      a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('shareText')(r.h))}&url=${encodeURIComponent(SHARE_URL)}`;
+      const mobile = matchMedia('(pointer: coarse)').matches;
+      if (!mobile) { a.target = '_blank'; a.rel = 'noopener'; }
+      // Xの投稿URLには画像を付けられないので：
+      // スマホは共有シートに画像と文を渡す（使えなければそのまま x.com へ）。PCは画像を保存してから投稿画面を開く
+      a.onclick = e => {
+        const file = shareFile();
+        if (mobile) {
+          if (navigator.canShare?.({ files: [file] })) {
+            e.preventDefault();
+            navigator.share({ files: [file], text: `${t('shareText')(r.h)}\n${SHARE_URL}` })
+              .catch(err => { if (err.name !== 'AbortError') location.href = a.href; });
+          }
+          return;
+        }
+        const d = document.createElement('a');
+        d.href = resultImage().toDataURL('image/png'); d.download = 'burger-tower.png'; d.click();
+      };
+      box.appendChild(a);
+    }
+    // 結果画像（1080×1350）：完成したバーガーの画面と高さ
+    let snap = null, snapCenter = null;
+    function takeSnap() {
+      renderer.render(scene, camera);
+      const src = renderer.domElement;
+      snap = document.createElement('canvas'); snap.width = src.width; snap.height = src.height;
+      snap.getContext('2d').drawImage(src, 0, 0);
+      const v = new THREE.Vector3(0, curH * 0.5, 0).project(camera);
+      snapCenter = { x: (v.x + 1) / 2 * src.width, y: (1 - v.y) / 2 * src.height };
+    }
+    function resultImage() {
+      const W = 1080, H = 1350, c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      g.fillStyle = '#a8e0ff'; g.fillRect(0, 0, W, H);
+      if (snap) {
+        // バーガーを中心に、縦横比 4:5 で切り抜く
+        let sh = Math.min(snap.height, snap.width * H / W), sw = sh * W / H;
+        const sx = Math.min(Math.max(snapCenter.x - sw / 2, 0), snap.width - sw);
+        const sy = Math.min(Math.max(snapCenter.y - sh * 0.55, 0), snap.height - sh);
+        g.drawImage(snap, sx, sy, sw, sh, 0, 0, W, H);
+      }
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = 'bold 150px system-ui, sans-serif';
+      g.lineWidth = 16; g.strokeStyle = '#fff'; g.lineJoin = 'round';
+      g.strokeText(`${result.h}cm`, W / 2, 140);
+      g.fillStyle = '#5a3517'; g.fillText(`${result.h}cm`, W / 2, 140);
+      return c;
+    }
+    let fileCache = null;
+    function shareFile() {
+      if (fileCache?.h === result.h) return fileCache.file;
+      const url = resultImage().toDataURL('image/png'), bin = atob(url.split(',')[1]);
+      const arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      fileCache = { h: result.h, file: new File([arr], 'burger-tower.png', { type: 'image/png' }) };
+      return fileCache.file;
+    }
+    function finish() {
+      state = 'result'; $('finish').hidden = true;
+      const h = cm(curH), isBest = h > best;
+      if (isBest) { best = h; store.set('best', best); }
+      result = { h, isBest };
+      takeSnap(); fileCache = null;
+      showResult(); hud();
+      $('result').hidden = false; $('hud').hidden = true;
+    }
+    function start() {
+      reset();
+      state = 'play'; $('finish').hidden = false;
+      spawnHolder(); hud();
+    }
+
+    // ---- ループ ----
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      // 縦長の画面では少し引く
+      // 画面の縦横比に合わせて、揺れる範囲（横）とタワーまわり（縦）が両方収まる距離にする
+      const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const fitH = 5.2 / tanV, fitW = 4.4 / (tanV * camera.aspect);
+      camera.userData.dist = Math.max(fitH, fitW) / 1.11;
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', resize);
+
+    // ---- 落下地点のガイド：デカールの位置合わせと、中心から真下への縦線 ----
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1, 6).translate(0, -0.5, 0),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 }));
+    scene.add(stem);
+    const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), origin = new THREE.Vector3();
+    // 高さマップ：お皿と積んだ具材（レイヤー1）を真上から撮り、各地点のいちばん上の高さを記録する
+    const hTarget = new THREE.WebGLRenderTarget(512, 512, { type: THREE.HalfFloatType, depthBuffer: true });
+    const hCam = new THREE.OrthographicCamera(-4.5, 4.5, 4.5, -4.5, 0.1, 80);
+    hCam.up.set(0, 0, -1); hCam.layers.set(1);
+    const hMat = new THREE.ShaderMaterial({
+      side: THREE.DoubleSide,
+      vertexShader: 'varying float vY; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vY = w.y; gl_Position = projectionMatrix * viewMatrix * w; }',
+      fragmentShader: 'varying float vY; void main() { gl_FragColor = vec4(vY, 0.0, 0.0, 1.0); }',
+    });
+    decal.uHeight.value = hTarget.texture;
+    let hCount = -1, hCamY = 0;
+    function renderHeight() {
+      hCam.position.set(0, camY + 40, 0); hCam.lookAt(0, camY, 0);
+      hCam.updateMatrixWorld();
+      decal.uHMat.value.multiplyMatrices(hCam.projectionMatrix, hCam.matrixWorldInverse);
+      const bg = scene.background, fog = scene.fog;
+      scene.background = null; scene.fog = null; scene.overrideMaterial = hMat;
+      renderer.setRenderTarget(hTarget);
+      renderer.setClearColor(0x000000, 1);
+      renderer.clear();  // 何もない所は高さ 0（お皿の面）扱い
+      renderer.render(scene, hCam);
+      renderer.setRenderTarget(null);
+      scene.background = bg; scene.fog = fog; scene.overrideMaterial = null;
+    }
+
+    function updateGuide() {
+      stem.visible = !!holder; decal.uDecalOn.value = holder ? 1 : 0;
+      if (!holder) return;
+      const k = KINDS[holder.kind], p = holder.mesh.position, bottom = p.y - k.h / 2;
+      decal.uDecalPos.value.set(p.x, bottom, p.z);
+      decal.uDecalRot.value = holder.rot;
+      decal.uDecalR.value = k.r || k.box / 2;
+      decal.uDecalBox.value = k.box ? 1 : 0;
+      // 高さマップは、具材が動いているときや新しく積まれたときだけ撮り直す
+      const moving = pieces.some(q => q.body.sleepState !== CANNON.Body.SLEEPING);
+      if (moving || pieces.length !== hCount || Math.abs(camY - hCamY) > 1) {
+        holder.mesh.visible = false; renderHeight(); holder.mesh.visible = true;
+        hCount = pieces.length; hCamY = camY;
+      }
+      origin.set(p.x, bottom - 0.01, p.z);
+      ray.set(origin, down);
+      const hit = ray.intersectObjects([plate, ...pieces.map(q => q.mesh)], true)[0];
+      stem.position.set(p.x, bottom, p.z);
+      stem.scale.y = Math.max(0.01, hit ? bottom - hit.point.y : 12);
+    }
+
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min((now - last) / 1000, 1 / 20); last = now;
+      world.step(1 / 60, dt, 3);
+      for (const p of pieces) if (p.body.sleepState !== CANNON.Body.SLEEPING) sync(p);
+
+      if (state !== 'result') {
+        // お皿から落ちた具材：音を鳴らし、見えなくなったら消す
+        for (const p of pieces) {
+          if (!p.fell && p.body.position.y < -1) { p.fell = true; crash(); }
+        }
+        // 落ちた具材は、画面の外に出てから消す
+        const offscreen = p => {
+          if (p.body.position.y > -1) return false;
+          const v = p.mesh.position.clone().project(camera);
+          return v.y < -1.3 || Math.abs(v.x) > 1.5 || p.body.position.y < camY - 60;
+        };
+        for (const p of pieces.filter(offscreen)) {
+          world.removeBody(p.body); scene.remove(p.mesh);
+          pieces.splice(pieces.indexOf(p), 1);
+        }
+        // 止まっている具材のいちばん上 = 高さ
+        let top = 0.5;
+        for (const p of pieces) {
+          const b = p.body;
+          if (b.position.y < 0) continue;
+          if (b.velocity.length() < 0.25 || b.sleepState === CANNON.Body.SLEEPING) top = Math.max(top, topOf(p));
+        }
+        stackTop = Math.max(0.5, Math.min(top, pieces.reduce((m, p) => Math.max(m, topOf(p)), 0)));
+        // 全部止まったら高さを更新（崩れたら下がる）
+        const settled = pieces.every(p => p.fell || p.body.velocity.length() < 0.25 || p.body.sleepState === CANNON.Body.SLEEPING);
+        if (settled && now > nextAt) { curH = stackTop; hud(); }
+        if (state === 'play' && now > nextAt && !holder) spawnHolder();
+        // 最後のバンズが落ち着いたら（長くても5秒で）結果へ
+        if (state === 'settle' && now > nextAt && (settled || now - settleAt > 5000)) {
+          curH = stackTop; finish();
+        }
+      }
+      if (holder) {
+        swingT += dt * holder.speed;
+        // 高さの判定が細かく揺れても具材が震えないよう、なめらかに追う（崩れて大きく下がったときだけ下げる）
+        // 止まったときの高さ（curH）だけを見る。崩れている最中に上下して震えないように
+        const goal = Math.max(curH, stackTop - 0.5) + 2.4;
+        if (goal > holderY || goal < holderY - 0.6) holderY += (goal - holderY) * Math.min(1, dt * 3);
+        const p = holderPos();
+        holder.mesh.position.set(p.x, p.y, p.z);
+        holder.mesh.rotation.set(0, holder.rot, 0);
+      }
+      updateGuide();
+
+      // カメラ：斜め上から、タワーの上に合わせてついていく
+      camY += (curH - camY) * Math.min(1, dt * 2);
+      const d = camera.userData.dist || 13;
+      camera.position.set(d * 0.35, camY + d * 0.62, d * 0.85);
+      camera.lookAt(0, camY - 0.2, 0);
+      sun.position.set(4, camY + 10, 6); sun.target.position.set(0, camY, 0);
+      // 雲は少し遅れてついてくる（上に昇っていく感じ）
+      clouds.position.y = camY * 0.6;
+      updateClouds(dt);
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+    }
+
+    // スタート画面なし：開いたらすぐ遊べる
+    resize(); applyLang(); start();
+    requestAnimationFrame(loop);
+    window.__game = { get state() { return state; }, drop, finish: finishBurger, get h() { return curH; }, get hx() { return holder ? holderPos() : null; } };
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

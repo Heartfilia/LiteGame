@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>联机自检 · LiteGame</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 16px; font: 14px/1.6 -apple-system, "PingFang SC", system-ui, sans-serif;
+         background: #0e0d0b; color: #efe6d4; }
+  h1 { font-size: 18px; margin: 4px 0 12px; }
+  .row { display: flex; gap: 8px; margin-bottom: 12px; }
+  input { flex: 1; min-width: 0; padding: 10px; border-radius: 9px; border: 1px solid #3a352e;
+          background: #17161a; color: #efe6d4; font-size: 14px; }
+  button { padding: 10px 14px; border-radius: 9px; border: 0; background: #e2bd7d; color: #1a1408;
+           font-weight: 600; font-size: 14px; }
+  #out { display: grid; gap: 8px; }
+  .item { padding: 10px 12px; border-radius: 10px; border: 1px solid #2b2822; background: #15140f; }
+  .item b { display: block; font-size: 12px; color: #a49a87; font-weight: 500; margin-bottom: 2px; }
+  .ok { color: #8fd6a8; }
+  .bad { color: #e8a0a0; }
+  .warn { color: #ffd166; }
+  pre { margin: 6px 0 0; white-space: pre-wrap; word-break: break-all; font-size: 12px; color: #cfc4ae; }
+</style>
+</head>
+<body>
+<h1>联机自检</h1>
+<div class="row">
+  <input id="server" value="https://gameserver.litetools.top" inputmode="url" spellcheck="false">
+  <button id="run" type="button">重新检测</button>
+</div>
+<div id="out"></div>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const out = $('out');
+  const MARKER = '无法连接服务器：地址不可达';   // 新版 netplay.js 才有的文案
+  const rows = [];
+
+  function add(title, state, detail) {
+    const node = document.createElement('div');
+    node.className = 'item';
+    node.innerHTML = '<b></b><span class="' + state + '"></span>';
+    node.querySelector('b').textContent = title;
+    node.querySelector('span').textContent = detail || '';
+    out.append(node);
+    return node;
+  }
+
+  function reset() { out.textContent = ''; rows.length = 0; }
+
+  async function run() {
+    reset();
+    const server = $('server').value.trim().replace(/\/+$/, '');
+
+    add('页面地址', '', location.href);
+    add('origin', '', location.origin);
+    add('HTTPS', location.protocol === 'https:' ? 'ok' : 'bad',
+      location.protocol === 'https:' ? '是（安全上下文）' : '否，非 https 页面会拦截跨域请求');
+    add('网络', navigator.onLine ? 'ok' : 'bad', navigator.onLine ? '在线' : '离线');
+
+    // 1) 跨域请求：成功即说明 网络 + 证书 + CORS 全部通过
+    let corsOk = false;
+    const started = Date.now();
+    try {
+      const response = await fetch(server + '/api/v1/info', { cache: 'no-store' });
+      const data = await response.json();
+      corsOk = true;
+      add('接口与 CORS', 'ok',
+        `${response.status} · ${data.service || '?'} v${data.version || '?'} · ${Date.now() - started}ms`);
+    } catch (error) {
+      add('接口与 CORS', 'bad', (error && error.name || 'Error') + '：' + (error && error.message || error));
+    }
+
+    // 2) 不带 CORS 的探测：能通说明只是 CORS 被拒，不通说明网络/证书有问题
+    if (!corsOk) {
+      try {
+        await fetch(server + '/api/v1/info', { mode: 'no-cors', cache: 'no-store' });
+        add('网络探测（no-cors）', 'warn',
+          '能连上，但浏览器的跨域校验没过 —— 服务器没有放行当前 origin：' + location.origin);
+      } catch (error) {
+        add('网络探测（no-cors）', 'bad',
+          '连不上：DNS、证书或网络被拦。换 Wi-Fi/流量再试一次即可区分。');
+      }
+    }
+
+    // 3) 前端版本：检查线上 netplay.js 是否已是带新提示的构建
+    try {
+      const response = await fetch('assets/js/netplay.js', { cache: 'no-store' });
+      const text = await response.text();
+      const fresh = text.includes(MARKER);
+      add('前端构建', fresh ? 'ok' : 'warn',
+        fresh ? '已是新构建（含网络错误提示）'
+              : '仍是旧构建：手机上跑的是缓存或未重新部署的 JS');
+    } catch (_) {
+      add('前端构建', 'warn', '读不到 assets/js/netplay.js，跳过检查');
+    }
+
+    add('下一步', '', corsOk
+      ? '链路正常。若游戏里仍失败，请把「设置 → 服务器」里的地址与这里填的保持一致后重连。'
+      : '把上面红字那行发我，能直接定位是 CORS、证书还是网络。');
+  }
+
+  $('run').addEventListener('click', run);
+  run();
+})();
+</script>
+</body>
+</html>

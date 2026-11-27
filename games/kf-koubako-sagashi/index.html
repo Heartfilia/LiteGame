@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>千猫寻同款 · LiteGame</title>
+  <meta name="description" content="一千只猫里找出花色相同的那只。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="千猫寻同款 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/koubako-sagashi/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/koubako-sagashi/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #c9b48a; font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif; color: #3a2a1a; }
+    canvas#cv { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; gap: 8px; pointer-events: none; }
+    header > * { pointer-events: auto; }
+    header a { color: #3a2a1a; text-decoration: none; font-size: 14px; background: rgba(255,250,238,.85); border-radius: 14px; padding: 6px 10px; }
+    .hbtns { display: flex; gap: 6px; }
+    .pill { height: 34px; min-width: 34px; border: none; border-radius: 17px; background: rgba(255,250,238,.92); color: #3a2a1a; font-size: 14px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    select.pill { appearance: none; -webkit-appearance: none; }
+    #sound svg { width: 20px; height: 20px; }
+    /* the sample cat is drawn by WebGL into this frame's area; the frame itself is only the border */
+    #card { position: fixed; z-index: 2; border: 4px solid #6b3f1d; border-radius: 14px; box-shadow: 0 6px 18px rgba(60,30,10,.35), inset 0 0 0 2px #e9c98f; pointer-events: none; }
+    #card[hidden] { display: none; }
+    #card .mag { position: absolute; left: -14px; top: -14px; width: 40px; height: 40px; border-radius: 50%; background: #6b3f1d; display: flex; align-items: center; justify-content: center; }
+    #card .mag svg { width: 24px; height: 24px; }
+    #clock { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); background: #fff8e8; border: 3px solid #6b3f1d; border-radius: 16px; padding: 1px 12px; font-size: clamp(18px, 3.2vmin, 26px); font-weight: 900; font-variant-numeric: tabular-nums; color: #3a2a1a; white-space: nowrap; transition: transform .15s, color .15s, background .15s; }
+    #result { position: fixed; z-index: 2; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: calc(52px + 2vh) 16px calc(80px + env(safe-area-inset-bottom)); }
+    #result[hidden] { display: none; }
+    #result > * { pointer-events: auto; }
+    .rbox { background: rgba(255,248,232,.78); border-radius: 22px; padding: 8px 22px 12px; box-shadow: 0 6px 20px rgba(60,30,10,.25); display: flex; flex-direction: column; align-items: center; }
+    .big { margin: 0; font-size: clamp(48px, 9vmin, 120px); font-weight: 900; color: #3a2a1a; text-shadow: 0 0 6px #fff8e8, 0 3px 0 #fff8e8; text-align: center; line-height: 1.05; }
+    .sub { margin: 6px 0 0; font-size: clamp(15px, 2.2vmin, 24px); background: rgba(255,250,238,.85); border-radius: 12px; padding: 3px 12px; text-align: center; }
+    .btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn { border: none; border-radius: 28px; background: #b5462b; color: #fff; font-size: clamp(19px, 2.8vmin, 30px); font-weight: 800; padding: 13px 34px; cursor: pointer; text-decoration: none; box-shadow: 0 4px 0 #7a2c19; font-family: inherit; }
+    .btn:active { transform: translateY(3px); box-shadow: none; }
+    .btn.x { background: #111; box-shadow: 0 4px 0 #000; font-size: clamp(16px, 2.3vmin, 24px); display: flex; align-items: center; }
+    /* short, wide windows: the result goes in a column on the left, the found cat sits to the right */
+    @media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+      #result { right: auto; width: 46%; justify-content: center; gap: 18px; padding: 52px 12px calc(80px + env(safe-area-inset-bottom)); }
+      .big { font-size: 46px; }
+      .btn { font-size: 17px; padding: 10px 22px; }
+    }
+    #msg { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 20px; font-size: 18px; z-index: 5; }
+  </style>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">千猫寻同款</h1>
+  <main style="display:contents">
+  <canvas id="cv"></canvas>
+  <header>
+    <a id="back" href="../../index.html#/category/premium">← トップへ戻る</a>
+    <div class="hbtns">
+      <button id="sound" class="pill" aria-label="sound"></button>
+      <select id="lang" class="pill" aria-label="Language"><option value="ja">日本語</option><option value="zh">中文</option><option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option></select>
+    </div>
+  </header>
+  <div id="card">
+    <div class="mag"><svg viewBox="0 0 24 24" fill="none" stroke="#fff3dc" stroke-width="2.6" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5L20 20"/></svg></div>
+    <div id="clock">00:00</div>
+  </div>
+  <div id="result" hidden>
+    <div class="rbox"><p class="big" id="rTime"></p><p class="sub" id="rBest"></p></div>
+    <div class="btns"><button id="again" class="btn"></button><a id="share" class="btn x"></a></div>
+  </div>
+  <div id="msg"></div>
+
+  </main>
+  <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.js", "three/addons/": "../lib/three/examples/jsm/" } }</script>
+  <script>
+    setTimeout(() => { if (!window.GAME_READY) { const m = document.getElementById('msg'); m.style.display = 'flex'; m.textContent = 'Failed to load. Please reload. / 読み込めませんでした。再読み込みしてください。'; } }, 8000);
+    // no magnifier / text selection / image menu on long press, no page pinch-zoom
+    document.addEventListener('touchstart', e => { if (!e.target.closest('a, button, select, input')) e.preventDefault(); }, { passive: false });
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+    document.addEventListener('gesturestart', e => e.preventDefault());
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 千猫寻同款 · 中文文案
+window.__KF_ZH__ = {
+  title: '千猫寻同款',
+  back: '← 大厅',
+  again: '再来一次',
+  share: '分享到 X',
+  best: '最佳',
+  sec: (s) => `${s}`,
+  post: (s) => `在一千只猫里找到同款，用时 ${s} #LiteGame`
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+    window.GAME_READY = true;
+
+    const $ = id => document.getElementById(id);
+    const URL_ = new URL('./', location.href).href;
+    const TAG = '#千猫寻同款ゲーム';
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('koubako-sagashi:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('koubako-sagashi:' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    // ---------- 言語 ----------
+    const L = {
+      ja: { title: '千猫寻同款', back: '← トップへ戻る', again: 'もう一度', share: 'Xでポスト', best: '自己ベスト',
+            sec: s => s, post: s => `香箱座りの猫1000匹の中から、同じ柄の猫を ${s} で見つけた\n${TAG}` },
+      ko: { title: '식빵 고양이 천 마리', back: '← 처음으로', again: '다시 하기', share: 'X에 게시', best: '최고 기록',
+            sec: s => s, post: s => `식빵 자세 고양이 1000마리 중에서 같은 무늬 고양이를 ${s} 만에 찾았다\n${TAG}` },
+      en: { title: '1000 Loaf Cats', back: '← Top', again: 'Play again', share: 'Post on X', best: 'Best',
+            sec: s => s, post: s => `I found the matching cat among 1000 loafing cats in ${s}\n${TAG}` },
+      th: { title: 'แมวหมอบพันตัว', back: '← กลับหน้าแรก', again: 'เล่นอีกครั้ง', share: 'โพสต์บน X', best: 'สถิติสูงสุด',
+            sec: s => s, post: s => `หาแมวลายเดียวกันเจอใน ${s} จากแมวหมอบ 1000 ตัว\n${TAG}` },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    const autoLang = () => { for (const l of navigator.languages?.length ? navigator.languages : [navigator.language || '']) { const c = l.toLowerCase().slice(0, 2); if (L[c]) return c; } return 'en'; };
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'en';
+    const t = k => L[lang][k];
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('lang').value = lang;
+      $('back').textContent = t('back');
+      $('again').textContent = t('again');
+      $('share').textContent = t('share');
+      if (state === 'done') showResult();
+    }
+    $('lang').onchange = () => { lang = $('lang').value; store.set('lang', lang); applyLang(); };
+
+    // ---------- 音 ----------
+    let soundOn = store.get('sound', true), ac = null;
+    const drawSoundBtn = () => {
+      $('sound').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${soundOn ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+    };
+    drawSoundBtn();
+    $('sound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); drawSoundBtn(); };
+    // iPhone の消音モードでも鳴らす
+    function unmuteIOS() {
+      try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch {}
+      try {
+        const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+        const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+        const a = document.createElement('audio');
+        a.src = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.loop = true; a.setAttribute('playsinline', '');
+        a.play().catch(() => {});
+      } catch {}
+    }
+    function initAudio() {
+      if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+      unmuteIOS();
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0;
+        o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
+      } catch { ac = null; }
+    }
+    addEventListener('pointerdown', initAudio, { capture: true });
+    addEventListener('keydown', initAudio, { capture: true });
+    const on = () => soundOn && ac;
+    function noiseBuf(dur) {
+      const b = ac.createBuffer(1, Math.max(1, Math.floor(ac.sampleRate * dur)), ac.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      return b;
+    }
+    function tone(type, f0, f1, dur, vol, delay = 0) {
+      if (!on()) return;
+      const now = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.connect(g).connect(ac.destination); o.start(now); o.stop(now + dur + 0.02);
+    }
+    // 猫の声: のこぎり波（声帯）＋息を、母音の共鳴に通す。「み・ぁ・ぅ」と母音を変え、高く出て下がる
+    const VOWEL = { i: [320, 2500, 3300], e: [520, 2000, 2900], a: [850, 1500, 2900], o: [550, 950, 2700], u: [380, 1100, 2600] };
+    function voice(f0, seq, dur, vol = 0.4, delay = 0) {
+      if (!on()) return;
+      const now = ac.currentTime + delay;
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0 * 0.85, now);
+      o.frequency.linearRampToValueAtTime(f0 * 1.25, now + dur * 0.3);
+      o.frequency.exponentialRampToValueAtTime(f0 * 0.7, now + dur);
+      const vib = ac.createOscillator(); vib.frequency.value = 6 + Math.random() * 3;
+      const vg = ac.createGain(); vg.gain.value = f0 * 0.03; vib.connect(vg).connect(o.frequency);
+      const ns = ac.createBufferSource(); ns.buffer = noiseBuf(dur);
+      const ng = ac.createGain(); ng.gain.value = 0.12;
+      const src = ac.createGain(); o.connect(src); ns.connect(ng).connect(src);
+      const out = ac.createGain();
+      out.gain.setValueAtTime(0, now);
+      out.gain.linearRampToValueAtTime(vol, now + 0.04);
+      out.gain.setValueAtTime(vol, now + dur * 0.6);
+      out.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      [1, 0.6, 0.25].forEach((amp, fi) => {
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = fi ? 9 : 6;
+        seq.forEach((v, si) => { const tt = now + dur * si / Math.max(1, seq.length - 1) * 0.75; bp.frequency[si ? 'linearRampToValueAtTime' : 'setValueAtTime'](VOWEL[v][fi] * 1.2, tt); });
+        const g = ac.createGain(); g.gain.value = amp * 3; src.connect(bp).connect(g).connect(out);
+      });
+      out.connect(ac.destination);
+      o.start(now); vib.start(now); ns.start(now); o.stop(now + dur); vib.stop(now + dur); ns.stop(now + dur);
+    }
+    const MEOWS = [['i', 'a', 'u'], ['i', 'a', 'o'], ['e', 'a', 'u'], ['i', 'e', 'a', 'u'], ['a', 'o']];
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    const meow = (vol = 0.4, f0 = 520 + Math.random() * 200, delay = 0) => voice(f0, pick(MEOWS), 0.4 + Math.random() * 0.25, vol, delay);
+    // 威嚇の「シャー」: 高い帯域の息を強くはき出す＋低いうなり
+    function hiss() {
+      if (!on()) return;
+      const now = ac.currentTime, dur = 0.7;
+      const s = ac.createBufferSource(); s.buffer = noiseBuf(dur);
+      const hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 4200; hp.Q.value = 0.7;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.7, now + 0.05);
+      g.gain.setValueAtTime(0.7, now + 0.3); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      s.connect(hp).connect(g).connect(ac.destination); s.start(now);
+      voice(150, ['o', 'a'], 0.55, 0.18);
+    }
+    // 指で畳をつつく軽い「トッ」
+    function tap() {
+      if (!on()) return;
+      const now = ac.currentTime, s = ac.createBufferSource(); s.buffer = noiseBuf(0.04);
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 3;
+      const g = ac.createGain(); g.gain.setValueAtTime(0.35, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      s.connect(bp).connect(g).connect(ac.destination); s.start(now);
+      tone('sine', 220, 120, 0.06, 0.15);
+    }
+    function chime() { [880, 1175, 1568].forEach((f, i) => { tone('sine', f, f * 0.995, 0.6, 0.12, i * 0.09); tone('sine', f * 2, f * 2, 0.3, 0.03, i * 0.09); }); }
+
+    // ---------- 柄 ----------
+    // 毛色: 白・黒・茶・灰・クリーム・こげ茶
+    const PAL = ['#f2eee6', '#2b2725', '#d9822b', '#8b8d91', '#e9cf9f', '#6a4630'];
+    const EYES = ['#e2bd2f', '#86b84a', '#5d9fe0', '#d27a2c'];
+    const NREG = 7; // 頭の左右・肩・腰・左右の脇腹・しっぽ
+    const ri = n => Math.floor(Math.random() * n);
+    // 見た目が同じなら同じキーになるよう、見えない違いは消しておく
+    function normalize(c) {
+      if (c.base <= 1) c.stripes = 0;
+      c.reg = c.reg.map(r => (r === c.base ? -1 : r));
+      if (c.base === 0) c.white = 0;
+      c.key = [c.base, c.stripes, c.white, ...c.reg].join(',');
+      let h = 0; for (const ch of c.key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      c.eye = h % EYES.length; // 目の色も柄で決まる
+      return c;
+    }
+    function randCat() {
+      const base = ri(PAL.length);
+      const others = [0, 1, 2, 3, 4, 5].filter(i => i !== base);
+      const p1 = pick(others), p2 = pick(others.filter(i => i !== p1)), calico = Math.random() < 0.3;
+      const reg = Array.from({ length: NREG }, () => Math.random() < 0.5 ? -1 : (calico && Math.random() < 0.4 ? p2 : p1));
+      return normalize({ base, stripes: Math.random() < 0.35 ? 1 : 0, white: ri(4), reg });
+    }
+    function mutate(src) {
+      for (;;) {
+        const c = { ...src, reg: [...src.reg] }, k = ri(10);
+        if (k === 0) c.base = ri(PAL.length);
+        else if (k === 1) c.stripes = 1 - c.stripes;
+        else if (k === 2) c.white ^= 1 + ri(2);
+        else { const i = ri(NREG); c.reg[i] = Math.random() < 0.3 ? -1 : ri(PAL.length); }
+        normalize(c);
+        if (c.key !== src.key) return c;
+      }
+    }
+
+    // ---------- 3D ----------
+    const cv = $('cv');
+    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    renderer.autoClear = false;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#d8c7a0');
+    scene.fog = new THREE.Fog('#d8c7a0', 20, 80);
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 300);
+    scene.add(new THREE.HemisphereLight('#dceeff', '#9a7a48', 1.5));
+    const sun = new THREE.DirectionalLight('#ffe1b5', 2.4);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.0008; sun.shadow.normalBias = 0.02;
+    scene.add(sun, sun.target);
+
+    // Canvas で描くテクスチャ
+    function canvasTex(w, h, draw, rep) {
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      draw(c.getContext('2d'), w, h);
+      const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8;
+      if (rep) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(...rep); }
+      return tx;
+    }
+    // 畳: い草の細い目＋縁。縦置き1枚と横置き2枚を1枚の絵にして並べる（5.4×3.6）
+    const TATAMI_W = 5.4, TATAMI_D = 3.6;
+    const tatamiTex = (rep, heri = true) => canvasTex(768, 512, (g, W, H) => {
+      const u = W / TATAMI_W;
+      const mat = (x, y, w, h) => {
+        const vert = h > w;
+        g.fillStyle = '#c8c07c'; g.fillRect(x, y, w, h);
+        g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+        if (vert) for (let i = 0; i < w; i += 3) { g.fillStyle = `rgba(${90 + ri(40)},${90 + ri(30)},30,${0.1 + Math.random() * 0.12})`; g.fillRect(x + i, y, 1.5, h); }
+        else for (let i = 0; i < h; i += 3) { g.fillStyle = `rgba(${90 + ri(40)},${90 + ri(30)},30,${0.1 + Math.random() * 0.12})`; g.fillRect(x, y + i, w, 1.5); }
+        for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(255,250,200,${Math.random() * 0.1})`; vert ? g.fillRect(x + ri(w), y + ri(h), 1, 6 + ri(20)) : g.fillRect(x + ri(w), y + ri(h), 6 + ri(20), 1); }
+        g.restore();
+        g.fillStyle = 'rgba(90,80,40,.45)';
+        g.fillRect(x, y, w, 1.5); g.fillRect(x, y + h - 1.5, w, 1.5); g.fillRect(x, y, 1.5, h); g.fillRect(x + w - 1.5, y, 1.5, h);
+        if (heri) {
+          g.fillStyle = '#4a4630';
+          if (vert) { g.fillRect(x, y, 7, h); g.fillRect(x + w - 7, y, 7, h); } else { g.fillRect(x, y, w, 7); g.fillRect(x, y + h - 7, w, 7); }
+        }
+      };
+      mat(0, 0, 1.8 * u, 3.6 * u);
+      mat(1.8 * u, 0, 3.6 * u, 1.8 * u);
+      mat(1.8 * u, 1.8 * u, 3.6 * u, 1.8 * u);
+    }, rep);
+    const woodTex = (base, rep) => canvasTex(128, 512, (g, w, h) => {
+      g.fillStyle = base; g.fillRect(0, 0, w, h);
+      for (let x = 0; x < w; x += 2) { g.fillStyle = `rgba(60,30,10,${Math.random() * 0.18})`; g.fillRect(x + Math.sin(x) * 2, 0, 1 + Math.random() * 2, h); }
+      for (let i = 0; i < 6; i++) { g.strokeStyle = 'rgba(60,30,10,.25)'; g.beginPath(); const cx = ri(w); for (let y = 0; y < h; y += 8) g.lineTo(cx + Math.sin(y / 40 + i) * 6, y); g.stroke(); }
+    }, rep);
+    const plasterTex = canvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#c8a878'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(${ri(2) ? 255 : 90},${ri(2) ? 230 : 60},${ri(2) ? 190 : 30},${Math.random() * 0.12})`; g.fillRect(ri(w), ri(h), 2, 2); }
+    }, [6, 2]);
+    const shojiTex = canvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#f6efdc'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(200,180,140,${Math.random() * 0.15})`; g.fillRect(ri(w), ri(h), 1, 3 + ri(6)); }
+      g.fillStyle = '#9a6a3c';
+      for (let x = 0; x <= w; x += w / 4) g.fillRect(x - 3, 0, 6, h);
+      for (let y = 0; y <= h; y += h / 6) g.fillRect(0, y - 3, w, 6);
+    }, [8, 1]);
+    // 掛け軸: 和紙の上にいつもの猫、赤い落款
+    const catImg = new Image();
+    const scrollTex = canvasTex(256, 640, (g, w, h) => {
+      g.fillStyle = '#4c5a3a'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#b89a5a'; g.fillRect(14, 60, w - 28, h - 120);
+      g.fillStyle = '#f4ecd6'; g.fillRect(28, 90, w - 56, h - 180);
+      for (let i = 0; i < 800; i++) { g.fillStyle = `rgba(160,130,80,${Math.random() * 0.1})`; g.fillRect(28 + ri(w - 56), 90 + ri(h - 180), 2, 2); }
+      g.fillStyle = '#b8322a'; g.fillRect(w - 70, h - 150, 26, 26);
+    });
+    catImg.onload = () => {
+      const g = scrollTex.image.getContext('2d'), w = 256;
+      g.drawImage(catImg, 38, 180, w - 76, w - 76);
+      scrollTex.needsUpdate = true;
+    };
+    catImg.src = 'cat.png';
+
+    const std = o => new THREE.MeshStandardMaterial(o);
+    const room = new THREE.Group(); scene.add(room);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), std({ map: tatamiTex([1, 1]), roughness: 0.9 }));
+    floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; room.add(floor);
+    const backWall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), std({ map: plasterTex, roughness: 1 })); room.add(backWall);
+    const sideL = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), std({ map: shojiTex, roughness: 0.9, emissive: '#fff4d8', emissiveIntensity: 0.35 })); room.add(sideL);
+    const sideR = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), std({ map: shojiTex, roughness: 0.9, emissive: '#fff4d8', emissiveIntensity: 0.2 })); room.add(sideR);
+    const beamMat = std({ map: woodTex('#7a4e2a', [1, 1]), roughness: 0.6 });
+    const BOX = new THREE.BoxGeometry(1, 1, 1);
+    const tokonoma = new THREE.Group(); room.add(tokonoma);
+    { const plat = new THREE.Mesh(BOX, std({ map: woodTex('#5a3418', [1, 1]), roughness: 0.4 }));
+      plat.scale.set(5, 0.3, 1.6); plat.position.set(0, 0.15, 0.8); plat.castShadow = plat.receiveShadow = true; tokonoma.add(plat);
+      const scroll = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 3.75), std({ map: scrollTex, roughness: 0.95 }));
+      scroll.position.set(0, 2.45, 0.06); scroll.castShadow = true; tokonoma.add(scroll);
+      for (const y of [0.55, 4.35]) { const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.75, 10), beamMat); rod.rotation.z = Math.PI / 2; rod.position.set(0, y, 0.1); tokonoma.add(rod); }
+      for (const x of [-2.6, 2.6]) { const p = new THREE.Mesh(BOX, beamMat); p.scale.set(0.25, 6, 0.25); p.position.set(x, 3, 1.6); p.castShadow = true; tokonoma.add(p); }
+      // 花入れと枝
+      const vase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 0.6, 14), std({ color: '#2f4f5a', roughness: 0.25 }));
+      vase.position.set(1.5, 0.6, 0.8); vase.castShadow = true; tokonoma.add(vase);
+      const brMat = std({ color: '#4a3220', roughness: 0.8 }), flMat = std({ color: '#f2a7b8', roughness: 0.6 });
+      for (let i = 0; i < 5; i++) {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.025, 1.2, 5), brMat);
+        const a = -0.6 + i * 0.3; b.position.set(1.5 + Math.sin(a) * 0.45, 1.4, 0.8); b.rotation.z = -a * 0.9; tokonoma.add(b);
+        for (let k = 0; k < 4; k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), flMat); f.position.set(1.5 + Math.sin(a) * (0.25 + k * 0.15), 1.0 + k * 0.28 + Math.random() * 0.1, 0.8 + (Math.random() - 0.5) * 0.2); tokonoma.add(f); }
+      }
+    }
+
+    // ---------- 猫の形 ----------
+    // 胴・腰・頭・ほお・耳・目・鼻・前足・しっぽを1つにまとめる。aPart.x が部位、aPart.y がしっぽの付け根からの位置
+    const P_BODY = 0, P_HEAD = 1, P_EAR = 2, P_TAIL = 4, P_EYE = 5, P_NOSE = 6, P_PAW = 7, P_MUZ = 8;
+    function partGeo(geo, id, tw) {
+      geo = geo.index ? geo : geo;
+      const n = geo.attributes.position.count, a = new Float32Array(n * 2);
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < n; i++) { a[i * 2] = id; a[i * 2 + 1] = tw ? uv.getX(i) : 0; }
+      geo.setAttribute('aPart', new THREE.BufferAttribute(a, 2));
+      return geo;
+    }
+    const sph = (s, sx, sy, sz, x, y, z, id, ws = 16, hs = 12) => partGeo(new THREE.SphereGeometry(1, ws, hs).scale(sx, sy, sz).translate(x, y, z), id);
+    const parts = [
+      sph(0, 0.27, 0.21, 0.36, 0, 0.19, -0.02, P_BODY, 22, 14),
+      sph(0, 0.14, 0.15, 0.18, -0.13, 0.15, -0.16, P_BODY, 12, 10),
+      sph(0, 0.14, 0.15, 0.18, 0.13, 0.15, -0.16, P_BODY, 12, 10),
+      sph(0, 0.165, 0.15, 0.15, 0, 0.37, 0.27, P_HEAD, 18, 14),
+      sph(0, 0.088, 0.058, 0.062, 0, 0.322, 0.392, P_MUZ, 12, 8),
+      sph(0, 0.032, 0.03, 0.016, -0.066, 0.39, 0.4, P_EYE, 12, 8),
+      sph(0, 0.032, 0.03, 0.016, 0.066, 0.39, 0.4, P_EYE, 12, 8),
+      sph(0, 0.02, 0.014, 0.013, 0, 0.346, 0.447, P_NOSE, 8, 6),
+      sph(0, 0.055, 0.04, 0.075, -0.08, 0.03, 0.27, P_PAW, 10, 8),
+      sph(0, 0.055, 0.04, 0.075, 0.08, 0.03, 0.27, P_PAW, 10, 8),
+    ];
+    for (const s of [-1, 1]) {
+      const ear = new THREE.ConeGeometry(0.068, 0.12, 4, 1);
+      ear.rotateY(Math.PI / 4); ear.scale(1, 1, 0.55); ear.rotateZ(-s * 0.32); ear.rotateX(-0.12); ear.translate(s * 0.095, 0.5, 0.25);
+      parts.push(partGeo(ear, P_EAR));
+    }
+    { const curve = new THREE.CatmullRomCurve3([[0, 0.07, -0.33], [0.17, 0.05, -0.27], [0.26, 0.045, -0.06], [0.24, 0.045, 0.15], [0.13, 0.05, 0.28]].map(p => new THREE.Vector3(...p)));
+      const tail = new THREE.TubeGeometry(curve, 24, 0.042, 8, false);
+      // 先へ行くほど細く
+      const pos = tail.attributes.position, uv = tail.attributes.uv, c = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) { const u = uv.getX(i); curve.getPointAt(Math.min(1, u), c); const k = 1 - u * 0.35; pos.setXYZ(i, c.x + (pos.getX(i) - c.x) * k, c.y + (pos.getY(i) - c.y) * k, c.z + (pos.getZ(i) - c.z) * k); }
+      tail.computeVertexNormals();
+      parts.push(partGeo(tail, P_TAIL, true)); }
+    const catGeo = mergeGeometries(parts.map(g => { g = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'aPart'].includes(k)) g.deleteAttribute(k); return g; }));
+
+    // 柄はシェーダーで描く（1000匹を1回で描くため）
+    const uniforms = { uTime: { value: 0 }, uPal: { value: PAL.map(c => new THREE.Color(c)) }, uEyes: { value: EYES.map(c => new THREE.Color(c)) } };
+    const catMat = std({ color: '#ffffff', roughness: 0.85 });
+    catMat.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, uniforms);
+      sh.vertexShader = `
+        attribute vec2 aPart; attribute vec4 aCol; attribute vec4 aRegA; attribute vec4 aRegB;
+        uniform float uTime;
+        varying vec3 vObj; varying vec2 vPart; varying vec4 vCol; varying vec4 vRegA; varying vec4 vRegB;
+      ` + sh.vertexShader.replace('#include <begin_vertex>', `
+        #include <begin_vertex>
+        float ph = aRegB.w;
+        if (aPart.x > 3.5 && aPart.x < 4.5) {
+          // しっぽの先をときどきパタパタ
+          float win = step(0.55, fract(sin(floor(uTime * 0.3 + ph * 7.0) * 12.9898 + ph * 78.233) * 43758.5453));
+          float k = aPart.y * aPart.y;
+          transformed.y += k * 0.09 * (0.5 + 0.5 * sin(uTime * 7.0 + ph * 30.0)) * win;
+        }
+        if (aPart.x > 4.5 && aPart.x < 5.5) {
+          // まばたき
+          float b = fract(uTime * 0.21 + ph * 3.7);
+          float bl = 1.0 - smoothstep(0.0, 0.025, abs(b - 0.03));
+          transformed.y = mix(transformed.y, 0.388, bl * 0.9);
+        }
+        vObj = transformed; vPart = aPart; vCol = aCol; vRegA = aRegA; vRegB = aRegB;
+      `);
+      sh.fragmentShader = `
+        uniform vec3 uPal[6]; uniform vec3 uEyes[4];
+        varying vec3 vObj; varying vec2 vPart; varying vec4 vCol; varying vec4 vRegA; varying vec4 vRegB;
+        float hash3(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+        float vnoise(vec3 x) {
+          vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+          return mix(mix(mix(hash3(i), hash3(i + vec3(1,0,0)), f.x), mix(hash3(i + vec3(0,1,0)), hash3(i + vec3(1,1,0)), f.x), f.y),
+                     mix(mix(hash3(i + vec3(0,0,1)), hash3(i + vec3(1,0,1)), f.x), mix(hash3(i + vec3(0,1,1)), hash3(i + vec3(1,1,1)), f.x), f.y), f.z);
+        }
+        vec3 pal(float i) { int k = int(i + 0.5); vec3 c = uPal[0]; for (int j = 1; j < 6; j++) if (j == k) c = uPal[j]; return c; }
+        vec3 eyeCol(float i) { int k = int(i + 0.5); vec3 c = uEyes[0]; for (int j = 1; j < 4; j++) if (j == k) c = uEyes[j]; return c; }
+        float near(float a, float b) { return step(abs(a - b), 0.5); }
+      ` + sh.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+        vec3 P = vObj; float part = vPart.x;
+        float n = (vnoise(P * 11.0) - 0.5) * 0.09 + (vnoise(P * 29.0) - 0.5) * 0.035;
+        vec3 base = pal(vCol.x), col = base;
+        bool fur = part < 2.5 || near(part, 4.0) > 0.5 || near(part, 8.0) > 0.5;
+        // しま
+        if (vCol.z > 0.5) {
+          float s = -1.0;
+          if (near(part, 0.0) > 0.5) s = sin(P.z * 46.0 + abs(P.x) * 12.0 + n * 30.0);
+          else if (near(part, 1.0) > 0.5 && P.y > 0.44 && P.z > 0.25) s = sin(P.x * 85.0 + n * 20.0);
+          else if (near(part, 4.0) > 0.5) s = sin(vPart.y * 34.0);
+          col = mix(col, base * 0.5, smoothstep(0.25, 0.55, s));
+        }
+        // ぶち（-1 はなし）
+        float r;
+        r = vRegB.x; if (r > -0.5 && near(part, 0.0) > 0.5 && P.x + n < -0.12) col = pal(r);
+        r = vRegB.y; if (r > -0.5 && near(part, 0.0) > 0.5 && P.x - n > 0.12) col = pal(r);
+        r = vRegB.z; if (r > -0.5 && near(part, 4.0) > 0.5) col = pal(r);
+        r = vRegA.z; if (r > -0.5 && near(part, 0.0) > 0.5 && length(vec3(P.x * 1.15, P.y - 0.40, P.z - 0.12)) + n < 0.17) col = pal(r);
+        r = vRegA.w; if (r > -0.5 && near(part, 0.0) > 0.5 && length(vec3(P.x * 1.05, P.y - 0.33, P.z + 0.2)) + n < 0.19) col = pal(r);
+        bool head = near(part, 1.0) + near(part, 2.0) + near(part, 8.0) > 0.5;
+        r = vRegA.x; if (r > -0.5 && head && P.x + n * 0.7 < -0.012) col = pal(r);
+        r = vRegA.y; if (r > -0.5 && head && P.x - n * 0.7 > 0.012) col = pal(r);
+        // 白い口元・胸、白い足
+        float wm = vCol.w;
+        if (mod(wm, 2.0) > 0.5 && (near(part, 8.0) > 0.5 || (near(part, 0.0) > 0.5 && P.z > 0.23 && P.y < 0.3 + n))) col = uPal[0];
+        if (near(part, 7.0) > 0.5) col = wm > 1.5 ? uPal[0] : base;
+        if (fur) col *= 0.9 + 0.2 * vnoise(P * 140.0);
+        // 耳の内側は少し桃色
+        if (near(part, 2.0) > 0.5 && P.z > 0.262 && abs(P.x) > 0.06) col = mix(col, vec3(0.9, 0.6, 0.6), 0.45);
+        if (near(part, 6.0) > 0.5) col = vec3(0.85, 0.5, 0.52);
+        if (near(part, 5.0) > 0.5) {
+          vec2 e = vec2(abs(P.x) - 0.066, P.y - 0.39);
+          col = eyeCol(vCol.y);
+          col = mix(col, col * 0.55, smoothstep(0.012, 0.03, length(e)));
+          if (abs(e.x) < 0.0085) col = vec3(0.04);
+          if (length(e - vec2(-0.01 * sign(P.x) * -1.0, 0.012)) < 0.0075) col = vec3(1.0);
+        }
+        vec4 diffuseColor = vec4(col, opacity);
+      `).replace('#include <roughnessmap_fragment>', `
+        #include <roughnessmap_fragment>
+        if (vPart.x > 4.5 && vPart.x < 6.5) roughnessFactor = 0.2;
+      `);
+    };
+
+    const MAXN = 1000;
+    function makeCats(count) {
+      const m = new THREE.InstancedMesh(catGeo.clone(), catMat, count);
+      m.geometry.setAttribute('aCol', new THREE.InstancedBufferAttribute(new Float32Array(count * 4), 4));
+      m.geometry.setAttribute('aRegA', new THREE.InstancedBufferAttribute(new Float32Array(count * 4), 4));
+      m.geometry.setAttribute('aRegB', new THREE.InstancedBufferAttribute(new Float32Array(count * 4), 4));
+      m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false;
+      return m;
+    }
+    function setCat(m, i, c, phase) {
+      m.geometry.attributes.aCol.setXYZW(i, c.base, c.eye, c.stripes, c.white);
+      m.geometry.attributes.aRegA.setXYZW(i, c.reg[0], c.reg[1], c.reg[2], c.reg[3]);
+      m.geometry.attributes.aRegB.setXYZW(i, c.reg[4], c.reg[5], c.reg[6], phase);
+    }
+    const cats = makeCats(MAXN); scene.add(cats);
+
+    // お手本の猫（座布団の上）
+    const sScene = new THREE.Scene();
+    sScene.background = new THREE.Color('#efe0bd');
+    sScene.add(new THREE.HemisphereLight('#e6f2ff', '#a07a48', 1.6));
+    const sSun = new THREE.DirectionalLight('#ffe6c2', 2.2); sSun.position.set(-1.5, 3, 2); sSun.castShadow = true; sSun.shadow.mapSize.set(512, 512);
+    Object.assign(sSun.shadow.camera, { left: -1, right: 1, top: 1, bottom: -1, near: 0.5, far: 8 });
+    sScene.add(sSun);
+    const sPivot = new THREE.Group(); sScene.add(sPivot);
+    const zabuton = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 10), std({ map: canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#8c2f3c'; g.fillRect(0, 0, w, h); for (let i = 0; i < w; i += 4) { g.fillStyle = 'rgba(255,200,200,.08)'; g.fillRect(i, 0, 2, h); } }), roughness: 0.75 }));
+    zabuton.scale.set(0.55, 0.05, 0.55); zabuton.position.y = 0.0; zabuton.receiveShadow = true;
+    sPivot.add(zabuton);
+    const sample = makeCats(1); sample.position.y = 0.03; sPivot.add(sample);
+    const sCam = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
+    const sFloor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), std({ map: tatamiTex([1, 1], false), roughness: 0.9 }));
+    sFloor.rotation.x = -Math.PI / 2; sFloor.position.y = -0.04; sFloor.receiveShadow = true; sScene.add(sFloor);
+
+    // 見つけた猫の足元に出す金の輪
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.46, 0.56, 48), new THREE.MeshBasicMaterial({ color: '#ffd23a', transparent: true, opacity: 0.9, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring);
+
+    // ---------- 光の粒 ----------
+    const sparks = [];
+    const sparkGeo = new THREE.OctahedronGeometry(0.035);
+    function burst(p, color, n, speed, up) {
+      for (let i = 0; i < n; i++) {
+        const m = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ color, transparent: true }));
+        m.position.copy(p);
+        const a = Math.random() * Math.PI * 2, s = speed * (0.5 + Math.random());
+        sparks.push({ m, v: new THREE.Vector3(Math.cos(a) * s, up * (0.6 + Math.random()), Math.sin(a) * s), life: 0, max: 0.7 + Math.random() * 0.5 });
+        scene.add(m);
+      }
+    }
+    function updSparks(dt) {
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i]; s.life += dt;
+        s.v.y -= 2.5 * dt; s.m.position.addScaledVector(s.v, dt); s.m.rotation.x += dt * 6; s.m.rotation.y += dt * 4;
+        s.m.material.opacity = 1 - s.life / s.max;
+        if (s.life >= s.max) { scene.remove(s.m); s.m.material.dispose(); sparks.splice(i, 1); }
+      }
+    }
+
+    // ---------- ゲームの状態 ----------
+    const SP = 1.0; // 猫どうしの間隔
+    let COLS = 40, ROWS = 25, FW = 0, FD = 0;
+    let list = [], target = null, targetIdx = 0;
+    let state = 'ready', startT = 0, finalT = 0, best = store.get('best', null);
+    const base = []; // 各猫の位置と向き
+    const anims = new Map(); // 動いている猫: i -> { type, t }
+    const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+    function placeMatrix(i, dy = 0, yaw = 0, sc = 1, sx = 1) {
+      const b = base[i];
+      Q.setFromAxisAngle(UP, b.yaw + yaw); V.set(b.x, dy, b.z); S.set(sc * sx, sc / Math.sqrt(sx), sc);
+      cats.setMatrixAt(i, M4.compose(V, Q, S));
+    }
+    function newGame() {
+      // 縦長の画面では縦に長い並び
+      const portrait = innerWidth < innerHeight;
+      COLS = portrait ? 25 : 40; ROWS = portrait ? 40 : 25;
+      FW = (COLS - 1) * SP; FD = (ROWS - 1) * SP;
+      // お手本は、ぶちが2か所以上ある猫
+      do target = randCat(); while (target.reg.filter(r => r >= 0).length < 2);
+      list = [];
+      for (let i = 0; i < 40; i++) list.push(mutate(target));                 // 1か所違い
+      for (let i = 0; i < 30; i++) list.push(mutate(mutate(target)));         // 2か所違い
+      while (list.length < MAXN - 1) list.push(randCat());
+      list = list.filter(c => c.key !== target.key);
+      while (list.length < MAXN - 1) { const c = randCat(); if (c.key !== target.key) list.push(c); }
+      targetIdx = ri(MAXN);
+      list.splice(targetIdx, 0, target);
+      // 並べる順はばらばらに
+      const order = [...list.keys()];
+      for (let i = order.length - 1; i > 0; i--) { const j = ri(i + 1); [order[i], order[j]] = [order[j], order[i]]; }
+      const shuffled = order.map(k => list[k]);
+      targetIdx = order.indexOf(targetIdx);
+      list = shuffled;
+      base.length = 0;
+      for (let i = 0; i < MAXN; i++) {
+        const cx = i % COLS, cz = Math.floor(i / COLS);
+        base.push({ x: (cx - (COLS - 1) / 2) * SP + (Math.random() - 0.5) * 0.18, z: (cz - (ROWS - 1) / 2) * SP + (Math.random() - 0.5) * 0.18, yaw: (Math.random() - 0.5) * 0.9 });
+        setCat(cats, i, list[i], Math.random());
+        placeMatrix(i);
+      }
+      for (const k of ['aCol', 'aRegA', 'aRegB']) cats.geometry.attributes[k].needsUpdate = true;
+      cats.instanceMatrix.needsUpdate = true;
+      setCat(sample, 0, target, 0.37);
+      for (const k of ['aCol', 'aRegA', 'aRegB']) sample.geometry.attributes[k].needsUpdate = true;
+      sample.setMatrixAt(0, new THREE.Matrix4()); sample.instanceMatrix.needsUpdate = true;
+      anims.clear();
+      // 部屋
+      const RW = FW + 7, RD = FD + 7;
+      floor.scale.set(RW + 10, RD + 10, 1); floor.material.map.repeat.set((RW + 10) / TATAMI_W, (RD + 10) / TATAMI_D); floor.position.z = 0;
+      backWall.scale.set(RW + 10, 10, 1); backWall.position.set(0, 5, -RD / 2 - 0.5); backWall.material.map.repeat.set((RW + 10) / 4, 3);
+      tokonoma.position.set(0, 0, -RD / 2 - 0.5);
+      sideL.scale.set(RD + 10, 5, 1); sideL.rotation.y = Math.PI / 2; sideL.position.set(-RW / 2 - 1, 2.5, 3);
+      sideR.scale.set(RD + 10, 5, 1); sideR.rotation.y = -Math.PI / 2; sideR.position.set(RW / 2 + 1, 2.5, 3);
+      sideL.material.map.repeat.set((RD + 10) / 2, 1);
+      sun.position.set(-FW * 0.4 - 6, 18, FD * 0.25 + 8); sun.target.position.set(0, 0, 0);
+      const sc = sun.shadow.camera, R = Math.max(FW, FD) / 2 + 3;
+      Object.assign(sc, { left: -R, right: R, top: R, bottom: -R, near: 1, far: 80 }); sc.updateProjectionMatrix();
+      state = 'ready'; startT = 0; finalT = 0; fly = null; ring.visible = false;
+      $('result').hidden = true; $('card').hidden = false;
+      resize();
+      view.tx = 0; view.tz = view.tz0; view.d = view.dMax; vel.x = vel.z = 0; applyCamera();
+      updClock(0);
+    }
+
+    // ---------- カメラ ----------
+    const PITCH = THREE.MathUtils.degToRad(56);
+    const view = { tx: 0, tz: 0, d: 30, dMin: 3, dMax: 30, tz0: 0 };
+    const vel = { x: 0, z: 0 };
+    let fly = null, rect = { x0: 0, y0: 0, x1: 1, y1: 1 }, cardRect = { x: 0, y: 0, s: 100 };
+    function applyCamera() {
+      camera.position.set(view.tx, Math.sin(PITCH) * view.d, view.tz + Math.cos(PITCH) * view.d);
+      camera.lookAt(view.tx, 0, view.tz);
+      camera.updateMatrixWorld();
+      scene.fog.near = view.d * 1.2; scene.fog.far = view.d * 3.5 + 10;
+    }
+    function clampView() {
+      view.d = Math.min(view.dMax, Math.max(view.dMin, view.d));
+      // 引くほど真ん中に寄せる（いちばん引いたら全体がちょうど入る）
+      const k = Math.min(1, Math.max(0, (view.dMax - view.d) / (view.dMax - view.dMin) * 1.6));
+      const hx = FW / 2 * k, hz = FD / 2 * k;
+      const cz = view.tz0 * (1 - k);
+      view.tx = Math.min(hx, Math.max(-hx, view.tx));
+      view.tz = Math.min(cz + hz, Math.max(cz - hz, view.tz));
+    }
+    // 畑（猫の並び）の四隅を写したときの、画面上の範囲（-1〜1 が並べる範囲）
+    const corner = new THREE.Vector3();
+    function extent(d, tz) {
+      const save = { tx: view.tx, tz: view.tz, d: view.d };
+      view.tx = 0; view.tz = tz; view.d = d; applyCamera();
+      // setViewOffset のぶんを外して、並べる範囲だけで測る
+      const e = { x0: 9, x1: -9, y0: 9, y1: -9 };
+      const W = innerWidth, H = innerHeight, fw = rect.x1 - rect.x0, fh = rect.y1 - rect.y0;
+      for (const x of [-FW / 2 - 0.5, FW / 2 + 0.5]) for (const z of [-FD / 2 - 0.5, FD / 2 + 0.5]) for (const y of [0, 0.5]) {
+        corner.set(x, y, z).project(camera);
+        const px = (corner.x + 1) / 2 * W, py = (1 - corner.y) / 2 * H;
+        const nx = (px - rect.x0) / fw * 2 - 1, ny = 1 - (py - rect.y0) / fh * 2;
+        e.x0 = Math.min(e.x0, nx); e.x1 = Math.max(e.x1, nx); e.y0 = Math.min(e.y0, ny); e.y1 = Math.max(e.y1, ny);
+      }
+      Object.assign(view, save);
+      return e;
+    }
+    const shortWide = () => innerHeight <= 520 && innerWidth / innerHeight >= 4 / 3;
+    function resize() {
+      const W = innerWidth, H = innerHeight;
+      renderer.setSize(W, H, false);
+      const top = 50, bottom = 80;
+      // お手本のカード: 縦長は上のまんなか、横長は右上
+      const wide = W / H > 1.1;
+      const s = Math.round(Math.max(96, Math.min(wide ? H * 0.36 : W * 0.34, wide ? 230 : (H - top - bottom) * 0.24, 220)));
+      cardRect = wide ? { x: W - s - 18, y: top + 8, s } : { x: Math.round((W - s) / 2), y: top + 6, s };
+      Object.assign($('card').style, { left: cardRect.x - 4 + 'px', top: cardRect.y - 4 + 'px', width: s + 8 + 'px', height: s + 8 + 'px' });
+      // 猫を並べる範囲（カード・上の帯・下の空白を除く）
+      if (state === 'done' || state === 'found') {
+        rect = shortWide() ? { x0: W * 0.46, y0: top, x1: W, y1: H - bottom }
+                           : { x0: 0, y0: Math.min(H * 0.5, top + Math.max(80, H * 0.16)), x1: W, y1: H - bottom - 70 };
+      } else rect = wide ? { x0: 0, y0: top, x1: W - s - 30, y1: H - bottom } : { x0: 0, y0: cardRect.y + s + 32, x1: W, y1: H - bottom };
+      const fw = Math.max(80, rect.x1 - rect.x0), fh = Math.max(80, rect.y1 - rect.y0);
+      camera.aspect = fw / fh;
+      camera.setViewOffset(fw, fh, -rect.x0, -rect.y0, W, H);
+      camera.updateProjectionMatrix();
+      // 全体がちょうど入る距離と、そのときの見る位置（手前ほど大きく見えるので、角を写して確かめる）
+      const fit = d => {
+        // 上下の余りが同じになる位置を探す
+        let lo = -FD, hi = FD;
+        for (let k = 0; k < 20; k++) { const tz = (lo + hi) / 2, e = extent(d, tz); if (e.y0 + e.y1 > 0) hi = tz; else lo = tz; }
+        return { tz: (lo + hi) / 2, e: extent(d, (lo + hi) / 2) };
+      };
+      let lo = 2, hi = 200;
+      for (let k = 0; k < 24; k++) { const d = (lo + hi) / 2, f = fit(d); if (Math.max(-f.e.x0, f.e.x1, -f.e.y0, f.e.y1) > 1) lo = d; else hi = d; }
+      view.dMax = hi; view.tz0 = fit(hi).tz;
+      const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2), th = tv * camera.aspect;
+      // いちばん寄ると、狭い方の向きに猫が2匹半くらい
+      view.dMin = 2.6 / (2 * Math.min(tv, th));
+      if (view.dMin > view.dMax * 0.8) view.dMin = view.dMax * 0.8;
+      clampView(); applyCamera();
+    }
+    addEventListener('resize', () => { resize(); });
+
+    // ---------- 入力 ----------
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.2);
+    function floorAt(x, y, out = new THREE.Vector3()) {
+      ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      return ray.ray.intersectPlane(floorPlane, out) || out.set(view.tx, 0, view.tz);
+    }
+    function pickCat(x, y) {
+      ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const o = ray.ray.origin, d = ray.ray.direction;
+      let bestI = -1, bestT = Infinity;
+      for (let i = 0; i < MAXN; i++) {
+        const b = base[i];
+        const px = b.x - o.x, py = 0.25 - o.y, pz = b.z - o.z;
+        const tt = px * d.x + py * d.y + pz * d.z;
+        const qx = px - d.x * tt, qy = py - d.y * tt, qz = pz - d.z * tt;
+        if (qx * qx + qy * qy + qz * qz < 0.36 * 0.36 && tt < bestT) { bestT = tt; bestI = i; }
+      }
+      return bestI;
+    }
+    function zoomAt(x, y, factor) {
+      const a = floorAt(x, y);
+      view.d *= factor; clampView(); applyCamera();
+      const b = floorAt(x, y);
+      view.tx += a.x - b.x; view.tz += a.z - b.z; clampView(); applyCamera();
+    }
+    function panBy(x0, y0, x1, y1) {
+      const a = floorAt(x0, y0), b = floorAt(x1, y1);
+      view.tx += a.x - b.x; view.tz += a.z - b.z; clampView(); applyCamera();
+      return { x: a.x - b.x, z: a.z - b.z };
+    }
+    const ptrs = new Map();
+    let gesture = null; // { moved, t, multi }
+    const begin = () => { if (state === 'ready') { state = 'play'; startT = performance.now(); } };
+    cv.addEventListener('pointerdown', e => {
+      if (state === 'found' || state === 'done') return;
+      cv.setPointerCapture(e.pointerId);
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY });
+      if (ptrs.size === 1) gesture = { moved: 0, t: performance.now(), multi: false };
+      else if (gesture) gesture.multi = true;
+      vel.x = vel.z = 0;
+      begin();
+    });
+    cv.addEventListener('pointermove', e => {
+      const p = ptrs.get(e.pointerId); if (!p) return;
+      if (ptrs.size === 1) {
+        const mv = panBy(p.x, p.y, e.clientX, e.clientY);
+        vel.x = vel.x * 0.5 + mv.x * 0.5 * 60; vel.z = vel.z * 0.5 + mv.z * 0.5 * 60;
+      } else if (ptrs.size === 2) {
+        const [a, b] = [...ptrs.values()];
+        const o = a === p ? b : a;
+        const d0 = Math.hypot(p.x - o.x, p.y - o.y), d1 = Math.hypot(e.clientX - o.x, e.clientY - o.y);
+        const mx0 = (p.x + o.x) / 2, my0 = (p.y + o.y) / 2, mx1 = (e.clientX + o.x) / 2, my1 = (e.clientY + o.y) / 2;
+        if (d0 > 10 && d1 > 10) zoomAt(mx0, my0, d0 / d1);
+        panBy(mx0, my0, mx1, my1);
+      }
+      if (gesture) gesture.moved = Math.max(gesture.moved, Math.hypot(e.clientX - p.sx, e.clientY - p.sy));
+      p.x = e.clientX; p.y = e.clientY;
+    });
+    function endPtr(e) {
+      const p = ptrs.get(e.pointerId); if (!p) return;
+      ptrs.delete(e.pointerId);
+      if (ptrs.size === 0 && gesture) {
+        if (!gesture.multi && gesture.moved < 10 && performance.now() - gesture.t < 600) { vel.x = vel.z = 0; choose(e.clientX, e.clientY); }
+        gesture = null;
+      }
+      // 2本指から1本指に戻ったら、残った指の位置から続ける
+      for (const q of ptrs.values()) { q.sx = q.x; q.sy = q.y; }
+    }
+    cv.addEventListener('pointerup', endPtr);
+    cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); gesture = null; });
+    cv.addEventListener('wheel', e => {
+      e.preventDefault();
+      if (state === 'found' || state === 'done') return;
+      begin();
+      zoomAt(e.clientX, e.clientY, Math.exp(e.deltaY * (e.deltaMode ? 0.05 : 0.0015)));
+    }, { passive: false });
+    const keys = new Set();
+    addEventListener('keydown', e => {
+      if (e.target.closest?.('select')) return;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '+', '-', '=', '_'].includes(e.key)) { e.preventDefault(); keys.add(e.key); if (state !== 'found' && state !== 'done') begin(); }
+    });
+    addEventListener('keyup', e => keys.delete(e.key));
+    addEventListener('blur', () => keys.clear());
+
+    function choose(x, y) {
+      if (state !== 'play') return;
+      const i = pickCat(x, y);
+      if (i < 0) { tap(); return; }
+      if (i === targetIdx) found(i);
+      else {
+        // ちがう猫: シャーと怒ってふくらむ（時間は増えない）
+        anims.set(i, { type: 'angry', t: 0 });
+        hiss();
+        burst(new THREE.Vector3(base[i].x, 0.45, base[i].z), '#c9b7a0', 8, 0.6, 1.0);
+      }
+    }
+    const elapsed = () => state === 'play' ? (performance.now() - startT) / 1000 : state === 'ready' ? 0 : finalT;
+    function found(i) {
+      finalT = elapsed();
+      state = 'found';
+      anims.set(i, { type: 'happy', t: 0 });
+      meow(0.5, 620); setTimeout(chime, 250); setTimeout(() => meow(0.45, 700), 900);
+      burst(new THREE.Vector3(base[i].x, 0.5, base[i].z), '#ffd84a', 30, 1.2, 2.2);
+      $('card').hidden = true;
+      ring.position.set(base[i].x, 0.012, base[i].z); ring.visible = true; ring.userData.t = 0;
+      resize();
+      fly = { t: 0, from: { ...view }, to: { tx: base[i].x, tz: base[i].z, d: Math.max(view.dMin * 1.05, Math.min(view.dMax, 3.2)) } };
+      setTimeout(finish, 1500);
+    }
+    function finish() {
+      state = 'done';
+      if (best === null || finalT < best) { best = finalT; store.set('best', best); }
+      $('result').hidden = false;
+      resize();
+      snapPending = true;
+      showResult();
+    }
+    $('again').onclick = () => { newGame(); tap(); };
+
+    // ---------- 結果と共有 ----------
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    // 時間は 00:00（分:秒）で出す
+    const secs = v => { const n = Math.min(5999, Math.floor(v)); return `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`; };
+    function showResult() {
+      $('rTime').textContent = L[lang].sec(secs(finalT));
+      $('rBest').textContent = `${t('best')} ${L[lang].sec(secs(best))}`;
+      const a = $('share');
+      a.href = `https://x.com/intent/post?text=${encodeURIComponent(L[lang].post(secs(finalT)))}&url=${encodeURIComponent(URL_)}`;
+      if (coarse) { a.removeAttribute('target'); a.removeAttribute('rel'); } else { a.target = '_blank'; a.rel = 'noopener'; }
+      prepareShare();
+    }
+    $('share').addEventListener('click', e => {
+      const text = `${L[lang].post(secs(finalT))}\n${URL_}`;
+      if (coarse && navigator.share) {
+        e.preventDefault();
+        const file = shareFile();
+        navigator.share(file && navigator.canShare?.({ files: [file] }) ? { files: [file], text } : { text }).catch(() => {});
+        return;
+      }
+      const img = resultImage();
+      if (img) { const d = document.createElement('a'); d.href = img.toDataURL('image/png'); d.download = 'koubako-sagashi.png'; d.click(); }
+    });
+    let snap = null, snapPending = false, shareCache = null;
+    // 見つけた猫を真ん中にして正方形に切り抜く（描いた直後に写す）
+    function takeSnap() {
+      const dpr = cv.width / innerWidth;
+      const cx = (rect.x0 + rect.x1) / 2, cy = (rect.y0 + rect.y1) / 2;
+      const side = Math.min(innerWidth, innerHeight, Math.max(rect.x1 - rect.x0, rect.y1 - rect.y0) * 1.1);
+      const sx = Math.max(0, Math.min(innerWidth - side, cx - side / 2)), sy = Math.max(0, Math.min(innerHeight - side, cy - side / 2));
+      snap = document.createElement('canvas'); snap.width = snap.height = 1080;
+      snap.getContext('2d').drawImage(cv, sx * dpr, sy * dpr, side * dpr, side * dpr, 0, 0, 1080, 1080);
+      shareCache = null;
+      prepareShare();
+    }
+    function resultImage() {
+      if (!snap) return null;
+      const c = document.createElement('canvas'); c.width = c.height = 1080;
+      const g = c.getContext('2d');
+      g.drawImage(snap, 0, 0);
+      g.textAlign = 'center'; g.lineJoin = 'round';
+      const font = px => `900 ${px}px system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Noto Sans Thai", sans-serif`;
+      const text = (str, y, px, max, fill, line) => {
+        g.font = font(px);
+        const w = g.measureText(str).width; if (w > max) { px *= max / w; g.font = font(px); }
+        g.lineWidth = px * 0.16; g.strokeStyle = line; g.strokeText(str, 540, y); g.fillStyle = fill; g.fillText(str, 540, y);
+      };
+      text(L[lang].sec(secs(finalT)), 230, 190, 960, '#3a2a1a', '#fff8e8');
+      text(t('title'), 1030, 60, 900, '#fff8e8', '#3a2a1a');
+      return c;
+    }
+    function prepareShare() {
+      if (!snap) return;
+      const key = lang;
+      if (shareCache?.key === key) return;
+      shareCache = { key, file: null };
+      resultImage().toBlob(b => { if (b && shareCache?.key === key) shareCache.file = new File([b], 'koubako-sagashi.png', { type: 'image/png' }); }, 'image/png');
+    }
+    const shareFile = () => shareCache?.key === lang ? shareCache.file : null;
+
+    // ---------- 時計（経過時間を 00:00 で） ----------
+    let lastClock = '';
+    function updClock(sec) {
+      const str = secs(sec);
+      if (str !== lastClock) { lastClock = str; $('clock').textContent = str; }
+    }
+
+    // ---------- ループ ----------
+    let last = performance.now(), ambient = 4;
+    const ease = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      uniforms.uTime.value = now / 1000;
+      // キー操作
+      if (keys.size && (state === 'play' || state === 'ready')) {
+        const sp = view.d * 0.7 * dt;
+        if (keys.has('ArrowLeft')) view.tx -= sp; if (keys.has('ArrowRight')) view.tx += sp;
+        if (keys.has('ArrowUp')) view.tz -= sp; if (keys.has('ArrowDown')) view.tz += sp;
+        if (keys.has('+') || keys.has('=')) view.d *= Math.exp(-1.5 * dt);
+        if (keys.has('-') || keys.has('_')) view.d *= Math.exp(1.5 * dt);
+        clampView(); applyCamera();
+      }
+      // 指を離したあとの惰性
+      if (!ptrs.size && (vel.x || vel.z)) {
+        view.tx += vel.x * dt; view.tz += vel.z * dt;
+        const f = Math.exp(-6 * dt); vel.x *= f; vel.z *= f;
+        if (Math.hypot(vel.x, vel.z) < 0.02) vel.x = vel.z = 0;
+        clampView(); applyCamera();
+      }
+      if (fly) {
+        fly.t = Math.min(1, fly.t + dt / 0.9);
+        const k = ease(fly.t);
+        view.tx = fly.from.tx + (fly.to.tx - fly.from.tx) * k;
+        view.tz = fly.from.tz + (fly.to.tz - fly.from.tz) * k;
+        view.d = fly.from.d + (fly.to.d - fly.from.d) * k;
+        applyCamera();
+        if (fly.t >= 1) fly = null;
+      }
+      // 動いている猫
+      if (anims.size) {
+        for (const [i, a] of anims) {
+          a.t += dt;
+          if (a.type === 'angry') {
+            const k = Math.min(1, a.t / 0.8), puff = Math.sin(Math.min(1, a.t / 0.15) * Math.PI / 2) * (1 - k);
+            placeMatrix(i, 0, Math.sin(a.t * 50) * 0.15 * (1 - k), 1 + 0.18 * puff, 1 + 0.1 * puff);
+            if (a.t >= 0.8) { placeMatrix(i); anims.delete(i); }
+          } else {
+            // 見つかった猫: ぴょんぴょん跳ねてこっちを向く
+            const turn = -base[i].yaw * Math.min(1, a.t * 3);
+            const hop = Math.abs(Math.sin(a.t * 7)) * 0.28 * Math.max(0.25, 1 - a.t * 0.3);
+            const sq = 1 + Math.cos(a.t * 14) * 0.06;
+            placeMatrix(i, hop, turn, 1, sq);
+          }
+        }
+        cats.instanceMatrix.needsUpdate = true;
+      }
+      updSparks(dt);
+      if (ring.visible) { ring.userData.t += dt; const k = ring.userData.t; ring.scale.setScalar(1 + Math.sin(k * 5) * 0.06); ring.material.opacity = 0.65 + Math.sin(k * 5) * 0.25; }
+      // ときどき、どこかの猫が小さく鳴く
+      if (state === 'play') { ambient -= dt; if (ambient <= 0) { ambient = 5 + Math.random() * 8; meow(0.05, 450 + Math.random() * 300); } }
+      if (state === 'play' || state === 'ready') updClock(elapsed());
+
+      // 描画
+      renderer.setScissorTest(false);
+      renderer.setViewport(0, 0, innerWidth, innerHeight);
+      renderer.clear();
+      renderer.render(scene, camera);
+      if (snapPending) { snapPending = false; takeSnap(); }
+      if (!$('card').hidden) {
+        const { x, y, s } = cardRect, yb = innerHeight - y - s;
+        sPivot.rotation.y = Math.sin(now / 1000 * 0.7) * 0.85;
+        sCam.aspect = 1; sCam.updateProjectionMatrix();
+        sCam.position.set(0, Math.sin(PITCH) * 2.6 + 0.2, Math.cos(PITCH) * 2.6 + 0.05);
+        sCam.lookAt(0, 0.2, 0.02);
+        renderer.setScissorTest(true);
+        renderer.setScissor(x, yb, s, s); renderer.setViewport(x, yb, s, s);
+        renderer.render(sScene, sCam);
+      }
+      requestAnimationFrame(frame);
+    }
+    if (location.hash === '#debug') window.__dbg = { get targetIdx() { return targetIdx; }, base, view, applyCamera, camera, choose, get state() { return state; } };
+    newGame(); applyLang();
+    renderer.compile(scene, camera); renderer.compile(sScene, sCam);
+    requestAnimationFrame(frame);
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>

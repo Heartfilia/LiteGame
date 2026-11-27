@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>丼物工坊 · LiteGame</title>
+  <meta name="description" content="动物往碗里跳，按落进去的顺序拼成名字。">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- X などにURLを貼ったときのカード表示（ここだけは https:// から書く） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ふるかわけい面白チャンネル">
+  <meta property="og:title" content="丼物工坊 · LiteGame">
+  <meta property="og:url" content="https://keifurukawafunnych.com/games/donburi-maker/">
+  <meta property="og:image" content="https://keifurukawafunnych.com/games/donburi-maker/icon.png">
+  <meta name="twitter:card" content="summary">
+  <style>
+    html, body { margin: 0; height: 100%; background: #f4e3c8; color: #4a2a12; }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+      overflow: hidden; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
+    }
+    header a { color: #b0401c; text-decoration: none; font-weight: bold; }
+    .hbtns { display: flex; gap: 6px; }
+    #lang { font-size: 15px; padding: 0 10px; }
+    .pill {
+      font-size: 20px; background: #fff; border: 2px solid #e2c08f; border-radius: 999px;
+      min-width: 44px; height: 36px; cursor: pointer; font-weight: bold; color: #a3441a;
+    }
+    main {
+      flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    #stage { flex: 1; min-height: 0; position: relative; touch-action: none; }
+    #stage canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+    #hud {
+      position: absolute; top: 4px; left: 12px; right: 12px; display: flex;
+      align-items: center; justify-content: center; font-weight: bold; font-size: 26px; pointer-events: none; z-index: 2;
+      text-shadow: 0 2px 0 #fff;
+    }
+    #ctrl { display: flex; gap: 10px; justify-content: center; padding: 6px 12px; }
+    #ctrl button { width: min(160px, 42%); margin: 0; }
+    #tray {
+      display: flex; justify-content: center; gap: 4px; padding: 6px 8px;
+      background: #8a5a32; box-shadow: inset 0 4px 0 #6d4424;
+    }
+    #tray canvas {
+      width: min(13vw, 68px); height: min(13vw, 68px); background: #f8ecd6; border-radius: 14px;
+      cursor: grab; touch-action: none;
+    }
+    .overlay {
+      position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; justify-content: center;
+      align-items: center; padding: 8px 12px calc(80px + env(safe-area-inset-bottom)); box-sizing: border-box;
+      pointer-events: none;
+    }
+    .overlay .panel { pointer-events: auto; }
+    .overlay[hidden] { display: none; }
+    .panel {
+      background: #fff; border-radius: 24px; padding: 20px 16px; width: 100%; max-width: 360px;
+      box-sizing: border-box; text-align: center; box-shadow: 0 6px 0 #e2c08f;
+    }
+    .panel h1 { margin: 0 0 6px; font-size: 40px; }
+    #rName { font-size: 40px; font-weight: bold; line-height: 1.15; word-break: break-all; max-height: 30vh; overflow-y: auto; }
+    .big {
+      font: inherit; font-size: 22px; font-weight: bold; padding: 12px 8px; border-radius: 18px;
+      border: none; cursor: pointer; color: #fff; background: #d9532a; width: 100%;
+      box-shadow: 0 4px 0 #94321a; touch-action: manipulation; margin-top: 10px;
+      display: block; text-align: center; text-decoration: none; box-sizing: border-box;
+    }
+    .big:active { transform: translateY(3px); box-shadow: 0 1px 0 #94321a; }
+    .big.sub { background: #fff; color: #8a5a32; box-shadow: 0 4px 0 #e2c08f; border: 2px solid #e2c08f; }
+    .big.x { background: #222; box-shadow: 0 4px 0 #000; }
+    /* 持っている動物を棚の上にも描くための、透明な3Dの層 */
+    #hold { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 3; }
+    #err { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-weight: bold; z-index: 9; }
+  </style>
+  <script type="importmap">
+    { "imports": {
+      "three": "../lib/three/build/three.module.js",
+      "cannon-es": "../lib/vendor/cannon-es@0.20.0/dist/cannon-es.js"
+    } }
+  </script>
+</head>
+<body>
+  <!-- 検索エンジン・読み上げ用のゲーム名（画面には出ない） -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">丼物工坊</h1>
+  <header>
+    <a href="../../index.html#/category/premium" id="back">← トップへ戻る</a>
+    <div class="hbtns"><button id="lang" class="pill">EN</button><button id="sound" class="pill" aria-label="音のオン/オフ"></button></div>
+  </header>
+  <main>
+    <div id="stage">
+      <div id="hud"><span id="count"></span></div>
+    </div>
+    <div id="ctrl"><button id="reset" class="big sub"></button><button id="finish" class="big"></button></div>
+    <div id="tray"></div>
+    <canvas id="hold"></canvas>
+    <div id="result" class="overlay" hidden>
+      <div class="panel">
+        <div id="rName"></div>
+        <div id="shareBox"></div>
+        <button id="retry" class="big"></button>
+      </div>
+    </div>
+    <div id="err">読み込みに失敗しました。通信を確認して再読み込みしてください。</div>
+  </main>
+  <script>
+    // CDN が読めないときに一言出す
+    setTimeout(() => { if (!window.__ok) document.getElementById('err').style.display = 'flex'; }, 10000);
+  </script>
+  <script>/* 中文本地化：LiteGame（经作者授权） */
+// 丼物工坊 · 中文文案
+window.__KF_ZH__ = {
+  title: '丼物工坊',
+  back: '← 大厅',
+  finish: '完成',
+  reset: '重来',
+  retry: '再来一次',
+  share: '分享到 X',
+  cow: '牛',
+  pig: '猪',
+  shrimp: '天妇罗',
+  chicken: '鸡肉',
+  egg: '鸡蛋',
+  tuna: '金枪鱼',
+  squid: '鱿鱼',
+  join: (a) => a.join('') + '丼',
+  plain: '丼',
+  count: (n) => `${n} 个`,
+  shareText: (s) => `做出了「${s}」#LiteGame`
+};
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import * as CANNON from 'cannon-es';
+    window.__ok = true;
+
+    const SHARE_URL = 'https://keifurukawafunnych.com/games/donburi-maker/';
+    const ICON_MODE = new URLSearchParams(location.search).has('icon');
+
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('donburi:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('donburi:' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    // ---- 丼の名前に使う字 ----
+    const ITEMS = ['cow', 'pig', 'shrimp', 'chicken', 'egg', 'tuna', 'squid'];
+
+    // ---- 言語 ----
+    const L = {
+      ja: {
+        title: '丼物工坊', back: '← トップへ戻る', lang: 'EN', langLabel: 'Switch to English',
+        finish: '完成', reset: 'やり直し', retry: 'もう一度', share: 'Xに投稿',
+        ch: { cow: '牛', pig: '豚', shrimp: '天', chicken: '親', egg: '子', tuna: '鉄火', squid: 'イカ' },
+        join: a => a.join('') + '丼', plain: '丼',
+        count: n => `${n}匹`,
+        shareText: s => `「${s}」ができた！ #丼物工坊`,
+      },
+      en: {
+        title: 'Donburi Maker', back: '← Top', lang: '日本語', langLabel: '日本語に切り替え',
+        finish: 'Done', reset: 'Redo', retry: 'Again', share: 'Post on X',
+        ch: { cow: 'Beef', pig: 'Pork', shrimp: 'Tempura', chicken: 'Chicken', egg: 'Egg', tuna: 'Tuna', squid: 'Squid' },
+        join: a => a.join('-') + ' Bowl', plain: 'Bowl',
+        count: n => `${n}`,
+        shareText: s => `I made a "${s}"! #DonburiMaker`,
+      },
+    }
+const __KF_ZH_LANG = Object.assign(L, { zh: window.__KF_ZH__ || {} });
+for (const __k in L.ja) if (L.zh[__k] == null) L.zh[__k] = L.ja[__k];
+if (!L.zh.lang) L.zh.lang = '中文';
+try { const __fix = () => { const __s = document.querySelector('#lang'); if (__s && __s.tagName === 'SELECT') { if (!__s.querySelector('option[value="zh"]')) { const __o = document.createElement('option'); __o.value = 'zh'; __o.textContent = '中文'; __s.append(__o); } __s.value = 'zh'; } }; __fix(); setTimeout(__fix, 300); setTimeout(__fix, 1500); } catch (__e) {}
+;
+    let lang = (window.__KF_ZH__ ? 'zh' : 'en');
+    if (!L[lang]) lang = 'ja';
+    const t = k => L[lang][k];
+    const $ = id => document.getElementById(id);
+    const langBtn = $('lang');
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      $('back').textContent = t('back');
+      langBtn.textContent = t('lang'); langBtn.setAttribute('aria-label', t('langLabel'));
+      $('finish').textContent = t('finish');
+      $('reset').textContent = t('reset');
+      $('retry').textContent = t('retry');
+      hud();
+      if (result) showResult();
+    }
+    langBtn.onclick = () => { lang = lang === 'ja' ? 'en' : 'ja'; store.set('lang', lang); applyLang(); };
+    // ---- 音 ----
+    let soundOn = store.get('sound', true);
+    const soundBtn = $('sound');
+    const SPEAKER = '<path d="M4 9h3l4-4v14l-4-4H4z" fill="currentColor"/>';
+    const updateSoundBtn = () => {
+      soundBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:middle">${SPEAKER}${
+        soundOn ? '<path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/>' : '<path d="M16 9l5 6M21 9l-5 6"/>'}</svg>`;
+    };
+    soundBtn.onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); updateSoundBtn(); };
+    updateSoundBtn();
+    let ac = null;
+    function audio() {
+      if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+      if (ac.state === 'suspended') ac.resume();
+      return ac;
+    }
+    function tone(type, f1, f2, dur, vol, delay = 0) {
+      if (!soundOn) return;
+      const a = audio(); if (!a) return;
+      const o = a.createOscillator(), g = a.createGain(), now = a.currentTime + delay;
+      o.type = type;
+      o.frequency.setValueAtTime(f1, now); o.frequency.exponentialRampToValueAtTime(f2, now + dur);
+      g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.connect(g).connect(a.destination); o.start(now); o.stop(now + dur + 0.01);
+    }
+    const sPick = () => tone('triangle', 500, 900, 0.07, 0.15);
+    const sLand = v => tone('sine', 220, 90, 0.12, Math.min(0.4, v * 0.06));
+    const sThrow = () => tone('sine', 300, 700, 0.12, 0.12);
+    const sDone = () => { tone('triangle', 660, 660, 0.12, 0.2); tone('triangle', 880, 880, 0.12, 0.2, 0.1); tone('triangle', 1320, 1320, 0.25, 0.2, 0.2); };
+
+    // ---- 3D ----
+    const stage = $('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: ICON_MODE });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.shadowMap.enabled = true;
+    stage.prepend(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#f4e3c8');
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    scene.add(new THREE.HemisphereLight('#fff8ee', '#a07850', 1.6));
+    const sun = new THREE.DirectionalLight('#ffffff', 1.6);
+    sun.position.set(3, 8, 5); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5 });
+    scene.add(sun);
+
+    const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 });
+    function part(geo, color, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) {
+      const m = new THREE.Mesh(geo, typeof color === 'string' ? mat(color) : color);
+      m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true;
+      return m;
+    }
+    const S = r => new THREE.SphereGeometry(r, 20, 14);
+
+    // 店：カウンター・壁・床
+    const counter = part(new THREE.BoxGeometry(9, 1.6, 4.4), '#c99a62', 0, -0.8, 0.2);
+    counter.receiveShadow = true; scene.add(counter);
+    const wall = part(new THREE.PlaneGeometry(30, 12), '#e9d2ac', 0, 2, -6);
+    scene.add(wall);
+    const floor = part(new THREE.PlaneGeometry(30, 12), '#9c7448', 0, -2.2, -2);
+    floor.rotation.x = -Math.PI / 2; scene.add(floor);
+    // のれん
+    for (let i = -2; i <= 2; i++) scene.add(part(new THREE.BoxGeometry(1.5, 1.4, 0.05), '#2c4a7a', i * 1.6, 4.3, -5.9));
+
+    // 丼
+    const BOWL = new THREE.Vector3(0, 0, -0.3);
+    const bowl = new THREE.Group();
+    const prof = [[0.55, 0], [0.62, 0.1], [0.78, 0.14], [1.0, 0.35], [1.22, 0.65], [1.36, 0.95], [1.42, 0.98]]
+      .map(([x, y]) => new THREE.Vector2(x, y));
+    const lathe = new THREE.LatheGeometry(prof, 40);
+    const outer = new THREE.Mesh(lathe, new THREE.MeshStandardMaterial({ color: '#29457a', roughness: 0.4, side: THREE.FrontSide }));
+    const inner = new THREE.Mesh(lathe, new THREE.MeshStandardMaterial({ color: '#fbf6ec', roughness: 0.4, side: THREE.BackSide }));
+    outer.castShadow = true;
+    bowl.add(outer, inner);
+    bowl.add(part(new THREE.CylinderGeometry(0.62, 0.62, 0.02, 40), '#fbf6ec', 0, 0.01, 0));
+    const rice = part(S(1), '#ffffff', 0, 0.3, 0, 1.05, 0.16, 1.05);
+    rice.receiveShadow = true; bowl.add(rice);
+    bowl.position.copy(BOWL);
+    scene.add(bowl);
+
+    // ---- 動物 ----
+    const BUILD = {
+      chicken() {
+        const g = new THREE.Group();
+        g.add(part(S(0.36), '#ffffff', 0, 0, 0, 1, 0.9, 1.15));
+        g.add(part(S(0.2), '#ffffff', 0, 0.3, 0.25));
+        g.add(part(S(0.08), '#e0302a', 0, 0.5, 0.25, 0.8, 1, 1.6));
+        g.add(part(S(0.05), '#e0302a', 0, 0.2, 0.43, 1, 1.5, 1));
+        const beak = part(new THREE.ConeGeometry(0.06, 0.16, 8), '#f0a020', 0, 0.3, 0.48); beak.rotation.x = Math.PI / 2; g.add(beak);
+        g.add(part(S(0.035), '#111', 0.1, 0.36, 0.4), part(S(0.035), '#111', -0.1, 0.36, 0.4));
+        g.add(part(S(0.16), '#ffffff', 0, 0.18, -0.36, 0.6, 1.2, 0.8));
+        return [g, 0.4];
+      },
+      egg() {
+        const g = new THREE.Group();
+        g.add(part(S(0.26), '#fff3dc', 0, 0, 0, 0.85, 1.1, 0.85));
+        return [g, 0.27];
+      },
+      cow() {
+        const g = new THREE.Group();
+        g.add(part(S(0.4), '#ffffff', 0, 0, 0, 1.05, 0.9, 1.2));
+        [[0.25, 0.15, 0.1], [-0.3, 0.05, -0.15], [0.05, 0.3, -0.25], [-0.15, -0.1, 0.3]].forEach(([x, y, z]) =>
+          g.add(part(S(0.13), '#222', x, y, z, 1, 0.6, 1)));
+        g.add(part(S(0.24), '#ffffff', 0, 0.2, 0.45));
+        g.add(part(S(0.15), '#f2a8b0', 0, 0.12, 0.64, 1.2, 0.8, 0.7));
+        g.add(part(S(0.035), '#111', 0.1, 0.3, 0.64), part(S(0.035), '#111', -0.1, 0.3, 0.64));
+        [1, -1].forEach(s => {
+          const h = part(new THREE.ConeGeometry(0.05, 0.18, 8), '#efe2c0', 0.14 * s, 0.46, 0.42); h.rotation.z = -0.4 * s; g.add(h);
+          g.add(part(S(0.08), '#222', 0.26 * s, 0.3, 0.4, 1, 0.5, 0.6));
+        });
+        return [g, 0.48];
+      },
+      pig() {
+        const g = new THREE.Group();
+        g.add(part(S(0.4), '#f5a6b6', 0, 0, 0, 1, 0.92, 1.1));
+        const sn = part(new THREE.CylinderGeometry(0.12, 0.12, 0.1, 16), '#ee8aa0', 0, 0.02, 0.44); sn.rotation.x = Math.PI / 2; g.add(sn);
+        g.add(part(S(0.025), '#7a3040', 0.05, 0.02, 0.5), part(S(0.025), '#7a3040', -0.05, 0.02, 0.5));
+        g.add(part(S(0.035), '#111', 0.14, 0.15, 0.37), part(S(0.035), '#111', -0.14, 0.15, 0.37));
+        [1, -1].forEach(s => {
+          const e = part(new THREE.ConeGeometry(0.09, 0.16, 8), '#ee8aa0', 0.2 * s, 0.37, 0.12); e.rotation.z = -0.5 * s; g.add(e);
+        });
+        return [g, 0.43];
+      },
+      shrimp() {
+        const g = new THREE.Group();
+        const body = part(new THREE.TorusGeometry(0.2, 0.11, 10, 20, Math.PI * 1.3), '#f06a3a');
+        body.rotation.y = Math.PI / 2; g.add(body);
+        // 輪の切り口が開いていて中が透けるので、両端を球でふさぐ
+        const arc = Math.PI * 1.3;
+        body.add(part(S(0.11), body.material, 0.2, 0, 0), part(S(0.11), body.material, 0.2 * Math.cos(arc), 0.2 * Math.sin(arc), 0));
+        const tail = part(new THREE.ConeGeometry(0.12, 0.18, 8), '#e04a2a', 0, -0.16, -0.18);
+        tail.rotation.x = 2.6; g.add(tail);
+        g.add(part(S(0.03), '#111', 0.06, 0.12, 0.17), part(S(0.03), '#111', -0.06, 0.12, 0.17));
+        [1, -1].forEach(s => {
+          const a = part(new THREE.CylinderGeometry(0.01, 0.01, 0.4), '#e04a2a', 0.05 * s, 0.28, 0.3); a.rotation.x = 0.9; g.add(a);
+        });
+        return [g, 0.33];
+      },
+      tuna() {
+        const g = new THREE.Group();
+        g.add(part(S(0.28), '#2b3f6b', 0, 0.03, 0, 0.7, 0.85, 1.55));
+        g.add(part(S(0.26), '#c9d2de', 0, -0.06, 0, 0.62, 0.6, 1.45));
+        const tail = part(new THREE.ConeGeometry(0.18, 0.2, 4), '#2b3f6b', 0, 0, -0.5, 0.3, 1, 1); tail.rotation.x = Math.PI / 2; g.add(tail);
+        const fin = part(new THREE.ConeGeometry(0.08, 0.18, 4), '#f2c230', 0, 0.28, -0.05, 0.3, 1, 1); g.add(fin);
+        g.add(part(S(0.04), '#111', 0.15, 0.08, 0.3), part(S(0.04), '#111', -0.15, 0.08, 0.3));
+        return [g, 0.4];
+      },
+      squid() {
+        const g = new THREE.Group();
+        g.add(part(new THREE.ConeGeometry(0.2, 0.45, 16), '#f6e6e0', 0, 0.3, 0));
+        g.add(part(new THREE.ConeGeometry(0.14, 0.1, 3), '#f6e6e0', 0, 0.45, 0, 2.6, 1, 0.3));
+        g.add(part(S(0.18), '#f6e6e0', 0, 0, 0));
+        g.add(part(S(0.035), '#111', 0.09, 0.02, 0.15), part(S(0.035), '#111', -0.09, 0.02, 0.15));
+        for (let i = 0; i < 8; i++) {
+          const a = i / 8 * Math.PI * 2;
+          const tl = part(new THREE.CylinderGeometry(0.03, 0.015, 0.32), '#f0d0c8', Math.cos(a) * 0.1, -0.24, Math.sin(a) * 0.1);
+          tl.rotation.set(Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3); g.add(tl);
+        }
+        return [g, 0.36];
+      },
+    };
+
+    // ---- 棚のアイコン（3Dの動物を小さく描いて画像にする） ----
+    const tray = $('tray');
+    {
+      const r2 = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+      r2.setSize(136, 136);
+      const sc = new THREE.Scene();
+      sc.add(new THREE.HemisphereLight('#fff8ee', '#a07850', 1.8));
+      const dl = new THREE.DirectionalLight('#fff', 1.4); dl.position.set(2, 4, 4); sc.add(dl);
+      const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 20);
+      ITEMS.forEach(id => {
+        const [g, r] = BUILD[id]();
+        g.rotation.y = id === 'shrimp' ? 1.1 : 0.6;
+        sc.add(g);
+        cam.position.set(0, r * 1.6, r * 4.6); cam.lookAt(0, 0.02, 0);
+        r2.render(sc, cam);
+        const c = document.createElement('canvas'); c.width = c.height = 136; c.dataset.id = id;
+        c.getContext('2d').drawImage(r2.domElement, 0, 0);
+        tray.appendChild(c);
+        sc.remove(g);
+      });
+      r2.dispose();
+    }
+
+    // ---- 物理 ----
+    const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -22, 0) });
+    world.defaultContactMaterial.friction = 0.35;
+    world.defaultContactMaterial.restitution = 0.3;
+    world.allowSleep = true;
+    const ground = new CANNON.Body({ mass: 0 });
+    ground.addShape(new CANNON.Box(new CANNON.Vec3(4.5, 0.8, 2.2)), new CANNON.Vec3(0, -0.8, 0.2));
+    world.addBody(ground);
+    const bowlBody = new CANNON.Body({ mass: 0 });
+    bowlBody.addShape(new CANNON.Cylinder(1.0, 1.0, 0.3, 16), new CANNON.Vec3(0, 0.2, 0));
+    {
+      const N = 18, tilt = Math.atan2(0.7, 0.85);
+      for (let i = 0; i < N; i++) {
+        const a = i / N * Math.PI * 2;
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(tilt, a, 0, 'YXZ'));
+        const r = 1.12, y = 0.55;
+        bowlBody.addShape(new CANNON.Box(new CANNON.Vec3(0.24, 0.55, 0.06)),
+          new CANNON.Vec3(Math.sin(a) * r, y, Math.cos(a) * r), new CANNON.Quaternion(q.x, q.y, q.z, q.w));
+      }
+    }
+    bowlBody.position.set(BOWL.x, BOWL.y, BOWL.z);
+    world.addBody(bowlBody);
+
+    let things = []; // { id, mesh, body }
+    let lastLand = 0;
+    function addThing(id, pos) {
+      const [mesh, r] = BUILD[id]();
+      scene.add(mesh);
+      const body = new CANNON.Body({ mass: 1, shape: new CANNON.Sphere(r), linearDamping: 0.1, angularDamping: 0.5 });
+      body.position.set(pos.x, pos.y, pos.z);
+      body.quaternion.setFromEuler(0, Math.random() * Math.PI * 2, 0);
+      body.sleepSpeedLimit = 0.3;
+      body.addEventListener('collide', e => {
+        const v = Math.abs(e.contact.getImpactVelocityAlongNormal());
+        const now = performance.now();
+        if (v > 2 && now - lastLand > 60) { lastLand = now; sLand(v); }
+      });
+      world.addBody(body);
+      const th = { id, mesh, body };
+      things.push(th);
+      return th;
+    }
+    function removeThing(th) {
+      th.mesh.parent?.remove(th.mesh); world.removeBody(th.body);
+      things = things.filter(x => x !== th);
+    }
+    const inBowl = th => {
+      const p = th.body.position;
+      return Math.hypot(p.x - BOWL.x, p.z - BOWL.z) < 1.4 && p.y > 0.2;
+    };
+    function clearAll() { [...things].forEach(th => { removeThing(th); }); }
+
+    // ---- 丼の名前 ----
+    // 丼の中にいる動物を、投げ入れた順に並べる
+    function bowlName() {
+      const ids = things.filter(inBowl).sort((a, b) => a.seq - b.seq).map(th => th.id);
+      if (!ids.length) return { name: t('plain'), n: 0 };
+      return { name: t('join')(ids.map(id => t('ch')[id])), n: ids.length };
+    }
+    function hud() {
+      $('count').textContent = t('count')(things.filter(inBowl).length);
+    }
+
+    // ---- 進行 ----
+    let state = 'play', result = null;
+    function finish() {
+      if (state !== 'play') return;
+      state = 'result';
+      result = bowlName();
+      showResult();
+      $('result').hidden = false;
+      $('ctrl').style.visibility = 'hidden';
+      sDone();
+    }
+    function restart() {
+      clearAll(); state = 'play'; result = null;
+      $('result').hidden = true; $('ctrl').style.visibility = '';
+    }
+    function showResult() {
+      // 名前は結果を出した時点の動物で決めるが、言語を切り替えたら訳し直す
+      if (result.ids === undefined) result.ids = things.filter(inBowl).sort((a, b) => a.seq - b.seq).map(th => th.id);
+      const name = result.ids.length ? t('join')(result.ids.map(id => t('ch')[id])) : t('plain');
+      const el = $('rName');
+      el.textContent = name;
+      el.style.fontSize = `${Math.max(18, Math.min(52, innerHeight * 0.06, 560 / Math.max(1, name.length)))}px`;
+      const box = $('shareBox'); box.textContent = '';
+      const a = document.createElement('a');
+      a.className = 'big x'; a.textContent = t('share');
+      a.href = `https://x.com/intent/post?text=${encodeURIComponent(t('shareText')(name))}&url=${encodeURIComponent(SHARE_URL)}`;
+      if (!matchMedia('(pointer: coarse)').matches) { a.target = '_blank'; a.rel = 'noopener'; }
+      box.appendChild(a);
+    }
+    $('finish').onclick = finish;
+    $('reset').onclick = () => { if (state === 'play') clearAll(); };
+    $('retry').onclick = restart;
+
+    // ---- スワイプで投げる ----
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    // カウンターの手前の縦の面。指の真下に動物を出す
+    const HOLD_Z = 2.7, holdPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -HOLD_Z);
+    let hold = null, seq = 0;
+    function holdPos(e) {
+      const r = holdCanvas.getBoundingClientRect();
+      ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, holdCam);
+      const p = new THREE.Vector3();
+      if (!ray.ray.intersectPlane(holdPlane, p)) p.set(0, 0, HOLD_Z);
+      p.x = THREE.MathUtils.clamp(p.x, -3, 3);
+      return p;
+    }
+    const aimPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.7);
+    function onPlane(x, y) {
+      const r = holdCanvas.getBoundingClientRect();
+      ndc.set((x - r.left) / r.width * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, holdCam);
+      return ray.ray.intersectPlane(aimPlane, new THREE.Vector3());
+    }
+    tray.addEventListener('pointerdown', e => {
+      const id = e.target.dataset?.id;
+      if (!id || state !== 'play' || hold) return;
+      e.preventDefault();
+      const [mesh, r] = BUILD[id]();
+      mesh.position.copy(holdPos(e));
+      holdScene.add(mesh);
+      hold = { id, mesh, r, pid: e.pointerId, hist: [{ x: e.clientX, y: e.clientY, t: performance.now() }] };
+      sPick();
+    });
+    addEventListener('pointermove', e => {
+      if (!hold || e.pointerId !== hold.pid) return;
+      hold.mesh.position.copy(holdPos(e));
+      hold.hist.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+      if (hold.hist.length > 12) hold.hist.shift();
+    });
+    function release(e) {
+      if (!hold || e.pointerId !== hold.pid) return;
+      const h = hold; hold = null;
+      holdScene.remove(h.mesh);
+      // 離す直前 0.12 秒の指の速さ（画面の高さ／秒）で投げる
+      const now = performance.now();
+      // 0.12 秒より前の点のうち一番新しいものを起点にする（イベントがまばらでも速さが出るように）
+      let i = h.hist.findIndex(p => now - p.t < 120);
+      if (i < 0) i = h.hist.length - 1;
+      const a = h.hist[Math.max(0, i - 1)], z = { x: e.clientX, y: e.clientY };
+      const dts = Math.max(0.04, (now - a.t) / 1000), H = stage.clientHeight || 600;
+      const up = (a.y - z.y) / H / dts;
+      const th = addThing(h.id, h.mesh.position);
+      th.seq = seq++;
+      // カウンターの縁より上に出るまではすり抜ける
+      th.body.collisionResponse = false; th.ghost = performance.now();
+      scene.remove(th.mesh); holdScene.add(th.mesh);
+      if (up > 0.3) {
+        // スワイプの速さで飛ぶ距離、スワイプの向きで左右が決まる。そこへ山なりに飛ばす
+        const p = th.body.position, T = 0.9;
+        const tz = 2.4 - Math.min(up, 6) * 1.15, ty = 1.4;
+        // 画面上のスワイプの線を丼の高さの面に写し、その線の延長に飛ばす（見た目どおりの向きになる）
+        const A = onPlane(a.x, a.y), Z = onPlane(z.x, z.y);
+        let tx = p.x;
+        if (A && Z && Math.abs(A.z - Z.z) > 0.01) tx = Z.x + (Z.x - A.x) * (tz - Z.z) / (Z.z - A.z);
+        tx = THREE.MathUtils.clamp(tx, p.x - 4, p.x + 4);
+        th.body.velocity.set((tx - p.x) / T, (ty - p.y) / T + 11 * T, (tz - p.z) / T);
+        th.body.angularVelocity.set(-6, Math.random() * 4 - 2, Math.random() * 2 - 1);
+        sThrow();
+      }
+    }
+    addEventListener('pointerup', release);
+    addEventListener('pointercancel', release);
+    // ---- 画面サイズ ----
+    const LOOK = new THREE.Vector3(0, 0, -0.2);
+    // 透明な層：同じカメラを、棚の下まで広げて描く
+    const holdCanvas = $('hold');
+    const holdRenderer = new THREE.WebGLRenderer({ canvas: holdCanvas, antialias: true, alpha: true });
+    holdRenderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    const holdScene = new THREE.Scene();
+    holdScene.add(new THREE.HemisphereLight('#fff8ee', '#a07850', 1.6));
+    { const l = new THREE.DirectionalLight('#ffffff', 1.6); l.position.set(3, 8, 5); holdScene.add(l); }
+    const holdCam = camera.clone();
+    function resize() {
+      if (ICON_MODE) return;
+      const w = stage.clientWidth, h = stage.clientHeight, hh = tray.offsetTop + tray.offsetHeight;
+      // 大きさが変わっていなければ何もしない（キャンバスを作り直すと一瞬消えてチカチカする）
+      if (w === lastSize[0] && h === lastSize[1] && hh === lastSize[2]) return;
+      lastSize = [w, h, hh];
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      // 横幅 5.2 が収まる距離（縦長のスマホでは遠ざかる）
+      const dist = Math.max(8.2, 2.6 / (tanV * camera.aspect));
+      const dir = new THREE.Vector3(0, 0.62, 0.78).normalize();
+      camera.position.copy(LOOK).addScaledVector(dir, dist);
+      camera.lookAt(LOOK);
+      camera.updateProjectionMatrix();
+      holdRenderer.setSize(w, hh);
+      holdCam.copy(camera);
+      holdCam.setViewOffset(w, h, 0, 0, w, hh);
+      // 作り直したキャンバスが空のまま表示されないよう、すぐ描き直す
+      renderer.render(scene, camera);
+      holdRenderer.render(holdScene, holdCam);
+    }
+    let lastSize = [];
+    addEventListener('resize', resize);
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    // ---- アイコン用の画面（?icon） ----
+    if (ICON_MODE) {
+      document.body.innerHTML = ''; document.body.appendChild(renderer.domElement);
+      renderer.setPixelRatio(1); renderer.setSize(512, 512);
+      camera.aspect = 1; camera.fov = 40; camera.updateProjectionMatrix();
+      camera.position.set(0, 3.3, 4.1); camera.lookAt(0, 0.35, 0.6);
+      const place = (id, x, y, z, ry) => { const [m] = BUILD[id](); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); };
+      place('chicken', -0.35, 0.68, 0.6, 0.5);
+      place('egg', 0.45, 0.6, 0.75, 0);
+      place('pig', 0.25, 0.7, 0.2, -0.4);
+      renderer.render(scene, camera);
+      window.__iconReady = true;
+    }
+
+    // ---- ループ ----
+    let last = performance.now();
+    function loop(now) {
+      requestAnimationFrame(loop);
+      if (ICON_MODE) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      world.step(1 / 60, dt, 4);
+      for (const th of [...things]) {
+        th.mesh.position.copy(th.body.position);
+        th.mesh.quaternion.copy(th.body.quaternion);
+        if (th.ghost && (th.body.position.y > th.body.shapes[0].radius + 0.05 || now - th.ghost > 900)) {
+          th.ghost = 0; th.body.collisionResponse = true;
+          holdScene.remove(th.mesh); scene.add(th.mesh);
+        }
+        if (th.body.position.y < -3) removeThing(th);
+      }
+      hud();
+      renderer.render(scene, camera);
+      holdRenderer.render(holdScene, holdCam);
+    }
+    if (window.__KF_ZH__) lang = 'zh';
+    applyLang();
+    requestAnimationFrame(loop);
+  </script>
+  <!-- 結果画面の広告（../../ad.js の説明を参照） -->
+  <footer style="position:fixed;left:10px;bottom:6px;z-index:60;font:11px/1.5 -apple-system,sans-serif;color:#a49a87;opacity:.55;pointer-events:none;max-width:70vw">原作：ふるかわけい（Kei Furukawa）· 中文本地化：LiteGame · 经作者授权，允许在中国地区部署，不得部署在日本</footer>
+</body>
+</html>
