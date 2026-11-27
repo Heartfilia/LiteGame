@@ -1984,3 +1984,10 @@ html.has-data-modal{overflow:hidden}
 .game-card[aria-disabled=true]{opacity:.55;cursor:default}
 .game-card[aria-disabled=true] .game-play{display:none}
 @media(pointer:coarse){.footer-data{min-height:44px;padding:8px 14px}}
+
+/* 多人竞技：按玩法分组 */
+.mp-group { margin-top: 28px; }
+.mp-group:first-child { margin-top: 0; }
+.mp-group-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.mp-group-head h2 { margin: 0; font-size: 17px; letter-spacing: .02em; }
+.mp-group-head span { font-size: 12px; color: var(--c-text-dim); }

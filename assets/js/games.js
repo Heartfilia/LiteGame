@@ -95,6 +95,14 @@ window.GAME_DATA = {
       description: '手感、画面与规则都反复打磨的小品，一局很短，回味很长。',
       accent: '#e0b678',
       icon: 'gem'
+    },
+    {
+      id: 'multiplayer',
+      name: '多人竞技',
+      tagline: '两个人，或者四个人',
+      description: '能凑上人的游戏都收在这里：开房联机、同屏对弈、三四个人轮流上手。',
+      accent: '#8fd6a8',
+      icon: 'swords'
     }
   ],
   games: [
@@ -917,6 +925,34 @@ window.GAME_DATA = {
       source: 'chogan'
     }
   ]
+  ,
+  // 谁真的能多人玩：max = 同场人数上限，modes = online / local
+  multiplayer: {
+    'idiom-chain': { max: 2, modes: ['online'] },
+    'pi-death': { max: 2, modes: ['online'] },
+    'cat-find': { max: 2, modes: ['online'] },
+    'gyoza': { max: 2, modes: ['online'] },
+    'gorillas': { max: 2, modes: ['local'] },
+    'tanks': { max: 2, modes: ['local'] },
+    'chess': { max: 2, modes: ['local'] },
+    'xiangqi': { max: 2, modes: ['local'] },
+    'gomoku': { max: 2, modes: ['local'] },
+    'go': { max: 2, modes: ['local'] },
+    'reversi': { max: 2, modes: ['local'] },
+    'checkers': { max: 2, modes: ['local'] },
+    'backgammon': { max: 2, modes: ['local'] },
+    'mancala': { max: 2, modes: ['local'] },
+    'dots': { max: 2, modes: ['local'] },
+    'morris': { max: 2, modes: ['local'] },
+    'linkup': { max: 2, modes: ['local'] },
+    'eightball': { max: 2, modes: ['local'] },
+    'snooker': { max: 2, modes: ['local'] },
+    'darts': { max: 2, modes: ['local'] },
+    'bowling': { max: 2, modes: ['local'] },
+    'ludo': { max: 4, modes: ['local'] },
+    'snakes': { max: 4, modes: ['local'] },
+    'chain': { max: 4, modes: ['local'] }
+  }
 };
 
 // BEGIN GENERATED NES CATALOG

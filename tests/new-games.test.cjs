@@ -137,9 +137,17 @@ test('catalog has playable entries and local covers in every category', () => {
   // Every section must retain at least twenty playable entries.
   // 「精致游戏」是慢慢攒的精选区：单款也要能通过打磨标准，因此下限为 1。
   const minPerCategory = { shooting: 1, premium: 1 };
+  // 多人竞技是聚合分区：游戏仍留在原分区，这里按 multiplayer 元数据统计
+  const mpMeta = window.GAME_DATA.multiplayer || {};
+  const countIn = (c) => c.id === 'multiplayer'
+    ? games.filter(g => mpMeta[g.id]).length
+    : games.filter(g => g.category === c.id).length;
   for (const c of categories) {
     const min = minPerCategory[c.id] || 20;
-    assert.ok(games.filter(g => g.category === c.id).length >= min, c.id + ' has too few games');
+    assert.ok(countIn(c) >= min, c.id + ' has too few games');
+  }
+  for (const id of Object.keys(mpMeta)) {
+    assert.ok(games.some(g => g.id === id), 'multiplayer entry points at missing game: ' + id);
   }
   for (const g of games) {
     assert.ok(fs.existsSync(path.join(root, g.url.split('?')[0])), g.url);

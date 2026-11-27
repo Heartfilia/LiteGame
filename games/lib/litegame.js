@@ -14,7 +14,8 @@
     casual: '休闲',
     music: '音乐',
     sports: '体育',
-    premium: '精致游戏'
+    premium: '精致游戏',
+    multiplayer: '多人竞技'
   };
 
   var from = '';

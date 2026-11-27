@@ -23,6 +23,7 @@
     leaf: '<path d="M20.4 3.8C11.2 3.8 4.8 8.3 4.8 15a5.2 5.2 0 0 0 8.8 3.7c4-3.6 6.2-9.7 6.8-14.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="currentColor" fill-opacity=".12"/><path d="M4.5 21c1.2-5 4-8.4 8.5-11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
     note: '<path d="M9.4 17.2V6.4L19 4.2v10.6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><ellipse cx="6.9" cy="17.9" rx="2.7" ry="2.2" stroke="currentColor" stroke-width="1.8" fill="currentColor" fill-opacity=".15"/><ellipse cx="16.5" cy="15.5" rx="2.7" ry="2.2" stroke="currentColor" stroke-width="1.8" fill="currentColor" fill-opacity=".15"/>',
     ball: '<circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.8"/><path d="M3.6 12h16.8M12 3.4v17.2M5.8 5.8a13 13 0 0 1 0 12.4M18.2 5.8a13 13 0 0 0 0 12.4" stroke="currentColor" stroke-width="1.6"/>',
+    swords: '<path d="M4 3l7 7-2 2-7-7V3h2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M20 3l-7 7 2 2 7-7V3h-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.5 18.5l5-5M18.5 18.5l-5-5M3 21l3-3M21 21l-3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
     gem: '<path d="M12 2.8 20.4 8.6 12 21.4 3.6 8.6 12 2.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3.9 8.6h16.2M8.7 8.6 12 2.8l3.3 5.8M8.7 8.6 12 21.2l3.3-12.6" stroke="currentColor" stroke-width="1.3" opacity=".7"/>',
     board: '<rect x="3.2" y="3.2" width="17.6" height="17.6" rx="3.6" stroke="currentColor" stroke-width="1.8"/><path d="M3.6 9.2h16.8M3.6 14.8h16.8M9.2 3.6v16.8M14.8 3.6v16.8" stroke="currentColor" stroke-width="1.25" opacity=".42"/><circle cx="12" cy="12" r="2.1" fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.5"/>',
     cards: '<rect x="8.4" y="3.1" width="11" height="16.2" rx="2.4" transform="rotate(10 13.9 11.2)" stroke="currentColor" stroke-width="1.7"/><rect x="4.2" y="4.6" width="11" height="15.8" rx="2.3" stroke="currentColor" stroke-width="1.8" fill="currentColor" fill-opacity=".06"/><path d="m9.7 9.2 2.1 2.7-2.1 2.7-2.1-2.7 2.1-2.7Z" fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
@@ -57,8 +58,12 @@
     return categories.find(function (c) { return c.id === id; }) || null;
   }
 
+  const MP_META = (window.GAME_DATA && window.GAME_DATA.multiplayer) || {};
+
   function gamesInCategory(id) {
     if (id === 'favorites') { const ids = new Set(favorites.read()); return games.filter(game => ids.has(game.id)); }
+    // 多人竞技是聚合分区：不搬动游戏原本的分区，只按元数据汇总
+    if (id === 'multiplayer') return games.filter(function (g) { return !!MP_META[g.id]; });
     return games.filter(function (g) { return g.category === id; });
   }
 
@@ -285,8 +290,77 @@
     }
   }
 
+  function renderMultiplayer(cat) {
+    const all = gamesInCategory('multiplayer');
+    const groups = [
+      { key: 'online', title: '联机对战', hint: '开房、发邀请链接，异地也能一起玩', match: m => (m.modes || []).includes('online') },
+      { key: 'duo', title: '双人同屏', hint: '一台设备，两人轮流或同屏对战', match: m => (m.modes || []).includes('local') && m.max <= 2 },
+      { key: 'party', title: '3–4 人同机', hint: '聚会用，轮流上手', match: m => (m.modes || []).includes('local') && m.max >= 3 }
+    ].map(g => ({ ...g, list: all.filter(game => g.match(MP_META[game.id])) }));
+
+    let query = '';
+    try { query = sessionStorage.getItem('litegame.category-search.multiplayer') || ''; } catch (e) {}
+
+    function groupHTML(group) {
+      const list = group.list.filter(game => !query || [game.title, game.subtitle, game.description, (game.tags || []).join(' ')].join(' ').toLowerCase().includes(query));
+      if (!list.length) return '';
+      return '<section class="mp-group" data-group="' + group.key + '">' +
+        '<div class="mp-group-head"><h2>' + esc(group.title) + '</h2><span>' + esc(group.hint) + '</span></div>' +
+        '<div class="game-grid">' + list.map(gameCard).join('') + '</div>' +
+      '</section>';
+    }
+
+    function paint() {
+      const body = document.getElementById('mp-body');
+      if (!body) return;
+      const html = groups.map(groupHTML).join('');
+      body.innerHTML = html || emptyState('没有匹配的多人游戏', '换个关键词试试，或者清空搜索。', '#/category/multiplayer', '看看全部');
+      const status = document.getElementById('category-search-status');
+      const shown = groups.reduce((n, g) => n + g.list.filter(game => !query || [game.title, game.subtitle, game.description, (game.tags || []).join(' ')].join(' ').toLowerCase().includes(query)).length, 0);
+      if (status) status.textContent = query ? (shown ? '找到 ' + shown + ' 款多人游戏' : '没有匹配的多人游戏') : '';
+      const clear = document.getElementById('category-search-clear');
+      if (clear) clear.hidden = !query;
+    }
+
+    app.innerHTML = '' +
+      '<div class="view">' +
+        '<section class="page-head" style="--accent:' + esc(cat.accent) + '">' +
+          '<a class="back-link" href="#/">' + icon('arrowLeft') + '返回主菜单</a>' +
+          '<div class="page-head-row">' +
+            '<span class="page-icon">' + icon(cat.icon) + '</span>' +
+            '<div class="page-title">' +
+              '<span class="section-kicker">CATEGORY</span>' +
+              '<h1>' + esc(cat.name) + '分区</h1>' +
+              '<p>' + esc(cat.description) + '</p>' +
+            '</div>' +
+            '<span class="page-count">' + all.length + '<small>款游戏</small></span>' +
+          '</div>' +
+        '</section>' +
+        '<section class="category-search" role="search" aria-label="搜索多人游戏">' +
+          '<label for="category-search">搜索本分区的游戏</label>' +
+          '<div class="category-search-row"><input id="category-search" type="search" placeholder="输入游戏名称或关键词" autocomplete="off" value="' + esc(query) + '"><button id="category-search-clear" class="btn btn-ghost" type="button">清空</button></div>' +
+          '<p id="category-search-status" role="status"></p>' +
+        '</section>' +
+        '<div id="mp-body"></div>' +
+      '</div>';
+
+    const field = document.getElementById('category-search');
+    field.addEventListener('input', () => {
+      query = field.value.trim().toLowerCase();
+      try { sessionStorage.setItem('litegame.category-search.multiplayer', field.value); } catch (e) {}
+      paint();
+    });
+    document.getElementById('category-search-clear').onclick = () => {
+      field.value = ''; query = '';
+      try { sessionStorage.setItem('litegame.category-search.multiplayer', ''); } catch (e) {}
+      paint(); field.focus();
+    };
+    paint();
+  }
+
   function renderCategory(id) {
     if (id === 'favorites') { renderFavorites(); return; }
+    if (id === 'multiplayer') { renderMultiplayer(categoryById('multiplayer')); return; }
     const cat = categoryById(id);
     if (!cat) {
       app.innerHTML = '<div class="view"><section class="page-head"><a class="back-link" href="#/">' + icon('arrowLeft') + '返回首页</a></section>' +
