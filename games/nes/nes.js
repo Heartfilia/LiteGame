@@ -1,7 +1,8 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  const library = window.NES_LIBRARY.games;
+  // 重复条目（与已收录游戏字节相同）在目录里标记为 hidden，不进入游戏机列表
+  const library = window.NES_LIBRARY.games.filter(g => !g.hidden);
   const canvas = $('screen'), context = canvas.getContext('2d', { alpha: false });
   const image = context.createImageData(256, 240), pixels = new Uint32Array(image.data.buffer);
   let nes = null, rom = null, current = null, running = false, generation = 0;

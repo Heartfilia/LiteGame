@@ -41,3 +41,24 @@ test('Contra, Circus and Adventure Island boot and save states reproduce future 
     assert.equal(crypto.createHash('sha256').update(screen).digest('hex'), expected, game.title);
   }
 });
+
+
+test('匿名 ROM 已按指纹还原或隐藏，不再出现 z___game 名字', () => {
+  const root = path.join(__dirname, '..');
+  const catalog = JSON.parse(fs.readFileSync(path.join(root, 'games/nes/catalog.json')));
+  const map = JSON.parse(fs.readFileSync(path.join(root, 'deploy/nes-title-map.json')));
+  const byId = new Map(catalog.games.map((g) => [g.id, g]));
+
+  assert.equal(catalog.games.filter((g) => /^z___game_/.test(g.title)).length, 0);
+  for (const name of Object.keys(map)) {
+    assert.ok(!catalog.games.some((g) => g.title === name), '仍有一条匿名标题：' + name);
+  }
+  for (const game of catalog.games.filter((g) => g.hidden)) {
+    assert.ok(game.duplicateOf, game.id + ' 隐藏但没有 duplicateOf');
+    assert.ok(catalog.games.some((g) => g.title === game.duplicateOf && !g.hidden), game.duplicateOf + ' 没有对应的可见条目');
+  }
+  for (const game of catalog.games.filter((g) => g.identifiedBy === 'near' || g.identifiedBy === 'high')) {
+    assert.match(game.title, /（复刻版）$/, game.title + ' 缺少复刻版标记');
+  }
+  assert.ok(byId.size === catalog.games.length);
+});

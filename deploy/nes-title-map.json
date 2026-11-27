@@ -1,0 +1,1022 @@
+{
+ "z___game_006": {
+  "title": "空中魂斗罗无敌版",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_007": {
+  "title": "魂斗罗6无限生命大跳版",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_008": {
+  "title": "松鼠大战1",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_009": {
+  "title": "双截龙3中文版",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_011": {
+  "title": "古巴战士(完整汉化版)",
+  "level": "weak",
+  "score": 0.905
+ },
+ "z___game_013": {
+  "title": "瑪理奧2",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_014": {
+  "title": "超级马里奥3超级版",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_015": {
+  "title": "街头霸王III",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_017": {
+  "title": "南极大冒险(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_019": {
+  "title": "打砖块",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_021": {
+  "title": "斧王",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_024": {
+  "title": "蝙蝠侠归来",
+  "level": "near",
+  "score": 0.998
+ },
+ "z___game_025": {
+  "title": "坦克大战",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_026": {
+  "title": "热血新记录",
+  "level": "weak",
+  "score": 0.838
+ },
+ "z___game_028": {
+  "title": "赤影战士",
+  "level": "weak",
+  "score": 0.612
+ },
+ "z___game_029": {
+  "title": "炸弹人",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_030": {
+  "title": "炸弹人2",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_032": {
+  "title": "上尉密令",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_033": {
+  "title": "天使之翼2代",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_036": {
+  "title": "淘金者(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_038": {
+  "title": "松鼠大作戰",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_039": {
+  "title": "松鼠大战2(体力不减版)",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_040": {
+  "title": "马戏团",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_041": {
+  "title": "马戏团",
+  "level": "near",
+  "score": 0.993
+ },
+ "z___game_042": {
+  "title": "魂斗罗1中文无限命",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_043": {
+  "title": "魂斗罗1中文无限命",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_044": {
+  "title": "魂斗罗2",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_045": {
+  "title": "武装危机",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_046": {
+  "title": "脱狱2(血火纵横)(J)",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_049": {
+  "title": "唐老鸭",
+  "level": "weak",
+  "score": 0.856
+ },
+ "z___game_051": {
+  "title": "双截龙4",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_052": {
+  "title": "地道战",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_060": {
+  "title": "热血进行曲_(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_061": {
+  "title": "热血时代剧",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_066": {
+  "title": "越野摩托",
+  "level": "near",
+  "score": 0.996
+ },
+ "z___game_067": {
+  "title": "F1赛车",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_070": {
+  "title": "洛克人5",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_078": {
+  "title": "小蜜蜂",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_080": {
+  "title": "古巴战士_(CN)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_081": {
+  "title": "忍者神龟1-无敌版",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_082": {
+  "title": "风月魔传(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_083": {
+  "title": "眼镜蛇部队",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_085": {
+  "title": "七宝奇谋",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_086": {
+  "title": "大话西游",
+  "level": "near",
+  "score": 0.999
+ },
+ "z___game_092": {
+  "title": "星之卡比",
+  "level": "weak",
+  "score": 0.781
+ },
+ "z___game_093": {
+  "title": "冒险岛3",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_094": {
+  "title": "敲冰块",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_095": {
+  "title": "敲冰块",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_096": {
+  "title": "怒3",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_097": {
+  "title": "热血曲棍球",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_098": {
+  "title": "热血曲棍球(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_101": {
+  "title": "冒险岛2",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_102": {
+  "title": "冒险岛3",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_103": {
+  "title": "冒险岛4隐形版",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_104": {
+  "title": "赤色要塞",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_105": {
+  "title": "赤色要塞",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_107": {
+  "title": "兽王记",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_108": {
+  "title": "赤影战士",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_109": {
+  "title": "影子传说",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_110": {
+  "title": "摔交",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_111": {
+  "title": "热血足球2(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_112": {
+  "title": "热血足球2(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_114": {
+  "title": "三个枪手",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_115": {
+  "title": "麻雀",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_116": {
+  "title": "超时空要塞",
+  "level": "near",
+  "score": 0.995
+ },
+ "z___game_117": {
+  "title": "魔界村",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_118": {
+  "title": "魔界村",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_119": {
+  "title": "洛克人2",
+  "level": "weak",
+  "score": 0.769
+ },
+ "z___game_122": {
+  "title": "快打旋风修正",
+  "level": "weak",
+  "score": 0.762
+ },
+ "z___game_123": {
+  "title": "三目童子",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_124": {
+  "title": "热血格斗中文",
+  "level": "weak",
+  "score": 0.935
+ },
+ "z___game_125": {
+  "title": "热血硬派",
+  "level": "near",
+  "score": 0.999
+ },
+ "z___game_127": {
+  "title": "热血新纪录_",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_129": {
+  "title": "热血篮球",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_131": {
+  "title": "龙牙",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_139": {
+  "title": "吃豆",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_142": {
+  "title": "大力水手",
+  "level": "near",
+  "score": 0.994
+ },
+ "z___game_144": {
+  "title": "魂斗罗2机器人版",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_145": {
+  "title": "红巾特攻队",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_146": {
+  "title": "机械战警3(U)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_147": {
+  "title": "洛克人",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_148": {
+  "title": "洛克人2",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_152": {
+  "title": "洛克人7(J)",
+  "level": "near",
+  "score": 0.996
+ },
+ "z___game_153": {
+  "title": "洛克人7(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_156": {
+  "title": "绿色兵团",
+  "level": "weak",
+  "score": 0.978
+ },
+ "z___game_157": {
+  "title": "圣斗士星矢",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_158": {
+  "title": "西游记世界一代",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_159": {
+  "title": "沙罗曼蛇_(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_160": {
+  "title": "沙罗曼蛇_(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_161": {
+  "title": "沙罗曼蛇_(J)",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_162": {
+  "title": "三国志-群雄争霸",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_163": {
+  "title": "三国志4赤壁风云",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_167": {
+  "title": "三国志超级版",
+  "level": "near",
+  "score": 0.995
+ },
+ "z___game_171": {
+  "title": "桌球",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_172": {
+  "title": "双截龙2",
+  "level": "weak",
+  "score": 0.644
+ },
+ "z___game_173": {
+  "title": "雪人兄弟",
+  "level": "weak",
+  "score": 0.673
+ },
+ "z___game_177": {
+  "title": "街霸12人",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_178": {
+  "title": "热血物语",
+  "level": "weak",
+  "score": 0.798
+ },
+ "z___game_181": {
+  "title": "魂斗罗2无敌中文版",
+  "level": "near",
+  "score": 0.992
+ },
+ "z___game_183": {
+  "title": "超级马里奥兄弟1命数不减",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_184": {
+  "title": "超级玛丽2无限血版",
+  "level": "weak",
+  "score": 0.977
+ },
+ "z___game_185": {
+  "title": "超级马里奥3超级版",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_186": {
+  "title": "超级玛丽变态版",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_187": {
+  "title": "超级玛丽奥世界",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_188": {
+  "title": "超级玛莉",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_189": {
+  "title": "超级阿拉丁",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_190": {
+  "title": "冒险岛4隐形版",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_191": {
+  "title": "冒险岛4隐形版",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_193": {
+  "title": "特救指令",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_196": {
+  "title": "兔宝宝历险记2",
+  "level": "weak",
+  "score": 0.967
+ },
+ "z___game_198": {
+  "title": "吞食天地1",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_199": {
+  "title": "双鹰",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_200": {
+  "title": "兵蜂",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_201": {
+  "title": "兵蜂3",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_202": {
+  "title": "兵蜂3",
+  "level": "exact",
+  "score": 1
+ },
+ "z___game_204": {
+  "title": "天才厨师",
+  "level": "weak",
+  "score": 0.924
+ },
+ "z___game_205": {
+  "title": "功夫",
+  "level": "near",
+  "score": 1
+ },
+ "z___game_018": {
+  "title": "未来战士",
+  "level": "high",
+  "score": 1
+ },
+ "z___game_065": {
+  "title": "电梯迷宫",
+  "level": "high",
+  "score": 1
+ },
+ "z___game_195": {
+  "title": "俄罗斯方块",
+  "level": "high",
+  "score": 1
+ },
+ "z___game_034": {
+  "title": "忍者猫",
+  "level": "high",
+  "score": 0.999
+ },
+ "z___game_023": {
+  "title": "蝙蝠侠",
+  "level": "high",
+  "score": 0.875
+ },
+ "z___game_087": {
+  "title": "大坦克",
+  "level": "high",
+  "score": 0.853
+ },
+ "z___game_058": {
+  "title": "双截龙1",
+  "level": "mid",
+  "score": 0.787
+ },
+ "z___game_155": {
+  "title": "绿色兵团",
+  "level": "mid",
+  "score": 0.585
+ },
+ "z___game_012": {
+  "title": "五子棋",
+  "level": "mid",
+  "score": 0.529
+ },
+ "z___game_180": {
+  "title": "恶魔城3",
+  "level": "low",
+  "score": 0.484
+ },
+ "z___game_071": {
+  "title": "最终幻想(银河时代)",
+  "level": "low",
+  "score": 0.413
+ },
+ "z___game_113": {
+  "title": "塞尔达传说(东方的传说)",
+  "level": "low",
+  "score": 0.393
+ },
+ "z___game_031": {
+  "title": "炸弹人",
+  "level": "low",
+  "score": 0.375
+ },
+ "z___game_207": {
+  "title": "最终幻想2(宇宙战将)",
+  "level": "low",
+  "score": 0.372
+ },
+ "z___game_010": {
+  "title": "机器猫小叮当",
+  "level": "low",
+  "score": 0.311
+ },
+ "z___game_062": {
+  "title": "马里奥医生",
+  "level": "low",
+  "score": 0.221
+ },
+ "z___game_100": {
+  "title": "冒险岛1无敌版",
+  "level": "low",
+  "score": 0.217
+ },
+ "z___game_143": {
+  "title": "魂斗罗",
+  "level": "low",
+  "score": 0.209
+ },
+ "z___game_206": {
+  "title": "功夫",
+  "level": "low",
+  "score": 0.193
+ },
+ "z___game_037": {
+  "title": "成龙踢馆",
+  "level": "low",
+  "score": 0.162
+ },
+ "z___game_073": {
+  "title": "圣火徽章2",
+  "level": "low",
+  "score": 0.153
+ },
+ "z___game_074": {
+  "title": "圣火徽章2",
+  "level": "low",
+  "score": 0.153
+ },
+ "z___game_091": {
+  "title": "北斗神拳",
+  "level": "low",
+  "score": 0.152
+ },
+ "z___game_075": {
+  "title": "圣火徽章_索菲亚复苏(圣火徽章外传)",
+  "level": "low",
+  "score": 0.148
+ },
+ "z___game_137": {
+  "title": "忍者龙剑传3",
+  "level": "low",
+  "score": 0.108
+ },
+ "z___game_053": {
+  "title": "人间兵器",
+  "level": "low",
+  "score": 0.102
+ },
+ "z___game_130": {
+  "title": "人间兵器",
+  "level": "low",
+  "score": 0.102
+ },
+ "z___game_203": {
+  "title": "人间兵器",
+  "level": "low",
+  "score": 0.099
+ },
+ "z___game_076": {
+  "title": "恶魔之剑",
+  "level": "low",
+  "score": 0.083
+ },
+ "z___game_059": {
+  "title": "热血进行曲中文版",
+  "level": "low",
+  "score": 0.077
+ },
+ "z___game_120": {
+  "title": "合金装备美版燃烧战车美版(U)",
+  "level": "low",
+  "score": 0.075
+ },
+ "z___game_149": {
+  "title": "洛克人3",
+  "level": "low",
+  "score": 0.066
+ },
+ "z___game_170": {
+  "title": "少年街霸'97",
+  "level": "low",
+  "score": 0.056
+ },
+ "z___game_016": {
+  "title": "恶魔城传说",
+  "level": "low",
+  "score": 0.055
+ },
+ "z___game_126": {
+  "title": "热血躲避球",
+  "level": "low",
+  "score": 0.049
+ },
+ "z___game_134": {
+  "title": "忍者龙剑传3",
+  "level": "low",
+  "score": 0.048
+ },
+ "z___game_106": {
+  "title": "成龙之龙",
+  "level": "low",
+  "score": 0.044
+ },
+ "z___game_182": {
+  "title": "热血躲避球",
+  "level": "low",
+  "score": 0.043
+ },
+ "z___game_208": {
+  "title": "铁拳3",
+  "level": "low",
+  "score": 0.043
+ },
+ "z___game_209": {
+  "title": "铁拳3",
+  "level": "low",
+  "score": 0.043
+ },
+ "z___game_150": {
+  "title": "洛克人4",
+  "level": "low",
+  "score": 0.041
+ },
+ "z___game_128": {
+  "title": "热血篮球",
+  "level": "low",
+  "score": 0.039
+ },
+ "z___game_176": {
+  "title": "兵蜂(J)",
+  "level": "low",
+  "score": 0.038
+ },
+ "z___game_166": {
+  "title": "三国志超级版",
+  "level": "low",
+  "score": 0.037
+ },
+ "z___game_141": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.036
+ },
+ "z___game_197": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.036
+ },
+ "z___game_089": {
+  "title": "北斗神拳",
+  "level": "low",
+  "score": 0.035
+ },
+ "z___game_035": {
+  "title": "忍者猫",
+  "level": "low",
+  "score": 0.034
+ },
+ "z___game_057": {
+  "title": "杀虫大战",
+  "level": "low",
+  "score": 0.034
+ },
+ "z___game_088": {
+  "title": "飞龙之拳3(J)",
+  "level": "low",
+  "score": 0.034
+ },
+ "z___game_055": {
+  "title": "大力水手",
+  "level": "low",
+  "score": 0.033
+ },
+ "z___game_174": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.033
+ },
+ "z___game_140": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.032
+ },
+ "z___game_175": {
+  "title": "虎穴行动",
+  "level": "low",
+  "score": 0.032
+ },
+ "z___game_020": {
+  "title": "哈林篮球",
+  "level": "low",
+  "score": 0.031
+ },
+ "z___game_056": {
+  "title": "100合1",
+  "level": "low",
+  "score": 0.031
+ },
+ "z___game_136": {
+  "title": "忍者龙剑传2",
+  "level": "low",
+  "score": 0.031
+ },
+ "z___game_047": {
+  "title": "第2次超级机器人大战",
+  "level": "low",
+  "score": 0.03
+ },
+ "z___game_135": {
+  "title": "忍者龙剑传1",
+  "level": "low",
+  "score": 0.03
+ },
+ "z___game_048": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.029
+ },
+ "z___game_054": {
+  "title": "哈林篮球",
+  "level": "low",
+  "score": 0.029
+ },
+ "z___game_121": {
+  "title": "重装机兵",
+  "level": "low",
+  "score": 0.029
+ },
+ "z___game_138": {
+  "title": "跑跑卡丁车",
+  "level": "low",
+  "score": 0.029
+ },
+ "z___game_151": {
+  "title": "虎穴行动",
+  "level": "low",
+  "score": 0.027
+ },
+ "z___game_079": {
+  "title": "虎穴行动",
+  "level": "low",
+  "score": 0.026
+ },
+ "z___game_169": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.026
+ },
+ "z___game_077": {
+  "title": "100合1",
+  "level": "low",
+  "score": 0.025
+ },
+ "z___game_154": {
+  "title": "热血高校足球(J)",
+  "level": "low",
+  "score": 0.025
+ },
+ "z___game_027": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.023
+ },
+ "z___game_090": {
+  "title": "趣味方块",
+  "level": "low",
+  "score": 0.023
+ },
+ "z___game_099": {
+  "title": "飞碟大战",
+  "level": "low",
+  "score": 0.023
+ },
+ "z___game_194": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.023
+ },
+ "z___game_084": {
+  "title": "黑暗之蛊",
+  "level": "low",
+  "score": 0.022
+ },
+ "z___game_133": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.022
+ },
+ "z___game_022": {
+  "title": "跳跳车",
+  "level": "low",
+  "score": 0.021
+ },
+ "z___game_064": {
+  "title": "跑跑卡丁车",
+  "level": "low",
+  "score": 0.021
+ },
+ "z___game_072": {
+  "title": "最终幻想3",
+  "level": "low",
+  "score": 0.021
+ },
+ "z___game_164": {
+  "title": "哈林篮球",
+  "level": "low",
+  "score": 0.021
+ },
+ "z___game_165": {
+  "title": "洛克人6",
+  "level": "low",
+  "score": 0.02
+ },
+ "z___game_168": {
+  "title": "疯狂鸡蛋仔",
+  "level": "low",
+  "score": 0.02
+ },
+ "z___game_050": {
+  "title": "跑跑卡丁车",
+  "level": "low",
+  "score": 0.019
+ },
+ "z___game_179": {
+  "title": "鬼屋冒险美版",
+  "level": "low",
+  "score": 0.019
+ },
+ "z___game_192": {
+  "title": "趣味方块",
+  "level": "low",
+  "score": 0.018
+ },
+ "z___game_068": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.017
+ },
+ "z___game_069": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.017
+ },
+ "z___game_063": {
+  "title": "勇者斗恶龙4_(J)",
+  "level": "low",
+  "score": 0.015
+ },
+ "z___game_132": {
+  "title": "格斗美少女战士",
+  "level": "low",
+  "score": 0.012
+ }
+}

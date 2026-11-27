@@ -203,2247 +203,2516 @@
     },
     {
       "id": "nes-6e51ecec3c3ad970",
-      "title": "z___game_006",
+      "title": "空中魂斗罗无敌版",
       "sourcePath": "z___game_006.nes",
       "sha256": "0785ce3472f356a7260028378f2f24df64f2e50b48642c5513ed514817fc90d8",
       "rom": "roms/0785ce3472f356a7260028378f2f24df64f2e50b48642c5513ed514817fc90d8.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "空中魂斗罗无敌版",
+      "hidden": true
     },
     {
       "id": "nes-f96f66156b2506a7",
-      "title": "z___game_007",
+      "title": "魂斗罗6无限生命大跳版",
       "sourcePath": "z___game_007.nes",
       "sha256": "991824271dae21387caa3d20e6393f0cbf751b901c0b78bc6456b79d5b0d2eff",
       "rom": "roms/991824271dae21387caa3d20e6393f0cbf751b901c0b78bc6456b79d5b0d2eff.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "魂斗罗6无限生命大跳版",
+      "hidden": true
     },
     {
       "id": "nes-bfca9a6576f97023",
-      "title": "z___game_008",
+      "title": "松鼠大战1",
       "sourcePath": "z___game_008.nes",
       "sha256": "b348c20fdc729ab2938723e7b153679de341c16a655203b5754f01234a48c134",
       "rom": "roms/b348c20fdc729ab2938723e7b153679de341c16a655203b5754f01234a48c134.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "松鼠大战1",
+      "hidden": true
     },
     {
       "id": "nes-1840a69da51376ca",
-      "title": "z___game_009",
+      "title": "双截龙3中文版（复刻版）",
       "sourcePath": "z___game_009.nes",
       "sha256": "c154be5067c9c5cc3e31eb994bf1e21d7cb3e8ef82a437eb523882a710582370",
       "rom": "roms/c154be5067c9c5cc3e31eb994bf1e21d7cb3e8ef82a437eb523882a710582370.nes",
       "size": 262288,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-2ebaafff532b5fdc",
-      "title": "z___game_010",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_010.nes",
       "sha256": "85098a6c37971547fa099dba5e35053ce52d992f5f58c76dfd9740f196bbef2c",
       "rom": "roms/85098a6c37971547fa099dba5e35053ce52d992f5f58c76dfd9740f196bbef2c.nes",
       "size": 524304,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「机器猫小叮当」（相似度 0.311）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-ea95b212f01751f1",
-      "title": "z___game_011",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_011.nes",
       "sha256": "5871c0bc3a06cfa2e1d9360a651025855d965fa3a9b77bcaeb331d2378ba1afb",
       "rom": "roms/5871c0bc3a06cfa2e1d9360a651025855d965fa3a9b77bcaeb331d2378ba1afb.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「古巴战士(完整汉化版)」（相似度 0.905）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-0ca6b9c8ca9e6de8",
-      "title": "z___game_012",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_012.nes",
       "sha256": "adadfd920ba528cc0a06330b82f0f928a76105e03348fdcb1f7168031f4f1190",
       "rom": "roms/adadfd920ba528cc0a06330b82f0f928a76105e03348fdcb1f7168031f4f1190.nes",
       "size": 40976,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「五子棋」（相似度 0.529）",
+      "identifiedBy": "mid"
     },
     {
       "id": "nes-346d3ab96dd77baa",
-      "title": "z___game_013",
+      "title": "瑪理奧2",
       "sourcePath": "z___game_013.nes",
       "sha256": "9f73e5a91857ff58024769fb299bf8c2404dd9b7e4e0cb26cb7f346df05409da",
       "rom": "roms/9f73e5a91857ff58024769fb299bf8c2404dd9b7e4e0cb26cb7f346df05409da.nes",
       "size": 262288,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "瑪理奧2",
+      "hidden": true
     },
     {
       "id": "nes-54a7c214419fa825",
-      "title": "z___game_014",
+      "title": "超级马里奥3超级版（复刻版）",
       "sourcePath": "z___game_014.nes",
       "sha256": "2dbff658378216b3d4e59fdb38926d0bddabd9e78d75e8819e3824d5554daed8",
       "rom": "roms/2dbff658378216b3d4e59fdb38926d0bddabd9e78d75e8819e3824d5554daed8.nes",
       "size": 393232,
       "mapper": 4,
       "status": "unsupported",
-      "detail": "Game crashed, invalid opcode at address $c41d"
+      "detail": "Game crashed, invalid opcode at address $c41d",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-1c58ecebff3ecf22",
-      "title": "z___game_015",
+      "title": "街头霸王III",
       "sourcePath": "z___game_015.nes",
       "sha256": "7a91dd8b2a2b404e3c06ce8a1e3cd885de822ab5d63178bad04b9da107792327",
       "rom": "roms/7a91dd8b2a2b404e3c06ce8a1e3cd885de822ab5d63178bad04b9da107792327.nes",
       "size": 655376,
       "mapper": 91,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 91"
+      "detail": "Unsupported mapper: 91",
+      "duplicateOf": "街头霸王III",
+      "hidden": true
     },
     {
       "id": "nes-19eb5ee873205bff",
-      "title": "z___game_016",
+      "title": "未识别 · mapper 24",
       "sourcePath": "z___game_016.nes",
       "sha256": "d29ac5cfea1e324ddd5e4d977ebe9bf3273f0132509ce2b48bf22cfcdacb9403",
       "rom": "roms/d29ac5cfea1e324ddd5e4d977ebe9bf3273f0132509ce2b48bf22cfcdacb9403.nes",
       "size": 917536,
       "mapper": 24,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 24"
+      "detail": "Unsupported mapper: 24；疑似基于「恶魔城传说」（相似度 0.055）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-9d59c4c08ee46aa4",
-      "title": "z___game_017",
+      "title": "南极大冒险(J)",
       "sourcePath": "z___game_017.nes",
       "sha256": "529b50520591ed70ccd4ed8a7a231cd6f11f4bf7112f5faa565aeb5369eb84c8",
       "rom": "roms/529b50520591ed70ccd4ed8a7a231cd6f11f4bf7112f5faa565aeb5369eb84c8.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "南极大冒险(J)",
+      "hidden": true
     },
     {
       "id": "nes-817bc72ba1e5ec66",
-      "title": "z___game_018",
+      "title": "未来战士（复刻版）",
       "sourcePath": "z___game_018.nes",
       "sha256": "8a49bbf4fbbe4da30bf3723b546aeb1a83010c1e2bb9d7998a0ed0aba35adbb9",
       "rom": "roms/8a49bbf4fbbe4da30bf3723b546aeb1a83010c1e2bb9d7998a0ed0aba35adbb9.nes",
       "size": 131088,
       "mapper": 130,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "high"
     },
     {
       "id": "nes-4876f2d98c2df5a0",
-      "title": "z___game_019",
+      "title": "打砖块",
       "sourcePath": "z___game_019.nes",
       "sha256": "051ec534fb620a6ec25a4c79ed142dc3cb0e45e4445bd834d19a5a536b46749f",
       "rom": "roms/051ec534fb620a6ec25a4c79ed142dc3cb0e45e4445bd834d19a5a536b46749f.nes",
       "size": 40976,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "打砖块",
+      "hidden": true
     },
     {
       "id": "nes-66659824dda16d29",
-      "title": "z___game_020",
+      "title": "未识别 · mapper 70",
       "sourcePath": "z___game_020.nes",
       "sha256": "0b3b4b026bd00354b0b9a60397469790aef5290c0e3703bbafdfc896ad4199f5",
       "rom": "roms/0b3b4b026bd00354b0b9a60397469790aef5290c0e3703bbafdfc896ad4199f5.nes",
       "size": 196624,
       "mapper": 70,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 70"
+      "detail": "Unsupported mapper: 70；疑似基于「哈林篮球」（相似度 0.031）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-ff1de369da51a2db",
-      "title": "z___game_021",
+      "title": "斧王（复刻版）",
       "sourcePath": "z___game_021.NES",
       "sha256": "b9ab5fbc92df5f496af543711adcdead16c02cbd08aca69f5f3a49d593a25c2f",
       "rom": "roms/b9ab5fbc92df5f496af543711adcdead16c02cbd08aca69f5f3a49d593a25c2f.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-6eb13362328a4aea",
-      "title": "z___game_022",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_022.nes",
       "sha256": "28fe46cc4418d11e3805e6c43c60cb8ad66d70ea06f2ac460a39f2888fd71a37",
       "rom": "roms/28fe46cc4418d11e3805e6c43c60cb8ad66d70ea06f2ac460a39f2888fd71a37.nes",
       "size": 40976,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「跳跳车」（相似度 0.021）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-019ab2a457d23a29",
-      "title": "z___game_023",
+      "title": "蝙蝠侠（复刻版）",
       "sourcePath": "z___game_023.nes",
       "sha256": "39b3982742429e9226de6d1f3eb86adb94fa54e77f416a635fa58a8e7c832093",
       "rom": "roms/39b3982742429e9226de6d1f3eb86adb94fa54e77f416a635fa58a8e7c832093.nes",
       "size": 262160,
       "mapper": 69,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 69"
+      "detail": "Unsupported mapper: 69",
+      "identifiedBy": "high"
     },
     {
       "id": "nes-daf0156d713c5181",
-      "title": "z___game_024",
+      "title": "蝙蝠侠归来（复刻版）",
       "sourcePath": "z___game_024.NES",
       "sha256": "d15669dcb5f39e0f7ef59c81357ee5d92323828c0af03ca9960bb0127a8171be",
       "rom": "roms/d15669dcb5f39e0f7ef59c81357ee5d92323828c0af03ca9960bb0127a8171be.nes",
       "size": 393232,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-ec466777df691d3b",
-      "title": "z___game_025",
+      "title": "坦克大战",
       "sourcePath": "z___game_025.nes",
       "sha256": "a869aead5b6957fc62002ff9636e048cc34baf0100d629b07dc51aa18f220c0c",
       "rom": "roms/a869aead5b6957fc62002ff9636e048cc34baf0100d629b07dc51aa18f220c0c.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "坦克大战",
+      "hidden": true
     },
     {
       "id": "nes-c023d5e628b3bd9d",
-      "title": "z___game_026",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_026.nes",
       "sha256": "dd8aabf72ef4df421dddb61d98e84a5c81b19dd36a38dd297c2999f984e841be",
       "rom": "roms/dd8aabf72ef4df421dddb61d98e84a5c81b19dd36a38dd297c2999f984e841be.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血新记录」（相似度 0.838）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-de5911dadff74d15",
-      "title": "z___game_027",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_027.nes",
       "sha256": "493a7c3e263775d3c8181e2ddb21138185f93beceff92b6ceb74195ca19af36b",
       "rom": "roms/493a7c3e263775d3c8181e2ddb21138185f93beceff92b6ceb74195ca19af36b.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.023）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-6a7cd9db77d6c5fd",
-      "title": "z___game_028",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_028.nes",
       "sha256": "a1b9bd29f3a8a4d4d491b1eb9d5287e6ab273cee43235ecc5093ab14275c3a4d",
       "rom": "roms/a1b9bd29f3a8a4d4d491b1eb9d5287e6ab273cee43235ecc5093ab14275c3a4d.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「赤影战士」（相似度 0.612）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-a08411c8f6960602",
-      "title": "z___game_029",
+      "title": "炸弹人",
       "sourcePath": "z___game_029.nes",
       "sha256": "0b5d24ccf0335b5f70a02fd162b20fa3a6defb83408f37a8701de83d5fcf2c9a",
       "rom": "roms/0b5d24ccf0335b5f70a02fd162b20fa3a6defb83408f37a8701de83d5fcf2c9a.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "炸弹人",
+      "hidden": true
     },
     {
       "id": "nes-f4b37a2fdd571d1a",
-      "title": "z___game_030",
+      "title": "炸弹人2（复刻版）",
       "sourcePath": "z___game_030.nes",
       "sha256": "f8dbe875734201fd10c6a518a57cbcebcc5a7ff44eea28ba69ab7bcbed8016bf",
       "rom": "roms/f8dbe875734201fd10c6a518a57cbcebcc5a7ff44eea28ba69ab7bcbed8016bf.nes",
       "size": 131088,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-e0611c82c7b694f1",
-      "title": "z___game_031",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_031.NES",
       "sha256": "f9e1c791c69030d97517c91e2b22162ed0b827f35f7194ff3235a1265c1a5415",
       "rom": "roms/f9e1c791c69030d97517c91e2b22162ed0b827f35f7194ff3235a1265c1a5415.nes",
       "size": 41103,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「炸弹人」（相似度 0.375）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-e26a37411228acfd",
-      "title": "z___game_032",
+      "title": "上尉密令（复刻版）",
       "sourcePath": "z___game_032.nes",
       "sha256": "5595550a40fad3e4c1b1725c64179d3de26b214afecc2ff966046e74a1ae743f",
       "rom": "roms/5595550a40fad3e4c1b1725c64179d3de26b214afecc2ff966046e74a1ae743f.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-2bf716a8ac0ac7a9",
-      "title": "z___game_033",
+      "title": "天使之翼2代",
       "sourcePath": "z___game_033.nes",
       "sha256": "ee08f9134ef0e9e3a5f77e4f08244d24739c68d781cb58e2be737916bb3ab5ae",
       "rom": "roms/ee08f9134ef0e9e3a5f77e4f08244d24739c68d781cb58e2be737916bb3ab5ae.nes",
       "size": 393232,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "天使之翼2代",
+      "hidden": true
     },
     {
       "id": "nes-939e41ba2774736f",
-      "title": "z___game_034",
+      "title": "忍者猫（复刻版）",
       "sourcePath": "z___game_034.nes",
       "sha256": "ba273dc8fbe7a0464441b7a3c9742ff991b9eb764f515e2d5f0a5bb9011716c7",
       "rom": "roms/ba273dc8fbe7a0464441b7a3c9742ff991b9eb764f515e2d5f0a5bb9011716c7.nes",
       "size": 262160,
       "mapper": 244,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "high"
     },
     {
       "id": "nes-041ffb88724f5ee3",
-      "title": "z___game_035",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_035.nes",
       "sha256": "ae7f0fdf55ff0b6b7085e551fa6f057e58d61fad5f7b6500dd042d9caf1c25b9",
       "rom": "roms/ae7f0fdf55ff0b6b7085e551fa6f057e58d61fad5f7b6500dd042d9caf1c25b9.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「忍者猫」（相似度 0.034）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-cb103177f8fbe3bf",
-      "title": "z___game_036",
+      "title": "淘金者(J)",
       "sourcePath": "z___game_036.nes",
       "sha256": "2e18fffa50552eddc9865817664005da0310af0a31b7052897d7651bf0b88aa5",
       "rom": "roms/2e18fffa50552eddc9865817664005da0310af0a31b7052897d7651bf0b88aa5.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "淘金者(J)",
+      "hidden": true
     },
     {
       "id": "nes-3778bcdb080c8af1",
-      "title": "z___game_037",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_037.nes",
       "sha256": "05c65c86a1eec7d7a478defc4824bb252e568f38e78a8fbb863446cc8093b6ff",
       "rom": "roms/05c65c86a1eec7d7a478defc4824bb252e568f38e78a8fbb863446cc8093b6ff.nes",
       "size": 65552,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「成龙踢馆」（相似度 0.162）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-d16e5152353de89b",
-      "title": "z___game_038",
+      "title": "松鼠大作戰",
       "sourcePath": "z___game_038.nes",
       "sha256": "5e28cdca4d4c1632dda246149b552353fb4a1689c82618c72efca6baf8a75e48",
       "rom": "roms/5e28cdca4d4c1632dda246149b552353fb4a1689c82618c72efca6baf8a75e48.nes",
       "size": 786464,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "松鼠大作戰",
+      "hidden": true
     },
     {
       "id": "nes-b0d500e175ea3e60",
-      "title": "z___game_039",
+      "title": "松鼠大战2(体力不减版)（复刻版）",
       "sourcePath": "z___game_039.nes",
       "sha256": "8555d9725d221164497b3825780c0adaabf6a486352d50c7da1f4e2d0cd63db2",
       "rom": "roms/8555d9725d221164497b3825780c0adaabf6a486352d50c7da1f4e2d0cd63db2.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-5a7c17228aa55db6",
-      "title": "z___game_040",
+      "title": "马戏团",
       "sourcePath": "z___game_040.nes",
       "sha256": "608a8c542e49d5fa500634aa49ee96921d52c49c6e1646db7ca21ac7682ce4ba",
       "rom": "roms/608a8c542e49d5fa500634aa49ee96921d52c49c6e1646db7ca21ac7682ce4ba.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "马戏团",
+      "hidden": true
     },
     {
       "id": "nes-5fa6d729bbeb6959",
-      "title": "z___game_041",
+      "title": "马戏团（复刻版）",
       "sourcePath": "z___game_041.nes",
       "sha256": "4afc0be51a8bbaa92864bf349b2c60fca34e0db92cdd7de68bb9c660febfadd9",
       "rom": "roms/4afc0be51a8bbaa92864bf349b2c60fca34e0db92cdd7de68bb9c660febfadd9.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-276cd3f88e98f88a",
-      "title": "z___game_042",
+      "title": "魂斗罗1中文无限命（复刻版）",
       "sourcePath": "z___game_042.nes",
       "sha256": "6ba53139fa88b8de1ae527c438bda6f1541d1ee7df26d63dec5164a32d166bfe",
       "rom": "roms/6ba53139fa88b8de1ae527c438bda6f1541d1ee7df26d63dec5164a32d166bfe.nes",
       "size": 262160,
       "mapper": 23,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 23"
+      "detail": "Unsupported mapper: 23",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-ce50dc887415ea98",
-      "title": "z___game_043",
+      "title": "魂斗罗1中文无限命（复刻版）",
       "sourcePath": "z___game_043.nes",
       "sha256": "6ba53139fa88b8de1ae527c438bda6f1541d1ee7df26d63dec5164a32d166bfe",
       "rom": "roms/6ba53139fa88b8de1ae527c438bda6f1541d1ee7df26d63dec5164a32d166bfe.nes",
       "size": 262160,
       "mapper": 23,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 23"
+      "detail": "Unsupported mapper: 23",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-88eed1ee2985d544",
-      "title": "z___game_044",
+      "title": "魂斗罗2",
       "sourcePath": "z___game_044.nes",
       "sha256": "3f47051315209efcd3465f26f07496a5d65a9db88ebe504b5982a81314cd8036",
       "rom": "roms/3f47051315209efcd3465f26f07496a5d65a9db88ebe504b5982a81314cd8036.nes",
       "size": 253968,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "魂斗罗2",
+      "hidden": true
     },
     {
       "id": "nes-e080dba34fdd3e9d",
-      "title": "z___game_045",
+      "title": "武装危机",
       "sourcePath": "z___game_045.nes",
       "sha256": "b4403aff597bac8e54f042ef572147b5a2c2b57a61f608fdd1f29bf6329d1b8c",
       "rom": "roms/b4403aff597bac8e54f042ef572147b5a2c2b57a61f608fdd1f29bf6329d1b8c.nes",
       "size": 262160,
       "mapper": 23,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 23"
+      "detail": "Unsupported mapper: 23",
+      "duplicateOf": "武装危机",
+      "hidden": true
     },
     {
       "id": "nes-6807b0aefed47991",
-      "title": "z___game_046",
+      "title": "脱狱2(血火纵横)(J)（复刻版）",
       "sourcePath": "z___game_046.nes",
       "sha256": "a2747cab66e807275bdbe32fd61f2d614539f93fa1370f66409ca9e3ac2bac2a",
       "rom": "roms/a2747cab66e807275bdbe32fd61f2d614539f93fa1370f66409ca9e3ac2bac2a.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-fe159e274e0de7bf",
-      "title": "z___game_047",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_047.nes",
       "sha256": "f183a08cf1bb9390fe6bc1fa0bd925b18365a52fc66c61aa383840d72d7a98e0",
       "rom": "roms/f183a08cf1bb9390fe6bc1fa0bd925b18365a52fc66c61aa383840d72d7a98e0.nes",
       "size": 1048608,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「第2次超级机器人大战」（相似度 0.03）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-f4d15678f96ba3ee",
-      "title": "z___game_048",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_048.nes",
       "sha256": "57a62232b89d9d277099fc7734cb17f53463dc011d948e990c571ed94784a12a",
       "rom": "roms/57a62232b89d9d277099fc7734cb17f53463dc011d948e990c571ed94784a12a.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.029）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-474f64e7a5b5640d",
-      "title": "z___game_049",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_049.nes",
       "sha256": "80ea2ad702fcadfe5fba1e326bcf1cf6bc67ac9265b2e703bd3f40410bcaa29c",
       "rom": "roms/80ea2ad702fcadfe5fba1e326bcf1cf6bc67ac9265b2e703bd3f40410bcaa29c.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「唐老鸭」（相似度 0.856）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-1b05a7be7668a8c7",
-      "title": "z___game_050",
+      "title": "未识别 · mapper 16",
       "sourcePath": "z___game_050.nes",
       "sha256": "4c04158f659346b8873e47d898d1af6103849be068d8cb5e9064dbc3d5d3acd0",
       "rom": "roms/4c04158f659346b8873e47d898d1af6103849be068d8cb5e9064dbc3d5d3acd0.nes",
       "size": 262160,
       "mapper": 16,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 16"
+      "detail": "Unsupported mapper: 16；疑似基于「跑跑卡丁车」（相似度 0.019）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-1e049be1c53d97c7",
-      "title": "z___game_051",
+      "title": "双截龙4",
       "sourcePath": "z___game_051.nes",
       "sha256": "d1677a458c4c9518d3c9f444b114dc200e710ae7fffb19e9d0168c7084c37a67",
       "rom": "roms/d1677a458c4c9518d3c9f444b114dc200e710ae7fffb19e9d0168c7084c37a67.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "双截龙4",
+      "hidden": true
     },
     {
       "id": "nes-a0eb24c67493d040",
-      "title": "z___game_052",
+      "title": "地道战",
       "sourcePath": "z___game_052.nes",
       "sha256": "74bc6db30fbbd7a502022a45cf4674388c3f472733b016065120ba53b2bad3eb",
       "rom": "roms/74bc6db30fbbd7a502022a45cf4674388c3f472733b016065120ba53b2bad3eb.nes",
       "size": 524304,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "地道战",
+      "hidden": true
     },
     {
       "id": "nes-9dd0a27c52efee25",
-      "title": "z___game_053",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_053.nes",
       "sha256": "9dd80c2c7896c9837b145d89b16f4745cb4516f0a1d8260cc6d824832aca746e",
       "rom": "roms/9dd80c2c7896c9837b145d89b16f4745cb4516f0a1d8260cc6d824832aca746e.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「人间兵器」（相似度 0.102）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-becb5aef7c98d5f2",
-      "title": "z___game_054",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_054.nes",
       "sha256": "f4f15ba7ef0b0bdb7cbca691dd51c240ea8f410ea7aae715f56f4ce2f3fe450e",
       "rom": "roms/f4f15ba7ef0b0bdb7cbca691dd51c240ea8f410ea7aae715f56f4ce2f3fe450e.nes",
       "size": 786464,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「哈林篮球」（相似度 0.029）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-c69296b48d97c2a8",
-      "title": "z___game_055",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_055.nes",
       "sha256": "f9f026fd3560eeb03be9f6d1efa329b4c71d562caf06d4a5a691e5342f8da8e6",
       "rom": "roms/f9f026fd3560eeb03be9f6d1efa329b4c71d562caf06d4a5a691e5342f8da8e6.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「大力水手」（相似度 0.033）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-963eceea7ec1847b",
-      "title": "z___game_056",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_056.nes",
       "sha256": "0055bd4c899c99cbb0d687abab0d5ee6f29b11c93088423bb5a8b5d1b40fa9b2",
       "rom": "roms/0055bd4c899c99cbb0d687abab0d5ee6f29b11c93088423bb5a8b5d1b40fa9b2.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「100合1」（相似度 0.031）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-829dc74e46be2b77",
-      "title": "z___game_057",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_057.nes",
       "sha256": "93afe18160673d87cbb4db7a3fcd6be3d530528b84caa1ac6b6ac895f6a2dc27",
       "rom": "roms/93afe18160673d87cbb4db7a3fcd6be3d530528b84caa1ac6b6ac895f6a2dc27.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「杀虫大战」（相似度 0.034）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-6a73fef6e061eab6",
-      "title": "z___game_058",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_058.nes",
       "sha256": "4be6ac0874522934b3f862c304c050a12202e7b6061bdca026b202d5527afc0b",
       "rom": "roms/4be6ac0874522934b3f862c304c050a12202e7b6061bdca026b202d5527afc0b.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「双截龙1」（相似度 0.787）",
+      "identifiedBy": "mid"
     },
     {
       "id": "nes-335189274b023e87",
-      "title": "z___game_059",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_059.nes",
       "sha256": "2f79f88d2445a029e3748b46e4d9d917c87ef273773761a2eb3ae364fd4790ba",
       "rom": "roms/2f79f88d2445a029e3748b46e4d9d917c87ef273773761a2eb3ae364fd4790ba.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血进行曲中文版」（相似度 0.077）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-683e8d47c6f27ef1",
-      "title": "z___game_060",
+      "title": "热血进行曲_(J)",
       "sourcePath": "z___game_060.nes",
       "sha256": "bf37e2fd9fd72af9cab173390570e37967687fc1d2b997dc6f70056de16c120f",
       "rom": "roms/bf37e2fd9fd72af9cab173390570e37967687fc1d2b997dc6f70056de16c120f.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血进行曲_(J)",
+      "hidden": true
     },
     {
       "id": "nes-1defe8a9c027b07a",
-      "title": "z___game_061",
+      "title": "热血时代剧",
       "sourcePath": "z___game_061.nes",
       "sha256": "54d79f15f60a32123e95fbf20661128a13ee0eee1941e0ff98ba7bb54343e23a",
       "rom": "roms/54d79f15f60a32123e95fbf20661128a13ee0eee1941e0ff98ba7bb54343e23a.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血时代剧",
+      "hidden": true
     },
     {
       "id": "nes-8711920e2209c8d3",
-      "title": "z___game_062",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_062.nes",
       "sha256": "83914c08f82fc70779121760a48392af3a5988f015794eb53cbe1aa0a165c821",
       "rom": "roms/83914c08f82fc70779121760a48392af3a5988f015794eb53cbe1aa0a165c821.nes",
       "size": 65552,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「马里奥医生」（相似度 0.221）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-28595b597ab00a1f",
-      "title": "z___game_063",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_063.nes",
       "sha256": "05b4bb37888db7590ed11d10adf8f197a39cb33e1148f2e1bf57b09930e60a3a",
       "rom": "roms/05b4bb37888db7590ed11d10adf8f197a39cb33e1148f2e1bf57b09930e60a3a.nes",
       "size": 524304,
       "mapper": 1,
       "status": "unsupported",
-      "detail": "Game crashed, invalid opcode at address $93c5"
+      "detail": "Game crashed, invalid opcode at address $93c5；疑似基于「勇者斗恶龙4_(J)」（相似度 0.015）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-70730c59b220fd97",
-      "title": "z___game_064",
+      "title": "未识别 · mapper 17",
       "sourcePath": "z___game_064.nes",
       "sha256": "59bdc5140c1cfd6577d489f5a092527edf80940ea23cdb506e8a7cd7d83dc1a6",
       "rom": "roms/59bdc5140c1cfd6577d489f5a092527edf80940ea23cdb506e8a7cd7d83dc1a6.nes",
       "size": 393232,
       "mapper": 17,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 17"
+      "detail": "Unsupported mapper: 17；疑似基于「跑跑卡丁车」（相似度 0.021）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-c72902ddfe90f2e9",
-      "title": "z___game_065",
+      "title": "电梯迷宫（复刻版）",
       "sourcePath": "z___game_065.nes",
       "sha256": "b023f94c204dbbc3acaee152615c1bcd290d84e549813476a0756141e0d654da",
       "rom": "roms/b023f94c204dbbc3acaee152615c1bcd290d84e549813476a0756141e0d654da.nes",
       "size": 40976,
       "mapper": 64,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "high"
     },
     {
       "id": "nes-62be0c8bdc4aad5f",
-      "title": "z___game_066",
+      "title": "越野摩托（复刻版）",
       "sourcePath": "z___game_066.nes",
       "sha256": "730a03154efe6ed62046de02a34c349749f327e2c68e0a8675a045208e6ddd4d",
       "rom": "roms/730a03154efe6ed62046de02a34c349749f327e2c68e0a8675a045208e6ddd4d.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-fab6d09d7378a3c5",
-      "title": "z___game_067",
+      "title": "F1赛车",
       "sourcePath": "z___game_067.nes",
       "sha256": "7d42d143cfc282f659ad3f351bcbaf66fac67d5a6ff7d10744c1cf4cdf8a3d1e",
       "rom": "roms/7d42d143cfc282f659ad3f351bcbaf66fac67d5a6ff7d10744c1cf4cdf8a3d1e.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "F1赛车",
+      "hidden": true
     },
     {
       "id": "nes-be1a572b52e449ba",
-      "title": "z___game_068",
+      "title": "未识别 · mapper 10",
       "sourcePath": "z___game_068.nes",
       "sha256": "23a64cc66235cfaf7e94fb1272aa56b6436c4c08b6f41256c081dc496897744c",
       "rom": "roms/23a64cc66235cfaf7e94fb1272aa56b6436c4c08b6f41256c081dc496897744c.nes",
       "size": 262160,
       "mapper": 10,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 10"
+      "detail": "Unsupported mapper: 10；疑似基于「格斗美少女战士」（相似度 0.017）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-fbfe1ab2a75b622e",
-      "title": "z___game_069",
+      "title": "未识别 · mapper 16",
       "sourcePath": "z___game_069.NES",
       "sha256": "ce4e7d25a44dc2a6308eb7c80192cab7ea50f8468ba3f0a0d7ed9c51e8d4543d",
       "rom": "roms/ce4e7d25a44dc2a6308eb7c80192cab7ea50f8468ba3f0a0d7ed9c51e8d4543d.nes",
       "size": 262160,
       "mapper": 16,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 16"
+      "detail": "Unsupported mapper: 16；疑似基于「格斗美少女战士」（相似度 0.017）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-be0d9693cb87645c",
-      "title": "z___game_070",
+      "title": "洛克人5",
       "sourcePath": "z___game_070.nes",
       "sha256": "6a4739f49542f6ca004f0755dd47932140dd4a9ee85b3d63bd007b13f737f45b",
       "rom": "roms/6a4739f49542f6ca004f0755dd47932140dd4a9ee85b3d63bd007b13f737f45b.nes",
       "size": 524304,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "洛克人5",
+      "hidden": true
     },
     {
       "id": "nes-df3af4c35273b004",
-      "title": "z___game_071",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_071.nes",
       "sha256": "7f9e40ada806156d250803cec9cc6f063e378028a561e0fda018271a578fdd59",
       "rom": "roms/7f9e40ada806156d250803cec9cc6f063e378028a561e0fda018271a578fdd59.nes",
       "size": 524304,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「最终幻想(银河时代)」（相似度 0.413）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-79939f89f2c06598",
-      "title": "z___game_072",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_072.nes",
       "sha256": "4db45df80a4910027bf9e2e151c6af66cc5ce8eeee07256f5cd8ed2baee281dd",
       "rom": "roms/4db45df80a4910027bf9e2e151c6af66cc5ce8eeee07256f5cd8ed2baee281dd.nes",
       "size": 524304,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「最终幻想3」（相似度 0.021）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-e8b007f2f94313a8",
-      "title": "z___game_073",
+      "title": "未识别 · mapper 10",
       "sourcePath": "z___game_073.nes",
       "sha256": "ab7a2433a85eaba89e20612d3b9ed637fcb6412cbdcd69cd748c9cab8e7d980b",
       "rom": "roms/ab7a2433a85eaba89e20612d3b9ed637fcb6412cbdcd69cd748c9cab8e7d980b.nes",
       "size": 393232,
       "mapper": 10,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 10"
+      "detail": "Unsupported mapper: 10；疑似基于「圣火徽章2」（相似度 0.153）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-50b5ad0a43f7faeb",
-      "title": "z___game_074",
+      "title": "未识别 · mapper 10",
       "sourcePath": "z___game_074.nes",
       "sha256": "718770a459c4c1140efcddaa78c2d44eefc32de373692d9fdfcc3a032e1f1731",
       "rom": "roms/718770a459c4c1140efcddaa78c2d44eefc32de373692d9fdfcc3a032e1f1731.nes",
       "size": 393232,
       "mapper": 10,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 10"
+      "detail": "Unsupported mapper: 10；疑似基于「圣火徽章2」（相似度 0.153）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-fa61fa7e430ae7e3",
-      "title": "z___game_075",
+      "title": "未识别 · mapper 10",
       "sourcePath": "z___game_075.nes",
       "sha256": "beafb14c1a45eb094e525d6d13b8dac1c43426fbbc51669fad14970808fa983d",
       "rom": "roms/beafb14c1a45eb094e525d6d13b8dac1c43426fbbc51669fad14970808fa983d.nes",
       "size": 393232,
       "mapper": 10,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 10"
+      "detail": "Unsupported mapper: 10；疑似基于「圣火徽章_索菲亚复苏(圣火徽章外传)」（相似度 0.148）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-d0033100f23fd250",
-      "title": "z___game_076",
+      "title": "未识别 · mapper 80",
       "sourcePath": "z___game_076.nes",
       "sha256": "a2465ef086ce3826c2f62d96d044241f2900eca9cbc98b0ebd331802d811a8d1",
       "rom": "roms/a2465ef086ce3826c2f62d96d044241f2900eca9cbc98b0ebd331802d811a8d1.nes",
       "size": 393232,
       "mapper": 80,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 80"
+      "detail": "Unsupported mapper: 80；疑似基于「恶魔之剑」（相似度 0.083）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-2136c082a8f2aac4",
-      "title": "z___game_077",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_077.nes",
       "sha256": "e1ffd97b1c9fe87f5edf606cb9fb27d7ee6d15a72a7095cad46adf4880e52ad7",
       "rom": "roms/e1ffd97b1c9fe87f5edf606cb9fb27d7ee6d15a72a7095cad46adf4880e52ad7.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「100合1」（相似度 0.025）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-2ad8d1b3a68832a6",
-      "title": "z___game_078",
+      "title": "小蜜蜂",
       "sourcePath": "z___game_078.nes",
       "sha256": "b7f4fbe8459e8819031a8b571deb12589bd2c69208197be060a6086f91555ea9",
       "rom": "roms/b7f4fbe8459e8819031a8b571deb12589bd2c69208197be060a6086f91555ea9.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "小蜜蜂",
+      "hidden": true
     },
     {
       "id": "nes-5a11c80cef1bc6bc",
-      "title": "z___game_079",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_079.nes",
       "sha256": "f3a275d65e4c6cad188c9f57f740a044f4196a5a27fbe99384757e3971baf8c7",
       "rom": "roms/f3a275d65e4c6cad188c9f57f740a044f4196a5a27fbe99384757e3971baf8c7.nes",
       "size": 688160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「虎穴行动」（相似度 0.026）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-9dc4f1006249c116",
-      "title": "z___game_080",
+      "title": "古巴战士_(CN)",
       "sourcePath": "z___game_080.nes",
       "sha256": "cb6ba03a20d8f3a34dda69f16895588a87fcfea0e95473da64c92bd2b6635985",
       "rom": "roms/cb6ba03a20d8f3a34dda69f16895588a87fcfea0e95473da64c92bd2b6635985.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "古巴战士_(CN)",
+      "hidden": true
     },
     {
       "id": "nes-139ad3a4a3fda33a",
-      "title": "z___game_081",
+      "title": "忍者神龟1-无敌版（复刻版）",
       "sourcePath": "z___game_081.nes",
       "sha256": "51b0f82c5d82c8822089eea1feb667ba5bdc28ee2948824b100ca5033358278d",
       "rom": "roms/51b0f82c5d82c8822089eea1feb667ba5bdc28ee2948824b100ca5033358278d.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-0e8651428574712c",
-      "title": "z___game_082",
+      "title": "风月魔传(J)",
       "sourcePath": "z___game_082.nes",
       "sha256": "889f2db8bba0243196cf6f9b2cd2cdceb3ec1d6330d30f7e30654f00fff30cc7",
       "rom": "roms/889f2db8bba0243196cf6f9b2cd2cdceb3ec1d6330d30f7e30654f00fff30cc7.nes",
       "size": 262160,
       "mapper": 23,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 23"
+      "detail": "Unsupported mapper: 23",
+      "duplicateOf": "风月魔传(J)",
+      "hidden": true
     },
     {
       "id": "nes-77b22012d42cac7a",
-      "title": "z___game_083",
+      "title": "眼镜蛇部队",
       "sourcePath": "z___game_083.nes",
       "sha256": "e922150d6f290cf69ff9c2583ea6b5fff326e9b5f982ccf0bf8488d16927d8a6",
       "rom": "roms/e922150d6f290cf69ff9c2583ea6b5fff326e9b5f982ccf0bf8488d16927d8a6.nes",
       "size": 393232,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "眼镜蛇部队",
+      "hidden": true
     },
     {
       "id": "nes-14e1268bdfead5ec",
-      "title": "z___game_084",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_084.nes",
       "sha256": "ff8af04842d7d52d1037c0b24a475689107e37e949a95835b66a86d1a1b9872a",
       "rom": "roms/ff8af04842d7d52d1037c0b24a475689107e37e949a95835b66a86d1a1b9872a.nes",
       "size": 393232,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「黑暗之蛊」（相似度 0.022）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-5c5e97e9e3b35a6a",
-      "title": "z___game_085",
+      "title": "七宝奇谋",
       "sourcePath": "z___game_085.nes",
       "sha256": "30c9d00cd797899fdede35a3af50addc5f2d270b35cc2f60cbca361bf4a93d23",
       "rom": "roms/30c9d00cd797899fdede35a3af50addc5f2d270b35cc2f60cbca361bf4a93d23.nes",
       "size": 49168,
       "mapper": 87,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 87"
+      "detail": "Unsupported mapper: 87",
+      "duplicateOf": "七宝奇谋",
+      "hidden": true
     },
     {
       "id": "nes-d1a5777d1db2fb6b",
-      "title": "z___game_086",
+      "title": "大话西游（复刻版）",
       "sourcePath": "z___game_086.nes",
       "sha256": "5b53b17ac042319597bad53dcc09021336cab807f3e28c593967c7504288e76b",
       "rom": "roms/5b53b17ac042319597bad53dcc09021336cab807f3e28c593967c7504288e76b.nes",
       "size": 524304,
       "mapper": 15,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 15"
+      "detail": "Unsupported mapper: 15",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-89fff524b4c7955d",
-      "title": "z___game_087",
+      "title": "大坦克（复刻版）",
       "sourcePath": "z___game_087.nes",
       "sha256": "d2aa6ccc9f3f146803a5c7f4c73198011e2b795ada9a147b4c545d6929eb870d",
       "rom": "roms/d2aa6ccc9f3f146803a5c7f4c73198011e2b795ada9a147b4c545d6929eb870d.nes",
       "size": 262160,
       "mapper": 241,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "high"
     },
     {
       "id": "nes-362fb6ea979f8380",
-      "title": "z___game_088",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_088.nes",
       "sha256": "02dba11663e75307d447a0c9fc92af919f1011684f1313ad455289162715e089",
       "rom": "roms/02dba11663e75307d447a0c9fc92af919f1011684f1313ad455289162715e089.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「飞龙之拳3(J)」（相似度 0.034）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-fbffd9b4dd3dd212",
-      "title": "z___game_089",
+      "title": "未识别 · mapper 3",
       "sourcePath": "z___game_089.nes",
       "sha256": "f6cd47882c20fa02ed9b7a6193689a3d1f867562338e6a2f252bd0baa51ed06e",
       "rom": "roms/f6cd47882c20fa02ed9b7a6193689a3d1f867562338e6a2f252bd0baa51ed06e.nes",
       "size": 65552,
       "mapper": 3,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「北斗神拳」（相似度 0.035）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-ebd10484e88a45c7",
-      "title": "z___game_090",
+      "title": "未识别 · mapper 3",
       "sourcePath": "z___game_090.nes",
       "sha256": "d33ff94fa25af564cce81b0c1be547c300a37b01e2bcf15aa141d7f3c6bcabb9",
       "rom": "roms/d33ff94fa25af564cce81b0c1be547c300a37b01e2bcf15aa141d7f3c6bcabb9.nes",
       "size": 589856,
       "mapper": 3,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「趣味方块」（相似度 0.023）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-872dcb5d1a98491e",
-      "title": "z___game_091",
+      "title": "未识别 · mapper 2",
       "sourcePath": "z___game_091.nes",
       "sha256": "f57a9a27a64fe95a5c548aa33079e9169d131b93149f421d817e85dea681d32c",
       "rom": "roms/f57a9a27a64fe95a5c548aa33079e9169d131b93149f421d817e85dea681d32c.nes",
       "size": 655392,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「北斗神拳」（相似度 0.152）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-b44c959f45d0cc8c",
-      "title": "z___game_092",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_092.nes",
       "sha256": "56901e11f6fe812e0a049c747fa0b0d6fc42a336c502ca94fb5282229853347d",
       "rom": "roms/56901e11f6fe812e0a049c747fa0b0d6fc42a336c502ca94fb5282229853347d.nes",
       "size": 786448,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「星之卡比」（相似度 0.781）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-8c25bfb6c1106613",
-      "title": "z___game_093",
+      "title": "冒险岛3（复刻版）",
       "sourcePath": "z___game_093.nes",
       "sha256": "5e82f2a9460d139c0dc87a970b0e7a1bebea2e238bd70fc2ac2232f312432dc0",
       "rom": "roms/5e82f2a9460d139c0dc87a970b0e7a1bebea2e238bd70fc2ac2232f312432dc0.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-582075c72505a176",
-      "title": "z___game_094",
+      "title": "敲冰块",
       "sourcePath": "z___game_094.nes",
       "sha256": "d230a7febf7e639760b6088c2b38cf70686ed64d66974ad94fd5fcd5c0a3f50f",
       "rom": "roms/d230a7febf7e639760b6088c2b38cf70686ed64d66974ad94fd5fcd5c0a3f50f.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "敲冰块",
+      "hidden": true
     },
     {
       "id": "nes-178ccdebe6e3082b",
-      "title": "z___game_095",
+      "title": "敲冰块",
       "sourcePath": "z___game_095.nes",
       "sha256": "d230a7febf7e639760b6088c2b38cf70686ed64d66974ad94fd5fcd5c0a3f50f",
       "rom": "roms/d230a7febf7e639760b6088c2b38cf70686ed64d66974ad94fd5fcd5c0a3f50f.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "敲冰块",
+      "hidden": true
     },
     {
       "id": "nes-1a7303b8bff9c585",
-      "title": "z___game_096",
+      "title": "怒3（复刻版）",
       "sourcePath": "z___game_096.nes",
       "sha256": "be21ed877a49659b97bd460f218a1227825132f43c3d5f907fd904ca411680fc",
       "rom": "roms/be21ed877a49659b97bd460f218a1227825132f43c3d5f907fd904ca411680fc.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-e1fbfaa59b882019",
-      "title": "z___game_097",
+      "title": "热血曲棍球",
       "sourcePath": "z___game_097.nes",
       "sha256": "d78ac3edf69b239cbfb72a2186b686f55f150075971ec436ab7c322e7a3b6bdf",
       "rom": "roms/d78ac3edf69b239cbfb72a2186b686f55f150075971ec436ab7c322e7a3b6bdf.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血曲棍球",
+      "hidden": true
     },
     {
       "id": "nes-9c1366b740005b54",
-      "title": "z___game_098",
+      "title": "热血曲棍球(J)",
       "sourcePath": "z___game_098.nes",
       "sha256": "b404f0c9e0c7e243a564fd0b19dcb8955d391daf5529e010bf12ca19d6a3bbc2",
       "rom": "roms/b404f0c9e0c7e243a564fd0b19dcb8955d391daf5529e010bf12ca19d6a3bbc2.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血曲棍球(J)",
+      "hidden": true
     },
     {
       "id": "nes-e6c771021cbf97e9",
-      "title": "z___game_099",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_099.nes",
       "sha256": "051da59d149978ecf0d44f7c41e28466e51881efcd5f1edb18e518c5b60e376f",
       "rom": "roms/051da59d149978ecf0d44f7c41e28466e51881efcd5f1edb18e518c5b60e376f.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「飞碟大战」（相似度 0.023）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-511233fe337f62f4",
-      "title": "z___game_100",
+      "title": "未识别 · mapper 3",
       "sourcePath": "z___game_100.nes",
       "sha256": "17b38fd086e671ce15fefb2e916af87f4e3799b8758c5bc42f6727bcdc926313",
       "rom": "roms/17b38fd086e671ce15fefb2e916af87f4e3799b8758c5bc42f6727bcdc926313.nes",
       "size": 65552,
       "mapper": 3,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「冒险岛1无敌版」（相似度 0.217）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-e82cf4b07236f79a",
-      "title": "z___game_101",
+      "title": "冒险岛2",
       "sourcePath": "z___game_101.nes",
       "sha256": "10dd53fd62c95e77856b09c693b3bdd14b62a89988902eea111257cafe9b8acc",
       "rom": "roms/10dd53fd62c95e77856b09c693b3bdd14b62a89988902eea111257cafe9b8acc.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "冒险岛2",
+      "hidden": true
     },
     {
       "id": "nes-477a60c09f831847",
-      "title": "z___game_102",
+      "title": "冒险岛3",
       "sourcePath": "z___game_102.nes",
       "sha256": "3685ced5c01174fc6f8ad8a7e399307e6891f84b6a16daf570bf43cc6c1209f6",
       "rom": "roms/3685ced5c01174fc6f8ad8a7e399307e6891f84b6a16daf570bf43cc6c1209f6.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "冒险岛3",
+      "hidden": true
     },
     {
       "id": "nes-cb2c4c14dd3b1d8e",
-      "title": "z___game_103",
+      "title": "冒险岛4隐形版（复刻版）",
       "sourcePath": "z___game_103.nes",
       "sha256": "532c2def87586a9e230de85773d3c3f58d1ef2f26d62c3f52622f6f36326fb56",
       "rom": "roms/532c2def87586a9e230de85773d3c3f58d1ef2f26d62c3f52622f6f36326fb56.nes",
       "size": 393232,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-c48c404462d822dc",
-      "title": "z___game_104",
+      "title": "赤色要塞（复刻版）",
       "sourcePath": "z___game_104.nes",
       "sha256": "97e0e7d84ce6cca3fd3ec5eabb3fa00252de54f1354156ca2b95b95a39237373",
       "rom": "roms/97e0e7d84ce6cca3fd3ec5eabb3fa00252de54f1354156ca2b95b95a39237373.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-d668a7dc248cc51a",
-      "title": "z___game_105",
+      "title": "赤色要塞（复刻版）",
       "sourcePath": "z___game_105.nes",
       "sha256": "97e0e7d84ce6cca3fd3ec5eabb3fa00252de54f1354156ca2b95b95a39237373",
       "rom": "roms/97e0e7d84ce6cca3fd3ec5eabb3fa00252de54f1354156ca2b95b95a39237373.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-e089c3720ec8ff3c",
-      "title": "z___game_106",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_106.nes",
       "sha256": "daaf7635d714132bba327b15cf35c79491dfbcb1bcbde3103ed480c8931ca3d2",
       "rom": "roms/daaf7635d714132bba327b15cf35c79491dfbcb1bcbde3103ed480c8931ca3d2.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「成龙之龙」（相似度 0.044）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-f0cef634f7052f6b",
-      "title": "z___game_107",
+      "title": "兽王记（复刻版）",
       "sourcePath": "z___game_107.nes",
       "sha256": "ea34b7e46be9478a3ac627ee26dac5b191aac3ddc8380a5e885a802c3051b8ee",
       "rom": "roms/ea34b7e46be9478a3ac627ee26dac5b191aac3ddc8380a5e885a802c3051b8ee.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-03dd17b38a5b20c2",
-      "title": "z___game_108",
+      "title": "赤影战士",
       "sourcePath": "z___game_108.nes",
       "sha256": "3ede04a9145cc9dbb5613e2afdf05c6c8ab77ecc2cc286a708153dfe8b3cae9d",
       "rom": "roms/3ede04a9145cc9dbb5613e2afdf05c6c8ab77ecc2cc286a708153dfe8b3cae9d.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "赤影战士",
+      "hidden": true
     },
     {
       "id": "nes-dde63025a721e4be",
-      "title": "z___game_109",
+      "title": "影子传说",
       "sourcePath": "z___game_109.nes",
       "sha256": "72fce2a76b602d96268a4800e2b981f8d44c761fb7bf2d83f1dd486d17dc075f",
       "rom": "roms/72fce2a76b602d96268a4800e2b981f8d44c761fb7bf2d83f1dd486d17dc075f.nes",
       "size": 49168,
       "mapper": 3,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "影子传说",
+      "hidden": true
     },
     {
       "id": "nes-f60600cf14dd20cc",
-      "title": "z___game_110",
+      "title": "摔交",
       "sourcePath": "z___game_110.nes",
       "sha256": "24615d3a02540551dd4dab1b38081c40407c5d8cad68bfa4fac4afdfa3e2e93e",
       "rom": "roms/24615d3a02540551dd4dab1b38081c40407c5d8cad68bfa4fac4afdfa3e2e93e.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "摔交",
+      "hidden": true
     },
     {
       "id": "nes-994f66d7aaf35059",
-      "title": "z___game_111",
+      "title": "热血足球2(J)",
       "sourcePath": "z___game_111.nes",
       "sha256": "cb1d51fc66910759dc74fcdbf408aefd2475811667a3135033b96bea40c10851",
       "rom": "roms/cb1d51fc66910759dc74fcdbf408aefd2475811667a3135033b96bea40c10851.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血足球2(J)",
+      "hidden": true
     },
     {
       "id": "nes-bdd9a157635641ff",
-      "title": "z___game_112",
+      "title": "热血足球2(J)",
       "sourcePath": "z___game_112.nes",
       "sha256": "cb1d51fc66910759dc74fcdbf408aefd2475811667a3135033b96bea40c10851",
       "rom": "roms/cb1d51fc66910759dc74fcdbf408aefd2475811667a3135033b96bea40c10851.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血足球2(J)",
+      "hidden": true
     },
     {
       "id": "nes-ebf04e14a336c3c2",
-      "title": "z___game_113",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_113.nes",
       "sha256": "89232edf4f9b52e3cb872094bc78973de080befca2ddea893b6e936066514d4e",
       "rom": "roms/89232edf4f9b52e3cb872094bc78973de080befca2ddea893b6e936066514d4e.nes",
       "size": 131088,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「塞尔达传说(东方的传说)」（相似度 0.393）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-3eab6b88170d1e94",
-      "title": "z___game_114",
+      "title": "三个枪手（复刻版）",
       "sourcePath": "z___game_114.nes",
       "sha256": "2530f0cf500fd2098c540daab2fad5b6c9fb8ae5bd48243ca0cfa0ee75d9ebb6",
       "rom": "roms/2530f0cf500fd2098c540daab2fad5b6c9fb8ae5bd48243ca0cfa0ee75d9ebb6.nes",
       "size": 196624,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-1f0eb33396140b21",
-      "title": "z___game_115",
+      "title": "麻雀",
       "sourcePath": "z___game_115.nes",
       "sha256": "d529aa3c90c4d5687330031f818518fb088c153832fa8049d90f2b131892a6a2",
       "rom": "roms/d529aa3c90c4d5687330031f818518fb088c153832fa8049d90f2b131892a6a2.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "麻雀",
+      "hidden": true
     },
     {
       "id": "nes-f3a5b5ea3767ebb9",
-      "title": "z___game_116",
+      "title": "超时空要塞（复刻版）",
       "sourcePath": "z___game_116.nes",
       "sha256": "0e10b0a904d7307d2538fb169c9be996ff0a20ab9826358791b90549c0b1ac41",
       "rom": "roms/0e10b0a904d7307d2538fb169c9be996ff0a20ab9826358791b90549c0b1ac41.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-7225925f32fecf4c",
-      "title": "z___game_117",
+      "title": "魔界村",
       "sourcePath": "z___game_117.nes",
       "sha256": "7421b53c43f5d4a1b8620f56696c827f1192ba3feeccde594e7e92af18a0ff53",
       "rom": "roms/7421b53c43f5d4a1b8620f56696c827f1192ba3feeccde594e7e92af18a0ff53.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "魔界村",
+      "hidden": true
     },
     {
       "id": "nes-eb9a20d996e1eb56",
-      "title": "z___game_118",
+      "title": "魔界村",
       "sourcePath": "z___game_118.nes",
       "sha256": "7421b53c43f5d4a1b8620f56696c827f1192ba3feeccde594e7e92af18a0ff53",
       "rom": "roms/7421b53c43f5d4a1b8620f56696c827f1192ba3feeccde594e7e92af18a0ff53.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "魔界村",
+      "hidden": true
     },
     {
       "id": "nes-cfb2c689cc87c3c8",
-      "title": "z___game_119",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_119.nes",
       "sha256": "411f5fc033b457af3aa3c59b9a27945ce68cd4ceabd6bb30ae629083d5f39550",
       "rom": "roms/411f5fc033b457af3aa3c59b9a27945ce68cd4ceabd6bb30ae629083d5f39550.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「洛克人2」（相似度 0.769）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-a74d131bfee77f54",
-      "title": "z___game_120",
+      "title": "未识别 · mapper 2",
       "sourcePath": "z___game_120.nes",
       "sha256": "4209cd49926549341f033450a8b3a5a6bc4e16dae22b09015a75eb9b2aecc9e8",
       "rom": "roms/4209cd49926549341f033450a8b3a5a6bc4e16dae22b09015a75eb9b2aecc9e8.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「合金装备美版燃烧战车美版(U)」（相似度 0.075）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-e19e30c01aed9d59",
-      "title": "z___game_121",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_121.nes",
       "sha256": "5b6ce60bffc8f95df7adb3b388c915aad9ee2a93e0b1a5fa18d4100a945d9a0a",
       "rom": "roms/5b6ce60bffc8f95df7adb3b388c915aad9ee2a93e0b1a5fa18d4100a945d9a0a.nes",
       "size": 524304,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「重装机兵」（相似度 0.029）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-5da06c89b58b3d5d",
-      "title": "z___game_122",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_122.nes",
       "sha256": "bd160df1958b59ebc11fe5ea2368dae54e42ae36b872e1e8ce53a618a468e532",
       "rom": "roms/bd160df1958b59ebc11fe5ea2368dae54e42ae36b872e1e8ce53a618a468e532.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「快打旋风修正」（相似度 0.762）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-78cfac25ed98c813",
-      "title": "z___game_123",
+      "title": "三目童子（复刻版）",
       "sourcePath": "z___game_123.nes",
       "sha256": "87d10cecf9e2f0419d675a7705b7a797639a751064d02c77f2d77fd862052bfc",
       "rom": "roms/87d10cecf9e2f0419d675a7705b7a797639a751064d02c77f2d77fd862052bfc.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-7667d3da9a7dac37",
-      "title": "z___game_124",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_124.nes",
       "sha256": "d14359d3c3e493388749f184f08a13d5eb424b8c5c8312f153af92ec72b8c052",
       "rom": "roms/d14359d3c3e493388749f184f08a13d5eb424b8c5c8312f153af92ec72b8c052.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血格斗中文」（相似度 0.935）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-9edec1726f36720c",
-      "title": "z___game_125",
+      "title": "热血硬派（复刻版）",
       "sourcePath": "z___game_125.nes",
       "sha256": "1a32a7fd0d08c148c306e23385ed774c708449e608b6553ffc751fa43a956496",
       "rom": "roms/1a32a7fd0d08c148c306e23385ed774c708449e608b6553ffc751fa43a956496.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-7bcb47394d54f85a",
-      "title": "z___game_126",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_126.nes",
       "sha256": "ba42bd0756015718a2c39d2763ca25540b89f1ea98cd2c96e9d0c0fc8d5cd364",
       "rom": "roms/ba42bd0756015718a2c39d2763ca25540b89f1ea98cd2c96e9d0c0fc8d5cd364.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血躲避球」（相似度 0.049）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-6e7ebe77d01e7992",
-      "title": "z___game_127",
+      "title": "热血新纪录_",
       "sourcePath": "z___game_127.nes",
       "sha256": "525b3c2eb249d25cf92f0eefe6c2dab40e7b0237b3d50185115f717d3a85f140",
       "rom": "roms/525b3c2eb249d25cf92f0eefe6c2dab40e7b0237b3d50185115f717d3a85f140.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血新纪录_",
+      "hidden": true
     },
     {
       "id": "nes-1488d45ce6108f87",
-      "title": "z___game_128",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_128.nes",
       "sha256": "0fa28f60abb8d2ccbbeee90e79e3fa160a5cf32feb90f47ebf1a89168cff569b",
       "rom": "roms/0fa28f60abb8d2ccbbeee90e79e3fa160a5cf32feb90f47ebf1a89168cff569b.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血篮球」（相似度 0.039）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-1b0358e63b6718ce",
-      "title": "z___game_129",
+      "title": "热血篮球",
       "sourcePath": "z___game_129.nes",
       "sha256": "4f1372eb9c2d2d7dcfdfb75827c291f9970716a5fe6ed58d33872851e1ef9968",
       "rom": "roms/4f1372eb9c2d2d7dcfdfb75827c291f9970716a5fe6ed58d33872851e1ef9968.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "热血篮球",
+      "hidden": true
     },
     {
       "id": "nes-d2277dfbc33876c3",
-      "title": "z___game_130",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_130.nes",
       "sha256": "e4cb41c603d006df2cbda81f5fbe75cd76410b208c21fe75b0137cfd97a8ad4e",
       "rom": "roms/e4cb41c603d006df2cbda81f5fbe75cd76410b208c21fe75b0137cfd97a8ad4e.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「人间兵器」（相似度 0.102）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-e603f13976519a24",
-      "title": "z___game_131",
+      "title": "龙牙（复刻版）",
       "sourcePath": "z___game_131.nes",
       "sha256": "89da2efb6db242ff51c28874b85df88f7bc9337ef16721ac004e3d6a7cfc81a4",
       "rom": "roms/89da2efb6db242ff51c28874b85df88f7bc9337ef16721ac004e3d6a7cfc81a4.nes",
       "size": 131088,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-76e55de883698cfc",
-      "title": "z___game_132",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_132.nes",
       "sha256": "11816e593672cb1ef1c24ebf29b3f757b427f44ffae1a04e678b3a791b9fb242",
       "rom": "roms/11816e593672cb1ef1c24ebf29b3f757b427f44ffae1a04e678b3a791b9fb242.nes",
       "size": 40976,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.012）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-55e934d14477fe7b",
-      "title": "z___game_133",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_133.nes",
       "sha256": "0e4346176a1be89b464892e8ad07b86aba199f9f9a4feb551db0520217714ec8",
       "rom": "roms/0e4346176a1be89b464892e8ad07b86aba199f9f9a4feb551db0520217714ec8.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.022）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-02a632d32d9be2eb",
-      "title": "z___game_134",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_134.nes",
       "sha256": "cbc50e0514cdab187ca74fc310ffd2bb8bddf8ff5d4a9783f8c790be353298f9",
       "rom": "roms/cbc50e0514cdab187ca74fc310ffd2bb8bddf8ff5d4a9783f8c790be353298f9.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「忍者龙剑传3」（相似度 0.048）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-cf79e8ffab0f1f24",
-      "title": "z___game_135",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_135.nes",
       "sha256": "6e56f762c9ac3dac234634cf673b8331204ab5ba13018e590eee4408e3c53c5c",
       "rom": "roms/6e56f762c9ac3dac234634cf673b8331204ab5ba13018e590eee4408e3c53c5c.nes",
       "size": 786464,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「忍者龙剑传1」（相似度 0.03）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-d4ce1d0db0f49d64",
-      "title": "z___game_136",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_136.nes",
       "sha256": "299151eb5449c581e3365743c95def699d16844f70770750ee22c267f74f4988",
       "rom": "roms/299151eb5449c581e3365743c95def699d16844f70770750ee22c267f74f4988.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「忍者龙剑传2」（相似度 0.031）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-f7d956a44bddb255",
-      "title": "z___game_137",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_137.nes",
       "sha256": "77c457cf5549a96794b5013d1d0c7b23d2b1280049fefd55f9dc59aaba16da05",
       "rom": "roms/77c457cf5549a96794b5013d1d0c7b23d2b1280049fefd55f9dc59aaba16da05.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「忍者龙剑传3」（相似度 0.108）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-86301769666196ae",
-      "title": "z___game_138",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_138.nes",
       "sha256": "18c9678a15c8e63b64bc595d52c4fa7adcdad478433c7b71b15db9eaa009c6b3",
       "rom": "roms/18c9678a15c8e63b64bc595d52c4fa7adcdad478433c7b71b15db9eaa009c6b3.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「跑跑卡丁车」（相似度 0.029）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-20af6de7aa190da8",
-      "title": "z___game_139",
+      "title": "吃豆",
       "sourcePath": "z___game_139.nes",
       "sha256": "c67e20d7144dac97ba9d4cef1ad90f13d6504e8492e60a6193c33695d68c4b22",
       "rom": "roms/c67e20d7144dac97ba9d4cef1ad90f13d6504e8492e60a6193c33695d68c4b22.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "吃豆",
+      "hidden": true
     },
     {
       "id": "nes-52b64ddf97abb281",
-      "title": "z___game_140",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_140.nes",
       "sha256": "451a201c067bbabad8d762c3fdc2a83cb0b93f26ed0c350cf23bbf486f7addb6",
       "rom": "roms/451a201c067bbabad8d762c3fdc2a83cb0b93f26ed0c350cf23bbf486f7addb6.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.032）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-c7a93c3a1ae6c193",
-      "title": "z___game_141",
+      "title": "未识别 · mapper 2",
       "sourcePath": "z___game_141.NES",
       "sha256": "072e443618846788c112ff8a454f89427314ba5931d36479146f47d0184a3181",
       "rom": "roms/072e443618846788c112ff8a454f89427314ba5931d36479146f47d0184a3181.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.036）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-fd81fae3319cad4b",
-      "title": "z___game_142",
+      "title": "大力水手（复刻版）",
       "sourcePath": "z___game_142.nes",
       "sha256": "193ba7a191635aa8085cf146747b17c72bc44564e83022221ebdafe3f30fc5c6",
       "rom": "roms/193ba7a191635aa8085cf146747b17c72bc44564e83022221ebdafe3f30fc5c6.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-c530b67f35a0b9f3",
-      "title": "z___game_143",
+      "title": "未识别 · mapper 2",
       "sourcePath": "z___game_143.nes",
       "sha256": "0064d66a14dc6f27d109d34b4e6a4983bc29eb167568b503e7e46d21cf2ab0e0",
       "rom": "roms/0064d66a14dc6f27d109d34b4e6a4983bc29eb167568b503e7e46d21cf2ab0e0.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「魂斗罗」（相似度 0.209）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-6b5bb309513b401a",
-      "title": "z___game_144",
+      "title": "魂斗罗2机器人版",
       "sourcePath": "z___game_144.nes",
       "sha256": "ba5e92e4fc52526da7d28587b302eae945f322ed79159f382d7714abde84ee29",
       "rom": "roms/ba5e92e4fc52526da7d28587b302eae945f322ed79159f382d7714abde84ee29.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "魂斗罗2机器人版",
+      "hidden": true
     },
     {
       "id": "nes-0a6294fc1b8fdf9e",
-      "title": "z___game_145",
+      "title": "红巾特攻队",
       "sourcePath": "z___game_145.nes",
       "sha256": "9adcad843afd6eebcf71d2beeea62c5bdb36ecad3f6991273d79425b9c0c9d23",
       "rom": "roms/9adcad843afd6eebcf71d2beeea62c5bdb36ecad3f6991273d79425b9c0c9d23.nes",
       "size": 65552,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "红巾特攻队",
+      "hidden": true
     },
     {
       "id": "nes-7546fda60c117039",
-      "title": "z___game_146",
+      "title": "机械战警3(U)",
       "sourcePath": "z___game_146.nes",
       "sha256": "52bd88e8dca43d8bbbe3c3a288ef11027d4ebce1fffae1a67abc32a1a7205452",
       "rom": "roms/52bd88e8dca43d8bbbe3c3a288ef11027d4ebce1fffae1a67abc32a1a7205452.nes",
       "size": 262160,
       "mapper": 1,
       "status": "unsupported",
-      "detail": "Game crashed, invalid opcode at address $c065"
+      "detail": "Game crashed, invalid opcode at address $c065",
+      "duplicateOf": "机械战警3(U)",
+      "hidden": true
     },
     {
       "id": "nes-26136adc24a1bb21",
-      "title": "z___game_147",
+      "title": "洛克人",
       "sourcePath": "z___game_147.nes",
       "sha256": "e5bbc798798a0f5ae6e6d22a35df2fc3d08cefe6a1b278ed7f1cc325e8ee19e0",
       "rom": "roms/e5bbc798798a0f5ae6e6d22a35df2fc3d08cefe6a1b278ed7f1cc325e8ee19e0.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "洛克人",
+      "hidden": true
     },
     {
       "id": "nes-bfde50fd82c3cb14",
-      "title": "z___game_148",
+      "title": "洛克人2（复刻版）",
       "sourcePath": "z___game_148.nes",
       "sha256": "deb88223311aca8ca566b99d4063ca29d389d939fee455f83afaec97c6f0a5d1",
       "rom": "roms/deb88223311aca8ca566b99d4063ca29d389d939fee455f83afaec97c6f0a5d1.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-20bfc21e3825358e",
-      "title": "z___game_149",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_149.nes",
       "sha256": "be79deffbd991271d1ed6b2e8e46ee5dc4eadc3d20ec8f19ceece208c82a74b8",
       "rom": "roms/be79deffbd991271d1ed6b2e8e46ee5dc4eadc3d20ec8f19ceece208c82a74b8.nes",
       "size": 917536,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「洛克人3」（相似度 0.066）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-341edd6922f7942a",
-      "title": "z___game_150",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_150.nes",
       "sha256": "906cf0c71421b4ae2a7804c49c22b46bbeae33bbde79df22e22ebf62e9d973ce",
       "rom": "roms/906cf0c71421b4ae2a7804c49c22b46bbeae33bbde79df22e22ebf62e9d973ce.nes",
       "size": 1048608,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「洛克人4」（相似度 0.041）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-2ca1a3e42c6052eb",
-      "title": "z___game_151",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_151.nes",
       "sha256": "8a3faa904e1092561e6ce91313cf911bf16656ca5533a2f381bad708045b8ad6",
       "rom": "roms/8a3faa904e1092561e6ce91313cf911bf16656ca5533a2f381bad708045b8ad6.nes",
       "size": 1048608,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「虎穴行动」（相似度 0.027）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-5c333ee49bfe2bfe",
-      "title": "z___game_152",
+      "title": "洛克人7(J)（复刻版）",
       "sourcePath": "z___game_152.nes",
       "sha256": "c627f12d7a1e4157d77a2ce2ea37e13bdf326d6b5ee7e51a3032253749c3d0b3",
       "rom": "roms/c627f12d7a1e4157d77a2ce2ea37e13bdf326d6b5ee7e51a3032253749c3d0b3.nes",
       "size": 1048608,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-2ca2f61f899a3e3b",
-      "title": "z___game_153",
+      "title": "洛克人7(J)",
       "sourcePath": "z___game_153.nes",
       "sha256": "561e11957af029fbbb6aecf87cd2f12bb7d23572fa0361bc34ac530f93ee9f9b",
       "rom": "roms/561e11957af029fbbb6aecf87cd2f12bb7d23572fa0361bc34ac530f93ee9f9b.nes",
       "size": 1048608,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "洛克人7(J)",
+      "hidden": true
     },
     {
       "id": "nes-bb8c7c84f4dfc4b4",
-      "title": "z___game_154",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_154.nes",
       "sha256": "f3b51e0647bf342f1664d47c4a79c6052364b60e66570723c1b5f9b1b4057e5f",
       "rom": "roms/f3b51e0647bf342f1664d47c4a79c6052364b60e66570723c1b5f9b1b4057e5f.nes",
       "size": 688160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血高校足球(J)」（相似度 0.025）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-5ec59905e6919216",
-      "title": "z___game_155",
+      "title": "未识别 · mapper 2",
       "sourcePath": "z___game_155.nes",
       "sha256": "ea0853e2d81088e7a43028ad9764adc2d99c00337e83e2f00ea15ac2a620059c",
       "rom": "roms/ea0853e2d81088e7a43028ad9764adc2d99c00337e83e2f00ea15ac2a620059c.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「绿色兵团」（相似度 0.585）",
+      "identifiedBy": "mid"
     },
     {
       "id": "nes-b17339b149f71b02",
-      "title": "z___game_156",
+      "title": "未识别 · mapper 2",
       "sourcePath": "z___game_156.NES",
       "sha256": "cc5ec973848eb372e08ee1f832aa76c8af6215edd14100866ea202f06006d2de",
       "rom": "roms/cc5ec973848eb372e08ee1f832aa76c8af6215edd14100866ea202f06006d2de.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「绿色兵团」（相似度 0.978）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-5508a994c3f03873",
-      "title": "z___game_157",
+      "title": "圣斗士星矢",
       "sourcePath": "z___game_157.nes",
       "sha256": "6917b31d7343a9a17170e833bacdbc3b1eba3e02d11c51c0d44dbe436c9ad43a",
       "rom": "roms/6917b31d7343a9a17170e833bacdbc3b1eba3e02d11c51c0d44dbe436c9ad43a.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "圣斗士星矢",
+      "hidden": true
     },
     {
       "id": "nes-7b017d0638f76e4f",
-      "title": "z___game_158",
+      "title": "西游记世界一代",
       "sourcePath": "z___game_158.nes",
       "sha256": "8a26f9355a5d6e2049a062195694d35d2d1e701fa8b551a641d0f606375d80c3",
       "rom": "roms/8a26f9355a5d6e2049a062195694d35d2d1e701fa8b551a641d0f606375d80c3.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "西游记世界一代",
+      "hidden": true
     },
     {
       "id": "nes-459d4712c74b1869",
-      "title": "z___game_159",
+      "title": "沙罗曼蛇_(J)",
       "sourcePath": "z___game_159.nes",
       "sha256": "fce0e800062bb97fa6f583f6af2799771d5d5decf31aa336812ffb75d527169e",
       "rom": "roms/fce0e800062bb97fa6f583f6af2799771d5d5decf31aa336812ffb75d527169e.nes",
       "size": 131088,
       "mapper": 73,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 73"
+      "detail": "Unsupported mapper: 73",
+      "duplicateOf": "沙罗曼蛇_(J)",
+      "hidden": true
     },
     {
       "id": "nes-d375a29a517a0fce",
-      "title": "z___game_160",
+      "title": "沙罗曼蛇_(J)",
       "sourcePath": "z___game_160.nes",
       "sha256": "fce0e800062bb97fa6f583f6af2799771d5d5decf31aa336812ffb75d527169e",
       "rom": "roms/fce0e800062bb97fa6f583f6af2799771d5d5decf31aa336812ffb75d527169e.nes",
       "size": 131088,
       "mapper": 73,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 73"
+      "detail": "Unsupported mapper: 73",
+      "duplicateOf": "沙罗曼蛇_(J)",
+      "hidden": true
     },
     {
       "id": "nes-2c9f1c8c0a9388ea",
-      "title": "z___game_161",
+      "title": "沙罗曼蛇_(J)",
       "sourcePath": "z___game_161.nes",
       "sha256": "fce0e800062bb97fa6f583f6af2799771d5d5decf31aa336812ffb75d527169e",
       "rom": "roms/fce0e800062bb97fa6f583f6af2799771d5d5decf31aa336812ffb75d527169e.nes",
       "size": 131088,
       "mapper": 73,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 73"
+      "detail": "Unsupported mapper: 73",
+      "duplicateOf": "沙罗曼蛇_(J)",
+      "hidden": true
     },
     {
       "id": "nes-0ec4bc56a84476c2",
-      "title": "z___game_162",
+      "title": "三国志-群雄争霸",
       "sourcePath": "z___game_162.nes",
       "sha256": "3408e070642368fef1eb76ee7f4526ad1310da7b8760230110624bb1f3084414",
       "rom": "roms/3408e070642368fef1eb76ee7f4526ad1310da7b8760230110624bb1f3084414.nes",
       "size": 393232,
       "mapper": 112,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 112"
+      "detail": "Unsupported mapper: 112",
+      "duplicateOf": "三国志-群雄争霸",
+      "hidden": true
     },
     {
       "id": "nes-a039f4a20ff7426a",
-      "title": "z___game_163",
+      "title": "三国志4赤壁风云",
       "sourcePath": "z___game_163.nes",
       "sha256": "dee4d95f36a621b85cfba3e7ecba7a83cda3814bb0d96f76b6502f616f21c25f",
       "rom": "roms/dee4d95f36a621b85cfba3e7ecba7a83cda3814bb0d96f76b6502f616f21c25f.nes",
       "size": 524304,
       "mapper": 117,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 117"
+      "detail": "Unsupported mapper: 117",
+      "duplicateOf": "三国志4赤壁风云",
+      "hidden": true
     },
     {
       "id": "nes-5534b6d036a78b77",
-      "title": "z___game_164",
+      "title": "未识别 · mapper 19",
       "sourcePath": "z___game_164.nes",
       "sha256": "45bdbd7b6c54f84d93cb3c45a9304d8946064631903b4dedc1db6f2bcf4d4d3f",
       "rom": "roms/45bdbd7b6c54f84d93cb3c45a9304d8946064631903b4dedc1db6f2bcf4d4d3f.nes",
       "size": 262160,
       "mapper": 19,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 19"
+      "detail": "Unsupported mapper: 19；疑似基于「哈林篮球」（相似度 0.021）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-11746acef70896a5",
-      "title": "z___game_165",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_165.nes",
       "sha256": "e05ad7c349d90063a1087160eb715c06685c8fcddc7a1eb5c72565ef659a4aca",
       "rom": "roms/e05ad7c349d90063a1087160eb715c06685c8fcddc7a1eb5c72565ef659a4aca.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「洛克人6」（相似度 0.02）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-03c9be30f127fbfd",
-      "title": "z___game_166",
+      "title": "未识别 · mapper 19",
       "sourcePath": "z___game_166.nes",
       "sha256": "7885adde7ef60ab56c1ec4adf283766af966ba93049f601e737f23feb78d786f",
       "rom": "roms/7885adde7ef60ab56c1ec4adf283766af966ba93049f601e737f23feb78d786f.nes",
       "size": 1048608,
       "mapper": 19,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 19"
+      "detail": "Unsupported mapper: 19；疑似基于「三国志超级版」（相似度 0.037）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-74a5b1ffc265dffa",
-      "title": "z___game_167",
+      "title": "三国志超级版（复刻版）",
       "sourcePath": "z___game_167.nes",
       "sha256": "8e7b722e63cc06bfd0e29eb703df10a581500a595607f934789491c57cb7d85e",
       "rom": "roms/8e7b722e63cc06bfd0e29eb703df10a581500a595607f934789491c57cb7d85e.nes",
       "size": 524304,
       "mapper": 19,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 19"
+      "detail": "Unsupported mapper: 19",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-44006808567fcfaa",
-      "title": "z___game_168",
+      "title": "未识别 · mapper 90",
       "sourcePath": "z___game_168.nes",
       "sha256": "5d48dfadf618786074c6bc620d95557ed0edae9926380383c6551b37f28bfd5c",
       "rom": "roms/5d48dfadf618786074c6bc620d95557ed0edae9926380383c6551b37f28bfd5c.nes",
       "size": 524304,
       "mapper": 90,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 90"
+      "detail": "Unsupported mapper: 90；疑似基于「疯狂鸡蛋仔」（相似度 0.02）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-5f97151e10d9eedb",
-      "title": "z___game_169",
+      "title": "未识别 · mapper 94",
       "sourcePath": "z___game_169.nes",
       "sha256": "56a72cd018e7fffbc556789b6e170ae062f5e3792c322b912d7ab5615bcaa863",
       "rom": "roms/56a72cd018e7fffbc556789b6e170ae062f5e3792c322b912d7ab5615bcaa863.nes",
       "size": 131088,
       "mapper": 94,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.026）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-fbd87bd205b8d133",
-      "title": "z___game_170",
+      "title": "未识别 · mapper 187",
       "sourcePath": "z___game_170.nes",
       "sha256": "fdac6687b8ead6bad47d39c978565377da1aa12e383a0de6a49f846a62631156",
       "rom": "roms/fdac6687b8ead6bad47d39c978565377da1aa12e383a0de6a49f846a62631156.nes",
       "size": 393232,
       "mapper": 187,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 187"
+      "detail": "Unsupported mapper: 187；疑似基于「少年街霸'97」（相似度 0.056）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-41b6afd757fcd451",
-      "title": "z___game_171",
+      "title": "桌球",
       "sourcePath": "z___game_171.nes",
       "sha256": "327c2304647f4604d36d1bf1bbc763b15bb43f2772bfdbed72596cf83572e77c",
       "rom": "roms/327c2304647f4604d36d1bf1bbc763b15bb43f2772bfdbed72596cf83572e77c.nes",
       "size": 163856,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "桌球",
+      "hidden": true
     },
     {
       "id": "nes-58d0060f9a5003de",
-      "title": "z___game_172",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_172.nes",
       "sha256": "effacde3692522a8940296aab01424b06ea8a2291484dd701bc9ab6ee8f4c3ac",
       "rom": "roms/effacde3692522a8940296aab01424b06ea8a2291484dd701bc9ab6ee8f4c3ac.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「双截龙2」（相似度 0.644）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-00d148d164cc1679",
-      "title": "z___game_173",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_173.nes",
       "sha256": "654047da018207b95d1417fd7521ad087cefbbfa87239b50ec084e072c60f60b",
       "rom": "roms/654047da018207b95d1417fd7521ad087cefbbfa87239b50ec084e072c60f60b.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「雪人兄弟」（相似度 0.673）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-1be152c48260175f",
-      "title": "z___game_174",
+      "title": "未识别 · mapper 65",
       "sourcePath": "z___game_174.nes",
       "sha256": "386dd9ba05980b8097dcb6289519ef22cbf41d25dab24289e504bbea2c35f665",
       "rom": "roms/386dd9ba05980b8097dcb6289519ef22cbf41d25dab24289e504bbea2c35f665.nes",
       "size": 262160,
       "mapper": 65,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 65"
+      "detail": "Unsupported mapper: 65；疑似基于「格斗美少女战士」（相似度 0.033）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-c75e4cf87848f6de",
-      "title": "z___game_175",
+      "title": "未识别 · mapper 17",
       "sourcePath": "z___game_175.nes",
       "sha256": "5964892162040584ba7a138d0c5e06ff5537f743ac85925e8f1e6f98bed723e0",
       "rom": "roms/5964892162040584ba7a138d0c5e06ff5537f743ac85925e8f1e6f98bed723e0.nes",
       "size": 786464,
       "mapper": 17,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 17"
+      "detail": "Unsupported mapper: 17；疑似基于「虎穴行动」（相似度 0.032）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-a210a75a6acc35b5",
-      "title": "z___game_176",
+      "title": "未识别 · mapper 2",
       "sourcePath": "z___game_176.NES",
       "sha256": "486d9c59474a37423b045d7caae1e200a0433ca42254fd0971bb2c29e9998d43",
       "rom": "roms/486d9c59474a37423b045d7caae1e200a0433ca42254fd0971bb2c29e9998d43.nes",
       "size": 139280,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「兵蜂(J)」（相似度 0.038）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-6af3c476361b451a",
-      "title": "z___game_177",
+      "title": "街霸12人",
       "sourcePath": "z___game_177.nes",
       "sha256": "d6a843a4d158079c6d5fc9afcb63545acbdc918500576a0b01461394ed83beeb",
       "rom": "roms/d6a843a4d158079c6d5fc9afcb63545acbdc918500576a0b01461394ed83beeb.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "街霸12人",
+      "hidden": true
     },
     {
       "id": "nes-2bbe15fe2817d46d",
-      "title": "z___game_178",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_178.nes",
       "sha256": "049123dafd15c15656c6ed3e80210aa99a0f173431e57cb3d18871ca092bca51",
       "rom": "roms/049123dafd15c15656c6ed3e80210aa99a0f173431e57cb3d18871ca092bca51.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血物语」（相似度 0.798）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-b65602539744a2f5",
-      "title": "z___game_179",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_179.nes",
       "sha256": "cc7e0306b32b1d288ce107c0390d561d243dc632d56eb82efcf5cdb5454d87a3",
       "rom": "roms/cc7e0306b32b1d288ce107c0390d561d243dc632d56eb82efcf5cdb5454d87a3.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「鬼屋冒险美版」（相似度 0.019）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-35328919c8eb72cd",
-      "title": "z___game_180",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_180.nes",
       "sha256": "f41e1145853dd42948ef91254586b94bf27d38c8d44ea6578bdbc956d23d360f",
       "rom": "roms/f41e1145853dd42948ef91254586b94bf27d38c8d44ea6578bdbc956d23d360f.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「恶魔城3」（相似度 0.484）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-b6b7c692dfc9643b",
-      "title": "z___game_181",
+      "title": "魂斗罗2无敌中文版（复刻版）",
       "sourcePath": "z___game_181.nes",
       "sha256": "997ac2fc26972ae2dde1089184d6be232d0198c96688f08c0a30e1c06c145330",
       "rom": "roms/997ac2fc26972ae2dde1089184d6be232d0198c96688f08c0a30e1c06c145330.nes",
       "size": 786464,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-61700634507337fc",
-      "title": "z___game_182",
+      "title": "未识别 · mapper 1",
       "sourcePath": "z___game_182.nes",
       "sha256": "6c5feb2e836efc151acb8087fa1e7038d3c1e6a6b4f46f06a41302b11024ffc3",
       "rom": "roms/6c5feb2e836efc151acb8087fa1e7038d3c1e6a6b4f46f06a41302b11024ffc3.nes",
       "size": 262160,
       "mapper": 1,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「热血躲避球」（相似度 0.043）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-0f42a9b30556ace9",
-      "title": "z___game_183",
+      "title": "超级马里奥兄弟1命数不减（复刻版）",
       "sourcePath": "z___game_183.nes",
       "sha256": "f61548fdf1670cffefcc4f0b7bdcdd9eaba0c226e3b74f8666071496988248de",
       "rom": "roms/f61548fdf1670cffefcc4f0b7bdcdd9eaba0c226e3b74f8666071496988248de.nes",
       "size": 40976,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-c7c880aeb55f9437",
-      "title": "z___game_184",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_184.nes",
       "sha256": "6ba64ff651ede7eea2f6142f681b5f03df496456523e3712f8cd5bbee8f2f2ae",
       "rom": "roms/6ba64ff651ede7eea2f6142f681b5f03df496456523e3712f8cd5bbee8f2f2ae.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「超级玛丽2无限血版」（相似度 0.977）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-1370a226d80e0b4e",
-      "title": "z___game_185",
+      "title": "超级马里奥3超级版（复刻版）",
       "sourcePath": "z___game_185.nes",
       "sha256": "2dbff658378216b3d4e59fdb38926d0bddabd9e78d75e8819e3824d5554daed8",
       "rom": "roms/2dbff658378216b3d4e59fdb38926d0bddabd9e78d75e8819e3824d5554daed8.nes",
       "size": 393232,
       "mapper": 4,
       "status": "unsupported",
-      "detail": "Game crashed, invalid opcode at address $c41d"
+      "detail": "Game crashed, invalid opcode at address $c41d",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-f051db4e21ac0487",
-      "title": "z___game_186",
+      "title": "超级玛丽变态版",
       "sourcePath": "z___game_186.nes",
       "sha256": "546a35e356a43b165830b41581710cb898ad462197d5bc6d95782f6896e78add",
       "rom": "roms/546a35e356a43b165830b41581710cb898ad462197d5bc6d95782f6896e78add.nes",
       "size": 40976,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "超级玛丽变态版",
+      "hidden": true
     },
     {
       "id": "nes-479d12eb857c9b3b",
-      "title": "z___game_187",
+      "title": "超级玛丽奥世界",
       "sourcePath": "z___game_187.nes",
       "sha256": "b5cc8b38ce2b0149b7d90c612dd88d8c5fd58285f68c90e52f7485637e8107a9",
       "rom": "roms/b5cc8b38ce2b0149b7d90c612dd88d8c5fd58285f68c90e52f7485637e8107a9.nes",
       "size": 786448,
       "mapper": 90,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 90"
+      "detail": "Unsupported mapper: 90",
+      "duplicateOf": "超级玛丽奥世界",
+      "hidden": true
     },
     {
       "id": "nes-b27003947e2291b7",
-      "title": "z___game_188",
+      "title": "超级玛莉",
       "sourcePath": "z___game_188.nes",
       "sha256": "e9d2cc78600d4b765eca41b87eaa2b8f593d5bad5d71d2f3d6b43c5092e5705b",
       "rom": "roms/e9d2cc78600d4b765eca41b87eaa2b8f593d5bad5d71d2f3d6b43c5092e5705b.nes",
       "size": 40976,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "超级玛莉",
+      "hidden": true
     },
     {
       "id": "nes-9aa554c975e97043",
-      "title": "z___game_189",
+      "title": "超级阿拉丁",
       "sourcePath": "z___game_189.nes",
       "sha256": "8de25c51ba45b7c5c1b91d5074e03e6b110070bbe99a1732b48ff20a9151f416",
       "rom": "roms/8de25c51ba45b7c5c1b91d5074e03e6b110070bbe99a1732b48ff20a9151f416.nes",
       "size": 524304,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "超级阿拉丁",
+      "hidden": true
     },
     {
       "id": "nes-e8013b6208de1c53",
-      "title": "z___game_190",
+      "title": "冒险岛4隐形版（复刻版）",
       "sourcePath": "z___game_190.NES",
       "sha256": "43a7f88be4e4a146c070489af781b762482b02fe23ddaea7fe12dd79234873d4",
       "rom": "roms/43a7f88be4e4a146c070489af781b762482b02fe23ddaea7fe12dd79234873d4.nes",
       "size": 393232,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-9e68771da43c4e0b",
-      "title": "z___game_191",
+      "title": "冒险岛4隐形版（复刻版）",
       "sourcePath": "z___game_191.nes",
       "sha256": "9d7402da135fd1290346ccc9332836daee3a9a3cda3789999c3f86efdb5b19c2",
       "rom": "roms/9d7402da135fd1290346ccc9332836daee3a9a3cda3789999c3f86efdb5b19c2.nes",
       "size": 393232,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-973c6d773937b0ab",
-      "title": "z___game_192",
+      "title": "未识别 · mapper 66",
       "sourcePath": "z___game_192.nes",
       "sha256": "f3830292a758dd404ad7c5dc174b996dfd9ef475af28534038f607bae9ad026d",
       "rom": "roms/f3830292a758dd404ad7c5dc174b996dfd9ef475af28534038f607bae9ad026d.nes",
       "size": 688160,
       "mapper": 66,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「趣味方块」（相似度 0.018）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-eaa072ce9cc89ef2",
-      "title": "z___game_193",
+      "title": "特救指令",
       "sourcePath": "z___game_193.nes",
       "sha256": "b70ba5149d731333c86521f519eac23c9e904ebf475ed436995e3d91a910698f",
       "rom": "roms/b70ba5149d731333c86521f519eac23c9e904ebf475ed436995e3d91a910698f.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "特救指令",
+      "hidden": true
     },
     {
       "id": "nes-6b395c958bff3877",
-      "title": "z___game_194",
+      "title": "未识别 · mapper 3",
       "sourcePath": "z___game_194.nes",
       "sha256": "6552ed20b7297e0cc828b3b8c25c44064fc28d56d8c684bcb5b1cf29e76d01e6",
       "rom": "roms/6552ed20b7297e0cc828b3b8c25c44064fc28d56d8c684bcb5b1cf29e76d01e6.nes",
       "size": 65552,
       "mapper": 3,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.023）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-ed38960f22c77a2f",
-      "title": "z___game_195",
+      "title": "俄罗斯方块（复刻版）",
       "sourcePath": "z___game_195.nes",
       "sha256": "e49a618645be2a57ce37035d17d4493c1bfae2984259f71ff664ec3a554f65ce",
       "rom": "roms/e49a618645be2a57ce37035d17d4493c1bfae2984259f71ff664ec3a554f65ce.nes",
       "size": 65552,
       "mapper": 3,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "high"
     },
     {
       "id": "nes-47f06df74bf66ae7",
-      "title": "z___game_196",
+      "title": "未识别 · mapper 85",
       "sourcePath": "z___game_196.nes",
       "sha256": "f41607b80904a2e1150a155121405dd1fed007ce98ff00a274a7891cafd7e32d",
       "rom": "roms/f41607b80904a2e1150a155121405dd1fed007ce98ff00a274a7891cafd7e32d.nes",
       "size": 262160,
       "mapper": 85,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 85"
+      "detail": "Unsupported mapper: 85；疑似基于「兔宝宝历险记2」（相似度 0.967）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-72e0382a544b0067",
-      "title": "z___game_197",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_197.nes",
       "sha256": "aaeceb811865b9f4736670b55cbfd4a3deae5d26374e9d10d744fc44055b524f",
       "rom": "roms/aaeceb811865b9f4736670b55cbfd4a3deae5d26374e9d10d744fc44055b524f.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「格斗美少女战士」（相似度 0.036）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-764a9ecd77bc7af7",
-      "title": "z___game_198",
+      "title": "吞食天地1（复刻版）",
       "sourcePath": "z___game_198.nes",
       "sha256": "2d31d89989cf0fa69737d39cf83aec49efb1d0e6cd55412015180e9150c35d66",
       "rom": "roms/2d31d89989cf0fa69737d39cf83aec49efb1d0e6cd55412015180e9150c35d66.nes",
       "size": 524304,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-5ef6a0c6d48d3acc",
-      "title": "z___game_199",
+      "title": "双鹰（复刻版）",
       "sourcePath": "z___game_199.nes",
       "sha256": "24dc4260ffb8f42aedb21b9581b9c8b9564e01c8e7ff65a54e06fe0f1bbd341e",
       "rom": "roms/24dc4260ffb8f42aedb21b9581b9c8b9564e01c8e7ff65a54e06fe0f1bbd341e.nes",
       "size": 131088,
       "mapper": 2,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-98b0b68e12f1e2dd",
-      "title": "z___game_200",
+      "title": "兵蜂",
       "sourcePath": "z___game_200.nes",
       "sha256": "1abd84018fcb65492d622e6f2d5bb3a3537394c1805a90213cd96a3f8cb4451c",
       "rom": "roms/1abd84018fcb65492d622e6f2d5bb3a3537394c1805a90213cd96a3f8cb4451c.nes",
       "size": 49168,
       "mapper": 3,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "duplicateOf": "兵蜂",
+      "hidden": true
     },
     {
       "id": "nes-4be74a65dbbfd363",
-      "title": "z___game_201",
+      "title": "兵蜂3",
       "sourcePath": "z___game_201.nes",
       "sha256": "d8067b7d51a9cf5bdc202bada8a4a2ea507fb122969ab2fe462304a75a141674",
       "rom": "roms/d8067b7d51a9cf5bdc202bada8a4a2ea507fb122969ab2fe462304a75a141674.nes",
       "size": 262160,
       "mapper": 22,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 22"
+      "detail": "Unsupported mapper: 22",
+      "duplicateOf": "兵蜂3",
+      "hidden": true
     },
     {
       "id": "nes-3d59f88982895777",
-      "title": "z___game_202",
+      "title": "兵蜂3",
       "sourcePath": "z___game_202.nes",
       "sha256": "d8067b7d51a9cf5bdc202bada8a4a2ea507fb122969ab2fe462304a75a141674",
       "rom": "roms/d8067b7d51a9cf5bdc202bada8a4a2ea507fb122969ab2fe462304a75a141674.nes",
       "size": 262160,
       "mapper": 22,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 22"
+      "detail": "Unsupported mapper: 22",
+      "duplicateOf": "兵蜂3",
+      "hidden": true
     },
     {
       "id": "nes-aa24342c733dea9d",
-      "title": "z___game_203",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_203.NES",
       "sha256": "0ee526011a65f595ca01308464db7372f29b108918ef32e845b784c26fe4179d",
       "rom": "roms/0ee526011a65f595ca01308464db7372f29b108918ef32e845b784c26fe4179d.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「人间兵器」（相似度 0.099）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-b5fcb35085015a0c",
-      "title": "z___game_204",
+      "title": "未识别 · mapper 4",
       "sourcePath": "z___game_204.nes",
       "sha256": "4b35e20d11c69d13c0628b9428c22b6067f3cedd121f7625c45cbaa27c5d3c8c",
       "rom": "roms/4b35e20d11c69d13c0628b9428c22b6067f3cedd121f7625c45cbaa27c5d3c8c.nes",
       "size": 262160,
       "mapper": 4,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「天才厨师」（相似度 0.924）",
+      "identifiedBy": "weak"
     },
     {
       "id": "nes-19a5a599c4a34427",
-      "title": "z___game_205",
+      "title": "功夫（复刻版）",
       "sourcePath": "z___game_205.nes",
       "sha256": "ed41a83b174502df5d03d143b7993ce86af8c61af99fe7b3a30592cc39530254",
       "rom": "roms/ed41a83b174502df5d03d143b7993ce86af8c61af99fe7b3a30592cc39530254.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。",
+      "identifiedBy": "near"
     },
     {
       "id": "nes-0570afd65f1a6e6f",
-      "title": "z___game_206",
+      "title": "未识别 · mapper 0",
       "sourcePath": "z___game_206.nes",
       "sha256": "391324f3b7d7d5fab0ca791612644ae31e80bd4d2a3a78123ce6904ea28af976",
       "rom": "roms/391324f3b7d7d5fab0ca791612644ae31e80bd4d2a3a78123ce6904ea28af976.nes",
       "size": 24592,
       "mapper": 0,
       "status": "boot",
-      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。"
+      "detail": "已通过 180 帧启动与 START 输入检查；支持手机手柄和即时存档。未验证完整通关。；疑似基于「功夫」（相似度 0.193）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-febbae73d9becd59",
-      "title": "z___game_207",
+      "title": "未识别 · mapper 245",
       "sourcePath": "z___game_207.nes",
       "sha256": "97880bc94d07d68ce8cab9d22abe297a15f6d14af34b0b1384e75d6dc3b19594",
       "rom": "roms/97880bc94d07d68ce8cab9d22abe297a15f6d14af34b0b1384e75d6dc3b19594.nes",
       "size": 524304,
       "mapper": 245,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 245"
+      "detail": "Unsupported mapper: 245；疑似基于「最终幻想2(宇宙战将)」（相似度 0.372）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-6ea67c71e1fec96d",
-      "title": "z___game_208",
+      "title": "未识别 · mapper 115",
       "sourcePath": "z___game_208.nes",
       "sha256": "10a438e3c2b4bd830a01667e2135cb710e564742a4b6424b68452721111ad09e",
       "rom": "roms/10a438e3c2b4bd830a01667e2135cb710e564742a4b6424b68452721111ad09e.nes",
       "size": 393232,
       "mapper": 115,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 115"
+      "detail": "Unsupported mapper: 115；疑似基于「铁拳3」（相似度 0.043）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-1fdb54c6cec5779c",
-      "title": "z___game_209",
+      "title": "未识别 · mapper 115",
       "sourcePath": "z___game_209.nes",
       "sha256": "10a438e3c2b4bd830a01667e2135cb710e564742a4b6424b68452721111ad09e",
       "rom": "roms/10a438e3c2b4bd830a01667e2135cb710e564742a4b6424b68452721111ad09e.nes",
       "size": 393232,
       "mapper": 115,
       "status": "unsupported",
-      "detail": "Unsupported mapper: 115"
+      "detail": "Unsupported mapper: 115；疑似基于「铁拳3」（相似度 0.043）",
+      "identifiedBy": "low"
     },
     {
       "id": "nes-4537987c41cba710",
@@ -10255,5 +10524,6 @@
       "status": "unsupported",
       "detail": "Unsupported mapper: 88"
     }
-  ]
+  ],
+  "unknownCount": 96
 }
